@@ -1,0 +1,472 @@
+# Checklist geral de implementação — PetFlow
+
+## Etapa 0 — Base do projeto
+
+- [x] Inspecionar diretório, Git, dependências e configurações existentes
+- [x] Preservar arquivos preexistentes (`automação do whatsapp/`, documento da etapa)
+- [x] Criar monorepo (npm workspaces)
+- [x] `apps/api` — NestJS mínimo com health check e tratamento de erros
+- [x] `apps/web` — Next.js + Tailwind mínimo
+- [x] `apps/worker` — stub de tarefas em segundo plano
+- [x] `packages/shared` — tipos/validações compartilhados (base)
+- [x] `packages/config` — tsconfig base
+- [x] `database/` — schema Prisma técnico + migrations/seeds organizados
+- [x] Scripts de dev, build, lint e testes
+- [x] `.env.example` sem segredos
+- [x] `.gitignore` adequado
+- [x] Testes (health check via Vitest + Supertest)
+- [x] Documentação: PRD, ARCHITECTURE, DATABASE, DEVELOPMENT, CHANGELOG, PROJECT_STATUS, AGENTS.md
+- [x] Validações executadas com evidência
+
+## Etapa 1 — Autenticação, empresas, usuários, permissões e isolamento multiempresa
+
+Escopo definido em `Etapas_projeto/PetFlow_Prompt_OpenCode_Etapa_1.md`.
+
+- [x] Ambiente verificado: PostgreSQL 17 local (sem Docker), bancos `petflow`
+      e `petflow_test` criados, `DATABASE_URL` em `.env` local
+- [x] Schema Prisma: `Company`, `User`, `Session` + enums; migration
+      `20261009185907_etapa1_auth_tenancy` aplicada nos dois bancos
+- [x] `npm run db:validate` — schema válido
+- [x] Bootstrap seguro e idempotente via CLI (`npm run bootstrap:admin`,
+      credenciais por `BOOTSTRAP_*` no ambiente, sem senha padrão)
+- [x] Login/logout/`me` com cookie HttpOnly (token SHA-256 em `Session`),
+      revogação efetiva no logout e na inativação de usuário
+- [x] Endpoints privados protegidos por `AuthGuard` global; permissão
+      administrativa verificada no backend (`AdminGuard`)
+- [x] Isolamento multiempresa: `companyId` derivado do contexto autenticado;
+      testes de acesso cruzado (404/escopo) aprovados
+- [x] Rate limit de login, verificação de `Origin`, CORS com allowlist
+- [x] Frontend: `/login`, área protegida `/` (empresa + usuário + logout),
+      `/usuarios` (admin), proxy rewrites Next → API
+- [x] Testes de integração com PostgreSQL real: 23/23 aprovados
+      (`tests/auth.test.ts`, `tests/users.test.ts`, `tests/health.test.ts`)
+- [x] `npm run lint` — 0 erros
+- [x] `npm run typecheck` — OK (4 workspaces)
+- [x] `npm run build` — OK (shared, api, web, worker)
+- [x] Validação manual E2E: health 200, login 200 (API e via proxy web),
+      `me` 200, `users` 200, logout 200, `me` 401 após logout, páginas 200
+- [x] Documentação atualizada (CHANGELOG, PROJECT_STATUS, ARCHITECTURE,
+      DATABASE, DEVELOPMENT, AGENTS)
+
+## Etapa 2 — Produtos, estoque, fornecedores e movimentações
+
+Escopo definido em `Etapas_projeto/PetFlow_Prompt_OpenCode_Etapa_2.md`.
+
+- [x] Etapa 1 confirmada funcional (proteções de autenticação/tenant ativas)
+- [x] Schema: `Category`, `Supplier`, `Product`, `StockMovement`; migration
+      `20261009194843_etapa2_products_stock` aplicada em `petflow` e
+      `petflow_test`; `npm run db:validate` OK
+- [x] CRUD de categorias (nome único por empresa, inativação) pela API
+- [x] CRUD de fornecedores (dados opcionais, inativação) pela API
+- [x] CRUD de produtos (SKU/barcode únicos por empresa, categoria/fornecedor
+      validados no servidor, preços/estoque mínimo não negativos)
+- [x] Entradas/saídas/ajustes com saldo materializado + lock `FOR UPDATE`;
+      ajustes exigem justificativa e ADMIN; saída não deixa saldo negativo
+- [x] Saldo, histórico paginado (autor, data, tipo, motivo) e alertas de
+      estoque baixo
+- [x] Escrita de catálogo/produtos/ajustes restrita a ADMIN no backend;
+      leitura e entradas/saídas para qualquer usuário autenticado
+- [x] Frontend integrado: `/produtos`, detalhe com movimentações,
+      `/produtos/novo`, `/produtos/[id]/editar`, `/categorias`,
+      `/fornecedores` (busca, filtros, paginação, confirmação de inativação)
+- [x] Testes: 76/76 aprovados em PostgreSQL real (CRUD, validações,
+      duplicidade, isolamento multiempresa, concorrência, alertas)
+- [x] `npm run lint`, `npm run typecheck`, `npm run build` OK
+- [x] Validação E2E manual: login, categoria 201, fornecedor 201, produto
+      201, entrada 10 → saldo 10, saída 3 → saldo 7, saída 999 → 400,
+      ajuste −1 → saldo 6, saldo/histórico/alertas corretos, páginas 200
+- [x] Documentação atualizada (CHANGELOG, STATUS, DATABASE, API, DEVELOPMENT,
+      ARCHITECTURE, AGENTS)
+- [x] Commit e push (ver relatório final / PROJECT_STATUS)
+
+## Etapa 3 — Vendas e PDV (2026-10-09)
+
+- [x] Etapa 2 confirmada funcional (76/76 testes antes de iniciar)
+- [x] Schema: `Sale`, `SaleItem`; enums `PaymentMethod`, `SaleStatus`;
+      migration `20261009205135_etapa3_sales_pdv` aplicada em `petflow` e
+      `petflow_test`; `npm run db:validate` OK
+- [x] `POST /api/sales`: recálculo de preços/totais no servidor, snapshot
+      de nome/SKU/preço nos itens, baixa de estoque + movimentos `OUT` na
+      mesma transação, lock `FOR UPDATE` dos produtos
+- [x] Prevenção de venda duplicada (`clientRequestId` idempotente → 409) e
+      código de comprovante (`PF-XXXXXXXX`) único por empresa
+- [x] Rejeições: produto inexistente/inativo/de outra empresa (404/400),
+      quantidade zero/negativa, estoque insuficiente, desconto negativo ou
+      acima do subtotal; adulteração de preços/totais pelo cliente
+      ignorada (servidor recalcula)
+- [x] `GET /api/sales` (histórico paginado, filtros status/código/período)
+      e `GET /api/sales/:id` (detalhe com itens e snapshots)
+- [x] `POST /api/sales/:id/cancel`: ADMIN, motivo obrigatório, devolução
+      única de estoque com movimentos `IN` compensatórios, auditoria
+      (autor/data/motivo), venda nunca apagada fisicamente
+- [x] Frontend: `/pdv` (busca por nome/SKU/barcode, carrinho com
+      quantidades, desconto, formas de pagamento, finalização com
+      confirmação e comprovante imprimível), `/vendas` (histórico com
+      filtros), `/vendas/[id]` (detalhe + cancelamento com motivo e
+      confirmação); sessão expirada redireciona para `/login`
+- [x] Testes: 104/104 aprovados em PostgreSQL real (28 novos: validações,
+      snapshots, idempotência, concorrência, cancelamento único,
+      isolamento multiempresa)
+- [x] `npm run lint`, `npm run typecheck`, `npm run build` OK
+- [x] Validação E2E manual: 25/25 verificações (venda 3× com desconto →
+      total do banco, estoque 10→7→10 no cancelamento, reenvio e
+      recancelamento 409, páginas 200)
+- [x] Documentação atualizada (CHANGELOG, STATUS, DATABASE, API,
+      DEVELOPMENT, ARCHITECTURE)
+- [x] Commit e push (ver relatório final / PROJECT_STATUS)
+
+## Etapa 4 — Caixa e financeiro (2026-10-09)
+
+- [x] Etapa 3 confirmada funcional (104/104 testes antes de iniciar;
+      auditoria de lint/typecheck/build/db:validate sem problemas)
+- [x] Schema: `CashSession`, `CashMovement`; enums `CashSessionStatus`,
+      `CashMovementType`, `CashMovementOrigin`; `Sale.cashSessionId`;
+      migration `20261009212628_etapa4_cash_finance` aplicada em `petflow`
+      e `petflow_test`; `npm run db:validate` OK
+- [x] `POST /api/cash/sessions` (ADMIN, uma aberta por empresa com lock
+      na `Company` → 409 em duplicidade) e `GET /sessions/current`
+      (404 sem sessão aberta)
+- [x] Movimentações manuais (ADMIN, sessão aberta; `OUT` exige
+      justificativa; valores positivos validados no Zod) e histórico com
+      filtros (período, sessão, tipo, origem) + paginação
+- [x] `POST /sessions/:id/close` (ADMIN): saldo esperado e diferença
+      calculados no servidor (apenas `inCash`); duplo fechamento → 409
+- [x] Estorno auditável (`POST /movements/:id/reversal`): apenas
+      `MANUAL` não estornado na sessão aberta; cria `REVERSAL`
+      compensatório e marca o original (`updateMany` condicional → dupla
+      corrida 409); venda → 400; sessão fechada → 409
+- [x] `GET /api/cash/summary`: totais por origem/tipo/período/sessão
+      calculados no servidor (vendas, manuais, cancelamentos, estornos,
+      entradas, saídas, líquido)
+- [x] Integração com vendas: `POST /sales` e `/sales/:id/cancel` exigem
+      caixa aberto (409) e gravam `cashSessionId` + lançamento único
+      (`SALE`/`SALE_CANCELMENT`) na mesma transação; `inCash` conforme
+      `paymentMethod === "CASH"`; lock de sessão antes dos produtos
+- [x] Frontend: `/caixa` (situação, abertura, form entrada/saída,
+      movimentações recentes), `/caixa/fechar`, `/caixa/movimentos`
+      (filtros + estorno), `/caixa/sessoes`, `/financeiro`; banner e
+      bloqueio de venda no `/pdv` com caixa fechado; home módulo
+      disponível; badge "Etapa 4"
+- [x] Testes: 141/141 aprovados em PostgreSQL real (37 novos em
+      `cash.test.ts`; `sales.test.ts` abrindo caixa no `beforeAll`)
+- [x] `npm run lint`, `npm run typecheck`, `npm run build`,
+      `npm run db:validate` OK
+- [x] Validação E2E manual: 30/30 verificações (venda com caixa fechado
+      409, abertura, `inCash` dinheiro/Pix, saída sem justificativa 400,
+      cancelamento único, duplo estorno 409, resumo, fechamento com
+      diferença −2.50, duplo fechamento 409, reabertura, páginas 200)
+- [x] Documentação atualizada (CHANGELOG, STATUS, DATABASE, API,
+      ARCHITECTURE, DEVELOPMENT)
+- [x] Commit e push (ver relatório final / PROJECT_STATUS)
+
+## Etapa 5 — Clientes, pets e serviços (2026-10-09)
+
+- [x] Etapa 4 confirmada funcional (141/141 testes antes de iniciar;
+      auditoria de lint/typecheck/build/db:validate sem problemas)
+- [x] Schema: `Client`, `Pet`, `Service`; enums `PetSpecies`, `PetSex`;
+      `Sale.clientId` opcional (FK `SetNull` + índice); migration aditiva
+      `20261009222638_etapa5_clients_pets_services` aplicada em `petflow`
+      e `petflow_test`; `npm run db:validate` OK
+- [x] CRUD de clientes pela API com busca (nome/telefone/email/CPF),
+      paginação e status; endereço estruturado; contatos normalizados
+      (telefone só dígitos, email minúsculo)
+- [x] Política de duplicidade de cliente: `nameKey` + contato igual com
+      cliente ativo → 409; homônimos sem contato e famílias com mesmo
+      telefone permitidos; cliente inativo não bloqueia novo cadastro
+- [x] CRUD de pets pela API (espécie/sexo/nascimento/peso/raça/cor),
+      responsável validado no servidor (ativo e da mesma empresa), troca
+      de responsável, busca por pet/raça/cor/responsável e filtros
+- [x] CRUD de serviços pela API: nome único por empresa (case-insensitive
+      com espaços colapsados), preço obrigatório ≥ 0, duração 1..1440;
+      escrita restrita a ADMIN, leitura autenticada
+- [x] `GET /api/clients/:id/pets` (pets do responsável) e detalhe de pet
+      com responsável
+- [x] Integração venda–cliente: `POST /sales` aceita `clientId` opcional
+      validado (ativo + mesma empresa → 400 caso contrário); listagem e
+      detalhe retornam `client`; venda rápida sem cliente preservada
+- [x] Frontend: `/clientes` (lista/busca/cadastro completo/inativação),
+      `/clientes/[id]` (ficha + pets), `/pets` (listagem com filtros +
+      cadastro/edição), `/servicos` (escrita ADMIN); `/pdv` com seletor
+      opcional de cliente; `/vendas` e detalhe com cliente; home com
+      módulos disponíveis; badge "Etapa 5"
+- [x] Testes: 190/190 aprovados em PostgreSQL real (49 novos:
+      `clients.test.ts` 20, `pets.test.ts` 12, `services.test.ts` 13,
+      `sales.test.ts` +4)
+- [x] `npm run lint`, `npm run typecheck`, `npm run build`,
+      `npm run db:validate` OK
+- [x] Validação E2E manual: 40/40 verificações (normalizações, 409 de
+      duplicidade, validações 400, venda com cliente, venda rápida sem
+      cliente, páginas 200)
+- [x] Documentação atualizada (CHANGELOG, STATUS, DATABASE, API,
+      ARCHITECTURE, DEVELOPMENT, README)
+- [x] Commit e push (ver relatório final / PROJECT_STATUS)
+
+## Etapa 6 — Integração com WhatsApp (2026-10-09)
+
+Escopo definido em `Etapas_projeto/PetFlow_Prompt_OpenCode_Etapa_6.md`.
+
+- [x] Etapa 5 confirmada funcional (190/190 testes antes de iniciar;
+      auditoria de lint/typecheck/build/db:validate sem problemas)
+- [x] Decisões registradas: Cloud API oficial da Meta (nada de
+      scraping/Selenium/QR); fila em Postgres no `apps/worker` (sem
+      Redis/BullMQ); dashboard continua Etapa 7; `automação do whatsapp/`
+      intocada
+- [x] Schema: `WhatsAppConfig`, `WhatsAppTemplate`,
+      `WhatsAppConsent`, `WhatsAppMessage`, `WhatsAppSendAttempt`,
+      `WhatsAppWebhookEvent` + 8 enums; migration
+      `20261009232055_etapa6_whatsapp_integration` aplicada em
+      `petflow` e `petflow_test`; `npm run db:validate` OK
+- [x] Pacote `@petflow/whatsapp`: E.164, classificação de erro
+      (TRANSIENT 429/408/5xx), backoff exponencial, opt-out textual,
+      `MetaCloudProvider` + `MockWhatsAppProvider`
+- [x] Schemas Zod E6 em `@petflow/shared` (+ regex de linguagem
+      corrigido para `pt_BR` com underscore)
+- [x] `GET/PUT /api/whatsapp/config`, `POST /whatsapp/config/health`
+      (sem vazar token), `PATCH /whatsapp/config/status` (ADMIN)
+- [x] `GET/POST /api/whatsapp/templates`, `PATCH /:id/approval`,
+      `PATCH /:id/status` (escrita ADMIN; variáveis validadas)
+- [x] `GET/POST /api/whatsapp/consents`,
+      `GET/PUT /whatsapp/consents/:clientId` (opt-in ADMIN, opt-out
+      auditável, 404 cross-tenant)
+- [x] `GET/POST /api/whatsapp/messages` (enfileiramento idempotente),
+      `GET /whatsapp/messages/:id`, `POST /:id/cancel`
+- [x] Webhook Meta (`@Public`): challenge GET, `POST` com
+      verificação `x-hub-signature-256` sobre `rawBody` (403 inválido),
+      idempotência por `wamid`, status de entrega, "SAIR" → opt-out
+- [x] Worker: claim atômico, backoff, `MAX_ATTEMPTS=3`, rate limit por
+      ciclo, heartbeat e shutdown gracioso; envs `WORKER_*`/`WHATSAPP_*`
+- [x] Frontend: `/whatsapp`, `/whatsapp/templates`,
+      `/whatsapp/mensagens`, `/whatsapp/mensagens/[id]`, seção de
+      consentimento em `/clientes/[id]`, card na home, badge "Etapa 6"
+- [x] Testes: 251/251 aprovados em PostgreSQL real (61 novos em
+      `tests/whatsapp.test.ts`)
+- [x] `npm run lint`, `npm run typecheck`, `npm run build`,
+      `npm run db:validate` OK
+- [x] Documentação atualizada (CHANGELOG, STATUS, DATABASE, API,
+      ARCHITECTURE, DEVELOPMENT, README, `.env.example`)
+- [x] Commit e push (ver relatório final / PROJECT_STATUS)
+
+## Etapa 7 — Dashboard e relatórios (2026-10-09)
+
+Escopo definido em `Etapas_projeto/PetFlow_Prompt_OpenCode_Etapa_7.md`.
+
+- [x] Etapa 6 confirmada funcional (251/251 testes antes de iniciar;
+      auditoria de lint/typecheck/build/db:validate sem problemas)
+- [x] Auditoria inicial: fontes de dados reais das Etapas 1–6,
+      serviços realizados sem estado → indicador indisponível, sem
+      lib de gráficos (decisão: barras CSS, zero dependências novas)
+- [x] Schemas Zod E7 em `@petflow/shared`: `reportDateField` com
+      validação de calendário real, `checkReportPeriod` (`from ≤ to`,
+      máx. 366 dias), default 30 dias, `json|csv` e schemas dos 6
+      relatórios (+ paginação reutilizando `paginationQuerySchema`)
+- [x] Migration aditiva `20261010002727_etapa7_report_indexes`
+      (`Client`/`Pet` com `@@index([companyId, createdAt])`)
+      aplicada em `petflow` e `petflow_test`; `npm run db:validate` OK
+- [x] `GET /api/reports/summary` — vendas (concluídas/canceladas,
+      líquido/bruto/descontos, ticket `null` sem vendas), por dia e
+      forma de pagamento (SQL puro), caixa (saldo esperado da sessão
+      aberta, `inCash`/totais), estoque (baixo/zerado), clientes e
+      pets novos, WhatsApp por status, `servicesRealized` com
+      `available:false`
+- [x] `GET /api/reports/sales` — totais separados concluídas ×
+      canceladas (filtro `status` afeta só a lista; `paymentMethod`
+      afeta os totais), lista paginada, filtros e isolamento
+- [x] `GET /api/reports/stock/alerts` (sem estoque ou no mínimo,
+      inativos excluídos, paginação) e
+      `/stock/movements` (totais por tipo zero-fill, filtros
+      `productId`/`type`/período)
+- [x] `GET /api/reports/cash` (inCash vs todos, estornos por
+      origem, sessões fechadas com diferença), `/clients` (novos +
+      pets por espécie), `/whatsapp` (status atual, falhas por
+      motivo — aceitação ≠ entrega)
+- [x] Período em UTC inclusivo (`T00:00:00.000Z`–`T23:59:59.999Z`),
+      documentado; validações 400 (inverso, >366 dias, formato e
+      data inválidas)
+- [x] CSV (`format=csv`) em vendas, alertas e movimentações:
+      helper com aspas/CRLF, anti-injeção (prefixo `'` em
+      `=+-@`), teto 5000 linhas, ignora paginação, filename com
+      data
+- [x] Leitura exige apenas sessão (sem `AdminGuard`); `companyId`
+      sempre da sessão (parâmetro de cliente ignorado); MEMBER pode
+      ler
+- [x] Frontend: `/dashboard` (período, KPIs, barras CSS por dia e
+      por forma de pagamento, card serviços indisponível),
+      `/relatorios` (abas vendas/estoque/caixa/clientes/whatsapp
+      com filtros, paginação e CSV), `lib/format.ts`,
+      `downloadCsv()`, home com cards, badge "Etapa 7"
+- [x] Testes: 292/292 aprovados em PostgreSQL real (41 novos em
+      `tests/reports.test.ts`)
+- [x] `npm run lint`, `npm run typecheck`, `npm run build`,
+      `npm run db:validate` OK; varredura de segredos sem achados
+- [x] Documentação atualizada (CHANGELOG, STATUS, DATABASE, API,
+      ARCHITECTURE, DEVELOPMENT, README)
+- [x] Commit e push (ver relatório final / PROJECT_STATUS)
+
+## Etapa 8 — Agendamentos (2026-10-10)
+
+Escopo definido e aprovado na conversa com o proprietário (sem prompt
+oficial em `Etapas_projeto/`).
+
+- [x] Etapa 7 confirmada funcional (292/292 testes antes de iniciar;
+      auditoria de lint/typecheck/build/db:validate sem problemas)
+- [x] Decisões registradas: conflito de horário da empresa inteira,
+      serviços em vendas/PDV fora da etapa, lembretes automáticos
+      incluídos pela fila WhatsApp existente, `durationMinutes`
+      obrigatório (1..1440)
+- [x] Schemas Zod E8 em `@petflow/shared`: `localDateTimeField` com
+      calendário real, `create/update/cancel/update-status/list
+      appointments`, constantes de status bloqueante/terminal,
+      constantes de lembrete (3 variáveis, lead 5..40320 default
+      1440); `updateWhatsAppConfigSchema` com `reminderTemplateId` e
+      `reminderLeadMinutes`
+- [x] Migration `20261010115308_etapa8_appointments`: enum
+      `AppointmentStatus`, modelo `Appointment` (FK `Restrict` para
+      empresa/cliente/pet/serviço/autor, `cancelledByUserId`
+      `SetNull`, índices `[companyId, startLocal]`, `[companyId,
+      status, startAt]`, `[clientId]`, `[petId]`) e
+      `WhatsAppConfig.reminderTemplateId`/`reminderLeadMinutes`;
+      aplicada em `petflow` (dev); `npm run db:validate` OK
+- [x] `POST /api/appointments` (201): `startAt`/`endAt` calculados no
+      servidor (`startLocal` + offset leste-positivo ±840), passado
+      recusado (tolerância 60 s), cliente/pet/serviço validados
+- [x] `GET /api/appointments` (filtros `from/to` sobre `startLocal`,
+      `status`, `clientId`, `petId`, `serviceId`, `search`,
+      paginação) e `GET /:id` (404 cross-tenant)
+- [x] `PATCH /:id` (campos parciais, reagendamento recalcula
+      `startAt`, apenas status não-terminal), `PATCH /:id/status`
+      (CONFIRMED/COMPLETED/NO_SHOW; terminal → 409), `POST /:id/cancel`
+      (201, motivo 3..500, guarda de status → dupla corrida 409)
+- [x] Conflito em transação com `FOR UPDATE` na `Company`: sobreposição
+      em SCHEDULED/CONFIRMED → 409; fim-início exato permitido;
+      terminal/cancelado não bloqueia; edição exclui o próprio registro
+- [x] Sem `AdminGuard` (agenda é operação diária — MEMBER agenda);
+      `companyId` sempre da sessão
+- [x] Lembretes (`syncReminder`, fila WhatsApp + worker intactos):
+      chave `appointment-reminder:<id>` por empresa,
+      `origin=SERVICE_REMINDER`, `nextAttemptAt = max(now, startAt −
+      lead)`, variáveis pet/serviço/data-hora local, revalidação de
+      config/template/consentimento/telefone a cada mutação, atualiza
+      pendente ao reagendar, cancela ao cancelar/concluir ou tornar
+      inelegível; falha só loga (CRUD nunca falha)
+- [x] `GET/PUT /api/whatsapp/config` com campos de lembrete; PUT
+      valida template da mesma empresa com exatamente 3 variáveis (400)
+- [x] Relatórios: `summary.services` (contagens por status,
+      zero-fill), `modules.servicesRealized = {available: true,
+      reason: null}`; `clients.services` substitui `servicesRealized`
+- [x] Frontend: `/agenda` (visão por dia, navegação ←/Hoje/→/date
+      picker, filtros, paginação), `/agenda/novo`, `/agenda/[id]`
+      (transições + cancelamento com motivo), `/agenda/[id]/editar`,
+      `components/AppointmentForm.tsx`, helpers em `lib/format.ts`,
+      bloco E8 em `lib/types.ts`; home card "Agendamentos"; badge
+      "Etapa 8 — Agendamentos"; `/whatsapp` com select de template de
+      lembrete e antecedência; dashboard/relatórios com contagens
+- [x] Testes: 337/337 aprovados em PostgreSQL real (45 novos em
+      `tests/appointments.test.ts`; asserts de `servicesRealized`
+      atualizados em `tests/reports.test.ts`; `resetDatabase` cobre
+      `Appointment` e o novo FK)
+- [x] `npm run lint`, `npm run typecheck`, `npm run build`,
+      `npm run db:validate` OK; varredura de segredos sem achados
+      reais
+- [x] Documentação atualizada (CHANGELOG, STATUS, DATABASE, API,
+      ARCHITECTURE, DEVELOPMENT, README)
+- [x] Commit e push (ver relatório final / PROJECT_STATUS)
+
+## Etapa 9 — Assinaturas e gestão comercial (2026-10-10)
+
+Escopo definido e aprovado na conversa com o proprietário (sem prompt
+oficial em `Etapas_projeto/`; opções "Ambos" e "pagamento via
+caixa/venda existente").
+
+- [x] Etapa 8 confirmada funcional (337/337 testes antes de iniciar;
+      auditoria de lint/typecheck/build/db:validate sem problemas)
+- [x] Decisões registradas: pagamento sempre pelo caixa existente (sem
+      gateway), `TenantPlan`/`TenantSubscription` globais como exceção
+      documentável à regra de `companyId`, catálogo global do billing
+      sem escrita via API, cancelamento com motivo obrigatório
+      (cliente) e opcional (billing), assinatura de cliente sem
+      edição de campos (cancelar + criar nova)
+- [x] Schemas Zod E9 em `@petflow/shared`: `subscription/
+      tenantSubscriptionStatusSchema` + labels, constantes de duração
+      (1..3650 e 30 dias), `create/update/listSubscriptionPlans`,
+      `create/listSubscriptions` (`startAt` opcional ISO,
+      `registerPayment`), `cancelSubscription` (reason 3..500),
+      `updateTenantSubscription`, `cancelTenantSubscription` (reason
+      opcional ≤ 500)
+- [x] Migration `20261010131027_etapa9_subscriptions`: enums
+      `SubscriptionStatus`/`TenantSubscriptionStatus`; modelos
+      `SubscriptionPlan`/`Subscription` (FK `Restrict`, índices por
+      empresa e `[clientId]`), `TenantPlan`/`TenantSubscription`
+      (globais, `companyId` `@unique`), `CashMovement.subscriptionId`
+      (FK `SetNull` + índice); seed dos 3 `TenantPlan` iniciais na
+      própria migration (bytes reescritos em UTF-8 após P3015); nota:
+      `petflow_test` recebeu via global-setup; `npm run db:validate` OK
+- [x] `GET/POST /api/subscription-plans` (201, AdminGuard; nome único
+      por empresa → 409), `GET /:id`, `PATCH /:id`,
+      `PATCH /:id/status`; cross-tenant → 404
+- [x] `GET /api/subscriptions` (filtros `status`/`clientId`/`search`,
+      paginação) e `GET /:id` com expiração lazy nas leituras
+- [x] `POST /api/subscriptions` (201): cliente ativo e plano ativo
+      validados; `registerPayment` cria `CashMovement` IN/MANUAL em
+      transação após `lockOpenCashSession` (caixa fechado → 409)
+- [x] `POST /:id/renew` (201): exige caixa aberto, estende a partir de
+      `max(now, endAt)`, `renewalCount+1`, `lastPaymentAt`, movimento
+      de caixa vinculado; cancelada → 409; `POST /:id/cancel` (201,
+      motivo 3..500, `updateMany` com guarda → dupla corrida 409)
+- [x] `GET /api/billing/plans`, `GET /api/billing/subscription` (404
+      se ausente; expiração lazy), `PUT /api/billing/subscription`
+      (AdminGuard; upsert reinicia período e reativa; valida plano),
+      `POST .../renew` (201; cancelada → 409), `POST .../cancel`
+      (201; duplo → 409); escrita do catálogo global não exposta
+- [x] Frontend: `/planos` (CRUD ADMIN), `/assinaturas` (filtros +
+      paginação), `/assinaturas/nova` (cliente/plano/opção de caixa),
+      `/assinaturas/[id]` (detalhe, pagamentos, renovar/cancelar),
+      `/faturamento` (situação + troca/renovação/cancelamento); cards
+      "Assinaturas" e "Faturamento" na home; bloco E9 em `lib/types.ts`;
+      badge "Etapa 9 — Assinaturas"
+- [x] Testes: 367/367 aprovados em PostgreSQL real (18 novos em
+       `tests/subscriptions.test.ts` + 12 em `tests/billing.test.ts`;
+       `resetDatabase` cobre `Subscription` e `TenantSubscription`)
+- [x] `npm run lint`, `npm run typecheck`, `npm run build`,
+      `npm run db:validate` OK; varredura de segredos sem achados
+      reais
+- [x] Documentação atualizada (CHANGELOG, STATUS, DATABASE, API,
+      ARCHITECTURE, DEVELOPMENT, README)
+- [x] Commit e push (ver relatório final / PROJECT_STATUS)
+
+## Pós-Etapa 9 — acesso e demonstração (2026-10-10)
+
+- [x] **Redefinição de senha pelo painel**: `POST /api/auth/reset-password`
+       (flag `PASSWORD_RESET_ENABLED`, rate limit, transação com
+       revogação de sessões), página `/redefinir-senha`, link no login,
+       7 testes em `tests/password-reset.test.ts`
+- [x] **Cadastro aberto**: `POST /api/auth/register` (flag
+       `REGISTRATION_ENABLED`, rate limit por IP, empresa nova + admin,
+       auto-login), página `/cadastro`, link "Cadastre-se", refactor
+       `AuthService.createSession()`, 6 testes em `tests/register.test.ts`
+- [x] **Seed de demonstração**: `apps/api/src/cli/seed-demo.ts`
+       (`db:seed:demo`, transação única, só em empresa vazia); roda
+       aplicado na empresa "Mundo Pet" com verificação de integridade
+       (estoque, totais, caixa, agenda)
+- [x] **README**: guia "Como usar o sistema" (primeiro acesso, perfis,
+       rotina, receitas por módulo, mapa de páginas) + "Dados de
+       demonstração"
+- [x] Testes: 380/380 aprovados em PostgreSQL real (18 arquivos)
+- [x] `npm run lint`, `npm run typecheck`, `npm run build` OK
+- [x] Documentação atualizada (CHANGELOG, STATUS, DEVELOPMENT, API,
+       ARCHITECTURE, README, IMPLEMENTATION_CHECKLIST)
+- [x] Commit e push (ver PROJECT_STATUS — Git)
+
+## Etapas futuras — módulos de negócio
+
+- [x] Cadastro de clientes e animais (Etapa 5)
+- [x] Produtos e estoque (Etapa 2)
+- [x] Vendas e PDV (Etapa 3)
+- [x] Caixa e financeiro (Etapa 4)
+- [x] Automação WhatsApp (Etapa 6 — Cloud API + fila + webhook + UI)
+- [x] Dashboard e relatórios (Etapa 7)
+- [x] Agendamentos (Etapa 8 — CRUD + conflito + lembretes + `/agenda`)
+- [x] Assinaturas/multiempresa comercial (Etapa 9 — planos,
+      assinaturas de cliente, billing do SaaS)
+
+> Regra: nenhuma etapa é iniciada sem autorização explícita; marcar itens aqui
+> apenas com evidência de execução.

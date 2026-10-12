@@ -1,0 +1,40 @@
+{
+  "name": "petflow",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PetFlow - SaaS de gestão para pet shops",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build:shared": "npm run build --workspace @petflow/shared",
+    "build:whatsapp": "npm run build --workspace @petflow/whatsapp",
+    "dev:api": "npm run build:shared && npm run build:whatsapp && npm run dev --workspace @petflow/api",
+    "dev:web": "npm run dev --workspace @petflow/web",
+    "dev:worker": "npm run build:shared && npm run build:whatsapp && npm run dev --workspace @petflow/worker",
+    "build": "npm run build:shared && npm run build:whatsapp && npm run build --workspace @petflow/api && npm run build --workspace @petflow/web && npm run build --workspace @petflow/worker",
+    "lint": "eslint .",
+    "typecheck": "npm run build:shared && npm run build:whatsapp && npm run typecheck --workspace @petflow/api && npm run typecheck --workspace @petflow/web && npm run typecheck --workspace @petflow/worker",
+    "test": "npm run build:shared && npm run build:whatsapp && vitest run",
+    "bootstrap:admin": "npm run build:shared && npm run bootstrap:admin --workspace @petflow/api",
+    "db:seed:demo": "npm run seed:demo --workspace @petflow/api --",
+    "db:validate": "prisma validate --schema database/prisma/schema.prisma",
+    "db:generate": "prisma generate --schema database/prisma/schema.prisma",
+    "db:migrate": "prisma migrate dev --schema database/prisma/schema.prisma",
+    "db:deploy": "prisma migrate deploy --schema database/prisma/schema.prisma"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.12.0",
+    "eslint": "^9.12.0",
+    "prisma": "^5.22.0",
+    "supertest": "^7.0.0",
+    "@types/supertest": "^6.0.2",
+    "typescript": "^5.6.2",
+    "typescript-eslint": "^8.8.0",
+    "vitest": "^2.1.2"
+  }
+}

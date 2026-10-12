@@ -1,0 +1,767 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CompanyStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum UserRole {
+  ADMIN
+  MEMBER
+}
+
+enum RecordStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ProductUnit {
+  UNIDADE
+  KG
+  G
+  L
+  ML
+  CAIXA
+  PACOTE
+  ROLLO
+}
+
+enum StockMovementType {
+  IN
+  OUT
+  ADJUST_POSITIVE
+  ADJUST_NEGATIVE
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  PIX
+  OTHER
+}
+
+enum SaleStatus {
+  COMPLETED
+  CANCELLED
+}
+
+enum CashSessionStatus {
+  OPEN
+  CLOSED
+}
+
+enum CashMovementType {
+  IN
+  OUT
+}
+
+enum CashMovementOrigin {
+  MANUAL
+  SALE
+  SALE_CANCELMENT
+  REVERSAL
+}
+
+enum PetSpecies {
+  DOG
+  CAT
+  BIRD
+  RODENT
+  REPTILE
+  FISH
+  OTHER
+}
+
+enum PetSex {
+  MALE
+  FEMALE
+  UNKNOWN
+}
+
+enum WhatsAppConfigStatus {
+  CONFIGURED
+  ACTIVE
+  ERROR
+  DISCONNECTED
+}
+
+enum WhatsAppConsentStatus {
+  OPTED_IN
+  OPTED_OUT
+}
+
+enum WhatsAppConsentSource {
+  MANUAL
+  REPLY
+  IMPORT
+}
+
+enum WhatsAppTemplateCategory {
+  UTILITY
+  MARKETING
+  AUTHENTICATION
+}
+
+enum WhatsAppTemplateApproval {
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+}
+
+enum WhatsAppMessageStatus {
+  PENDING
+  PROCESSING
+  ACCEPTED
+  SENT
+  DELIVERED
+  READ
+  FAILED
+  CANCELLED
+}
+
+enum WhatsAppMessageOrigin {
+  MANUAL
+  SERVICE_REMINDER
+}
+
+enum WhatsAppAttemptOutcome {
+  ACCEPTED
+  TRANSIENT_ERROR
+  PERMANENT_ERROR
+}
+
+enum WhatsAppWebhookKind {
+  STATUS
+  INBOUND
+  OTHER
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum TenantSubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+model Company {
+  id        String        @id @default(cuid())
+  name      String
+  slug      String        @unique
+  status    CompanyStatus @default(ACTIVE)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  users     User[]
+  categories Category[]
+  suppliers  Supplier[]
+  products   Product[]
+  stockMovements StockMovement[]
+  sales      Sale[]
+  cashSessions   CashSession[]
+  cashMovements  CashMovement[]
+  clients    Client[]
+  pets       Pet[]
+  services   Service[]
+  whatsappConfig       WhatsAppConfig?
+  whatsappTemplates    WhatsAppTemplate[]
+  whatsappMessages     WhatsAppMessage[]
+  whatsappConsents     WhatsAppConsent[]
+  whatsappWebhookEvents WhatsAppWebhookEvent[]
+  appointments         Appointment[]
+  subscriptionPlans    SubscriptionPlan[]
+  subscriptions        Subscription[]
+  tenantSubscription   TenantSubscription?
+}
+
+model User {
+  id           String     @id @default(cuid())
+  companyId    String
+  company      Company    @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  name         String
+  email        String
+  passwordHash String
+  role         UserRole   @default(MEMBER)
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  sessions     Session[]
+  stockMovements StockMovement[]
+  salesCreated   Sale[] @relation("SaleCreatedBy")
+  salesCancelled Sale[] @relation("SaleCancelledBy")
+  cashSessionsOpened CashSession[] @relation("CashSessionOpenedBy")
+  cashSessionsClosed CashSession[] @relation("CashSessionClosedBy")
+  cashMovements  CashMovement[]
+  movementsReversed   CashMovement[] @relation("MovementReversedBy")
+  whatsappTemplatesCreated WhatsAppTemplate[]
+  whatsappConsentsUpdated  WhatsAppConsent[]
+  whatsappMessagesCreated  WhatsAppMessage[] @relation("WhatsAppMessageCreatedBy")
+  whatsappMessagesCancelled WhatsAppMessage[] @relation("WhatsAppMessageCancelledBy")
+  appointmentsCreated      Appointment[] @relation("AppointmentCreatedBy")
+  appointmentsCancelled    Appointment[] @relation("AppointmentCancelledBy")
+  subscriptionPlansCreated SubscriptionPlan[] @relation("SubscriptionPlanCreatedBy")
+  subscriptionsCreated     Subscription[] @relation("SubscriptionCreatedBy")
+  subscriptionsCancelled   Subscription[] @relation("SubscriptionCancelledBy")
+  tenantSubscriptionChanged TenantSubscription[] @relation("TenantSubscriptionChangedBy")
+
+  @@unique([companyId, email])
+  @@index([companyId, status])
+}
+
+model Session {
+  id           String    @id @default(cuid())
+  tokenHash    String    @unique
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  lastUsedAt   DateTime?
+  userAgent    String?
+  ip           String?
+  createdAt    DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Category {
+  id          String       @id @default(cuid())
+  companyId   String
+  company     Company      @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  name        String
+  nameKey     String
+  description String?
+  status      RecordStatus @default(ACTIVE)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  products    Product[]
+
+  @@unique([companyId, nameKey])
+  @@index([companyId, status])
+}
+
+model Supplier {
+  id        String       @id @default(cuid())
+  companyId String
+  company   Company      @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  name      String
+  document  String?
+  email     String?
+  phone     String?
+  notes     String?
+  status    RecordStatus @default(ACTIVE)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  products  Product[]
+
+  @@index([companyId, status])
+  @@index([companyId, name])
+}
+
+model Client {
+  id         String       @id @default(cuid())
+  companyId  String
+  company    Company      @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  name       String
+  nameKey    String
+  phone      String?
+  mobile     String?
+  email      String?
+  cpf        String?
+  street     String?
+  number     String?
+  complement String?
+  district   String?
+  city       String?
+  state      String?
+  zip        String?
+  notes      String?
+  status     RecordStatus @default(ACTIVE)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  pets       Pet[]
+  sales      Sale[]
+  whatsappConsent WhatsAppConsent?
+  whatsappMessages WhatsAppMessage[]
+  appointments Appointment[]
+  subscriptions Subscription[]
+
+  @@index([companyId, nameKey])
+  @@index([companyId, status])
+  @@index([companyId, name])
+  @@index([companyId, phone])
+  @@index([companyId, mobile])
+  @@index([companyId, email])
+  @@index([companyId, createdAt])
+}
+
+model Pet {
+  id        String       @id @default(cuid())
+  companyId String
+  company   Company      @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  clientId  String
+  client    Client       @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  name      String
+  species   PetSpecies
+  breed     String?
+  sex       PetSex       @default(UNKNOWN)
+  birthDate DateTime?
+  weight    Decimal?     @db.Decimal(6, 2)
+  color     String?
+  notes     String?
+  status    RecordStatus @default(ACTIVE)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  appointments Appointment[]
+
+  @@index([companyId, status])
+  @@index([companyId, name])
+  @@index([clientId])
+  @@index([companyId, createdAt])
+}
+
+model Service {
+  id              String       @id @default(cuid())
+  companyId       String
+  company         Company      @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  name            String
+  nameKey         String
+  description     String?
+  durationMinutes Int?
+  price           Decimal      @db.Decimal(12, 2)
+  status          RecordStatus @default(ACTIVE)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  appointments    Appointment[]
+
+  @@unique([companyId, nameKey])
+  @@index([companyId, status])
+  @@index([companyId, name])
+}
+
+model Appointment {
+  id                String            @id @default(cuid())
+  companyId         String
+  company           Company           @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  clientId          String
+  client            Client            @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  petId             String?
+  pet               Pet?              @relation(fields: [petId], references: [id], onDelete: Restrict)
+  serviceId         String
+  service           Service           @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  startAt           DateTime
+  endAt             DateTime
+  startLocal        String
+  durationMinutes   Int
+  status            AppointmentStatus @default(SCHEDULED)
+  notes             String?
+  cancelReason      String?
+  cancelledAt       DateTime?
+  cancelledByUserId String?
+  cancelledBy       User?             @relation("AppointmentCancelledBy", fields: [cancelledByUserId], references: [id], onDelete: SetNull)
+  createdByUserId   String
+  createdBy         User              @relation("AppointmentCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([companyId, startLocal])
+  @@index([companyId, status, startAt])
+  @@index([clientId])
+  @@index([petId])
+}
+
+model Product {
+  id            String        @id @default(cuid())
+  companyId     String
+  company       Company       @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  categoryId    String?
+  category      Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  supplierId    String?
+  supplier      Supplier?     @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  name          String
+  description   String?
+  sku           String?
+  barcode       String?
+  unit          ProductUnit   @default(UNIDADE)
+  costPrice     Decimal       @default(0) @db.Decimal(12, 2)
+  salePrice     Decimal       @default(0) @db.Decimal(12, 2)
+  stockQuantity Decimal       @default(0) @db.Decimal(12, 3)
+  minimumStock  Decimal       @default(0) @db.Decimal(12, 3)
+  status        RecordStatus  @default(ACTIVE)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  movements     StockMovement[]
+  saleItems     SaleItem[]
+
+  @@unique([companyId, sku])
+  @@unique([companyId, barcode])
+  @@index([companyId, status])
+  @@index([companyId, name])
+}
+
+model StockMovement {
+  id              String            @id @default(cuid())
+  companyId       String
+  company         Company           @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  productId       String
+  product         Product           @relation(fields: [productId], references: [id], onDelete: Restrict)
+  type            StockMovementType
+  quantity        Decimal           @db.Decimal(12, 3)
+  notes           String?
+  reference       String?
+  createdByUserId String
+  createdBy       User              @relation(fields: [createdByUserId], references: [id], onDelete: Restrict)
+  createdAt       DateTime          @default(now())
+
+  @@index([companyId, productId, createdAt])
+  @@index([companyId, createdAt])
+}
+
+model Sale {
+  id                String           @id @default(cuid())
+  companyId         String
+  company           Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  clientId          String?
+  client            Client?          @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  receiptCode       String
+  clientRequestId   String?
+  status            SaleStatus       @default(COMPLETED)
+  subtotal          Decimal          @db.Decimal(12, 2)
+  discount          Decimal          @default(0) @db.Decimal(12, 2)
+  total             Decimal          @db.Decimal(12, 2)
+  paymentMethod     PaymentMethod
+  paymentNote       String?
+  createdByUserId   String
+  createdBy         User             @relation("SaleCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  cancelledAt       DateTime?
+  cancelledByUserId String?
+  cancelledBy       User?            @relation("SaleCancelledBy", fields: [cancelledByUserId], references: [id], onDelete: SetNull)
+  cancelReason      String?
+  cashSessionId     String?
+  cashSession       CashSession?     @relation(fields: [cashSessionId], references: [id], onDelete: SetNull)
+  createdAt         DateTime         @default(now())
+  items             SaleItem[]
+  cashMovements     CashMovement[]
+
+  @@unique([companyId, receiptCode])
+  @@unique([companyId, clientRequestId])
+  @@index([companyId, createdAt])
+  @@index([companyId, status])
+  @@index([companyId, clientId])
+}
+
+model SaleItem {
+  id          String   @id @default(cuid())
+  saleId      String
+  sale        Sale     @relation(fields: [saleId], references: [id], onDelete: Restrict)
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  productName String
+  productSku  String?
+  unit        ProductUnit
+  unitPrice   Decimal  @db.Decimal(12, 2)
+  quantity    Decimal  @db.Decimal(12, 3)
+  subtotal    Decimal  @db.Decimal(12, 2)
+
+  @@index([saleId])
+}
+
+model CashSession {
+  id              String            @id @default(cuid())
+  companyId       String
+  company         Company           @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  status          CashSessionStatus @default(OPEN)
+  initialAmount   Decimal           @db.Decimal(12, 2)
+  openingNotes    String?
+  openedByUserId  String
+  openedBy        User              @relation("CashSessionOpenedBy", fields: [openedByUserId], references: [id], onDelete: Restrict)
+  openedAt        DateTime          @default(now())
+  closedAt        DateTime?
+  closedByUserId  String?
+  closedBy        User?             @relation("CashSessionClosedBy", fields: [closedByUserId], references: [id], onDelete: SetNull)
+  closingNotes    String?
+  countedAmount   Decimal?          @db.Decimal(12, 2)
+  expectedAmount  Decimal?          @db.Decimal(12, 2)
+  difference      Decimal?          @db.Decimal(12, 2)
+  movements       CashMovement[]
+  sales           Sale[]
+
+  @@index([companyId, status])
+  @@index([companyId, openedAt])
+}
+
+model CashMovement {
+  id               String             @id @default(cuid())
+  companyId        String
+  company          Company            @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  cashSessionId    String
+  cashSession      CashSession        @relation(fields: [cashSessionId], references: [id], onDelete: Restrict)
+  type             CashMovementType
+  origin           CashMovementOrigin
+  inCash           Boolean            @default(true)
+  amount           Decimal            @db.Decimal(12, 2)
+  description      String
+  justification    String?
+  saleId           String?
+  sale             Sale?              @relation(fields: [saleId], references: [id], onDelete: Restrict)
+  subscriptionId   String?
+  subscription     Subscription?      @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  reversalOfId     String?
+  reversalOf       CashMovement?      @relation("MovementReversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
+  reversals        CashMovement[]     @relation("MovementReversal")
+  reversedAt       DateTime?
+  reversedByUserId String?
+  reversedBy       User?              @relation("MovementReversedBy", fields: [reversedByUserId], references: [id], onDelete: SetNull)
+  reversalReason   String?
+  createdByUserId  String
+  createdBy        User               @relation(fields: [createdByUserId], references: [id], onDelete: Restrict)
+  createdAt        DateTime           @default(now())
+
+  @@unique([origin, saleId])
+  @@index([companyId, createdAt])
+  @@index([companyId, cashSessionId])
+  @@index([companyId, saleId])
+  @@index([companyId, subscriptionId])
+}
+
+model SubscriptionPlan {
+  id        String       @id @default(cuid())
+  companyId String
+  company   Company      @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  name      String
+  nameKey   String
+  description String?
+  price     Decimal      @db.Decimal(12, 2)
+  durationDays Int
+  status    RecordStatus @default(ACTIVE)
+  createdByUserId String
+  createdBy User         @relation("SubscriptionPlanCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  subscriptions Subscription[]
+
+  @@unique([companyId, nameKey])
+  @@index([companyId, status])
+  @@index([companyId, name])
+}
+
+model Subscription {
+  id        String             @id @default(cuid())
+  companyId String
+  company   Company            @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  clientId  String
+  client    Client             @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  planId    String
+  plan      SubscriptionPlan   @relation(fields: [planId], references: [id], onDelete: Restrict)
+  startAt   DateTime
+  endAt     DateTime
+  status    SubscriptionStatus @default(ACTIVE)
+  cancelReason String?
+  cancelledAt   DateTime?
+  cancelledByUserId String?
+  cancelledBy User?            @relation("SubscriptionCancelledBy", fields: [cancelledByUserId], references: [id], onDelete: SetNull)
+  createdByUserId String
+  createdBy User               @relation("SubscriptionCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  renewalCount Int             @default(0)
+  lastPaymentAt DateTime?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  payments CashMovement[]
+
+  @@index([companyId, status, endAt])
+  @@index([clientId])
+  @@index([companyId, createdAt])
+}
+
+model TenantPlan {
+  id           String   @id @default(cuid())
+  name         String
+  nameKey      String   @unique
+  description  String?
+  priceMonthly Decimal  @db.Decimal(12, 2)
+  durationDays Int      @default(30)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  tenantSubscriptions TenantSubscription[]
+
+  @@index([active])
+}
+
+model TenantSubscription {
+  id        String                 @id @default(cuid())
+  companyId String                 @unique
+  company   Company                @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  planId    String
+  plan      TenantPlan             @relation(fields: [planId], references: [id], onDelete: Restrict)
+  status    TenantSubscriptionStatus @default(ACTIVE)
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelReason String?
+  cancelledAt DateTime?
+  changedByUserId String?
+  changedBy User?                  @relation("TenantSubscriptionChangedBy", fields: [changedByUserId], references: [id], onDelete: SetNull)
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+
+  @@index([status, currentPeriodEnd])
+}
+
+model WhatsAppConfig {
+  id             String                @id @default(cuid())
+  companyId      String                @unique
+  company        Company               @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  status         WhatsAppConfigStatus  @default(CONFIGURED)
+  phoneNumberId  String?
+  wabaId         String?
+  displayName    String?
+  lastError      String?
+  lastHealthAt   DateTime?
+  reminderTemplateId  String?
+  reminderTemplate    WhatsAppTemplate? @relation(fields: [reminderTemplateId], references: [id], onDelete: SetNull)
+  reminderLeadMinutes Int                @default(1440)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  @@index([status])
+}
+
+model WhatsAppTemplate {
+  id                String                   @id @default(cuid())
+  companyId         String
+  company           Company                  @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  name              String
+  nameKey           String
+  language          String                   @default("pt_BR")
+  category          WhatsAppTemplateCategory @default(UTILITY)
+  approval          WhatsAppTemplateApproval @default(PENDING_APPROVAL)
+  body              String
+  providerReference String?
+  status            RecordStatus             @default(ACTIVE)
+  createdByUserId   String?
+  createdBy         User?                    @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+  messages          WhatsAppMessage[]
+  reminderConfigs   WhatsAppConfig[]
+
+  @@unique([companyId, nameKey])
+  @@index([companyId, status])
+  @@index([companyId, approval])
+}
+
+model WhatsAppConsent {
+  id               String                  @id @default(cuid())
+  companyId        String
+  company          Company                 @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  clientId         String                @unique
+  client           Client                @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  status           WhatsAppConsentStatus
+  source           WhatsAppConsentSource
+  phone            String?
+  notes            String?
+  updatedByUserId  String?
+  updatedBy        User?                   @relation(fields: [updatedByUserId], references: [id], onDelete: SetNull)
+  changedAt        DateTime                @default(now())
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  messages         WhatsAppMessage[]
+
+  @@index([companyId, status])
+}
+
+model WhatsAppMessage {
+  id             String                 @id @default(cuid())
+  companyId      String
+  company        Company                @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  clientId       String?
+  client         Client?                @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  templateId     String?
+  template       WhatsAppTemplate?      @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  consentId      String?
+  consent        WhatsAppConsent?       @relation(fields: [consentId], references: [id], onDelete: SetNull)
+  toPhone        String
+  variables      Json?
+  templateNameSnapshot       String
+  templateLanguageSnapshot   String
+  templateBodySnapshot       String
+  status         WhatsAppMessageStatus  @default(PENDING)
+  origin         WhatsAppMessageOrigin  @default(MANUAL)
+  attempts       Int                    @default(0)
+  maxAttempts    Int                    @default(3)
+  nextAttemptAt  DateTime?
+  lastAttemptAt  DateTime?
+  providerMessageId String?             @unique
+  failureReason  String?
+  failureDetail  String?
+  idempotencyKey String?
+  cancelReason   String?
+  cancelledByUserId String?
+  cancelledBy    User?                  @relation("WhatsAppMessageCancelledBy", fields: [cancelledByUserId], references: [id], onDelete: SetNull)
+  createdByUserId String?
+  createdBy      User?                  @relation("WhatsAppMessageCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  attemptsLog    WhatsAppMessageAttempt[]
+
+  @@unique([companyId, idempotencyKey])
+  @@index([companyId, createdAt])
+  @@index([companyId, status, nextAttemptAt])
+  @@index([clientId])
+}
+
+model WhatsAppMessageAttempt {
+  id                String                 @id @default(cuid())
+  messageId         String
+  message           WhatsAppMessage        @relation(fields: [messageId], references: [id], onDelete: Restrict)
+  attemptNumber     Int
+  outcome           WhatsAppAttemptOutcome
+  providerMessageId String?
+  errorCode         String?
+  errorMessage      String?
+  httpStatus        Int?
+  startedAt         DateTime               @default(now())
+  finishedAt        DateTime?
+
+  @@unique([messageId, attemptNumber])
+  @@index([startedAt])
+}
+
+model WhatsAppWebhookEvent {
+  id                String               @id @default(cuid())
+  eventId           String               @unique
+  kind              WhatsAppWebhookKind  @default(OTHER)
+  phoneNumberId     String?
+  companyId         String?
+  company           Company?             @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  providerMessageId String?
+  payload           Json
+  handled           Boolean              @default(false)
+  receivedAt        DateTime             @default(now())
+
+  @@index([companyId, receivedAt])
+  @@index([providerMessageId])
+}
