@@ -7,6 +7,7 @@ import {
 } from "@nestjs/common";
 import bcrypt from "bcryptjs";
 import { PrismaService } from "../prisma/prisma.module";
+import { TenantLimitsService } from "../billing/tenant-limits.service";
 import type { CreateUserInput, UpdateUserStatusInput } from "@petflow/shared";
 import type { AuthContext } from "../common/decorators/auth.decorator";
 
@@ -24,7 +25,10 @@ const userSelect = {
 
 @Injectable()
 export class UsersService {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(TenantLimitsService) private readonly limits: TenantLimitsService,
+  ) {}
 
   async list(auth: AuthContext) {
     return this.prisma.user.findMany({
@@ -35,6 +39,8 @@ export class UsersService {
   }
 
   async create(auth: AuthContext, input: CreateUserInput) {
+    await this.limits.assertCanCreate(auth.companyId, "user");
+
     const existing = await this.prisma.user.findUnique({
       where: {
         companyId_email: { companyId: auth.companyId, email: input.email },

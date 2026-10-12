@@ -683,15 +683,18 @@ model Subscription {
 }
 
 model TenantPlan {
-  id           String   @id @default(cuid())
-  name         String
-  nameKey      String   @unique
-  description  String?
+  id          String   @id @default(cuid())
+  name        String
+  nameKey     String   @unique
+  description String?
   priceMonthly Decimal  @db.Decimal(12, 2)
   durationDays Int      @default(30)
-  active       Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  userLimit   Int?
+  clientLimit Int?
+  productLimit Int?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   tenantSubscriptions TenantSubscription[]
 
   @@index([active])
@@ -710,6 +713,8 @@ model TenantSubscription {
   cancelledAt DateTime?
   changedByUserId String?
   changedBy User?                  @relation("TenantSubscriptionChangedBy", fields: [changedByUserId], references: [id], onDelete: SetNull)
+  gateway   String?
+  gatewaySubscriptionId String?    @unique
   createdAt DateTime               @default(now())
   updatedAt DateTime               @updatedAt
 

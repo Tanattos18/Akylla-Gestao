@@ -7,6 +7,7 @@ import {
 } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.module";
+import { TenantLimitsService } from "../billing/tenant-limits.service";
 import type {
   CreateProductInput,
   ListProductsQuery,
@@ -56,7 +57,10 @@ function normalizeCode(value: string | null | undefined): string | null {
 
 @Injectable()
 export class ProductsService {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(TenantLimitsService) private readonly limits: TenantLimitsService,
+  ) {}
 
   async list(auth: AuthContext, query: ListProductsQuery) {
     const andConditions: Prisma.ProductWhereInput[] = [];
@@ -120,6 +124,8 @@ export class ProductsService {
   }
 
   async create(auth: AuthContext, input: CreateProductInput) {
+    await this.limits.assertCanCreate(auth.companyId, "product");
+
     const sku = input.sku ? input.sku.toUpperCase() : null;
     const barcode = normalizeCode(input.barcode);
 

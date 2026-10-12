@@ -2,42 +2,53 @@
 
 ## Etapa atual
 
-**Etapa 10 (roteiro Akylla) — Módulos específicos de pet shop** —
-CONCLUÍDA (2026-10-12), com decisões do proprietário registradas.
+**Etapa 11 (roteiro Akylla) — Planos e assinatura SaaS** — CONCLUÍDA
+(2026-10-12), com decisões D1–D4 do proprietário registradas e
+implementadas.
 
 Roteiro: `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`. Entregas da etapa:
 
-- **Entregável**: `docs/akylla/PLANO_MODULARIZACAO.md` — mapeamento de
-  dependências com evidência e recomendação por módulo (pets = opcional
-  de nicho sem exclusão; agenda/serviços/WhatsApp/assinaturas =
-  genéricos; seed = reescrever após aprovação), impacto e reversão.
-- **D2 CONFIRMADA** (2026-10-12): nenhuma exclusão; lembrete WhatsApp
-  generalizado ("{{1}} tutor/pet" → "{{1}} cliente", API + UI, só
-  rótulo; comportamento intacto).
-- **D3 DECIDIDA: opção B — tabela `CompanyModule`**, implementada na
-  etapa com autorização: migration aditiva `company_module` (enums
-  `BusinessModule`/`CompanyModuleStatus`), `ModuleGuard` (403 no
-  servidor para módulos `DISABLED`; webhook público intocado),
-  `GET`/`PATCH /api/company-modules` (`AdminGuard` na escrita), home
-  ocultando cards de módulos desativados. Ausência de linha = ativo.
-- **Testes**: `tests/company-modules.test.ts` +13 (guard, AdminGuard,
-  cross-tenant, webhook, upsert); `resetDatabase` cobre
-  `companyModule`.
-- **Docs**: `DATABASE.md` (seção CompanyModule), `API.md` (seção
-  "Módulos por empresa"), MAPA §6.2/§6.3/§7.
-- Validações: `lint` 0 → `typecheck` OK → **490/490 testes** → `build`
+- **Entregável**: `docs/akylla/PLANO_BILLING.md` — separação
+  billing-SaaS × assinaturas de negócio, estado dos modelos, avaliação
+  de gateway e checklist de decisões D1–D4.
+- **D1** (manter planos do seed, sem anúncio público), **D2** (todos os
+  limites: usuários+clientes+produtos), **D3** (status quo — enforcement
+  só com assinatura `ACTIVE`), **D4** (Mercado Pago sandbox) —
+  aprovadas pelo proprietário em 2026-10-12.
+- **Limites no backend**: migration `20261012173450_tenant_plan_limits`
+  (colunas `userLimit`/`clientLimit`/`productLimit` + UPDATE dos planos
+  seed); `TenantLimitsService` chamado nos `create` de Users/Clients/
+  Products; 403 com nome do plano e limite; `TenantLimitsModule` nos
+  módulos correspondentes.
+- **Gateway Mercado Pago (sandbox)**: SDK `mercadopago`; provider
+  mock/real/Failing; `POST /api/billing/checkout` cria preapproval e
+  vincula `gateway`/`gatewaySubscriptionId`; webhook
+  `POST /api/webhooks/mercadopago` (`@Public` + assinatura HMAC,
+  idempotente); `GET /api/billing/gateway`; env vars sem segredos;
+  **cobrança recorrente real não ativada** (exige E2E sandbox +
+  aprovação).
+- **Testes**: `tenant-limits.test.ts` +7 e `mercadopago.test.ts` +12;
+  suíte completa **509/509**.
+- **Docs**: `DATABASE.md`, `API.md`, `CHANGELOG.md`,
+  `IMPLEMENTATION_CHECKLIST.md`.
+- Validações: `lint` 0 → `typecheck` OK → **509/509 testes** → `build`
   OK → `db:validate` OK (migration aplicada em `petflow` e
   `petflow_test`). Commit + push por etapa.
 
+### Pendências da Etapa 11
+
+- UI `/faturamento` exibindo limites do plano atual e uso;
+- E2E sandbox com cartão de teste do Mercado Pago + aprovação para
+  ativar cobrança recorrente real;
+- Escrita do catálogo global de planos (papel de plataforma).
+
 ### ⛔ PRÓXIMA ETAPA REQUER AUTORIZAÇÃO
 
-**Etapa 11 (Akylla) — Assinaturas e planos do SaaS**: planos
-comerciais, limites por plano, mensagens de upgrade e enforcement no
-backend (ex.: limites de usuários/produtos), com testes. A tabela
-`CompanyModule` é extensível para semear módulos por plano.
+**Etapa 12 (Akylla) — final**: fechamento do roteiro. Inspecionar
+`docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md` §Etapa 12 para o escopo exato.
 **Parada obrigatória antes de iniciar** (regra do roteiro).
 
-**Etapa 9 (Akylla, anterior) — Dashboard e relatórios** —
+**Etapa 10 (Akylla, anterior) — Módulos específicos de pet shop** —
 CONCLUÍDA (2026-10-12): dicionário de indicadores, remoção dos
 indicadores de nicho, CSV reforçado, +3 testes.
 

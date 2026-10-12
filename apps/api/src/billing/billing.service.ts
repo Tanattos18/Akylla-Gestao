@@ -21,6 +21,9 @@ const planSelect = {
   description: true,
   priceMonthly: true,
   durationDays: true,
+  userLimit: true,
+  clientLimit: true,
+  productLimit: true,
   active: true,
 } as const;
 

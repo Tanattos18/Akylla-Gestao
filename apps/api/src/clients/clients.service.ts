@@ -1,6 +1,7 @@
 import { ConflictException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.module";
+import { TenantLimitsService } from "../billing/tenant-limits.service";
 import type {
   CreateClientInput,
   ListClientsQuery,
@@ -53,7 +54,10 @@ export function clientNameKey(name: string): string {
  */
 @Injectable()
 export class ClientsService {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(TenantLimitsService) private readonly limits: TenantLimitsService,
+  ) {}
 
   async list(auth: AuthContext, query: ListClientsQuery) {
     const andConditions: Prisma.ClientWhereInput[] = [];
@@ -147,6 +151,8 @@ export class ClientsService {
   }
 
   async create(auth: AuthContext, input: CreateClientInput) {
+    await this.limits.assertCanCreate(auth.companyId, "client");
+
     const nameKey = clientNameKey(input.name);
 
     await this.assertNotDuplicated(auth, input, nameKey);

@@ -404,11 +404,19 @@ Comportamentos importantes:
 
 | Método | Rota | Acesso | Descrição |
 |---|---|---|---|
-| GET | `/api/billing/plans` | sessão | Catálogo global ativo (`{ items }`), ordenado por preço |
+| GET | `/api/billing/plans` | sessão | Catálogo global ativo (`{ items }`), ordenado por preço; inclui `userLimit`/`clientLimit`/`productLimit` (`null` = ilimitado) |
 | GET | `/api/billing/subscription` | sessão | Assinatura da empresa (404 se ausente; expiração lazy) |
 | PUT | `/api/billing/subscription` | ADMIN | Upsert (troca de plano reinicia o período e reativa; plano inexistente → 404, inativo → 400) |
 | POST | `/api/billing/subscription/renew` | ADMIN | Renova (201): novo período a partir de `max(now, end)`; cancelada → 409 |
 | POST | `/api/billing/subscription/cancel` | ADMIN | Cancela (201): `reason?` ≤ 500; duplo → 409 |
+| GET | `/api/billing/gateway` | ADMIN | Describe do gateway: `{ env: "sandbox" \| "production", credentialsConfigured }` |
+| POST | `/api/billing/checkout` | ADMIN | Cria preapproval no Mercado Pago (sandbox por padrão): `{ planId, payerEmail }` → `{ checkoutUrl, gatewaySubscriptionId }`; sem token → 400 com mensagem explícita |
+
+### Webhook Mercado Pago (Etapa 11)
+
+| Método | Rota | Acesso | Descrição |
+|---|---|---|---|
+| POST | `/api/webhooks/mercadopago` | `@Public` + assinatura HMAC | Processa eventos `type=preapproval`: assinatura `x-signature` verificada com `MERCADOPAGO_WEBHOOK_SECRET`; idempotente por `gatewaySubscriptionId`; resposta `{ received, processed }` |
 
 Comportamentos importantes:
 
@@ -417,8 +425,15 @@ Comportamentos importantes:
   plataforma e a assinatura é única por empresa (`companyId @unique`).
 - Escrita do catálogo global **não é exposta** nesta etapa (exige
   papel de plataforma — pendência registrada).
-- Sem gateway e sem enforcement de limites por plano ainda — a
-  assinatura é registro de comercial (pendências registradas).
+- **Enforcement de limites (Etapa 11, decisão D3)**: `TenantLimitsService`
+  verifica `userLimit`/`clientLimit`/`productLimit` no `create` de
+  Users/Clients/Products — **apenas** para empresas com assinatura
+  `ACTIVE`; sem assinatura, expirada ou cancelada, nenhum limite é
+  aplicado. Limite `NULL` = ilimitado.
+- **Gateway Mercado Pago (Etapa 11, decisão D4)**: sandbox por padrão;
+  checkout cria preapproval e a assinatura só fica `ACTIVE` quando o
+  webhook confirma o pagamento; sem `MERCADOPAGO_ACCESS_TOKEN`, o
+  checkout retorna 400 explícito (nunca cobra por engano).
 
 ## Módulos por empresa (Etapa 10)
 

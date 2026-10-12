@@ -1193,6 +1193,17 @@ export type CancelTenantSubscriptionInput = z.infer<
   typeof cancelTenantSubscriptionSchema
 >;
 
+export const createCheckoutSchema = z.object({
+  planId: z.string().trim().min(1, "Plano é obrigatório").max(60),
+  payerEmail: z
+    .string()
+    .trim()
+    .min(1, "Email do pagador é obrigatório")
+    .max(190)
+    .email("Email do pagador inválido"),
+});
+export type CreateCheckoutInput = z.infer<typeof createCheckoutSchema>;
+
 // ---------------------------------------------------------------------------
 // Etapa 10 — módulos por empresa (CompanyModule, decisão D3 — opção B)
 // ---------------------------------------------------------------------------

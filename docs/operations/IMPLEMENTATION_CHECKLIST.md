@@ -584,6 +584,63 @@ D2/D3 do proprietário registradas.**
       **490/490 testes** → `build` OK → `db:validate` OK (migration em
       `petflow` e `petflow_test`)
 
+## Etapa 11 (Akylla) — Planos e assinatura SaaS (2026-10-12)
+
+Roteiro: `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`. **Concluída — decisões
+D1–D4 do proprietário registradas e implementadas.**
+
+- [x] Instrução 1: separação billing-SaaS × assinaturas de negócio
+      formalizada no `PLANO_BILLING.md` §1 (models, API/UI, guard,
+      testes — sem mistura)
+- [x] Instrução 2: estado atual dos modelos documentado (`PLANO_BILLING.md`
+      §2) com lacunas identificadas (limites inexistentes, sem gateway)
+- [x] Instrução 3: **D1 aprovada** — planos do seed mantidos (79,90 /
+      149,90 / 249,90; 30 dias); **não anunciados publicamente**
+- [x] Instrução 4: **D2 aprovada — todos os limites**;
+      `userLimit`/`clientLimit`/`productLimit` em `TenantPlan` via
+      migration `20261012173450_tenant_plan_limits` (Essencial 3/200/100;
+      Profissional 10/1000/500; Completo ilimitado)
+- [x] Instrução 5: estados/vigência/cancelamento/renovação já modelados
+      e testados (12 testes em `billing.test.ts`, inalterados)
+- [x] **D3 aprovada — status quo**: enforcement (`TenantLimitsService`)
+      **apenas** para empresas com assinatura `ACTIVE`; sem assinatura,
+      expirada ou cancelada — nenhum bloqueio; aplicado nos `create` de
+      Users/Clients/Products (403 com nome do plano e limite)
+- [x] **D4 aprovada — Mercado Pago (sandbox)**: SDK oficial
+      `mercadopago`; provider mock/real/Failing com override para testes;
+      `POST /api/billing/checkout` (AdminGuard) cria preapproval e
+      vincula `gateway`/`gatewaySubscriptionId` na assinatura (status
+      `EXPIRED` até webhook confirmar); webhook
+      `POST /api/webhooks/mercadopago` (`@Public` + assinatura HMAC
+      `x-signature`, idempotente por `gatewaySubscriptionId`);
+      `GET /api/billing/gateway` descreve ambiente/credenciais; env vars
+      em `.env.example` sem segredos; sem token — checkout retorna 400
+      explícito
+- [x] Cobrança recorrente real **não ativada** (instrução 7): sandbox
+      por padrão; ativação exige E2E com cartão de teste + aprovação
+- [x] Nenhum preço/limite/promessa publicado fora do sistema
+      (instrução 8)
+- [x] Testes da etapa: `tests/tenant-limits.test.ts` **7** (sem
+      assinatura, ativa bloqueia 4º usuário, cliente limite, Completo sem
+      trava, EXPIRED/CANCELLED sem trava, isolamento cross-tenant) +
+      `tests/mercadopago.test.ts` **12** (checkout admin/member/anon,
+      plano inexistente, sem credenciais, webhook assinado ativa,
+      idempotência, cancelamento, gateway desconhecido, tipo diferente,
+      describe)
+- [x] Validações com evidência: `lint` 0 → `typecheck` OK →
+      **509/509 testes** → `build` OK → `db:validate` OK (migration em
+      `petflow` e `petflow_test`)
+- [x] Docs: `PLANO_BILLING.md` (entregável, decisões), `DATABASE.md`
+      (novas colunas), `API.md` (checkout/gateway/webhook), `CHANGELOG.md`
+
+### Pendências registradas (Etapa 11)
+
+- UI `/faturamento` exibindo limites do plano atual e uso (backend já
+  expõe campos);
+- E2E sandbox com cartão de teste do Mercado Pago + aprovação para
+  ativar cobrança recorrente real;
+- Escrita do catálogo global de planos (exige papel de plataforma).
+
 ## Etapas futuras — módulos de negócio
 
 - [x] Cadastro de clientes e animais (Etapa 5)

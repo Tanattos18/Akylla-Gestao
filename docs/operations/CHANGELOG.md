@@ -2,6 +2,73 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Akylla Gestão] - 2026-10-12 - Etapa 11 — Planos e assinatura SaaS
+
+### Adicionado
+
+- `docs/akylla/PLANO_BILLING.md`: **entregável da etapa** — separação
+  billing-SaaS × assinaturas de negócio, estado atual dos modelos,
+  lacunas, avaliação de gateway, proposta de limites e plano de
+  implementação. Decisões D1–D4 registradas pelo proprietário.
+- **Decisão D1 — planos do seed mantidos** (Essencial R$ 79,90/3 usuários ·
+  Profissional R$ 149,90/10 usuários · Completo R$ 249,90/ilimitado;
+  30 dias). Não publicados fora do sistema.
+- **Decisão D2 — todos os limites** (`userLimit`/`clientLimit`/
+  `productLimit` em `TenantPlan`, `NULL` = ilimitado): Essencial
+  3/200/100; Profissional 10/1000/500; Completo ilimitado. Migration
+  `database/prisma/migrations/20261012173450_tenant_plan_limits` aplica
+  colunas + UPDATE dos planos seed.
+- **Decisão D3 — enforcement só com assinatura ACTIVE** (status quo):
+  `TenantLimitsService` (`apps/api/src/billing/tenant-limits.service.ts`)
+  verifica limites no `create` de Users/Clients/Products apenas quando a
+  empresa tem `TenantSubscription` com status `ACTIVE`; sem assinatura,
+  expirada ou cancelada — nenhum bloqueio. 403 com nome do plano e
+  limite atingido. Módulo `TenantLimitsModule` injetado em
+  UsersModule/ClientsModule/ProductsModule.
+- **Decisão D4 — gateway Mercado Pago (sandbox)**: SDK oficial
+  `mercadopago` (npm workspace `@petflow/api`); provider
+  `mercadopago-provider.ts` (mock/Failing/Sdk) com override para testes;
+  `MercadoPagoService` (`POST /api/billing/checkout` cria preapproval e
+  vincula `gateway`/`gatewaySubscriptionId` na assinatura, status
+  `EXPIRED` até webhook confirmar pagamento); webhook
+  `POST /api/webhooks/mercadopago` (`@Public` + assinatura HMAC
+  `x-signature` verificada com `MERCADOPAGO_WEBHOOK_SECRET`, idempotente
+  por `gatewaySubscriptionId`); `GET /api/billing/gateway` descreve
+  ambiente e presença de credenciais. Sem `MERCADOPAGO_ACCESS_TOKEN`, o
+  checkout retorna 400 com mensagem explícita (nunca cobra por engano).
+- Env vars (`MERCADOPAGO_ENV`/`_ACCESS_TOKEN`/`_PUBLIC_KEY`/
+  `_WEBHOOK_SECRET`) em `env.ts` e `.env.example` (sem segredos reais).
+- Schema compartilhado `createCheckoutSchema` (`planId`, `payerEmail`).
+- `TenantPlan.userLimit/clientLimit/productLimit` e
+  `TenantSubscription.gateway/gatewaySubscriptionId @unique` no Prisma
+  schema e no `planSelect`/`subscriptionSelect` do billing service.
+- Testes: `tests/tenant-limits.test.ts` (7 — sem assinatura, ativa no
+  Essencial bloqueia 4º usuário, cliente limite ajustado, Completo sem
+  trava, EXPIRED/CANCELLED sem trava, isolamento cross-tenant) e
+  `tests/mercadopago.test.ts` (12 — checkout admin/member/anon, plano
+  inexistente, sem credenciais, webhook assinado ativa, idempotência,
+  cancelamento, gateway desconhecido, tipo diferente, describe).
+  Suíte completa: **509 testes, 23 arquivos, 0 falhas**.
+
+### Alterado
+
+- `UsersService.create`/`ClientsService.create`/`ProductsService.create`
+  chamam `limits.assertCanCreate` antes do insert.
+- `BillingController` ganha `POST /checkout` e `GET /gateway`
+  (ambos `AdminGuard`); `BillingModule` registra `MercadoPagoService` e
+  `MercadoPagoWebhookController`; importa `PrismaModule`.
+- `docs/architecture/DATABASE.md` e `docs/architecture/API.md`
+  atualizados (novas colunas, rotas e comportamentos).
+
+### Notas
+
+- Cobrança recorrente real **não ativada**: sandbox por padrão; ativação
+  exige testes E2E em sandbox com cartão de teste do Mercado Pago +
+  aprovação do proprietário (instrução 7 da Etapa 11).
+- Escrita do catálogo global de planos continua pendente (exige papel de
+  plataforma — fora do escopo desta etapa).
+- UI `/faturamento` ainda não exibe limites/uso — pendência registrada.
+
 ## [Akylla Gestão] - 2026-10-12 - Etapa 10 — Módulos de pet shop (modularização)
 
 ### Adicionado

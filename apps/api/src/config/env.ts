@@ -39,6 +39,11 @@ const schema = z.object({
   WHATSAPP_APP_SECRET: z.string().optional(),
   WHATSAPP_API_VERSION: z.string().default("v21.0"),
   WHATSAPP_COUNTRY_CODE: z.string().regex(/^\d{1,3}$/, "Código do país inválido").default("55"),
+  // Mercado Pago (Etapa 11) — sandbox por padrão; segredos somente no servidor
+  MERCADOPAGO_ACCESS_TOKEN: z.string().optional(),
+  MERCADOPAGO_PUBLIC_KEY: z.string().optional(),
+  MERCADOPAGO_WEBHOOK_SECRET: z.string().optional(),
+  MERCADOPAGO_ENV: z.enum(["sandbox", "production"]).default("sandbox"),
 });
 
 const parsed = schema.safeParse(process.env);
