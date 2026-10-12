@@ -2,6 +2,75 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Akylla Gestão] - 2026-10-12 - Etapa 5 — Cadastros, clientes e fornecedores
+
+### Alterado
+
+- `apps/api/src/suppliers/suppliers.service.ts`: busca de fornecedores
+  ampliada de apenas nome para **nome, email, telefone e documento**
+  (paridade com clientes; roteiro, instrução 7 — filtros).
+
+### Adicionado
+
+- `tests/clients.test.ts` (+2): criação de cliente somente com nome
+  (CPF/telefone/email não obrigatórios) e **inativação preserva histórico
+  de vendas** (venda com cliente → inativar → ficha com `_count.sales` e
+  venda consultável).
+- `tests/catalog.test.ts` (+4): fornecedor somente com nome, busca por
+  email/telefone/documento, paginação e **inativação preserva produtos
+  vinculados**.
+
+### Verificado (sem alteração de código)
+
+- Formulários de clientes/fornecedores/categorias **genéricos**: apenas
+  nome obrigatório; CPF validado quando preenchido (11 dígitos), nunca
+  obrigatório; sem textos de nicho (`grep cachorro|gato|raça|tutor|banho|
+  tosa` vazio).
+- Duplicidade: bloqueia apenas nome+contato iguais entre ativos;
+  homônimos e contatos compartilhados permitidos; inativos não bloqueiam.
+- Inativação por status (sem DELETE): FKs `Restrict`/`SetNull` preservam
+  vendas, produtos e histórico.
+- Isolamento por tenant confirmado (tenancy-audit + CRUD próprio).
+- Elementos de navegação de pets na tela de clientes diferidos para a
+  **Etapa 10** (conforme MAPA_DE_MODULOS §6.2 — decisão do proprietário).
+
+### Verificado
+
+- `lint` 0 · `typecheck` OK · **442/442 testes** (+6).
+- Commits por etapa (aprovado pelo proprietário): Etapa 4 e Etapa 5
+  separados; push para `main`.
+
+## [Akylla Gestão] - 2026-10-12 - Etapa 4 — Definição do núcleo genérico
+
+### Adicionado
+
+- `docs/akylla/MAPA_DE_MODULOS.md`: matriz de classificação dos 23 itens
+  do inventário nas 4 categorias do roteiro (núcleo comum · opcional
+  futuro genérico · específico de pet shop · obsoleto/duplicado), com
+  localização, dependências (API/UI/models/testes), evidências
+  `[Código]/[Teste]`, destino recomendado e conferência de completude
+  (22/22 controllers, 25/25 models, 38/38 páginas, 19/19 arquivos de
+  teste).
+- Diferenciação billing SaaS da Akylla × financeiro da empresa cliente;
+  registro das decisões futuras de navegação, destino do pet shop e
+  **opções de ativação por segmento (somente documentação — Decisão 2)**.
+
+### Notas
+
+- Etapa de análise/documentação: **nenhum código, teste, schema,
+  migration, dado ou configuração alterado**; nenhum módulo excluído,
+  ocultado, renomeado ou migrado; nenhuma dependência adicionada.
+- Pendências registradas: D1 (construção de "configurações da empresa" —
+  etapa a definir), D2/D3 (destino do pet shop e ativação por segmento →
+  Etapa 10), D4 (confirmação da leitura de opcionais genéricos).
+
+### Verificado
+
+- `lint` 0 · `typecheck` OK · **436/436 testes** (sem variação em
+  relação à Etapa 3) · `git status` restrito a arquivos de documentação.
+- Conclusão da etapa **pendente de revisão e aprovação da matriz pelo
+  proprietário** (Etapa 5 não iniciada).
+
 ## [Akylla Gestão] - 2026-10-12 - Etapa 3 — Auditoria multiempresa e permissões
 
 ### Adicionado

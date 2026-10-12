@@ -17,6 +17,7 @@ let adminBCookie: string;
 let clientAId: string;
 let clientBId: string;
 let petOfClientAId: string;
+let companyAId: string;
 
 async function createCompany(slug: string) {
   return prisma.company.create({ data: { name: `Empresa ${slug}`, slug } });
@@ -58,6 +59,7 @@ beforeAll(async () => {
 
   const companyA = await createCompany("clientes-a");
   const companyB = await createCompany("clientes-b");
+  companyAId = companyA.id;
 
   await createUser({
     companyId: companyA.id,
@@ -361,5 +363,72 @@ describe("Pets — cadastro básico usado pelos testes de isolamento", () => {
       .get(`/api/pets/${petOfClientAId}`)
       .set("Cookie", adminBCookie);
     expect(response.status).toBe(404);
+  });
+});
+
+describe("Cadastro genérico e histórico (Etapa 5)", () => {
+  let nameOnlyClientId: string;
+
+  it("cria cliente somente com nome — CPF, telefone e email não são obrigatórios", async () => {
+    const response = await request(app.getHttpServer())
+      .post("/api/clients")
+      .set("Cookie", memberACookie)
+      .send({ name: "Cliente Sem Contato" });
+
+    expect(response.status).toBe(201);
+    expect(response.body.cpf).toBeNull();
+    expect(response.body.phone).toBeNull();
+    expect(response.body.email).toBeNull();
+    nameOnlyClientId = response.body.id;
+  });
+
+  it("inativar cliente preserva vendas e histórico consultáveis", async () => {
+    const product = await prisma.product.create({
+      data: {
+        companyId: companyAId,
+        name: "Produto Histórico Cliente",
+        sku: "HIST-ET5",
+        salePrice: "10.00",
+        stockQuantity: 5,
+      },
+    });
+
+    const openCash = await request(app.getHttpServer())
+      .post("/api/cash/sessions")
+      .set("Cookie", adminACookie)
+      .send({ initialAmount: "0.00" });
+    expect(openCash.status).toBe(201);
+
+    const sale = await request(app.getHttpServer())
+      .post("/api/sales")
+      .set("Cookie", memberACookie)
+      .send({
+        items: [{ productId: product.id, quantity: "1" }],
+        paymentMethod: "CASH",
+        clientId: nameOnlyClientId,
+        clientRequestId: "req-hist-etapa5-001",
+      });
+    expect(sale.status).toBe(201);
+
+    const inactive = await request(app.getHttpServer())
+      .patch(`/api/clients/${nameOnlyClientId}/status`)
+      .set("Cookie", adminACookie)
+      .send({ status: "INACTIVE" });
+    expect(inactive.status).toBe(200);
+    expect(inactive.body.status).toBe("INACTIVE");
+
+    const detail = await request(app.getHttpServer())
+      .get(`/api/clients/${nameOnlyClientId}`)
+      .set("Cookie", adminACookie);
+    expect(detail.status).toBe(200);
+    expect(detail.body.status).toBe("INACTIVE");
+    expect(detail.body._count.sales).toBe(1);
+
+    const saleDetail = await request(app.getHttpServer())
+      .get(`/api/sales/${sale.body.id}`)
+      .set("Cookie", adminACookie);
+    expect(saleDetail.status).toBe(200);
+    expect(saleDetail.body.status).toBe("COMPLETED");
+    expect(saleDetail.body.client.id).toBe(nameOnlyClientId);
   });
 });

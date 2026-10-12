@@ -15,6 +15,7 @@ let memberACookie: string;
 let adminBCookie: string;
 let categoryBId: string;
 let supplierBId: string;
+let companyAId: string;
 
 async function createCompany(slug: string) {
   return prisma.company.create({ data: { name: `Empresa ${slug}`, slug } });
@@ -56,6 +57,7 @@ beforeAll(async () => {
 
   const companyA = await createCompany("catalogo-a");
   const companyB = await createCompany("catalogo-b");
+  companyAId = companyA.id;
 
   await createUser({
     companyId: companyA.id,
@@ -244,5 +246,93 @@ describe("Fornecedores — CRUD e isolamento", () => {
       .send({ name: "Tentativa" });
 
     expect(response.status).toBe(404);
+  });
+
+  it("cria fornecedor somente com nome — documento, email e telefone opcionais", async () => {
+    const response = await request(app.getHttpServer())
+      .post("/api/suppliers")
+      .set("Cookie", adminACookie)
+      .send({ name: "Distribuidora Só Nome" });
+
+    expect(response.status).toBe(201);
+    expect(response.body.document).toBeNull();
+    expect(response.body.email).toBeNull();
+    expect(response.body.phone).toBeNull();
+  });
+
+  it("busca fornecedor por nome, email, telefone ou documento", async () => {
+    const withDocument = await request(app.getHttpServer())
+      .post("/api/suppliers")
+      .set("Cookie", adminACookie)
+      .send({ name: "Fornecedor Com Documento", document: "12345678000190" });
+    expect(withDocument.status).toBe(201);
+
+    const byEmail = await request(app.getHttpServer())
+      .get("/api/suppliers")
+      .query({ search: "petdist" })
+      .set("Cookie", adminACookie);
+    expect(byEmail.status).toBe(200);
+    expect(byEmail.body.items.some((item: { id: string }) => item.id === supplierAId)).toBe(true);
+
+    const byPhone = await request(app.getHttpServer())
+      .get("/api/suppliers")
+      .query({ search: "99999-0000" })
+      .set("Cookie", adminACookie);
+    expect(byPhone.status).toBe(200);
+    expect(byPhone.body.items.some((item: { id: string }) => item.id === supplierAId)).toBe(true);
+
+    const byDocument = await request(app.getHttpServer())
+      .get("/api/suppliers")
+      .query({ search: "12345678000190" })
+      .set("Cookie", adminACookie);
+    expect(byDocument.status).toBe(200);
+    expect(
+      byDocument.body.items.some((item: { id: string }) => item.id === withDocument.body.id),
+    ).toBe(true);
+  });
+
+  it("pagina a listagem de fornecedores", async () => {
+    const page1 = await request(app.getHttpServer())
+      .get("/api/suppliers")
+      .query({ page: 1, pageSize: 1 })
+      .set("Cookie", adminACookie);
+    expect(page1.status).toBe(200);
+    expect(page1.body.items).toHaveLength(1);
+    expect(page1.body.page).toBe(1);
+    expect(page1.body.total).toBeGreaterThanOrEqual(3);
+
+    const page2 = await request(app.getHttpServer())
+      .get("/api/suppliers")
+      .query({ page: 2, pageSize: 1 })
+      .set("Cookie", adminACookie);
+    expect(page2.status).toBe(200);
+    expect(page2.body.items).toHaveLength(1);
+    expect(page2.body.page).toBe(2);
+    expect(page2.body.items[0].id).not.toBe(page1.body.items[0].id);
+  });
+
+  it("inativar fornecedor preserva produtos vinculados e histórico", async () => {
+    const product = await prisma.product.create({
+      data: {
+        companyId: companyAId,
+        name: "Produto com Fornecedor Inativo",
+        sku: "FOR-INAT-01",
+        salePrice: "9.90",
+        stockQuantity: 3,
+        supplierId: supplierAId,
+      },
+    });
+
+    const detail = await request(app.getHttpServer())
+      .get(`/api/products/${product.id}`)
+      .set("Cookie", adminACookie);
+    expect(detail.status).toBe(200);
+    expect(detail.body.supplier.id).toBe(supplierAId);
+
+    const supplier = await request(app.getHttpServer())
+      .get(`/api/suppliers/${supplierAId}`)
+      .set("Cookie", adminACookie);
+    expect(supplier.status).toBe(200);
+    expect(supplier.body.status).toBe("INACTIVE");
   });
 });

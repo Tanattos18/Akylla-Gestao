@@ -248,6 +248,20 @@ controle em `docs/akylla/`.
   (+56 cenários A×B); **nenhuma falha de isolamento ou autorização
   confirmada**; suíte **436/436**, lint/typecheck/build OK; nenhum código
   de produção alterado.
-- Próxima etapa autorizada: **Etapa 4** (aguardando aprovação).
+- **Etapa 4 (2026-10-12)** — definição do núcleo genérico (apenas análise
+  e documentação): `docs/akylla/MAPA_DE_MODULOS.md`; matriz de 23 itens
+  nas 4 categorias aprovadas, inventário completo conferido; **aprovada
+  pelo proprietário**; nenhum código/schema/teste alterado.
+- **Etapa 5 (2026-10-12)** — cadastros, clientes e fornecedores:
+  cadastros confirmados genéricos e isolados por tenant; busca de
+  fornecedores ampliada (nome/email/telefone/documento); +6 testes
+  (opcionalidade de CPF/documento e preservação de histórico na
+  inativação); suíte **442/442**, lint/typecheck OK; navegação de pets
+  na tela de clientes diferida para a Etapa 10.
+- **Modelo operacional aprovado:** execução contínua das Etapas 5→9 com
+  relatório por etapa; parada obrigatória antes das Etapas 10, 11, 12 e
+  de qualquer migration; commit+push por etapa; "configurações da
+  empresa" definida para a **Etapa 12** (Decisão D1).
+- Próxima etapa: **Etapa 6 — Produtos, categorias e estoque**.
 
 > Os status/etapas PetFlow acima desta seção permanecem como histórico.

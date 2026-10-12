@@ -29,7 +29,14 @@ export class SuppliersService {
       companyId: auth.companyId,
       ...(query.status ? { status: query.status } : {}),
       ...(query.search
-        ? { name: { contains: query.search, mode: "insensitive" as const } }
+        ? {
+            OR: [
+              { name: { contains: query.search, mode: "insensitive" as const } },
+              { email: { contains: query.search, mode: "insensitive" as const } },
+              { phone: { contains: query.search } },
+              { document: { contains: query.search } },
+            ],
+          }
         : {}),
     };
 
