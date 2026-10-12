@@ -262,11 +262,16 @@ controle em `docs/akylla/`.
   itens do roteiro confirmados no código; correção do filtro `lowStock`
   (exigir `minimumStock > 0`); +2 testes (requisição repetida e exclusão
   de mínimo zero); suíte **444/444**, lint/typecheck OK.
+- **Etapa 7 (2026-10-12)** — vendas e recebimentos: fluxo validado sem
+  alteração de código (todos os 9 itens e 7 testes do roteiro cobertos);
+  entregável `docs/akylla/LIMITACOES_VENDAS.md` com 9 limitações
+  explícitas; caixa por turno mantido (decisão); suíte **444/444**,
+  lint/typecheck OK.
 - **Modelo operacional aprovado:** execução contínua das Etapas 5→9 com
   relatório por etapa; parada obrigatória antes das Etapas 10, 11, 12 e
   de qualquer migration; commit+push por etapa; "configurações da
   empresa" definida para a **Etapa 12** (Decisão D1).
-- Próxima etapa: **Etapa 7 — Vendas e recebimentos** (manter caixa por
-  turno, decisão já aprovada).
+- Próxima etapa: **Etapa 8 — Financeiro básico (AP/AR)** — exige
+  aprovação do modelo de dados e da migration antes de implementar.
 
 > Os status/etapas PetFlow acima desta seção permanecem como histórico.

@@ -2,6 +2,32 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Akylla Gestão] - 2026-10-12 - Etapa 7 — Vendas e recebimentos
+
+### Adicionado
+
+- `docs/akylla/LIMITACOES_VENDAS.md`: **entregável** da etapa — fluxo
+  validado item a item do roteiro com evidências `[Código]/[Teste]`,
+  cobertura dos 7 testes exigidos e **lista explícita de 9 limitações**
+  (sem fiscal/adquirente/conciliação, cancelamento total apenas, uma
+  forma de pagamento por venda, venda exige caixa aberto, origem MANUAL
+  em pagamentos de assinatura, estoque sem chave de idempotência, sem
+  lote/validade, sem PDV offline, recibo comercial `PF-`).
+
+### Verificado (sem alteração de código)
+
+- Itens 1–9 do roteiro confirmados no código (recálculo no servidor,
+  transação única venda+itens+estoque+caixa, snapshots, idempotência
+  `clientRequestId`, cancelamento auditável com devolução única,
+  nenhuma menção a fiscal/adquirente na UI).
+- **Decisão de caixa: mantida abertura/fechamento por turno** (regra
+  original; não alterada silenciosamente conforme roteiro).
+
+### Verificado
+
+- `lint` 0 · `typecheck` OK · **444/444 testes** (sem variação — etapa
+  de conferência/entregável documental).
+
 ## [Akylla Gestão] - 2026-10-12 - Etapa 6 — Produtos, categorias e estoque
 
 ### Corrigido
