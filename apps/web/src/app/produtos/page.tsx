@@ -72,6 +72,15 @@ export default function ProdutosPage() {
     });
   }, [router]);
 
+  // Busca inicial via ?search= (ex.: busca global do header)
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("search");
+    if (q) {
+      setSearch(q);
+      setSearchInput(q);
+    }
+  }, []);
+
   useEffect(() => {
     if (!session) return;
     void Promise.all([

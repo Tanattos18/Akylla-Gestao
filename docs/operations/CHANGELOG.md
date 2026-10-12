@@ -2,6 +2,22 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Akylla Gestão] - 2026-10-12 - Continuação da reformulação do painel
+
+### Alterado
+
+- **Busca global** do header agora inclui **pets** e **serviços** além
+  de produtos, clientes e vendas (receiptCode).
+- **Notificações** recarregadas ao abrir o sino (além do load inicial do
+  shell) — contagem sempre atual no clique.
+- `/produtos` e `/clientes` leem `?search=` da URL na carga inicial —
+  "Ver todos os resultados" da busca global pré-preenche o filtro da
+  página de listagem.
+
+### Validações
+
+- lint 0 · typecheck OK · 509/509 testes · build OK.
+
 ## [Akylla Gestão] - 2026-10-12 - Reformulação profissional do painel
 
 ### Alterado

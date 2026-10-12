@@ -14,17 +14,21 @@ import {
   Receipt,
   AlertTriangle,
   CalendarClock,
+  PawPrint,
+  Scissors,
   X,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { formatBrl } from "@/lib/format";
 import type {
+  ClientDto,
   DashboardSummaryDto,
   FinancialSummaryDto,
   Paginated,
+  PetDto,
   ProductDto,
-  ClientDto,
   SaleDto,
+  ServiceDto,
 } from "@/lib/types";
 
 const routeLabels: Record<string, string> = {
@@ -59,6 +63,8 @@ const routeLabels: Record<string, string> = {
 interface SearchResults {
   products: ProductDto[];
   clients: ClientDto[];
+  pets: PetDto[];
+  services: ServiceDto[];
   sales: SaleDto[];
 }
 
@@ -114,6 +120,7 @@ export function Header({
     overduePayables: 0,
     loaded: false,
   });
+  const [notifLoading, setNotifLoading] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
@@ -125,31 +132,32 @@ export function Header({
   const alertCount =
     notif.lowStock + notif.outOfStock + notif.overdueReceivables + notif.overduePayables;
 
-  useEffect(() => {
-    let cancelled = false;
-    Promise.all([
-      api<DashboardSummaryDto>("/api/reports/summary", { redirectOnUnauthorized: false }),
-      api<FinancialSummaryDto>("/api/financial/summary", { redirectOnUnauthorized: false }).catch(
-        () => null,
-      ),
-    ])
-      .then(([summary, fin]) => {
-        if (cancelled) return;
-        setNotif({
-          lowStock: summary.stock.lowStockCount,
-          outOfStock: summary.stock.outOfStockCount,
-          overdueReceivables: fin?.overdueReceivablesCount ?? 0,
-          overduePayables: fin?.overduePayablesCount ?? 0,
-          loaded: true,
-        });
-      })
-      .catch(() => {
-        if (!cancelled) setNotif((n) => ({ ...n, loaded: true }));
+  const loadNotifications = useCallback(async () => {
+    setNotifLoading(true);
+    try {
+      const [summary, fin] = await Promise.all([
+        api<DashboardSummaryDto>("/api/reports/summary", { redirectOnUnauthorized: false }),
+        api<FinancialSummaryDto>("/api/financial/summary", {
+          redirectOnUnauthorized: false,
+        }).catch(() => null),
+      ]);
+      setNotif({
+        lowStock: summary.stock.lowStockCount,
+        outOfStock: summary.stock.outOfStockCount,
+        overdueReceivables: fin?.overdueReceivablesCount ?? 0,
+        overduePayables: fin?.overduePayablesCount ?? 0,
+        loaded: true,
       });
-    return () => {
-      cancelled = true;
-    };
+    } catch {
+      setNotif((n) => ({ ...n, loaded: true }));
+    } finally {
+      setNotifLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void loadNotifications();
+  }, [loadNotifications]);
 
   const runSearch = useCallback(async (term: string) => {
     const q = term.trim();
@@ -160,13 +168,19 @@ export function Header({
     }
     setSearching(true);
     const enc = encodeURIComponent(q);
-    const [products, clients, sales] = await Promise.all([
+    const [products, clients, pets, services, sales] = await Promise.all([
       api<Paginated<ProductDto>>(`/api/products?status=ACTIVE&pageSize=4&search=${enc}`, {
         redirectOnUnauthorized: false,
       }).catch(() => ({ items: [] as ProductDto[] })),
       api<Paginated<ClientDto>>(`/api/clients?status=ACTIVE&pageSize=4&search=${enc}`, {
         redirectOnUnauthorized: false,
       }).catch(() => ({ items: [] as ClientDto[] })),
+      api<Paginated<PetDto>>(`/api/pets?status=ACTIVE&pageSize=4&search=${enc}`, {
+        redirectOnUnauthorized: false,
+      }).catch(() => ({ items: [] as PetDto[] })),
+      api<Paginated<ServiceDto>>(`/api/services?status=ACTIVE&pageSize=4&search=${enc}`, {
+        redirectOnUnauthorized: false,
+      }).catch(() => ({ items: [] as ServiceDto[] })),
       api<Paginated<SaleDto>>(`/api/sales?pageSize=3&search=${enc}`, {
         redirectOnUnauthorized: false,
       }).catch(() => ({ items: [] as SaleDto[] })),
@@ -174,6 +188,8 @@ export function Header({
     setSearchResults({
       products: products.items,
       clients: clients.items,
+      pets: pets.items,
+      services: services.items,
       sales: sales.items,
     });
     setSearching(false);
@@ -196,9 +212,12 @@ export function Header({
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) setSearchOpen(false);
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) setProfileOpen(false);
+      if (searchRef.current && !searchRef.current.contains(e.target as Node))
+        setSearchOpen(false);
+      if (notifRef.current && !notifRef.current.contains(e.target as Node))
+        setNotifOpen(false);
+      if (profileRef.current && !profileRef.current.contains(e.target as Node))
+        setProfileOpen(false);
     }
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
@@ -209,6 +228,12 @@ export function Header({
     setNotifOpen(false);
     setProfileOpen(false);
   }, [pathname]);
+
+  function toggleNotif() {
+    const next = !notifOpen;
+    setNotifOpen(next);
+    if (next) void loadNotifications();
+  }
 
   function goSearch() {
     const q = searchTerm.trim();
@@ -221,6 +246,8 @@ export function Header({
     searchResults &&
     (searchResults.products.length > 0 ||
       searchResults.clients.length > 0 ||
+      searchResults.pets.length > 0 ||
+      searchResults.services.length > 0 ||
       searchResults.sales.length > 0);
 
   return (
@@ -282,12 +309,12 @@ export function Header({
               if (e.key === "Enter") goSearch();
               if (e.key === "Escape") setSearchOpen(false);
             }}
-            placeholder="Buscar produtos, clientes, vendas…"
+            placeholder="Buscar produtos, clientes, pets…"
             aria-label="Busca global"
             className="w-56 rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-primary-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 xl:w-72"
           />
           {searchOpen && searchTerm.trim().length >= 2 && (
-            <div className="absolute right-0 top-full z-50 mt-2 w-[360px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
+            <div className="absolute right-0 top-full z-50 mt-2 w-[380px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
               {searching && (
                 <p className="px-4 py-3 text-sm text-slate-400">Buscando…</p>
               )}
@@ -297,7 +324,7 @@ export function Header({
                 </p>
               )}
               {!searching && hasResults && (
-                <div className="max-h-80 overflow-y-auto py-1">
+                <div className="max-h-96 overflow-y-auto py-1">
                   {searchResults!.products.length > 0 && (
                     <div>
                       <p className="px-4 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
@@ -335,6 +362,46 @@ export function Header({
                       ))}
                     </div>
                   )}
+                  {searchResults!.pets.length > 0 && (
+                    <div>
+                      <p className="px-4 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        Pets
+                      </p>
+                      {searchResults!.pets.map((pet) => (
+                        <Link
+                          key={pet.id}
+                          href={`/pets`}
+                          className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50"
+                        >
+                          <PawPrint className="h-4 w-4 shrink-0 text-slate-400" />
+                          <span className="truncate text-slate-700">
+                            {pet.name}
+                            {pet.client ? ` · ${pet.client.name}` : ""}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                  {searchResults!.services.length > 0 && (
+                    <div>
+                      <p className="px-4 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        Serviços
+                      </p>
+                      {searchResults!.services.map((s) => (
+                        <Link
+                          key={s.id}
+                          href={`/servicos`}
+                          className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50"
+                        >
+                          <Scissors className="h-4 w-4 shrink-0 text-slate-400" />
+                          <span className="truncate text-slate-700">{s.name}</span>
+                          <span className="ml-auto shrink-0 text-xs text-slate-400">
+                            {formatBrl(s.price)}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                   {searchResults!.sales.length > 0 && (
                     <div>
                       <p className="px-4 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
@@ -347,7 +414,9 @@ export function Header({
                           className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50"
                         >
                           <Receipt className="h-4 w-4 shrink-0 text-slate-400" />
-                          <span className="font-mono text-xs text-slate-700">{s.receiptCode}</span>
+                          <span className="font-mono text-xs text-slate-700">
+                            {s.receiptCode}
+                          </span>
                           <span className="ml-auto shrink-0 text-xs text-slate-500">
                             {formatBrl(s.total)}
                           </span>
@@ -372,8 +441,9 @@ export function Header({
         <div ref={notifRef} className="relative">
           <button
             type="button"
-            onClick={() => setNotifOpen((o) => !o)}
+            onClick={toggleNotif}
             aria-label={`Notificações${alertCount > 0 ? ` (${alertCount})` : ""}`}
+            aria-expanded={notifOpen}
             className="relative rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
           >
             <Bell className="h-5 w-5" />
@@ -396,7 +466,7 @@ export function Header({
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              {!notif.loaded ? (
+              {notifLoading && !notif.loaded ? (
                 <p className="px-4 py-3 text-sm text-slate-400">Carregando…</p>
               ) : alertCount === 0 ? (
                 <p className="px-4 py-3 text-sm text-slate-400">

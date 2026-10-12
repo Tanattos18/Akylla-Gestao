@@ -62,6 +62,12 @@ export default function ClientesPage() {
     });
   }, [router]);
 
+  // Busca inicial via ?search= (ex.: busca global do header)
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("search");
+    if (q) setSearch(q);
+  }, []);
+
   useEffect(() => {
     if (session) void loadClients(search);
   }, [session, loadClients, search]);
