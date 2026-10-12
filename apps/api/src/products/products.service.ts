@@ -77,6 +77,7 @@ export class ProductsService {
       const lowStockRows = await this.prisma.$queryRaw<Array<{ id: string }>>`
         SELECT id FROM "Product"
         WHERE "companyId" = ${auth.companyId}
+          AND "minimumStock" > 0
           AND "stockQuantity" <= "minimumStock"`;
       andConditions.push({ id: { in: lowStockRows.map((row) => row.id) } });
     }

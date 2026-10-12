@@ -2,6 +2,43 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Akylla Gestão] - 2026-10-12 - Etapa 6 — Produtos, categorias e estoque
+
+### Corrigido
+
+- `apps/api/src/products/products.service.ts`: filtro `lowStock` da
+  listagem agora exige `minimumStock > 0` (antes, produto com mínimo 0 e
+  saldo 0 era listado como "estoque baixo", divergindo do endpoint
+  `/stock/low-stock` e do flag `lowStock` por item).
+
+### Adicionado
+
+- `tests/stock.test.ts` (+2): **requisição repetida** de movimento gera
+  movimentos independentes, mantém saldo coerente e nunca deixa saldo
+  negativo (terceira tentativa → 400); filtro `lowStock` exclui produtos
+  **sem estoque mínimo configurado** (regressão da correção acima).
+
+### Verificado (sem alteração de código)
+
+- Unicidade de SKU/código de barras **por empresa** (`@@unique([companyId,
+  sku])`/`[companyId, barcode]`) + testes de conflito;
+- categoria/fornecedor de outra empresa rejeitados (400) + testes;
+- recálculo de saldo no servidor dentro de transação com `FOR UPDATE`
+  (saídas concorrentes aprovadas=1/rejeitadas=4);
+- histórico auditável (autor, motivo, referência, data);
+- bloqueio de saldo negativo (saída e ajuste);
+- precisão decimal: preços 2 casas, quantidades 3 casas (`decimalField(3)`,
+  aceita fracionárias);
+- alerta de estoque mínimo: endpoint `low-stock`, flag por item e UI
+  (banner + filtro + badges) com dados reais;
+- rótulos de produtos/categorias/fornecedores sem textos de nicho;
+- limitação registrada: movimentos de estoque **não têm chave de
+  idempotência** (coluna nova exigiria migration — decisão futura).
+
+### Verificado
+
+- `lint` 0 · `typecheck` OK · **444/444 testes** (+2).
+
 ## [Akylla Gestão] - 2026-10-12 - Etapa 5 — Cadastros, clientes e fornecedores
 
 ### Alterado

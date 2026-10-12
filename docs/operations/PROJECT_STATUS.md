@@ -258,10 +258,15 @@ controle em `docs/akylla/`.
   (opcionalidade de CPF/documento e preservação de histórico na
   inativação); suíte **442/442**, lint/typecheck OK; navegação de pets
   na tela de clientes diferida para a Etapa 10.
+- **Etapa 6 (2026-10-12)** — produtos, categorias e estoque: todos os 10
+  itens do roteiro confirmados no código; correção do filtro `lowStock`
+  (exigir `minimumStock > 0`); +2 testes (requisição repetida e exclusão
+  de mínimo zero); suíte **444/444**, lint/typecheck OK.
 - **Modelo operacional aprovado:** execução contínua das Etapas 5→9 com
   relatório por etapa; parada obrigatória antes das Etapas 10, 11, 12 e
   de qualquer migration; commit+push por etapa; "configurações da
   empresa" definida para a **Etapa 12** (Decisão D1).
-- Próxima etapa: **Etapa 6 — Produtos, categorias e estoque**.
+- Próxima etapa: **Etapa 7 — Vendas e recebimentos** (manter caixa por
+  turno, decisão já aprovada).
 
 > Os status/etapas PetFlow acima desta seção permanecem como histórico.

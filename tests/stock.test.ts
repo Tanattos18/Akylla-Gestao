@@ -387,3 +387,63 @@ describe("Concorrência de movimentações", () => {
     expect(movements).toBe(1);
   });
 });
+
+describe("Requisição repetida e alerta de estoque mínimo (Etapa 6)", () => {
+  it("requisição repetida gera movimentos independentes sem permitir saldo negativo", async () => {
+    const owner = await prisma.product.findUniqueOrThrow({ where: { id: productAId } });
+    const product = await prisma.product.create({
+      data: {
+        companyId: owner.companyId,
+        name: "Produto requisição repetida",
+        sku: "REQ-REP-001",
+        stockQuantity: 4,
+      },
+    });
+
+    const sendExit = () =>
+      request(app.getHttpServer())
+        .post("/api/stock/exits")
+        .set("Cookie", memberACookie)
+        .send({ productId: product.id, quantity: "1.5", reference: "req-repetida" });
+
+    const first = await sendExit();
+    expect(first.status).toBe(201);
+
+    const second = await sendExit();
+    expect(second.status).toBe(201);
+    expect(await getStock(product.id)).toBe("1.000");
+
+    const third = await sendExit();
+    expect(third.status).toBe(400);
+    expect(await getStock(product.id)).toBe("1.000");
+
+    const movements = await prisma.stockMovement.count({
+      where: { productId: product.id, reference: "req-repetida" },
+    });
+    expect(movements).toBe(2);
+  });
+
+  it("filtro lowStock da listagem exclui produto sem estoque mínimo configurado", async () => {
+    const owner = await prisma.product.findUniqueOrThrow({ where: { id: productAId } });
+    const zeroWithoutMinimum = await prisma.product.create({
+      data: {
+        companyId: owner.companyId,
+        name: "Zerado sem mínimo",
+        sku: "ZER-SEM-MIN",
+        stockQuantity: 0,
+        minimumStock: 0,
+      },
+    });
+
+    const response = await request(app.getHttpServer())
+      .get("/api/products")
+      .query({ lowStock: "true" })
+      .set("Cookie", adminACookie);
+
+    expect(response.status).toBe(200);
+    const ids = response.body.items.map((item: { id: string }) => item.id);
+    expect(ids).not.toContain(zeroWithoutMinimum.id);
+    expect(ids).not.toContain(productAId);
+    expect(ids).toContain(lowStockProductId);
+  });
+});
