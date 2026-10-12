@@ -347,7 +347,7 @@ export default function WhatsAppConfigPage() {
             </div>
             <div className="sm:col-span-2 border-t border-slate-100 pt-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                Lembrete de agendamentos (Etapa 8)
+                Lembrete de agendamentos
               </p>
             </div>
             <div>

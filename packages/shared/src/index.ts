@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const APP_NAME = "PetFlow";
+export const APP_NAME = "Akylla Gestão";
 
 export const paginationQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),

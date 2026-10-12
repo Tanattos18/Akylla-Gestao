@@ -1,5 +1,6 @@
 import type { SaleDto } from "./types";
 import { paymentMethodLabels, saleStatusLabels, productUnitLabels } from "./types";
+import { formatBrl } from "./format";
 
 function escapeHtml(value: string): string {
   return value
@@ -15,8 +16,8 @@ export function printReceipt(sale: SaleDto, companyName: string): boolean {
       (item) => `
       <tr>
         <td>${escapeHtml(item.productName)}</td>
-        <td class="num">${Number(item.quantity)} ${productUnitLabels[item.unit]} × R$ ${Number(item.unitPrice).toFixed(2)}</td>
-        <td class="num">R$ ${Number(item.subtotal).toFixed(2)}</td>
+        <td class="num">${Number(item.quantity)} ${productUnitLabels[item.unit]} × ${formatBrl(item.unitPrice)}</td>
+        <td class="num">${formatBrl(item.subtotal)}</td>
       </tr>`,
     )
     .join("");
@@ -61,9 +62,9 @@ export function printReceipt(sale: SaleDto, companyName: string): boolean {
     <tbody>${rows}</tbody>
   </table>
   <hr />
-  <p class="row"><span>Subtotal</span><span>R$ ${Number(sale.subtotal).toFixed(2)}</span></p>
-  <p class="row"><span>Desconto</span><span>- R$ ${Number(sale.discount).toFixed(2)}</span></p>
-  <p class="row total"><span>Total</span><span>R$ ${Number(sale.total).toFixed(2)}</span></p>
+  <p class="row"><span>Subtotal</span><span>${formatBrl(sale.subtotal)}</span></p>
+  <p class="row"><span>Desconto</span><span>- ${formatBrl(sale.discount)}</span></p>
+  <p class="row total"><span>Total</span><span>${formatBrl(sale.total)}</span></p>
   <p class="row"><span>Pagamento</span><span>${paymentMethodLabels[sale.paymentMethod]}</span></p>
   ${noteBlock}
   <hr />

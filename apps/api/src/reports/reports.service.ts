@@ -367,7 +367,7 @@ export class ReportsService {
           row.createdBy,
         ]),
       ),
-      filename: csvFilename("petflow_vendas", period.from, period.to),
+      filename: csvFilename("akylla_vendas", period.from, period.to),
     };
   }
 
@@ -452,7 +452,7 @@ export class ReportsService {
           item.alert === "OUT_OF_STOCK" ? "Sem estoque" : "Estoque baixo",
         ]),
       ),
-      filename: `petflow_estoque_alertas_${new Date().toISOString().slice(0, 10)}.csv`,
+      filename: `akylla_estoque_alertas_${new Date().toISOString().slice(0, 10)}.csv`,
     };
   }
 
@@ -548,7 +548,7 @@ export class ReportsService {
           row.createdBy,
         ]),
       ),
-      filename: csvFilename("petflow_estoque_movimentos", period.from, period.to),
+      filename: csvFilename("akylla_estoque_movimentos", period.from, period.to),
     };
   }
 

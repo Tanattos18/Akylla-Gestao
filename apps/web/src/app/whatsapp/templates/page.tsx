@@ -259,7 +259,7 @@ export default function WhatsAppTemplatesPage() {
                 value={form.body}
                 onChange={(event) => setForm({ ...form, body: event.target.value })}
                 rows={3}
-                placeholder="Olá {{1}}, seu pet {{2}} aguarda pelo próximo banho."
+                placeholder="Olá {{1}}, seu agendamento de {{2}} está marcado para {{3}}."
                 className={inputClass}
               />
               {fieldErrors.body && (

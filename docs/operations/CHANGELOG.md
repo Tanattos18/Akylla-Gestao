@@ -2,6 +2,62 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Akylla Gestão] - 2026-10-12 - Etapa 3 — Auditoria multiempresa e permissões
+
+### Adicionado
+
+- `tests/tenancy-audit.test.ts` (+56 cenários Empresa Alfa × Empresa Bravo):
+  identificação do tenant pela sessão, injeção de `companyId`
+  (corpo/query/cabeçalho), leitura cruzada por ID (18 recursos), escrita
+  cruzada com verificação pós-condição no banco, referências FK de outra
+  empresa rejeitadas, relatórios/CSV por empresa, perfis ADMIN × MEMBER e
+  ausência de dados de B em respostas de erro.
+- `docs/akylla/AUDITORIA_MULTIEMPRESA.md`: relatório completo (escopo,
+  matriz A×B, permissões, evidências, riscos e recomendações).
+
+### Verificado
+
+- Suíte completa **436/436 aprovados** (base 380 + 56 novos; nenhum teste
+  existente alterado), `lint` 0, `typecheck` OK, `build` OK.
+- **Nenhuma falha de isolamento entre empresas nem de autorização por
+  perfil confirmada.** Comportamentos intencionais documentados (MEMBER na
+  operação diária, planos SaaS globais, consentimento `OPTED_IN` restrito a
+  ADMIN). Nenhuma correção de segurança implementada (etapa de auditoria).
+
+## [Akylla Gestão] - 2026-10-12 - Etapa 2 — Identidade
+
+### Alterado
+
+- Produto renomeado visualmente para **Akylla Gestão** ("Gestão para
+  pequenos negócios"): `layout.tsx` (título/metadados/subtítulo/rodapé;
+  removidos o emoji de pata e o badge "Etapa 9"), `/login`, `/cadastro`,
+  `/faturamento` (3 textos), cards da home ("Clientes", "Agendamentos",
+  "Faturamento"), `Receipt.tsx`, fallbacks de impressão em `/pdv` e
+  `/vendas/[id]`, log de boot da API e constante `APP_NAME`
+  (`@petflow/shared`).
+- Exportações CSV: prefixos `petflow_*` → `akylla_*` (servidor em
+  `reports.service.ts` e nomes de fallback em `/relatorios`); asserção
+  correspondente atualizada em `tests/reports.test.ts` (mesma cobertura).
+- Moeda no comprovante impresso (`Receipt.tsx`, `lib/print.ts`)
+  padronizada em BRL via `formatBrl()` (antes `R$ x.xx` com ponto).
+- Textos de nicho removidos de módulos genéricos (card "Clientes e
+  animais" → "Clientes"; "banho e tosa" → "atendimentos"; placeholder de
+  template neutro). Exemplos do CLI `bootstrap-admin` genéricos.
+
+### Preservado (de propósito)
+
+- Identificadores internos `@petflow/*`, cookie `petflow_session`,
+  `service: "petflow-api"`, provedor mock "PetFlow Mock", prefixo de
+  comprovante `PF-`, bancos/tabelas/migrations, pasta legada
+  `automação do whatsapp/`, seed de demonstração. Nenhum módulo excluído;
+  nenhum item removido da navegação (análise em
+  `docs/akylla/IDENTIDADE_E_NAVEGACAO.md`).
+
+### Verificado
+
+- `lint` 0 erros · `typecheck` OK · **380/380 testes aprovados** · `build`
+  OK · `db:validate` OK (linha de base da Etapa 1 reproduzida sem falhas).
+
 ## [Não categorizado] - 2026-10-10 - Seed de demonstração
 
 ### Adicionado

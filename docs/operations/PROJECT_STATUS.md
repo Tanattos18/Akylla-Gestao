@@ -223,3 +223,31 @@ do proprietário): pendências acima (CI/deploy, enforcement de billing,
 gateway de pagamento, recorrência automática, verificação de e-mail e
 anti-abuso no cadastro), continuidade das atualizações/testes ou novas
 funcionalidades fora do roadmap.
+
+---
+
+## Projeto Akylla Gestão — jornada de adaptação (a partir de 2026-10-12)
+
+O repositório foi reutilizado como fundação do **Akylla Gestão** (SaaS
+multiempresa de gestão para pequenos negócios). Sequência operacional:
+Etapas 1–12 de `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`. Documentos de
+controle em `docs/akylla/`.
+
+- **Etapa 0 (2026-10-12)** — diagnóstico somente leitura:
+  `docs/akylla/DIAGNOSTICO_INICIAL.md`.
+- **Etapa 1 (2026-10-12)** — plano + linha de base:
+  `docs/akylla/PLANO_DE_ADAPTACAO.md`; `npm ci` e verificação completa
+  executadas: lint 0 erros, typecheck OK, **380/380 testes**, build OK,
+  `db:validate` OK. Nenhum schema/banco/migration alterados.
+- **Etapa 2 (2026-10-12)** — identidade Akylla Gestão:
+  `docs/akylla/IDENTIDADE_E_NAVEGACAO.md`; marca, textos, CSV e moeda do
+  comprovante adaptados; identificadores internos e módulos preservados;
+  validações 5/5 verdes (380/380 testes).
+- **Etapa 3 (2026-10-12)** — auditoria multiempresa e permissões:
+  `docs/akylla/AUDITORIA_MULTIEMPRESA.md` + `tests/tenancy-audit.test.ts`
+  (+56 cenários A×B); **nenhuma falha de isolamento ou autorização
+  confirmada**; suíte **436/436**, lint/typecheck/build OK; nenhum código
+  de produção alterado.
+- Próxima etapa autorizada: **Etapa 4** (aguardando aprovação).
+
+> Os status/etapas PetFlow acima desta seção permanecem como histórico.

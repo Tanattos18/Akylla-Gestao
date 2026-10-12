@@ -23,7 +23,7 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   await app.listen(env.API_PORT);
-  logger.log(`PetFlow API disponível em http://localhost:${env.API_PORT}`);
+  logger.log(`Akylla Gestão API disponível em http://localhost:${env.API_PORT}`);
 }
 
 bootstrap().catch((error) => {

@@ -6,6 +6,7 @@ import {
   saleStatusLabels,
   type SaleDto,
 } from "../lib/types";
+import { formatBrl } from "../lib/format";
 
 export function Receipt({
   sale,
@@ -17,7 +18,7 @@ export function Receipt({
   return (
     <div className="mx-auto max-w-sm rounded-lg border border-slate-200 bg-white p-6 font-mono text-sm text-slate-800 shadow-sm">
       <div className="text-center">
-        <p className="text-lg font-semibold text-slate-900">{companyName ?? "PetFlow"}</p>
+        <p className="text-lg font-semibold text-slate-900">{companyName ?? "Akylla Gestão"}</p>
         <p className="text-xs text-slate-500">Comprovante de venda</p>
       </div>
 
@@ -56,7 +57,7 @@ export function Receipt({
                 <td className="whitespace-nowrap py-1 text-right">
                   {Number(item.quantity)} {productUnitLabels[item.unit]}
                 </td>
-                <td className="py-1 text-right">R$ {Number(item.subtotal).toFixed(2)}</td>
+                <td className="py-1 text-right">{formatBrl(item.subtotal)}</td>
               </tr>
             ))}
           </tbody>
@@ -66,15 +67,15 @@ export function Receipt({
       <div className="mt-3 space-y-1 border-t border-dashed border-slate-300 pt-3 text-xs">
         <div className="flex justify-between">
           <span>Subtotal</span>
-          <span>R$ {Number(sale.subtotal).toFixed(2)}</span>
+          <span>{formatBrl(sale.subtotal)}</span>
         </div>
         <div className="flex justify-between">
           <span>Desconto</span>
-          <span>- R$ {Number(sale.discount).toFixed(2)}</span>
+          <span>- {formatBrl(sale.discount)}</span>
         </div>
         <div className="flex justify-between text-base font-semibold text-slate-900">
           <span>Total</span>
-          <span>R$ {Number(sale.total).toFixed(2)}</span>
+          <span>{formatBrl(sale.total)}</span>
         </div>
         <div className="flex justify-between">
           <span>Pagamento</span>
@@ -95,7 +96,7 @@ export function Receipt({
       )}
 
       <p className="mt-4 text-center text-[10px] text-slate-400">
-        PetFlow — Obrigado pela preferência!
+        Akylla Gestão — Obrigado pela preferência!
       </p>
     </div>
   );

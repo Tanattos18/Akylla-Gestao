@@ -825,7 +825,7 @@ describe("GET /api/reports/sales", () => {
     expect(response.headers["content-type"]).toContain("text/csv");
     expect(response.headers["content-disposition"]).toContain("attachment");
     expect(response.headers["content-disposition"]).toContain(
-      `petflow_vendas_${today}_${today}.csv`,
+      `akylla_vendas_${today}_${today}.csv`,
     );
     const text = response.text as string;
     expect(text).toContain('"Código"');

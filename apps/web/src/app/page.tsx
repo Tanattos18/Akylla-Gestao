@@ -26,8 +26,8 @@ const plannedModules = [
     available: true,
   },
   {
-    name: "Clientes e animais",
-    description: "Cadastro de tutores, pets e fichas",
+    name: "Clientes",
+    description: "Cadastro de clientes, contatos e histórico",
     href: "/clientes",
     available: true,
   },
@@ -57,7 +57,7 @@ const plannedModules = [
   },
   {
     name: "Agendamentos",
-    description: "Agenda diária de banho e tosa com lembretes no WhatsApp",
+    description: "Agenda de atendimentos com lembretes no WhatsApp",
     href: "/agenda",
     available: true,
   },
@@ -69,7 +69,7 @@ const plannedModules = [
   },
   {
     name: "Faturamento",
-    description: "Assinatura da empresa no PetFlow (billing do SaaS)",
+    description: "Assinatura da empresa no Akylla Gestão (billing do SaaS)",
     href: "/faturamento",
     available: true,
   },

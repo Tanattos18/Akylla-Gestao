@@ -37,7 +37,7 @@ async function main() {
     }
     console.error(`
 Variáveis obrigatórias:
-  BOOTSTRAP_COMPANY_NAME   Nome da empresa (ex.: "Pet Shop Amigo Fiel")
+  BOOTSTRAP_COMPANY_NAME   Nome da empresa (ex.: "Mercado Central")
   BOOTSTRAP_ADMIN_NAME     Nome do administrador
   BOOTSTRAP_ADMIN_EMAIL    Email do administrador
   BOOTSTRAP_ADMIN_PASSWORD Senha forte (min. 12 caracteres)
@@ -45,7 +45,7 @@ Opcionais:
   BOOTSTRAP_COMPANY_SLUG   Slug da empresa (padrão: gerado do nome)
 
 Exemplo de execução (PowerShell):
-  $env:BOOTSTRAP_COMPANY_NAME="Pet Shop Amigo Fiel"
+  $env:BOOTSTRAP_COMPANY_NAME="Mercado Central"
   $env:BOOTSTRAP_ADMIN_NAME="Dono"
   $env:BOOTSTRAP_ADMIN_EMAIL="dono@exemplo.com"
   $env:BOOTSTRAP_ADMIN_PASSWORD="senha-forte-aqui"

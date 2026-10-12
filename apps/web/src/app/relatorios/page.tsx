@@ -153,7 +153,7 @@ function VendasTab({ from, to, reloadKey }: PeriodProps) {
       if (status) params.set("status", status);
       if (paymentMethod) params.set("paymentMethod", paymentMethod);
       params.set("format", "csv");
-      await downloadCsv(`/api/reports/sales?${params.toString()}`, "petflow_vendas.csv");
+      await downloadCsv(`/api/reports/sales?${params.toString()}`, "akylla_vendas.csv");
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha ao exportar CSV.");
@@ -390,14 +390,14 @@ function EstoqueTab({ from, to, reloadKey }: PeriodProps) {
     setExporting(true);
     try {
       if (kind === "alertas") {
-        await downloadCsv("/api/reports/stock/alerts?format=csv", "petflow_estoque.csv");
+        await downloadCsv("/api/reports/stock/alerts?format=csv", "akylla_estoque.csv");
       } else {
         const params = buildPeriodParams(from, to);
         if (type) params.set("type", type);
         params.set("format", "csv");
         await downloadCsv(
           `/api/reports/stock/movements?${params.toString()}`,
-          "petflow_movimentos.csv",
+          "akylla_movimentos.csv",
         );
       }
       setError(null);

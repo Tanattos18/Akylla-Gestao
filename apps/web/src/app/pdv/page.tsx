@@ -236,7 +236,7 @@ export default function PdvPage() {
   }
 
   function handlePrint(sale: SaleDto) {
-    const ok = printReceipt(sale, session?.company.name ?? "PetFlow");
+    const ok = printReceipt(sale, session?.company.name ?? "Akylla Gestão");
     if (!ok) {
       setPrintNotice("Não foi possível abrir a janela de impressão. Permita pop-ups para este site.");
     } else {

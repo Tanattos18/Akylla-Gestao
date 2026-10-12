@@ -66,7 +66,7 @@ export default function CadastroPage() {
     <div className="mx-auto max-w-md">
       <div className="rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
         <h2 className="mb-1 text-xl font-semibold text-slate-900">
-          Criar conta no PetFlow
+          Criar conta no Akylla Gestão
         </h2>
         <p className="mb-6 text-sm text-slate-500">
           Crie a empresa e o usuário administrador. Você entra automaticamente

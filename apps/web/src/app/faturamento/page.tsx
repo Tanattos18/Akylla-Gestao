@@ -85,7 +85,7 @@ export default function FaturamentoPage() {
   }
 
   async function handleRenew() {
-    if (!window.confirm("Renovar a assinatura do PetFlow (inicia novo período)?")) return;
+    if (!window.confirm("Renovar a assinatura no Akylla Gestão (inicia novo período)?")) return;
     setBusy(true);
     setNotice(null);
     setError(null);
@@ -111,7 +111,7 @@ export default function FaturamentoPage() {
         method: "POST",
         body: JSON.stringify(reason.trim() ? { reason: reason.trim() } : {}),
       });
-      setNotice("Assinatura do PetFlow cancelada.");
+      setNotice("Assinatura do Akylla Gestão cancelada.");
       await load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Falha ao cancelar.");
@@ -128,7 +128,7 @@ export default function FaturamentoPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-semibold text-slate-900">Faturamento do PetFlow</h2>
+          <h2 className="text-xl font-semibold text-slate-900">Faturamento do Akylla Gestão</h2>
           <p className="text-sm text-slate-500">
             Assinatura da sua empresa no SaaS · {session.company.name}
           </p>

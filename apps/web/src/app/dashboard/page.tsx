@@ -320,7 +320,7 @@ export default function DashboardPage() {
             <StatCard
               title="Agendamentos e serviços"
               period={periodLabel}
-              definition="Contagem de agendamentos por status no período, pela data e hora de início (Etapa 8)."
+              definition="Contagem de agendamentos por status no período, pela data e hora de início."
             >
               {summary.modules.servicesRealized.available && summary.services ? (
                 <>
