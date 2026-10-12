@@ -2,6 +2,42 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Akylla Gestão] - 2026-10-12 - Documentação — Módulo PDV
+
+### Adicionado
+
+- `docs/akylla/PDV.md`: **documento funcional do Ponto de Venda** —
+  fluxo da tela `/pdv`, API (`POST/GET /api/sales`,
+  `POST /api/sales/:id/cancel`), regras de negócio (preço no servidor,
+  idempotência por `clientRequestId`, lock de caixa → produtos,
+  snapshot de itens), modelo de dados (`Sale`/`SaleItem`), comprovante e
+  impressão de cupom, integração com caixa/estoque/financeiro,
+  permissões (cancelar = ADMIN), garantias de testes e limitações
+  conhecidas (L1–L9, sem NFC-e/adquirente/conciliação).
+
+## [Akylla Gestão] - 2026-10-12 - Redesign do painel de gestão (implementado)
+
+### Adicionado
+
+- Sidebar escura (slate-900) + Header com breadcrumb + AppShell
+  (`components/shell/`) — rotas de auth sem shell.
+- Design tokens `@theme` Tailwind v4: primária amber, sidebar, sucesso
+  teal, fonte Inter via `next/font/google`.
+- Componentes UI (`components/ui/`): Card, Button, Input/Textarea/
+  Select, Badge, StatCard, EmptyState, Skeleton, **ComboChart** (barras
+  + linha SVG), **DonutChart** (distribuição %), **Progress**.
+- Dashboard redesenhado inspirado no `DimersonJr/dashboard-supermercado`
+  (Power BI): 6 KPIs (Vendas, Pedidos, Ticket médio, Clientes novos, A
+  receber, A pagar), combo chart (vendas/dia + ticket médio/dia), donut
+  de formas de pagamento, saúde do caixa (entradas vs saídas), widgets
+  (Catálogo, Estoque, Agenda, WhatsApp).
+- `formatBrlCompact` para eixos de gráfico; alias `@/*` no tsconfig web.
+
+### Alterado
+
+- Migração `teal-*` → `primary-*` em 56 arquivos (~232 ocorrências).
+- `docs/akylla/REDESIGN_PAINEL.md` marcado como IMPLEMENTADO (R1–R6).
+
 ## [Akylla Gestão] - 2026-10-12 - Documentação — Redesign do painel (proposta)
 
 ### Adicionado
