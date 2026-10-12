@@ -3,42 +3,39 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+  TrendingUp,
+  ArrowDownLeft,
+  ArrowUpRight,
+  ShoppingCart,
+  Receipt,
+  Users,
+  Activity,
+  Package,
+  AlertTriangle,
+  BarChart3,
+  Calendar,
+  MessageCircle,
+} from "lucide-react";
 import { api } from "../../lib/api";
-import { formatBrl, formatDateTime } from "../../lib/format";
+import { formatBrl, formatBrlCompact, formatDateTime } from "../../lib/format";
 import { fetchSession, type Session } from "../../lib/session";
-import type { DashboardSummaryDto } from "../../lib/types";
-
-function StatCard({
-  title,
-  period,
-  definition,
-  children,
-  footer,
-}: {
-  title: string;
-  period?: string;
-  definition: string;
-  children: React.ReactNode;
-  footer?: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="mb-2 flex items-start justify-between gap-2">
-        <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-          {title}
-        </h4>
-        {period && (
-          <span className="whitespace-nowrap text-[11px] text-slate-400">{period}</span>
-        )}
-      </div>
-      <div className="flex-1">{children}</div>
-      <p className="mt-3 border-t border-slate-100 pt-2 text-xs text-slate-400">
-        {definition}
-      </p>
-      {footer}
-    </div>
-  );
-}
+import type { DashboardSummaryDto, FinancialSummaryDto } from "../../lib/types";
+import {
+  Card,
+  CardHeader,
+  CardBody,
+  StatCard,
+  Button,
+  Input,
+  Skeleton,
+  StatCardSkeleton,
+  EmptyState,
+  Badge,
+  ComboChart,
+  DonutChart,
+  Progress,
+} from "@/components/ui";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -47,6 +44,7 @@ export default function DashboardPage() {
   const [loadingData, setLoadingData] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<DashboardSummaryDto | null>(null);
+  const [financial, setFinancial] = useState<FinancialSummaryDto | null>(null);
   const [loadedAt, setLoadedAt] = useState<string | null>(null);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -62,17 +60,19 @@ export default function DashboardPage() {
     });
   }, [router]);
 
-  const loadSummary = useCallback(async () => {
+  const loadData = useCallback(async () => {
     setLoadingData(true);
     try {
       const params = new URLSearchParams();
       if (from) params.set("from", from);
       if (to) params.set("to", to);
       const query = params.toString();
-      const data = await api<DashboardSummaryDto>(
-        `/api/reports/summary${query ? `?${query}` : ""}`,
-      );
-      setSummary(data);
+      const [sumData, finData] = await Promise.all([
+        api<DashboardSummaryDto>(`/api/reports/summary${query ? `?${query}` : ""}`),
+        api<FinancialSummaryDto>("/api/financial/summary").catch(() => null),
+      ]);
+      setSummary(sumData);
+      setFinancial(finData);
       setLoadedAt(new Date().toISOString());
       setError(null);
     } catch (err) {
@@ -84,356 +84,416 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (session) {
-      void loadSummary();
+      void loadData();
     }
   }, [session]);
 
   function handlePeriod(event: FormEvent) {
     event.preventDefault();
-    void loadSummary();
+    void loadData();
   }
 
   if (loading || !session) {
-    return <p className="py-16 text-center text-sm text-slate-500">Carregando...</p>;
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+        </div>
+        <Skeleton className="h-64 w-full" />
+      </div>
+    );
   }
 
-  const inputClass =
-    "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none";
-  const periodLabel = summary
-    ? `${summary.period.from} a ${summary.period.to} (${summary.period.timezone})`
-    : "—";
+  const userName = session.user.name.split(" ")[0];
+  const periodLabel = summary ? `${summary.period.from} — ${summary.period.to}` : "";
 
-  const maxDayNet = summary
-    ? Math.max(
-        1,
-        ...summary.salesByDay.map((day) => Number(day.net)),
-      )
-    : 1;
-  const maxPaymentNet = summary
-    ? Math.max(1, ...summary.salesByPaymentMethod.map((item) => Number(item.net)))
-    : 1;
+  const comboData =
+    summary?.salesByDay.map((day) => ({
+      label: day.day,
+      bar: Number(day.net),
+      line: day.count > 0 ? Number(day.net) / day.count : null,
+    })) ?? [];
+
+  const donutData =
+    summary?.salesByPaymentMethod.map((item) => ({
+      label: item.label,
+      value: Number(item.net),
+    })) ?? [];
+
+  const entries = summary ? Number(summary.cash.entriesInCash) : 0;
+  const exits = summary ? Number(summary.cash.exitsInCash) : 0;
+  const cashFlowMax = Math.max(entries + exits, 1);
+
+  const ticketAverage = summary?.sales.ticketAverage ? Number(summary.sales.ticketAverage) : null;
+  const maxDayTicket = comboData.length > 0
+    ? Math.max(...comboData.map((d) => d.line ?? 0))
+    : null;
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      {/* Saudação + período */}
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold text-slate-900">Dashboard</h2>
-          <p className="text-sm text-slate-500">
-            Indicadores da operação — período aplicado:{" "}
-            <strong className="font-medium text-slate-700">{periodLabel}</strong>
+          <p className="text-[11px] font-medium uppercase tracking-widest text-slate-400">
+            Seu negócio em um olhar
+          </p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-900">
+            Visão geral
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Olá {userName}, vamos cuidar do que importa.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href="/relatorios"
-            className="rounded-md bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-800"
-          >
-            Relatórios
-          </Link>
-          <Link
-            href="/"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
-          >
-            Início
+        <div className="flex items-center gap-2">
+          {periodLabel && (
+            <span className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-500 shadow-sm">
+              {periodLabel}
+            </span>
+          )}
+          <Link href="/relatorios">
+            <Button variant="secondary" size="sm">
+              <BarChart3 className="h-4 w-4" />
+              Relatórios
+            </Button>
           </Link>
         </div>
       </div>
 
-      <form
-        onSubmit={handlePeriod}
-        className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-4"
-      >
-        <div>
-          <label htmlFor="dash-from" className="mb-1 block text-sm text-slate-700">
-            De
-          </label>
-          <input
-            id="dash-from"
-            type="date"
-            value={from}
-            onChange={(event) => setFrom(event.target.value)}
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label htmlFor="dash-to" className="mb-1 block text-sm text-slate-700">
-            Até
-          </label>
-          <input
-            id="dash-to"
-            type="date"
-            value={to}
-            onChange={(event) => setTo(event.target.value)}
-            className={inputClass}
-          />
-        </div>
-        <div className="flex items-end gap-2">
-          <button
-            type="submit"
-            disabled={loadingData}
-            className="flex-1 rounded-md bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
-          >
-            {loadingData ? "Atualizando..." : "Atualizar"}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setFrom("");
-              setTo("");
-            }}
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
-          >
-            Padrão 30 dias
-          </button>
-        </div>
-        <div className="flex items-end text-xs text-slate-500">
-          {loadedAt ? `Dados carregados em ${formatDateTime(loadedAt)}` : "Sem dados carregados"}
-        </div>
-      </form>
+      {/* Filtro de período */}
+      <Card>
+        <CardBody>
+          <form onSubmit={handlePeriod} className="flex flex-wrap items-end gap-3">
+            <div className="w-40">
+              <Input
+                id="dash-from"
+                type="date"
+                label="De"
+                value={from}
+                onChange={(e) => setFrom(e.target.value)}
+              />
+            </div>
+            <div className="w-40">
+              <Input
+                id="dash-to"
+                type="date"
+                label="Até"
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+              />
+            </div>
+            <Button type="submit" disabled={loadingData} size="md">
+              {loadingData ? "Atualizando..." : "Atualizar"}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setFrom("");
+                setTo("");
+              }}
+            >
+              Padrão 30 dias
+            </Button>
+            {loadedAt && (
+              <span className="ml-auto text-xs text-slate-400">
+                Atualizado {formatDateTime(loadedAt)}
+              </span>
+            )}
+          </form>
+        </CardBody>
+      </Card>
 
       {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </div>
       )}
 
-      {loadingData && !summary && (
-        <p className="py-8 text-center text-sm text-slate-500">Carregando indicadores...</p>
-      )}
-
-      {summary && (
+      {/* KPIs — 6 cards inspirados no dashboard de referência */}
+      {loadingData && !summary ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+        </div>
+      ) : summary ? (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             <StatCard
-              title="Vendas do período"
-              period={periodLabel}
-              definition="Líquido = Σ total de vendas concluídas; ticket médio = líquido ÷ quantidade de concluídas; cancelamentos ficam fora do líquido."
-            >
-              <p className="text-2xl font-semibold text-slate-900">
-                {formatBrl(summary.sales.net)}
-              </p>
-              <p className="mt-1 text-sm text-slate-600">
-                {summary.sales.completedCount} venda
-                {summary.sales.completedCount === 1 ? "" : "s"} concluída
-                {summary.sales.completedCount === 1 ? "" : "s"} · bruto{" "}
-                {formatBrl(summary.sales.gross)} · descontos{" "}
-                {formatBrl(summary.sales.discounts)}
-              </p>
-              <p className="mt-1 text-sm text-slate-600">
-                Ticket médio:{" "}
-                <strong className="font-medium text-slate-800">
-                  {summary.sales.ticketAverage === null
-                    ? "— (sem vendas)"
-                    : formatBrl(summary.sales.ticketAverage)}
-                </strong>
-              </p>
-              <p className="mt-1 text-sm text-red-600">
-                {summary.sales.cancelledCount} cancelada
-                {summary.sales.cancelledCount === 1 ? "" : "s"} ·{" "}
-                {formatBrl(summary.sales.cancelledTotal)}
-              </p>
-            </StatCard>
-
+              label="Vendas"
+              value={formatBrl(summary.sales.net)}
+              subtext={`${summary.sales.completedCount} concluída(s)`}
+              icon={<TrendingUp className="h-5 w-5" />}
+              iconBg="violet"
+            />
             <StatCard
-              title="Caixa"
-              period={periodLabel}
-              definition="Entradas/saídas do período consideram apenas dinheiro físico (inCash); saldo esperado é da sessão aberta, calculado no servidor."
-            >
-              <p className="mb-1">
-                <span
-                  className={
-                    summary.cash.openSession
-                      ? "rounded-full bg-teal-50 px-2 py-0.5 text-xs font-medium text-teal-700"
-                      : "rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500"
-                  }
-                >
-                  {summary.cash.openSession ? "Caixa aberto" : "Caixa fechado"}
-                </span>
-              </p>
-              {summary.cash.openSession && (
-                <p className="text-sm text-slate-600">
-                  Saldo esperado:{" "}
-                  <strong className="font-medium text-slate-800">
-                    {formatBrl(summary.cash.openSession.expectedBalance)}
-                  </strong>
-                </p>
-              )}
-              <p className="mt-1 text-sm text-slate-600">
-                Entradas {formatBrl(summary.cash.entriesInCash)} · saídas{" "}
-                {formatBrl(summary.cash.exitsInCash)} · líquido{" "}
-                {formatBrl(
-                  Number(summary.cash.entriesInCash) - Number(summary.cash.exitsInCash),
-                )}
-              </p>
-            </StatCard>
-
+              label="Pedidos"
+              value={String(summary.sales.completedCount)}
+              subtext={`${summary.sales.cancelledCount} cancelado(s)`}
+              icon={<ShoppingCart className="h-5 w-5" />}
+              iconBg="sky"
+            />
             <StatCard
-              title="Estoque"
-              period="situação atual"
-              definition="Alertas de produtos ativos: sem estoque = saldo zerado; estoque baixo = saldo abaixo do mínimo (exclui os zerados)."
-            >
-              <p className="text-2xl font-semibold text-red-600">
-                {summary.stock.outOfStockCount}
-              </p>
-              <p className="text-sm text-slate-600">produto(s) sem estoque</p>
-              <p className="mt-2 text-2xl font-semibold text-amber-600">
-                {summary.stock.lowStockCount}
-              </p>
-              <p className="text-sm text-slate-600">produto(s) com estoque baixo</p>
-            </StatCard>
-
+              label="Ticket médio"
+              value={ticketAverage != null ? formatBrl(ticketAverage) : "—"}
+              subtext={
+                maxDayTicket != null
+                  ? `Melhor dia: ${formatBrl(maxDayTicket)}`
+                  : "Valor médio por venda"
+              }
+              icon={<Receipt className="h-5 w-5" />}
+              iconBg="amber"
+            />
             <StatCard
-              title="Novos clientes"
-              period={periodLabel}
-              definition="Contagem de clientes criados no período, pela data de cadastro (UTC)."
-            >
-              <p className="text-2xl font-semibold text-slate-900">
-                {summary.clients.newClients}
-              </p>
-              <p className="text-sm text-slate-600">cliente(s) cadastrado(s)</p>
-            </StatCard>
-
+              label="Clientes novos"
+              value={String(summary.clients.newClients)}
+              subtext="no período"
+              icon={<Users className="h-5 w-5" />}
+              iconBg="teal"
+            />
             <StatCard
-              title="WhatsApp"
-              period={periodLabel}
-              definition="Contagem pelo status atual das mensagens criadas no período — 'aceita pela API' não significa 'entregue'."
-            >
-              <p className="text-2xl font-semibold text-slate-900">
-                {summary.whatsapp.total}
-              </p>
-              <p className="text-sm text-slate-600">mensagem(ns) no período</p>
-              <p className="mt-1 text-sm text-slate-600">
-                Entregues: <strong className="font-medium">{summary.whatsapp.delivered}</strong>{" "}
-                · Lidas: <strong className="font-medium">{summary.whatsapp.read}</strong> ·
-                Falhas:{" "}
-                <strong className="font-medium text-red-600">
-                  {summary.whatsapp.failed}
-                </strong>{" "}
-                · Pendentes: {summary.whatsapp.pending}
-              </p>
-            </StatCard>
-
+              label="A receber"
+              value={financial ? formatBrl(financial.openReceivablesTotal) : "—"}
+              subtext={
+                financial
+                  ? `${financial.openReceivablesCount} título(s)`
+                  : "indisponível"
+              }
+              icon={<ArrowDownLeft className="h-5 w-5" />}
+              iconBg="amber"
+            />
             <StatCard
-              title="Agendamentos e serviços"
-              period={periodLabel}
-              definition="Contagem de agendamentos por status no período, pela data e hora de início."
-            >
-              {summary.modules.servicesRealized.available && summary.services ? (
-                <>
-                  <p className="text-2xl font-semibold text-slate-900">
-                    {summary.services.completed}
-                  </p>
-                  <p className="text-sm text-slate-600">serviço(s) concluído(s)</p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    Confirmados: <strong className="font-medium">{summary.services.confirmed}</strong>{" "}
-                    · Agendados: <strong className="font-medium">{summary.services.scheduled}</strong>
-                  </p>
-                  <p className="text-sm text-slate-600">
-                    Cancelados: {summary.services.cancelled} · Não compareceu:{" "}
-                    {summary.services.noShow}
-                  </p>
-                </>
-              ) : (
-                <>
-                  <span className="inline-block rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-                    Módulo não disponível
-                  </span>
-                  <p className="mt-2 text-sm text-slate-500">
-                    {summary.modules.servicesRealized.reason ??
-                      "Contagens de agendamentos indisponíveis."}
-                  </p>
-                </>
-              )}
-            </StatCard>
+              label="A pagar"
+              value={financial ? formatBrl(financial.openPayablesTotal) : "—"}
+              subtext={
+                financial
+                  ? `${financial.openPayablesCount} título(s)`
+                  : "indisponível"
+              }
+              icon={<ArrowUpRight className="h-5 w-5" />}
+              iconBg="red"
+            />
           </div>
 
-          <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-                Vendas concluídas por dia
-              </h3>
-              <span className="text-xs text-slate-400">
-                {periodLabel} · valores líquidos (R$)
-              </span>
-            </div>
-            {summary.salesByDay.length === 0 ? (
-              <p className="py-6 text-center text-sm text-slate-400">
-                Nenhuma venda concluída no período selecionado.
-              </p>
-            ) : (
-              <div className="flex h-40 items-end gap-1">
-                {summary.salesByDay.map((day) => (
-                  <div
-                    key={day.day}
-                    className="flex h-full flex-1 items-end"
-                    title={`${day.day}: ${day.count} venda(s) — ${formatBrl(day.net)}`}
-                  >
-                    <div
-                      className="w-full rounded-t bg-teal-600 hover:bg-teal-700"
-                      style={{
-                        height: `${Math.max(
-                          4,
-                          (Number(day.net) / maxDayNet) * 100,
-                        )}%`,
-                      }}
-                    />
-                  </div>
-                ))}
+          {/* Combo chart + Donut */}
+          <div className="grid gap-4 lg:grid-cols-3">
+            <Card className="lg:col-span-2">
+              <CardHeader
+                subtitle="Vendas (barras) e ticket médio por dia (linha)"
+                title="Vendas e ticket médio"
+              />
+              <CardBody>
+                {comboData.length === 0 ? (
+                  <EmptyState
+                    icon={<Activity className="h-6 w-6" />}
+                    title="Ainda não há atividade"
+                    description="Quando houver vendas concluídas, elas aparecerão aqui."
+                  />
+                ) : (
+                  <ComboChart
+                    data={comboData}
+                    barLabel="Vendas"
+                    lineLabel="Ticket médio"
+                    formatBar={formatBrlCompact}
+                    formatLine={formatBrlCompact}
+                  />
+                )}
+              </CardBody>
+              <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3 text-xs text-slate-400">
+                <span>Valores baseados nos registros da sua empresa</span>
+                {periodLabel && <span>{periodLabel}</span>}
               </div>
-            )}
-            {summary.salesByDay.length > 0 && (
-              <div className="mt-2 flex justify-between text-[11px] text-slate-400">
-                <span>{summary.salesByDay[0].day}</span>
-                <span>
-                  {summary.salesByDay[summary.salesByDay.length - 1].day}
-                </span>
-              </div>
-            )}
-          </section>
+            </Card>
 
-          <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-                Vendas por forma de pagamento
-              </h3>
-              <span className="text-xs text-slate-400">
-                {periodLabel} · apenas concluídas
-              </span>
+            <Card>
+              <CardHeader
+                subtitle="Participação no faturamento"
+                title="Vendas por pagamento"
+              />
+              <CardBody>
+                {donutData.length === 0 ? (
+                  <EmptyState
+                    icon={<BarChart3 className="h-6 w-6" />}
+                    title="Sem vendas no período"
+                    description="A distribuição por forma de pagamento aparecerá aqui."
+                  />
+                ) : (
+                  <DonutChart data={donutData} size={150} thickness={20} />
+                )}
+              </CardBody>
+            </Card>
+          </div>
+
+          {/* Saúde do caixa + widgets */}
+          <div className="grid gap-4 lg:grid-cols-3">
+            <Card>
+              <CardHeader
+                subtitle="Entradas vs saídas no período"
+                title="Saúde do caixa"
+              />
+              <CardBody className="space-y-4">
+                <div className="grid grid-cols-2 gap-3 text-center">
+                  <div className="rounded-lg bg-teal-50 p-3">
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-teal-600">
+                      Entradas
+                    </p>
+                    <p className="mt-0.5 text-lg font-semibold text-teal-700">
+                      {formatBrl(entries)}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-red-50 p-3">
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-red-500">
+                      Saídas
+                    </p>
+                    <p className="mt-0.5 text-lg font-semibold text-red-600">
+                      {formatBrl(exits)}
+                    </p>
+                  </div>
+                </div>
+                <Progress
+                  label="Fluxo positivo"
+                  value={entries}
+                  max={cashFlowMax}
+                  valueLabel={`${Math.round((entries / cashFlowMax) * 100)}% entradas`}
+                  color={entries >= exits ? "success" : "danger"}
+                />
+                <div className="rounded-lg bg-slate-50 p-3 text-center">
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-slate-400">
+                    Saldo do período
+                  </p>
+                  <p className="mt-0.5 text-xl font-semibold text-slate-900">
+                    {formatBrl(entries - exits)}
+                  </p>
+                  {summary.cash.openSession && (
+                    <p className="mt-1 text-xs text-slate-500">
+                      Caixa aberto — saldo esperado{" "}
+                      {formatBrl(summary.cash.openSession.expectedBalance)}
+                    </p>
+                  )}
+                </div>
+              </CardBody>
+            </Card>
+
+            <div className="space-y-4">
+              <Card>
+                <CardBody>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-50 text-primary-600">
+                      <Package className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-medium uppercase tracking-wider text-slate-400">
+                        Catálogo
+                      </p>
+                      <p className="text-lg font-semibold text-slate-900">
+                        {summary.stock.outOfStockCount + summary.stock.lowStockCount === 0
+                          ? "Tudo certo"
+                          : `${summary.stock.outOfStockCount + summary.stock.lowStockCount} produto(s)`}
+                      </p>
+                      <Link
+                        href="/produtos"
+                        className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary-600 hover:text-primary-700"
+                      >
+                        Ver produtos →
+                      </Link>
+                    </div>
+                  </div>
+                </CardBody>
+              </Card>
+
+              <Card className={summary.stock.lowStockCount > 0 ? "border-amber-200 bg-amber-50/50" : ""}>
+                <CardBody>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 text-amber-600">
+                      <AlertTriangle className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-medium uppercase tracking-wider text-slate-400">
+                        Estoque atenção
+                      </p>
+                      <p className="text-lg font-semibold text-slate-900">
+                        {summary.stock.lowStockCount} produto(s)
+                      </p>
+                      <p className="text-xs text-slate-500">abaixo do mínimo</p>
+                      <Link
+                        href="/produtos"
+                        className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-amber-700 hover:text-amber-800"
+                      >
+                        Conferir estoque →
+                      </Link>
+                    </div>
+                  </div>
+                </CardBody>
+              </Card>
             </div>
-            {summary.salesByPaymentMethod.length === 0 ? (
-              <p className="py-6 text-center text-sm text-slate-400">
-                Nenhuma venda concluída no período selecionado.
-              </p>
-            ) : (
-              <ul className="space-y-3">
-                {summary.salesByPaymentMethod.map((item) => (
-                  <li key={item.paymentMethod}>
-                    <div className="mb-1 flex justify-between text-sm">
-                      <span className="text-slate-700">
-                        {item.label} ({item.count})
-                      </span>
-                      <span className="font-medium text-slate-900">
-                        {formatBrl(item.net)}
-                      </span>
+
+            <div className="space-y-4">
+              <Card>
+                <CardBody>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-50 text-sky-600">
+                      <Calendar className="h-5 w-5" />
                     </div>
-                    <div className="h-2 rounded-full bg-slate-100">
-                      <div
-                        className="h-2 rounded-full bg-teal-600"
-                        style={{
-                          width: `${Math.max(
-                            2,
-                            (Number(item.net) / maxPaymentNet) * 100,
-                          )}%`,
-                        }}
-                      />
+                    <div>
+                      <p className="text-[11px] font-medium uppercase tracking-wider text-slate-400">
+                        Agendamentos
+                      </p>
+                      {summary.modules.servicesRealized.available && summary.services ? (
+                        <p className="text-lg font-semibold text-slate-900">
+                          {summary.services.completed} concluído(s)
+                        </p>
+                      ) : (
+                        <Badge color="amber">Módulo indisponível</Badge>
+                      )}
+                      <Link
+                        href="/agenda"
+                        className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-sky-600 hover:text-sky-700"
+                      >
+                        Ver agenda →
+                      </Link>
                     </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+                  </div>
+                </CardBody>
+              </Card>
+
+              <Card>
+                <CardBody>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                      <MessageCircle className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-medium uppercase tracking-wider text-slate-400">
+                        WhatsApp
+                      </p>
+                      <p className="text-lg font-semibold text-slate-900">
+                        {summary.whatsapp.pending} pendente(s)
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {summary.whatsapp.sent} enviada(s) · {summary.whatsapp.failed} falha(s)
+                      </p>
+                      <Link
+                        href="/whatsapp"
+                        className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-emerald-600 hover:text-emerald-700"
+                      >
+                        Ver mensagens →
+                      </Link>
+                    </div>
+                  </div>
+                </CardBody>
+              </Card>
+            </div>
+          </div>
         </>
-      )}
+      ) : null}
     </div>
   );
 }

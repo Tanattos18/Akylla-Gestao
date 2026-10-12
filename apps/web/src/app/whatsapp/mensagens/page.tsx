@@ -31,8 +31,8 @@ const statusBadgeClass: Record<WhatsAppMessageStatus, string> = {
   PROCESSING: "rounded-full bg-sky-50 px-2 py-0.5 text-xs text-sky-700",
   ACCEPTED: "rounded-full bg-sky-50 px-2 py-0.5 text-xs text-sky-700",
   SENT: "rounded-full bg-indigo-50 px-2 py-0.5 text-xs text-indigo-700",
-  DELIVERED: "rounded-full bg-teal-50 px-2 py-0.5 text-xs text-teal-700",
-  READ: "rounded-full bg-teal-100 px-2 py-0.5 text-xs text-teal-800",
+  DELIVERED: "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700",
+  READ: "rounded-full bg-primary-100 px-2 py-0.5 text-xs text-primary-800",
   FAILED: "rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-700",
   CANCELLED: "rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700",
 };
@@ -183,7 +183,7 @@ export default function WhatsAppMensagensPage() {
   }
 
   const inputClass =
-    "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none";
+    "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none";
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
@@ -218,7 +218,7 @@ export default function WhatsAppMensagensPage() {
       </div>
 
       {notice && (
-        <div className="rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm text-teal-800">
+        <div className="rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-sm text-primary-800">
           {notice}
         </div>
       )}
@@ -293,7 +293,7 @@ export default function WhatsAppMensagensPage() {
               <button
                 type="submit"
                 disabled={sending}
-                className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
+                className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
               >
                 {sending ? "Enfileirando..." : "Enviar mensagem"}
               </button>
@@ -313,7 +313,7 @@ export default function WhatsAppMensagensPage() {
             setStatusFilter(event.target.value);
             setPage(1);
           }}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none"
+          className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
         >
           {statusFilterOptions.map((option) => (
             <option key={option || "all"} value={option}>
@@ -328,7 +328,7 @@ export default function WhatsAppMensagensPage() {
             setPage(1);
           }}
           placeholder="Buscar por telefone ou cliente"
-          className="w-full max-w-sm rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none"
+          className="w-full max-w-sm rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
         />
       </div>
 
@@ -376,7 +376,7 @@ export default function WhatsAppMensagensPage() {
                   <div className="flex gap-3 text-xs font-medium">
                     <Link
                       href={`/whatsapp/mensagens/${message.id}`}
-                      className="text-teal-700 hover:underline"
+                      className="text-primary-700 hover:underline"
                     >
                       Detalhe
                     </Link>

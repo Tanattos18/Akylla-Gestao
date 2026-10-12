@@ -22,7 +22,7 @@ const pageSize = 20;
 
 const statusBadgeClass: Record<AppointmentStatus, string> = {
   SCHEDULED: "rounded-full bg-sky-50 px-2 py-0.5 text-xs text-sky-700",
-  CONFIRMED: "rounded-full bg-teal-50 px-2 py-0.5 text-xs text-teal-700",
+  CONFIRMED: "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700",
   COMPLETED: "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600",
   CANCELLED: "rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-700",
   NO_SHOW: "rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700",
@@ -97,7 +97,7 @@ export default function AgendaPage() {
   }
 
   const inputClass =
-    "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none";
+    "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none";
   const pages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
@@ -112,7 +112,7 @@ export default function AgendaPage() {
         <div className="flex gap-2">
           <Link
             href="/agenda/novo"
-            className="rounded-md bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-800"
+            className="rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
           >
             Novo agendamento
           </Link>
@@ -202,7 +202,7 @@ export default function AgendaPage() {
           </div>
           <button
             type="submit"
-            className="rounded-md bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-800"
+            className="rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
           >
             Filtrar
           </button>
@@ -241,7 +241,7 @@ export default function AgendaPage() {
                 <td className="px-4 py-3 text-right">
                   <Link
                     href={`/agenda/${appointment.id}`}
-                    className="text-sm text-teal-700 hover:underline"
+                    className="text-sm text-primary-700 hover:underline"
                   >
                     Ver detalhe
                   </Link>

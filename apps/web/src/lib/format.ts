@@ -6,6 +6,17 @@ export function formatBrl(value: string | number | null | undefined): string {
   });
 }
 
+/** Formatação compacta para eixos de gráfico: "R$ 1,2 mil" / "R$ 3,4 mi". */
+export function formatBrlCompact(value: number): string {
+  if (Math.abs(value) >= 1_000_000) {
+    return `R$ ${(value / 1_000_000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mi`;
+  }
+  if (Math.abs(value) >= 1_000) {
+    return `R$ ${(value / 1_000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mil`;
+  }
+  return `R$ ${value.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`;
+}
+
 export function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString("pt-BR");
 }

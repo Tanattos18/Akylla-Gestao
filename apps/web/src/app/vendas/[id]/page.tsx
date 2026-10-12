@@ -123,7 +123,7 @@ export default function VendaDetalhePage() {
             <span
               className={
                 sale.status === "COMPLETED"
-                  ? "rounded-full bg-teal-50 px-2 py-0.5 text-xs font-medium text-teal-700"
+                  ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700"
                   : "rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700"
               }
             >
@@ -140,7 +140,7 @@ export default function VendaDetalhePage() {
           <button
             type="button"
             onClick={handlePrint}
-            className="rounded-md border border-teal-700 px-3 py-2 text-sm font-medium text-teal-800 hover:bg-teal-100"
+            className="rounded-md border border-primary-600 px-3 py-2 text-sm font-medium text-primary-800 hover:bg-primary-100"
           >
             Imprimir comprovante
           </button>
@@ -166,7 +166,7 @@ export default function VendaDetalhePage() {
       </div>
 
       {notice && (
-        <div className="rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm text-teal-800">
+        <div className="rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-sm text-primary-800">
           {notice}
         </div>
       )}

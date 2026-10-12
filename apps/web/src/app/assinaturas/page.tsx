@@ -16,7 +16,7 @@ import {
 const PAGE_SIZE = 20;
 
 const statusBadge: Record<SubscriptionStatus, string> = {
-  ACTIVE: "rounded-full bg-teal-50 px-2 py-0.5 text-xs text-teal-700",
+  ACTIVE: "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700",
   EXPIRED: "rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700",
   CANCELLED: "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500",
 };
@@ -91,7 +91,7 @@ export default function AssinaturasPage() {
           {isAdmin && (
             <Link
               href="/assinaturas/nova"
-              className="rounded-md bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-800"
+              className="rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
             >
               Nova assinatura
             </Link>
@@ -122,7 +122,7 @@ export default function AssinaturasPage() {
             setPage(1);
             setStatus(event.target.value);
           }}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none"
+          className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
         >
           <option value="">Todos</option>
           <option value="ACTIVE">Ativa</option>
@@ -136,7 +136,7 @@ export default function AssinaturasPage() {
             setSearch(event.target.value);
           }}
           placeholder="Buscar por cliente ou plano"
-          className="w-full max-w-sm rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none"
+          className="w-full max-w-sm rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
         />
       </div>
 
@@ -157,7 +157,7 @@ export default function AssinaturasPage() {
                 <td className="px-4 py-3">
                   <Link
                     href={`/assinaturas/${subscription.id}`}
-                    className="font-medium text-slate-800 hover:text-teal-700 hover:underline"
+                    className="font-medium text-slate-800 hover:text-primary-700 hover:underline"
                   >
                     {subscription.client.name}
                   </Link>

@@ -1,11 +1,11 @@
-# Redesign do painel — Akylla Gestão (proposta visual)
+# Redesign do painel — Akylla Gestão
 
-> **Objetivo:** evoluir o visual e a estrutura do painel de gestão para um
-> layout moderno com sidebar fixa, header com breadcrumb, cards de KPI e
-> organização por módulos — sem alterar regra de negócio nem API.
+> **Status: IMPLEMENTADO** (2026-10-12). Todas as decisões R1–R6 foram
+> aprovadas pelo proprietário e o redesign foi aplicado em uma única
+> entrega (decisão R6: "tudo de uma vez").
 >
-> **Status:** proposta — requer aprovação do proprietário antes de
-> implementar. Nenhum código foi alterado.
+> Aprovado: R1=Amber · R2=Slate-900 · R3=Inter · R4=Home separada ·
+> R5=Lucide React · R6=Tudo de uma vez.
 
 ---
 
@@ -276,15 +276,46 @@ reutilizáveis:
 
 ---
 
-## 11. Aprovação necessária
+## 11. Decisões aprovadas e implementação
 
-| # | Decisão | Opções | Recomendação |
+| # | Decisão | Escolha do proprietário | Status |
 |---|---|---|---|
-| R1 | Cor primária | Amber (referência) · manter Teal · outra | **Amber** como marca + Teal como sucesso |
-| R2 | Sidebar escura | Slate-900 (#0f172a) · preto puro · outra | **Slate-900** (menos pesado que preto) |
-| R3 | Fonte | Inter · Geist · manter system-ui | **Inter** (legibilidade + padronização) |
-| R4 | Home vira dashboard | Sim (hub redundante) · manter home separada | **Manter home** como hub de módulos; dashboard como "Visão geral" |
-| R5 | Ícones | Lucide React · SVG inline · Heroicons | **Lucide React** ( leve, tree-shakable, ~30kB ) |
-| R6 | Implementar por fases | Sim (recomendado) · tudo de uma vez | **Por fases** (reduz risco; Fase 1–2 são independentes) |
+| R1 | Cor primária | **Amber / laranja** | ✅ Implementado (`@theme` primary-*) |
+| R2 | Sidebar escura | **Slate-900** (#0f172a) | ✅ Implementado (`--color-sidebar`) |
+| R3 | Fonte | **Inter** | ✅ Implementado (`next/font/google`) |
+| R4 | Home vs Dashboard | **Manter separadas** | ✅ Home = hub; Dashboard = Visão geral |
+| R5 | Ícones | **Lucide React** | ✅ Instalado e usado no Sidebar/Header/Dashboard |
+| R6 | Estratégia | **Tudo de uma vez** | ✅ Entrega única |
 
-> **Aguardando aprovação do proprietário para iniciar a Fase 1.**
+### O que foi entregue
+
+- `globals.css`: `@theme` Tailwind v4 com tokens primary (amber),
+  sidebar, success (teal), superfícies e fonte Inter.
+- `components/ui/`: Card, Button, Input/Textarea/Select, Badge,
+  StatCard, EmptyState, Skeleton, **ComboChart** (barras + linha SVG),
+  **DonutChart** (distribuição % SVG), **Progress** (barra de progresso),
+  (+ barrel index).
+- `components/shell/`: Sidebar (escura, navegação agrupada, empresa,
+  ajuda, usuário/logout), Header (breadcrumb + data + avatar),
+  AppShell (fetch sessão + módulos, layout condicional para rotas de
+  auth).
+- `layout.tsx`: Inter + AppShell (rotas de auth ficam sem sidebar).
+- `/dashboard` redesenhado com base no dashboard de referência
+  (`DimersonJr/dashboard-supermercado`):
+  - **6 KPI cards** (Vendas, Pedidos, Ticket médio, Clientes novos,
+    A receber, A pagar) — linha única no topo como no Power BI.
+  - **Combo chart**: barras (vendas/dia) + linha (ticket médio/dia) —
+    inspirado no "Ticket Médio Mês" do referência.
+  - **Donut**: distribuição % das vendas por forma de pagamento —
+    inspirado no "Distribuição de Pedidos por País".
+  - **Saúde do caixa**: entradas vs saídas com barra de progresso —
+    inspirado no "Desempenho do Ticket Médio" (gauge).
+  - Widgets: Catálogo, Estoque, Agenda, **WhatsApp** (pendentes).
+  - Skeleton loading, empty states, filtro de período.
+- Migração `teal-*` → `primary-*` em 56 arquivos (~232 ocorrências).
+- Alias `@/*` no tsconfig do web.
+- `formatBrlCompact` para eixos de gráfico ("R$ 1,2 mil").
+
+### Validações
+
+- lint 0 · typecheck OK · **509/509 testes** · build OK.

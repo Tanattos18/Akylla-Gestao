@@ -249,12 +249,12 @@ export default function PdvPage() {
   }
 
   const inputClass =
-    "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none";
+    "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none";
 
   if (completedSale) {
     return (
       <div className="space-y-6">
-        <div className="rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm text-teal-800">
+        <div className="rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-sm text-primary-800">
           Venda registrada com sucesso! Total R$ {Number(completedSale.total).toFixed(2)}.
         </div>
         {printNotice && (
@@ -267,7 +267,7 @@ export default function PdvPage() {
           <button
             type="button"
             onClick={() => handlePrint(completedSale)}
-            className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800"
+            className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
           >
             Imprimir comprovante
           </button>
@@ -328,7 +328,7 @@ export default function PdvPage() {
           </span>
           <Link
             href="/caixa"
-            className="rounded-md bg-teal-700 px-3 py-1.5 font-medium text-white hover:bg-teal-800"
+            className="rounded-md bg-primary-600 px-3 py-1.5 font-medium text-white hover:bg-primary-700"
           >
             Abrir caixa
           </Link>
@@ -370,7 +370,7 @@ export default function PdvPage() {
                     type="button"
                     onClick={() => addToCart(product)}
                     disabled={Number(product.stockQuantity) <= 0}
-                    className="shrink-0 rounded-md border border-teal-700 px-3 py-1 text-xs font-medium text-teal-800 hover:bg-teal-100 disabled:opacity-40"
+                    className="shrink-0 rounded-md border border-primary-600 px-3 py-1 text-xs font-medium text-primary-800 hover:bg-primary-100 disabled:opacity-40"
                   >
                     {Number(product.stockQuantity) <= 0 ? "Sem saldo" : "Adicionar"}
                   </button>
@@ -522,7 +522,7 @@ export default function PdvPage() {
           <button
             type="submit"
             disabled={saving || cart.length === 0 || cashOpen === false}
-            className="w-full rounded-md bg-teal-700 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-60"
+            className="w-full rounded-md bg-primary-600 px-4 py-3 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-60"
           >
             {saving ? "Finalizando..." : cashOpen === false ? "Caixa fechado" : "Finalizar venda"}
           </button>

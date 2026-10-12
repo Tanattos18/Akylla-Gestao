@@ -89,7 +89,7 @@ export default function FecharCaixaPage() {
   }
 
   const inputClass =
-    "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none";
+    "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none";
 
   if (result) {
     const difference = Number(result.differenceBalance);
@@ -112,7 +112,7 @@ export default function FecharCaixaPage() {
           <div className="flex justify-between border-t border-slate-100 pt-2 text-slate-600">
             <span>Diferença</span>
             <span
-              className={`font-semibold ${difference === 0 ? "text-teal-700" : "text-red-700"}`}
+              className={`font-semibold ${difference === 0 ? "text-primary-700" : "text-red-700"}`}
             >
               R$ {difference.toFixed(2)}
             </span>
@@ -121,13 +121,13 @@ export default function FecharCaixaPage() {
         <div className="flex justify-center gap-2">
           <Link
             href="/caixa"
-            className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800"
+            className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
           >
             Voltar ao caixa
           </Link>
           <Link
             href="/financeiro"
-            className="rounded-md border border-teal-700 px-4 py-2 text-sm font-medium text-teal-800 hover:bg-teal-100"
+            className="rounded-md border border-primary-600 px-4 py-2 text-sm font-medium text-primary-800 hover:bg-primary-100"
           >
             Ver resumo financeiro
           </Link>
@@ -140,7 +140,7 @@ export default function FecharCaixaPage() {
     <div className="mx-auto max-w-lg space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-slate-900">Fechar caixa</h2>
-        <Link href="/caixa" className="text-sm text-teal-700 hover:underline">
+        <Link href="/caixa" className="text-sm text-primary-700 hover:underline">
           Voltar
         </Link>
       </div>
@@ -162,7 +162,7 @@ export default function FecharCaixaPage() {
             </div>
             <div className="flex justify-between text-slate-600">
               <span>Entradas (dinheiro)</span>
-              <span className="font-medium text-teal-700">
+              <span className="font-medium text-primary-700">
                 + R$ {Number(cash.entriesTotal).toFixed(2)}
               </span>
             </div>

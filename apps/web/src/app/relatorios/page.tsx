@@ -35,7 +35,7 @@ const tabs: Array<{ id: Tab; label: string }> = [
 ];
 
 const inputClass =
-  "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none";
+  "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none";
 const secondaryButton =
   "rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50";
 
@@ -298,7 +298,7 @@ function VendasTab({ from, to, reloadKey }: PeriodProps) {
                   <span
                     className={
                       sale.status === "COMPLETED"
-                        ? "rounded-full bg-teal-50 px-2 py-0.5 text-xs text-teal-700"
+                        ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700"
                         : "rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-700"
                     }
                   >
@@ -416,7 +416,7 @@ function EstoqueTab({ from, to, reloadKey }: PeriodProps) {
           onClick={() => setView("alertas")}
           className={
             view === "alertas"
-              ? "rounded-md bg-teal-700 px-3 py-2 text-sm font-medium text-white"
+              ? "rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white"
               : secondaryButton
           }
         >
@@ -427,7 +427,7 @@ function EstoqueTab({ from, to, reloadKey }: PeriodProps) {
           onClick={() => setView("movimentos")}
           className={
             view === "movimentos"
-              ? "rounded-md bg-teal-700 px-3 py-2 text-sm font-medium text-white"
+              ? "rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white"
               : secondaryButton
           }
         >
@@ -775,7 +775,7 @@ function CaixaTab({ from, to, reloadKey }: PeriodProps) {
           <span className="text-xs font-semibold uppercase text-slate-500">
             Movimentações do período
           </span>
-          <Link href="/caixa/movimentos" className="text-xs text-teal-700 hover:underline">
+          <Link href="/caixa/movimentos" className="text-xs text-primary-700 hover:underline">
             Ver histórico completo
           </Link>
         </div>
@@ -930,7 +930,7 @@ function WhatsAppTab({ from, to, reloadKey }: PeriodProps) {
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-xs uppercase text-slate-400">Entregues / lidas</p>
-            <p className="text-2xl font-semibold text-teal-700">
+            <p className="text-2xl font-semibold text-primary-700">
               {data.states.delivered} / {data.states.read}
             </p>
             <p className="text-sm text-slate-600">
@@ -1064,7 +1064,7 @@ export default function RelatoriosPage() {
         <div className="flex gap-2">
           <Link
             href="/dashboard"
-            className="rounded-md bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-800"
+            className="rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
           >
             Dashboard
           </Link>
@@ -1108,7 +1108,7 @@ export default function RelatoriosPage() {
         <div className="flex items-end gap-2">
           <button
             type="submit"
-            className="rounded-md bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-800"
+            className="rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
           >
             Aplicar período
           </button>
@@ -1140,7 +1140,7 @@ export default function RelatoriosPage() {
             onClick={() => setTab(item.id)}
             className={
               tab === item.id
-                ? "rounded-md bg-teal-700 px-3 py-2 text-sm font-medium text-white"
+                ? "rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white"
                 : secondaryButton
             }
           >

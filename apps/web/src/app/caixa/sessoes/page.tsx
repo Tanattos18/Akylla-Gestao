@@ -64,7 +64,7 @@ export default function SessoesCaixaPage() {
         <div className="flex gap-2">
           <Link
             href="/caixa"
-            className="rounded-md border border-teal-700 px-3 py-2 text-sm font-medium text-teal-800 hover:bg-teal-100"
+            className="rounded-md border border-primary-600 px-3 py-2 text-sm font-medium text-primary-800 hover:bg-primary-100"
           >
             Caixa
           </Link>
@@ -112,7 +112,7 @@ export default function SessoesCaixaPage() {
                   <span
                     className={
                       item.status === "OPEN"
-                        ? "rounded-full bg-teal-50 px-2 py-0.5 text-xs text-teal-700"
+                        ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700"
                         : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600"
                     }
                   >
@@ -135,7 +135,7 @@ export default function SessoesCaixaPage() {
                     <span
                       className={
                         Number(item.difference) === 0
-                          ? "text-teal-700"
+                          ? "text-primary-700"
                           : "font-medium text-red-700"
                       }
                     >
@@ -148,7 +148,7 @@ export default function SessoesCaixaPage() {
                 <td className="px-4 py-3 text-right">
                   <Link
                     href={`/caixa/movimentos?sessionId=${item.id}`}
-                    className="text-sm text-teal-700 hover:underline"
+                    className="text-sm text-primary-700 hover:underline"
                   >
                     Movimentações
                   </Link>

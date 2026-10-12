@@ -92,7 +92,7 @@ export default function CadastroPage() {
             autoComplete="organization"
             value={companyName}
             onChange={(event) => setCompanyName(event.target.value)}
-            className="mb-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600"
+            className="mb-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             aria-invalid={Boolean(fieldErrors.companyName)}
           />
           {fieldErrors.companyName && (
@@ -109,7 +109,7 @@ export default function CadastroPage() {
             autoComplete="name"
             value={name}
             onChange={(event) => setName(event.target.value)}
-            className="mb-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600"
+            className="mb-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             aria-invalid={Boolean(fieldErrors.name)}
           />
           {fieldErrors.name && (
@@ -126,7 +126,7 @@ export default function CadastroPage() {
             autoComplete="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="mb-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600"
+            className="mb-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             aria-invalid={Boolean(fieldErrors.email)}
           />
           {fieldErrors.email && (
@@ -143,7 +143,7 @@ export default function CadastroPage() {
             autoComplete="new-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="mb-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600"
+            className="mb-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             aria-invalid={Boolean(fieldErrors.password)}
           />
           {fieldErrors.password && (
@@ -160,7 +160,7 @@ export default function CadastroPage() {
             autoComplete="new-password"
             value={confirm}
             onChange={(event) => setConfirm(event.target.value)}
-            className="mb-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600"
+            className="mb-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             aria-invalid={Boolean(fieldErrors.confirm)}
           />
           {fieldErrors.confirm && (
@@ -171,7 +171,7 @@ export default function CadastroPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Criando conta..." : "Criar conta"}
           </button>
@@ -179,7 +179,7 @@ export default function CadastroPage() {
 
         <p className="mt-4 text-center text-sm text-slate-500">
           Já tem conta?{" "}
-          <Link href="/login" className="text-teal-700 hover:underline">
+          <Link href="/login" className="text-primary-700 hover:underline">
             Entrar
           </Link>
         </p>

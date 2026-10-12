@@ -77,7 +77,7 @@ export default function LoginPage() {
             autoComplete="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="mb-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600"
+            className="mb-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             aria-invalid={Boolean(fieldErrors.email)}
           />
           {fieldErrors.email && <p className="mb-3 text-xs text-red-600">{fieldErrors.email}</p>}
@@ -92,7 +92,7 @@ export default function LoginPage() {
             autoComplete="current-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="mb-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600"
+            className="mb-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             aria-invalid={Boolean(fieldErrors.password)}
           />
           {fieldErrors.password && (
@@ -103,7 +103,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Entrando..." : "Entrar"}
           </button>
@@ -112,14 +112,14 @@ export default function LoginPage() {
         <p className="mt-4 text-center text-sm text-slate-500">
           <Link
             href="/redefinir-senha"
-            className="text-teal-700 hover:underline"
+            className="text-primary-700 hover:underline"
           >
             Não consegue entrar? Defina sua senha
           </Link>
         </p>
         <p className="mt-2 text-center text-sm text-slate-500">
           Não tem conta?{" "}
-          <Link href="/cadastro" className="text-teal-700 hover:underline">
+          <Link href="/cadastro" className="text-primary-700 hover:underline">
             Cadastre-se
           </Link>
         </p>

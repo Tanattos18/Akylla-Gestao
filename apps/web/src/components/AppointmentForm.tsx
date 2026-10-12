@@ -125,7 +125,7 @@ export function AppointmentForm({ initial, onSubmit, submitLabel }: AppointmentF
   }
 
   const inputClass =
-    "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none";
+    "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none";
 
   return (
     <form onSubmit={handleSubmit} noValidate className="grid gap-4 sm:grid-cols-2">
@@ -249,7 +249,7 @@ export function AppointmentForm({ initial, onSubmit, submitLabel }: AppointmentF
         <button
           type="submit"
           disabled={saving}
-          className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
+          className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
         >
           {saving ? "Salvando..." : submitLabel}
         </button>

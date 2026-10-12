@@ -103,7 +103,7 @@ export default function NovaAssinaturaPage() {
         <p className="text-sm text-amber-800">
           Apenas administradores podem criar assinaturas.
         </p>
-        <Link href="/assinaturas" className="mt-3 inline-block text-sm text-teal-700 underline">
+        <Link href="/assinaturas" className="mt-3 inline-block text-sm text-primary-700 underline">
           Voltar para assinaturas
         </Link>
       </div>
@@ -111,7 +111,7 @@ export default function NovaAssinaturaPage() {
   }
 
   const inputClass =
-    "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none";
+    "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none";
 
   return (
     <div className="mx-auto max-w-xl space-y-6">
@@ -225,7 +225,7 @@ export default function NovaAssinaturaPage() {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
+            className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
           >
             {saving ? "Criando..." : "Criar assinatura"}
           </button>

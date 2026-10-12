@@ -148,7 +148,7 @@ export default function HomePage() {
 
   return (
     <div>
-      <section className="mb-10 rounded-lg border border-teal-200 bg-teal-50 p-6">
+      <section className="mb-10 rounded-lg border border-primary-200 bg-primary-50 p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold text-slate-900">{session.company.name}</h2>
@@ -162,38 +162,38 @@ export default function HomePage() {
           <div className="flex gap-2">
             <Link
               href="/pdv"
-              className="rounded-md bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-800"
+              className="rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
             >
               Abrir PDV
             </Link>
             <Link
               href="/vendas"
-              className="rounded-md border border-teal-700 px-3 py-2 text-sm font-medium text-teal-800 hover:bg-teal-100"
+              className="rounded-md border border-primary-600 px-3 py-2 text-sm font-medium text-primary-800 hover:bg-primary-100"
             >
               Vendas
             </Link>
             <Link
               href="/caixa"
-              className="rounded-md border border-teal-700 px-3 py-2 text-sm font-medium text-teal-800 hover:bg-teal-100"
+              className="rounded-md border border-primary-600 px-3 py-2 text-sm font-medium text-primary-800 hover:bg-primary-100"
             >
               Caixa e financeiro
             </Link>
             <Link
               href="/produtos"
-              className="rounded-md border border-teal-700 px-3 py-2 text-sm font-medium text-teal-800 hover:bg-teal-100"
+              className="rounded-md border border-primary-600 px-3 py-2 text-sm font-medium text-primary-800 hover:bg-primary-100"
             >
               Produtos e estoque
             </Link>
             <Link
               href="/clientes"
-              className="rounded-md border border-teal-700 px-3 py-2 text-sm font-medium text-teal-800 hover:bg-teal-100"
+              className="rounded-md border border-primary-600 px-3 py-2 text-sm font-medium text-primary-800 hover:bg-primary-100"
             >
               Clientes
             </Link>
             {session.user.role === "ADMIN" && (
               <Link
                 href="/usuarios"
-                className="rounded-md border border-teal-700 px-3 py-2 text-sm font-medium text-teal-800 hover:bg-teal-100"
+                className="rounded-md border border-primary-600 px-3 py-2 text-sm font-medium text-primary-800 hover:bg-primary-100"
               >
                 Gerenciar usuários
               </Link>
@@ -202,7 +202,7 @@ export default function HomePage() {
               type="button"
               onClick={handleLogout}
               disabled={loggingOut}
-              className="rounded-md bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
+              className="rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
             >
               {loggingOut ? "Saindo..." : "Sair"}
             </button>
@@ -223,7 +223,7 @@ export default function HomePage() {
                   <span
                     className={
                       module.available
-                        ? "whitespace-nowrap rounded-full bg-teal-50 px-2 py-0.5 text-[11px] font-medium text-teal-700"
+                        ? "whitespace-nowrap rounded-full bg-primary-50 px-2 py-0.5 text-[11px] font-medium text-primary-700"
                         : "whitespace-nowrap rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700"
                     }
                   >

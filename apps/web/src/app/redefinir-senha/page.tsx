@@ -66,14 +66,14 @@ export default function RedefinirSenhaPage() {
           <div className="space-y-4">
             <div
               role="status"
-              className="rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm text-teal-800"
+              className="rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-sm text-primary-800"
             >
               Senha redefinida com sucesso. Suas sessões anteriores foram
               encerradas.
             </div>
             <Link
               href="/login"
-              className="block w-full rounded-md bg-teal-700 px-4 py-2 text-center text-sm font-medium text-white hover:bg-teal-800"
+              className="block w-full rounded-md bg-primary-600 px-4 py-2 text-center text-sm font-medium text-white hover:bg-primary-700"
             >
               Ir para o login
             </Link>
@@ -99,7 +99,7 @@ export default function RedefinirSenhaPage() {
                 autoComplete="username"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                className="mb-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600"
+                className="mb-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
                 aria-invalid={Boolean(fieldErrors.email)}
               />
               {fieldErrors.email && (
@@ -116,7 +116,7 @@ export default function RedefinirSenhaPage() {
                 autoComplete="new-password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                className="mb-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600"
+                className="mb-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
                 aria-invalid={Boolean(fieldErrors.password)}
               />
               {fieldErrors.password && (
@@ -133,7 +133,7 @@ export default function RedefinirSenhaPage() {
                 autoComplete="new-password"
                 value={confirm}
                 onChange={(event) => setConfirm(event.target.value)}
-                className="mb-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600"
+                className="mb-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
                 aria-invalid={Boolean(fieldErrors.confirm)}
               />
               {fieldErrors.confirm && (
@@ -144,7 +144,7 @@ export default function RedefinirSenhaPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading ? "Salvando..." : "Redefinir senha"}
               </button>
@@ -153,7 +153,7 @@ export default function RedefinirSenhaPage() {
         )}
 
         <p className="mt-4 text-center text-sm text-slate-500">
-          <Link href="/login" className="text-teal-700 hover:underline">
+          <Link href="/login" className="text-primary-700 hover:underline">
             Voltar para o login
           </Link>
         </p>

@@ -146,7 +146,7 @@ export default function ProdutosPage() {
           {isAdmin && (
             <Link
               href="/produtos/novo"
-              className="rounded-md bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-800"
+              className="rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
             >
               Novo produto
             </Link>
@@ -161,7 +161,7 @@ export default function ProdutosPage() {
       </div>
 
       {notice && (
-        <div className="rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm text-teal-800">
+        <div className="rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-sm text-primary-800">
           {notice}
         </div>
       )}
@@ -204,12 +204,12 @@ export default function ProdutosPage() {
                 onKeyDown={(event) => {
                   if (event.key === "Enter") applySearch();
                 }}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none"
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
               />
               <button
                 type="button"
                 onClick={applySearch}
-                className="rounded-md border border-teal-700 px-3 py-2 text-sm font-medium text-teal-800 hover:bg-teal-50"
+                className="rounded-md border border-primary-600 px-3 py-2 text-sm font-medium text-primary-800 hover:bg-primary-50"
               >
                 Buscar
               </button>
@@ -324,7 +324,7 @@ export default function ProdutosPage() {
                   <span
                     className={
                       product.status === "ACTIVE"
-                        ? "rounded-full bg-teal-50 px-2 py-0.5 text-xs text-teal-700"
+                        ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700"
                         : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500"
                     }
                   >
@@ -333,14 +333,14 @@ export default function ProdutosPage() {
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex gap-3 text-xs font-medium">
-                    <Link href={`/produtos/${product.id}`} className="text-teal-700 hover:underline">
+                    <Link href={`/produtos/${product.id}`} className="text-primary-700 hover:underline">
                       Detalhes
                     </Link>
                     {isAdmin && product.status === "ACTIVE" && (
                       <>
                         <Link
                           href={`/produtos/${product.id}/editar`}
-                          className="text-teal-700 hover:underline"
+                          className="text-primary-700 hover:underline"
                         >
                           Editar
                         </Link>

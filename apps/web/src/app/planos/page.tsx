@@ -153,7 +153,7 @@ export default function PlanosPage() {
   }
 
   const inputClass =
-    "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none";
+    "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none";
 
   return (
     <div className="space-y-6">
@@ -181,7 +181,7 @@ export default function PlanosPage() {
       </div>
 
       {notice && (
-        <div className="rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm text-teal-800">
+        <div className="rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-sm text-primary-800">
           {notice}
         </div>
       )}
@@ -265,7 +265,7 @@ export default function PlanosPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
+                className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
               >
                 {saving ? "Salvando..." : editingId ? "Salvar" : "Criar"}
               </button>
@@ -292,7 +292,7 @@ export default function PlanosPage() {
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Nome ou descrição do plano"
-          className="w-full max-w-sm rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none"
+          className="w-full max-w-sm rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
         />
       </div>
 
@@ -324,7 +324,7 @@ export default function PlanosPage() {
                   <span
                     className={
                       plan.status === "ACTIVE"
-                        ? "rounded-full bg-teal-50 px-2 py-0.5 text-xs text-teal-700"
+                        ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700"
                         : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500"
                     }
                   >
@@ -337,7 +337,7 @@ export default function PlanosPage() {
                       <button
                         type="button"
                         onClick={() => startEdit(plan)}
-                        className="text-teal-700 hover:underline"
+                        className="text-primary-700 hover:underline"
                       >
                         Editar
                       </button>
@@ -353,7 +353,7 @@ export default function PlanosPage() {
                         <button
                           type="button"
                           onClick={() => void handleStatus(plan, "ACTIVE")}
-                          className="text-teal-700 hover:underline"
+                          className="text-primary-700 hover:underline"
                         >
                           Reativar
                         </button>

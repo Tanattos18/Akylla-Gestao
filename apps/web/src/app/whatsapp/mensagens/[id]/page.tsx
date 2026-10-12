@@ -16,8 +16,8 @@ const statusBadgeClass: Record<string, string> = {
   PROCESSING: "rounded-full bg-sky-50 px-2 py-0.5 text-xs text-sky-700",
   ACCEPTED: "rounded-full bg-sky-50 px-2 py-0.5 text-xs text-sky-700",
   SENT: "rounded-full bg-indigo-50 px-2 py-0.5 text-xs text-indigo-700",
-  DELIVERED: "rounded-full bg-teal-50 px-2 py-0.5 text-xs text-teal-700",
-  READ: "rounded-full bg-teal-100 px-2 py-0.5 text-xs text-teal-800",
+  DELIVERED: "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700",
+  READ: "rounded-full bg-primary-100 px-2 py-0.5 text-xs text-primary-800",
   FAILED: "rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-700",
   CANCELLED: "rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700",
 };
@@ -140,7 +140,7 @@ export default function WhatsAppMensagemDetalhePage() {
       </div>
 
       {notice && (
-        <div className="rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm text-teal-800">
+        <div className="rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-sm text-primary-800">
           {notice}
         </div>
       )}

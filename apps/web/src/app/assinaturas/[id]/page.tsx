@@ -12,7 +12,7 @@ import {
 } from "../../../lib/types";
 
 const statusBadge: Record<string, string> = {
-  ACTIVE: "rounded-full bg-teal-50 px-2 py-0.5 text-xs text-teal-700",
+  ACTIVE: "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700",
   EXPIRED: "rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700",
   CANCELLED: "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500",
 };
@@ -103,7 +103,7 @@ export default function AssinaturaDetalhePage() {
     return (
       <div className="space-y-4 text-center">
         <p className="text-sm text-red-600">{error}</p>
-        <Link href="/assinaturas" className="text-sm text-teal-700 underline">
+        <Link href="/assinaturas" className="text-sm text-primary-700 underline">
           Voltar para assinaturas
         </Link>
       </div>
@@ -136,7 +136,7 @@ export default function AssinaturaDetalhePage() {
       </div>
 
       {notice && (
-        <div className="rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm text-teal-800">
+        <div className="rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-sm text-primary-800">
           {notice}
         </div>
       )}
@@ -189,7 +189,7 @@ export default function AssinaturaDetalhePage() {
                 type="button"
                 onClick={() => void handleRenew()}
                 disabled={busy}
-                className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
+                className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
               >
                 {busy ? "Processando..." : "Renovar (pagar no caixa)"}
               </button>

@@ -83,7 +83,7 @@ export default function VendasPage() {
   }
 
   const inputClass =
-    "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none";
+    "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none";
   const pages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
@@ -98,7 +98,7 @@ export default function VendasPage() {
         <div className="flex gap-2">
           <Link
             href="/pdv"
-            className="rounded-md bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-800"
+            className="rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
           >
             Abrir PDV
           </Link>
@@ -172,7 +172,7 @@ export default function VendasPage() {
         <div className="flex items-end gap-2">
           <button
             type="submit"
-            className="flex-1 rounded-md bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-800"
+            className="flex-1 rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
           >
             Filtrar
           </button>
@@ -221,7 +221,7 @@ export default function VendasPage() {
                   <span
                     className={
                       sale.status === "COMPLETED"
-                        ? "rounded-full bg-teal-50 px-2 py-0.5 text-xs text-teal-700"
+                        ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700"
                         : "rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-700"
                     }
                   >
@@ -231,7 +231,7 @@ export default function VendasPage() {
                 <td className="px-4 py-3 text-right">
                   <Link
                     href={`/vendas/${sale.id}`}
-                    className="text-sm text-teal-700 hover:underline"
+                    className="text-sm text-primary-700 hover:underline"
                   >
                     Ver detalhe
                   </Link>

@@ -15,7 +15,7 @@ import {
 
 const statusBadgeClass: Record<AppointmentStatus, string> = {
   SCHEDULED: "rounded-full bg-sky-50 px-2 py-0.5 text-xs text-sky-700",
-  CONFIRMED: "rounded-full bg-teal-50 px-2 py-0.5 text-xs text-teal-700",
+  CONFIRMED: "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700",
   COMPLETED: "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600",
   CANCELLED: "rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-700",
   NO_SHOW: "rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700",
@@ -133,7 +133,7 @@ export default function AgendamentoDetalhePage() {
             {error}
           </div>
         )}
-        <Link href="/agenda" className="text-sm text-teal-700 hover:underline">
+        <Link href="/agenda" className="text-sm text-primary-700 hover:underline">
           Voltar à agenda
         </Link>
       </div>
@@ -173,7 +173,7 @@ export default function AgendamentoDetalhePage() {
       </div>
 
       {notice && (
-        <div className="rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm text-teal-800">
+        <div className="rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-sm text-primary-800">
           {notice}
         </div>
       )}
@@ -199,7 +199,7 @@ export default function AgendamentoDetalhePage() {
         <div>
           <p className="text-xs uppercase text-slate-400">Cliente</p>
           <p className="mt-1 text-sm text-slate-800">
-            <Link href={`/clientes/${appointment.client.id}`} className="text-teal-700 hover:underline">
+            <Link href={`/clientes/${appointment.client.id}`} className="text-primary-700 hover:underline">
               {appointment.client.name}
             </Link>
             {phone ? <span className="text-slate-500"> · {phone}</span> : null}

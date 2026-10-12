@@ -133,7 +133,7 @@ export default function CaixaPage() {
   }
 
   const inputClass =
-    "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none";
+    "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none";
 
   return (
     <div className="space-y-6">
@@ -149,19 +149,19 @@ export default function CaixaPage() {
         <div className="flex flex-wrap gap-2">
           <Link
             href="/financeiro"
-            className="rounded-md bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-800"
+            className="rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
           >
             Resumo financeiro
           </Link>
           <Link
             href="/caixa/movimentos"
-            className="rounded-md border border-teal-700 px-3 py-2 text-sm font-medium text-teal-800 hover:bg-teal-100"
+            className="rounded-md border border-primary-600 px-3 py-2 text-sm font-medium text-primary-800 hover:bg-primary-100"
           >
             Movimentações
           </Link>
           <Link
             href="/caixa/sessoes"
-            className="rounded-md border border-teal-700 px-3 py-2 text-sm font-medium text-teal-800 hover:bg-teal-100"
+            className="rounded-md border border-primary-600 px-3 py-2 text-sm font-medium text-primary-800 hover:bg-primary-100"
           >
             Histórico de sessões
           </Link>
@@ -180,7 +180,7 @@ export default function CaixaPage() {
         </div>
       )}
       {notice && (
-        <div className="rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm text-teal-800">
+        <div className="rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-sm text-primary-800">
           {notice}
         </div>
       )}
@@ -224,7 +224,7 @@ export default function CaixaPage() {
                   <button
                     type="submit"
                     disabled={saving}
-                    className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
+                    className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
                   >
                     {saving ? "Abrindo..." : "Confirmar abertura"}
                   </button>
@@ -241,7 +241,7 @@ export default function CaixaPage() {
               <button
                 type="button"
                 onClick={() => setOpening(true)}
-                className="mt-4 rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800"
+                className="mt-4 rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
               >
                 Abrir caixa
               </button>
@@ -257,9 +257,9 @@ export default function CaixaPage() {
       {cash && (
         <>
           <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-lg border border-teal-200 bg-teal-50 p-4">
-              <p className="text-xs uppercase text-teal-700">Saldo esperado</p>
-              <p className="mt-1 text-2xl font-semibold text-teal-900">
+            <div className="rounded-lg border border-primary-200 bg-primary-50 p-4">
+              <p className="text-xs uppercase text-primary-700">Saldo esperado</p>
+              <p className="mt-1 text-2xl font-semibold text-primary-900">
                 R$ {Number(cash.expectedBalance).toFixed(2)}
               </p>
             </div>
@@ -350,7 +350,7 @@ export default function CaixaPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="w-full rounded-md bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
+                  className="w-full rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
                 >
                   {saving ? "Registrando..." : "Registrar"}
                 </button>
@@ -401,7 +401,7 @@ export default function CaixaPage() {
                       <span
                         className={
                           movement.type === "IN"
-                            ? "rounded-full bg-teal-50 px-2 py-0.5 text-xs text-teal-700"
+                            ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700"
                             : "rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-700"
                         }
                       >
@@ -437,7 +437,7 @@ export default function CaixaPage() {
           </section>
 
           <div className="text-right">
-            <Link href="/caixa/movimentos" className="text-sm text-teal-700 hover:underline">
+            <Link href="/caixa/movimentos" className="text-sm text-primary-700 hover:underline">
               Ver todas as movimentações
             </Link>
           </div>

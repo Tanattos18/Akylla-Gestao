@@ -192,7 +192,7 @@ export default function PetsPage() {
   }
 
   const inputClass =
-    "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none";
+    "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none";
 
   return (
     <div className="space-y-6">
@@ -218,7 +218,7 @@ export default function PetsPage() {
       </div>
 
       {notice && (
-        <div className="rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm text-teal-800">
+        <div className="rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-sm text-primary-800">
           {notice}
         </div>
       )}
@@ -378,7 +378,7 @@ export default function PetsPage() {
             <button
               type="submit"
               disabled={saving}
-              className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
+              className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
             >
               {saving ? "Salvando..." : editingId ? "Salvar" : "Criar"}
             </button>
@@ -404,13 +404,13 @@ export default function PetsPage() {
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Nome do pet, raça ou responsável"
-          className="w-full max-w-xs rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none"
+          className="w-full max-w-xs rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
         />
         <select
           value={speciesFilter}
           onChange={(event) => setSpeciesFilter(event.target.value)}
           aria-label="Filtrar por espécie"
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none"
+          className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
         >
           <option value="">Todas as espécies</option>
           {(Object.keys(petSpeciesLabels) as PetSpecies[]).map((species) => (
@@ -423,7 +423,7 @@ export default function PetsPage() {
           value={statusFilter}
           onChange={(event) => setStatusFilter(event.target.value)}
           aria-label="Filtrar por status"
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none"
+          className="rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
         >
           <option value="">Todos os status</option>
           <option value="ACTIVE">Ativos</option>
@@ -452,7 +452,7 @@ export default function PetsPage() {
                   {pet.client ? (
                     <Link
                       href={`/clientes/${pet.client.id}`}
-                      className="text-teal-700 hover:underline"
+                      className="text-primary-700 hover:underline"
                     >
                       {pet.client.name}
                     </Link>
@@ -467,7 +467,7 @@ export default function PetsPage() {
                   <span
                     className={
                       pet.status === "ACTIVE"
-                        ? "rounded-full bg-teal-50 px-2 py-0.5 text-xs text-teal-700"
+                        ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700"
                         : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500"
                     }
                   >
@@ -479,7 +479,7 @@ export default function PetsPage() {
                     <button
                       type="button"
                       onClick={() => startEdit(pet)}
-                      className="text-teal-700 hover:underline"
+                      className="text-primary-700 hover:underline"
                     >
                       Editar
                     </button>
@@ -495,7 +495,7 @@ export default function PetsPage() {
                       <button
                         type="button"
                         onClick={() => void handleStatus(pet, "ACTIVE")}
-                        className="text-teal-700 hover:underline"
+                        className="text-primary-700 hover:underline"
                       >
                         Reativar
                       </button>

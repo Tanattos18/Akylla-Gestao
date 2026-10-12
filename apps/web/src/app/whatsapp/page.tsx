@@ -23,7 +23,7 @@ const emptyForm = {
 };
 
 const statusBadgeClass: Record<string, string> = {
-  ACTIVE: "rounded-full bg-teal-50 px-2 py-0.5 text-xs font-medium text-teal-700",
+  ACTIVE: "rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700",
   CONFIGURED: "rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700",
   NOT_CONFIGURED: "rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500",
   ERROR: "rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700",
@@ -155,7 +155,7 @@ export default function WhatsAppConfigPage() {
   }
 
   const inputClass =
-    "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none";
+    "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none";
 
   return (
     <div className="space-y-6">
@@ -189,7 +189,7 @@ export default function WhatsAppConfigPage() {
       </div>
 
       {notice && (
-        <div className="rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm text-teal-800">
+        <div className="rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-sm text-primary-800">
           {notice}
         </div>
       )}
@@ -263,7 +263,7 @@ export default function WhatsAppConfigPage() {
                 type="button"
                 onClick={() => void handleHealth()}
                 disabled={checking}
-                className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
+                className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
               >
                 {checking ? "Testando..." : "Testar conexão"}
               </button>
@@ -271,7 +271,7 @@ export default function WhatsAppConfigPage() {
                 <button
                   type="button"
                   onClick={() => void handleStatus("CONFIGURED")}
-                  className="rounded-md border border-teal-700 px-4 py-2 text-sm font-medium text-teal-800 hover:bg-teal-100"
+                  className="rounded-md border border-primary-600 px-4 py-2 text-sm font-medium text-primary-800 hover:bg-primary-100"
                 >
                   Reconectar
                 </button>
@@ -291,7 +291,7 @@ export default function WhatsAppConfigPage() {
             <div
               className={
                 health.ok
-                  ? "mt-4 rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm text-teal-800"
+                  ? "mt-4 rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-sm text-primary-800"
                   : "mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
               }
             >
@@ -405,7 +405,7 @@ export default function WhatsAppConfigPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
+                className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
               >
                 {saving ? "Salvando..." : "Salvar configuração"}
               </button>

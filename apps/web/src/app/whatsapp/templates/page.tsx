@@ -24,7 +24,7 @@ const emptyForm = {
 
 const approvalBadgeClass: Record<WhatsAppTemplateApproval, string> = {
   PENDING_APPROVAL: "rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700",
-  APPROVED: "rounded-full bg-teal-50 px-2 py-0.5 text-xs text-teal-700",
+  APPROVED: "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700",
   REJECTED: "rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-700",
 };
 
@@ -146,7 +146,7 @@ export default function WhatsAppTemplatesPage() {
   }
 
   const inputClass =
-    "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none";
+    "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none";
 
   return (
     <div className="space-y-6">
@@ -181,7 +181,7 @@ export default function WhatsAppTemplatesPage() {
       </div>
 
       {notice && (
-        <div className="rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm text-teal-800">
+        <div className="rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-sm text-primary-800">
           {notice}
         </div>
       )}
@@ -275,7 +275,7 @@ export default function WhatsAppTemplatesPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-md bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
+                className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
               >
                 {saving ? "Criando..." : "Criar template"}
               </button>
@@ -312,7 +312,7 @@ export default function WhatsAppTemplatesPage() {
                     <button
                       type="button"
                       onClick={() => void handleApproval(template, "APPROVED")}
-                      className="text-teal-700 hover:underline"
+                      className="text-primary-700 hover:underline"
                     >
                       Marcar aprovado
                     </button>
@@ -338,7 +338,7 @@ export default function WhatsAppTemplatesPage() {
                     <button
                       type="button"
                       onClick={() => void handleStatus(template, "ACTIVE")}
-                      className="text-teal-700 hover:underline"
+                      className="text-primary-700 hover:underline"
                     >
                       Reativar
                     </button>
