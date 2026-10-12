@@ -2,6 +2,19 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Akylla Gestão] - 2026-10-12 - Documentação — Redesign do painel (proposta)
+
+### Adicionado
+
+- `docs/akylla/REDESIGN_PAINEL.md`: **proposta visual do painel de
+  gestão** — layout com sidebar fixa escura + header com breadcrumb/data/
+  avatar + dashboard redesenhado (KPIs, gráfico de atividade, widgets,
+  atividade recente). Diagnóstico do estado atual (sem sidebar, sem
+  design system, teal inline em ~40 arquivos), design tokens
+  (`@theme` Tailwind v4 com cor primária amber), componentes a criar
+  (`components/ui/`), plano de implementação em 5 fases e 6 decisões de
+  aprovação (R1–R6) aguardando proprietário. **Nenhum código alterado.**
+
 ## [Akylla Gestão] - 2026-10-12 - Etapa 12 — Qualidade, segurança e preparação para produção
 
 ### Adicionado
