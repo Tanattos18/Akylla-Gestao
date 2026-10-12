@@ -276,12 +276,12 @@ contexto autenticado e aceitam `from`/`to` em `YYYY-MM-DD`.
 
 | Método | Rota | Acesso | Descrição |
 |---|---|---|---|
-| GET | `/api/reports/summary` | sessão | KPIs: vendas (concluídas/canceladas, líquido/bruto/descontos, ticket médio), vendas por dia e por forma de pagamento, caixa (sessão aberta + `inCash`/totais), estoque (baixo/zerado), clientes/pets novos, WhatsApp por status, agendamentos por status (`services`), `modules.servicesRealized` |
+| GET | `/api/reports/summary` | sessão | KPIs: vendas (concluídas/canceladas, líquido/bruto/descontos, ticket médio), vendas por dia e por forma de pagamento, caixa (sessão aberta + `inCash`/totais), estoque (baixo/zerado), clientes novos, WhatsApp por status, agendamentos por status (`services`), `modules.servicesRealized` |
 | GET | `/api/reports/sales` | sessão | Totais separados concluídas × canceladas + lista paginada; filtros `from`, `to`, `status`, `paymentMethod`, `page`, `pageSize`, `format` |
 | GET | `/api/reports/stock/alerts` | sessão | Produtos sem estoque ou no mínimo (inativos excluídos); `page`, `pageSize`, `format` |
 | GET | `/api/reports/stock/movements` | sessão | Totais por tipo (zero-fill) + lista; filtros `productId`, `type`, período, paginação, `format` |
 | GET | `/api/reports/cash` | sessão | `inCash` vs todos, estornos por origem, sessões abertas/fechadas no período |
-| GET | `/api/reports/clients` | sessão | Clientes e pets novos no período + pets por espécie + agendamentos por status (`services`) |
+| GET | `/api/reports/clients` | sessão | Clientes novos no período + agendamentos por status (`services`); **sem indicadores de nicho** (`newPets`/`petsBySpecies` removidos na Etapa 9) |
 | GET | `/api/reports/whatsapp` | sessão | Contagem por status atual + falhas agrupadas por motivo |
 
 Comportamentos importantes:
@@ -305,12 +305,16 @@ Comportamentos importantes:
   `ACCEPTED` (aceito pela API Meta) não é `DELIVERED`.
 - **CSV** (`format=csv` em sales, stock/alerts, stock/movements):
   `text/csv` + `Content-Disposition` com filename
-  `petflow_<relatório>_<from>_<to>.csv`, linhas separadas por CRLF,
+  `akylla_<relatório>_<from>_<to>.csv`, linhas separadas por CRLF,
   escape por aspas e neutralização de injeção (célula iniciada por
-  `=`, `+`, `-`, `@` recebe apóstrofo); teto de `5000` linhas e
-  **ignora paginação**; exige sessão (401 sem cookie).
+  `=`, `+`, `-`, `@`, TAB ou CR — inclusive após espaço inicial —
+  recebe apóstrofo); teto de `5000` linhas e **ignora paginação**;
+  exige sessão (401 sem cookie).
 - Recurso de outra empresa nunca aparece (404/escopo); parâmetro
   `companyId` enviado pelo cliente é **ignorado**.
+- **Dicionário completo dos indicadores** (definição, fórmula, fonte,
+  estado vazio e como rastrear cada número):
+  `docs/akylla/DICIONARIO_INDICADORES.md` (Etapa 9).
 
 ## Agendamentos (Etapa 8)
 

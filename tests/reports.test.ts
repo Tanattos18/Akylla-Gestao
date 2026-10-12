@@ -14,6 +14,7 @@ let adminACookie: string;
 let memberACookie: string;
 let adminBCookie: string;
 
+let companyAId: string;
 let companyBId: string;
 let adminAId: string;
 let openSessionAId: string;
@@ -70,6 +71,7 @@ beforeAll(async () => {
 
   const companyA = await createCompany("relatorios-a");
   const companyB = await createCompany("relatorios-b");
+  companyAId = companyA.id;
   companyBId = companyB.id;
 
   const adminA = await createUser({
@@ -652,17 +654,17 @@ describe("GET /api/reports/summary", () => {
     expect(response.body.stock.lowStockCount).toBe(1);
   });
 
-  it("clientes: novos clientes e pets por período", async () => {
+  it("clientes: novos clientes por período (sem indicador de nicho)", async () => {
     const todayResponse = await get(
       `/api/reports/summary?from=${today}&to=${today}`,
       adminACookie,
     );
-    expect(todayResponse.body.clients).toEqual({ newClients: 2, newPets: 3 });
+    expect(todayResponse.body.clients).toEqual({ newClients: 2 });
     const yesterdayResponse = await get(
       `/api/reports/summary?from=${yesterday}&to=${yesterday}`,
       adminACookie,
     );
-    expect(yesterdayResponse.body.clients).toEqual({ newClients: 1, newPets: 1 });
+    expect(yesterdayResponse.body.clients).toEqual({ newClients: 1 });
   });
 
   it("whatsapp: aceitas pela API não são contadas como entregues", async () => {
@@ -738,7 +740,7 @@ describe("GET /api/reports/summary", () => {
     expect(summaryB.body.sales.completedCount).toBe(1);
     expect(summaryB.body.sales.net).toBe("999.99");
     expect(summaryB.body.whatsapp.total).toBe(0);
-    expect(summaryB.body.clients).toEqual({ newClients: 1, newPets: 1 });
+    expect(summaryB.body.clients).toEqual({ newClients: 1 });
     expect(summaryB.body.stock.outOfStockCount).toBe(1);
     expect(summaryB.body.stock.lowStockCount).toBe(0);
     expect(summaryB.body.cash.entriesInCash).toBe("0.00");
@@ -994,21 +996,15 @@ describe("GET /api/reports/cash", () => {
 });
 
 describe("GET /api/reports/clients", () => {
-  it("conta novos clientes e pets por período com espécies", async () => {
+  it("conta novos clientes por período e agendamentos, sem indicadores de nicho", async () => {
     const response = await get(
       `/api/reports/clients?from=${today}&to=${today}`,
       adminACookie,
     );
     expect(response.status).toBe(200);
     expect(response.body.newClients).toBe(2);
-    expect(response.body.newPets).toBe(3);
-    const bySpecies = Object.fromEntries(
-      (response.body.petsBySpecies as Array<{ species: string; count: number }>).map(
-        (row) => [row.species, row.count],
-      ),
-    );
-    expect(bySpecies.DOG).toBe(2);
-    expect(bySpecies.CAT).toBe(1);
+    expect(response.body.newPets).toBeUndefined();
+    expect(response.body.petsBySpecies).toBeUndefined();
     expect(response.body.services).toEqual({
       scheduled: 0,
       confirmed: 0,
@@ -1024,7 +1020,7 @@ describe("GET /api/reports/clients", () => {
       adminBCookie,
     );
     expect(response.body.newClients).toBe(1);
-    expect(response.body.newPets).toBe(1);
+    expect(response.body.newPets).toBeUndefined();
   });
 });
 
@@ -1111,5 +1107,196 @@ describe("Permissões e segurança dos relatórios", () => {
       const response = await get(endpoint, memberACookie);
       expect(response.status, endpoint).toBe(200);
     }
+  });
+});
+
+describe("Etapa 9 — empresa vazia", () => {
+  it("empresa sem nenhum dado zera todos os indicadores e não inventa números", async () => {
+    const emptyCompany = await createCompany("relatorios-vazio");
+    await createUser({
+      companyId: emptyCompany.id,
+      name: "Admin Vazio",
+      email: "admin@relatorios-vazio.test",
+      role: "ADMIN",
+    });
+    const cookie = await login("admin@relatorios-vazio.test");
+
+    const summary = await get("/api/reports/summary", cookie);
+    expect(summary.status).toBe(200);
+    expect(summary.body.sales.completedCount).toBe(0);
+    expect(summary.body.sales.net).toBe("0.00");
+    expect(summary.body.sales.ticketAverage).toBeNull();
+    expect(summary.body.salesByDay).toEqual([]);
+    expect(summary.body.salesByPaymentMethod).toEqual([]);
+    expect(summary.body.cash.openSession).toBeNull();
+    expect(summary.body.cash.entriesInCash).toBe("0.00");
+    expect(summary.body.cash.exitsInCash).toBe("0.00");
+    expect(summary.body.stock).toEqual({ outOfStockCount: 0, lowStockCount: 0 });
+    expect(summary.body.clients).toEqual({ newClients: 0 });
+    expect(summary.body.services).toEqual({
+      scheduled: 0,
+      confirmed: 0,
+      completed: 0,
+      cancelled: 0,
+      noShow: 0,
+    });
+    expect(summary.body.whatsapp.total).toBe(0);
+
+    const sales = await get("/api/reports/sales", cookie);
+    expect(sales.body.items).toEqual([]);
+    expect(sales.body.totals.completed.count).toBe(0);
+
+    const clients = await get("/api/reports/clients", cookie);
+    expect(clients.body.newClients).toBe(0);
+    expect(clients.body.newPets).toBeUndefined();
+
+    const financial = await get("/api/financial/summary", cookie);
+    expect(financial.status).toBe(200);
+    expect(financial.body).toMatchObject({
+      openPayablesTotal: "0.00",
+      openPayablesCount: 0,
+      openReceivablesTotal: "0.00",
+      openReceivablesCount: 0,
+      overduePayablesTotal: "0.00",
+      overdueReceivablesTotal: "0.00",
+      paidInTotal: "0.00",
+      paidOutTotal: "0.00",
+      cancelledCount: 0,
+    });
+
+    const cash = await get("/api/cash/summary", cookie);
+    expect(cash.body.totalIn).toBe("0.00");
+    expect(cash.body.totalOut).toBe("0.00");
+    expect(cash.body.net).toBe("0.00");
+  });
+});
+
+describe("Etapa 9 — exportação CSV com caracteres especiais", () => {
+  it("neutraliza fórmulas (inclusive com espaço inicial) e escapa vírgulas, aspas e quebras de linha", async () => {
+    const formulaClient = await prisma.client.create({
+      data: { companyId: companyAId, name: " =1+1", nameKey: "csv formula cliente" },
+    });
+    const atClient = await prisma.client.create({
+      data: { companyId: companyAId, name: "@comando", nameKey: "csv comando cliente" },
+    });
+    const specialClient = await prisma.client.create({
+      data: {
+        companyId: companyAId,
+        name: 'Ação, "Comercial"\nLtda.',
+        nameKey: "csv acao comercial",
+      },
+    });
+
+    const saleData = (
+      receiptCode: string,
+      clientId: string,
+      time: string,
+      paymentMethod: "CASH" | "PIX",
+    ) => ({
+      companyId: companyAId,
+      receiptCode,
+      status: "COMPLETED" as const,
+      subtotal: "10.00",
+      discount: "0.00",
+      total: "10.00",
+      paymentMethod,
+      createdByUserId: adminAId,
+      clientId,
+      createdAt: at(today, time),
+    });
+    await prisma.sale.create({ data: saleData("PF-REPAX1", formulaClient.id, "16:00:00.000", "CASH") });
+    await prisma.sale.create({ data: saleData("PF-REPAX2", atClient.id, "16:05:00.000", "PIX") });
+    await prisma.sale.create({ data: saleData("PF-REPAX3", specialClient.id, "16:10:00.000", "CASH") });
+
+    const response = await get(
+      `/api/reports/sales?from=${today}&to=${today}&format=csv`,
+      adminACookie,
+    );
+    expect(response.status).toBe(200);
+    const text = response.text as string;
+
+    // fórmula com espaço inicial é neutralizada com apóstrofo
+    expect(text).toContain("\"' =1+1\"");
+    expect(text).not.toMatch(/," =1\+1"/);
+    // início por @ é neutralizado
+    expect(text).toContain("\"'@comando\"");
+    expect(text).not.toMatch(/,"@comando"/);
+    // vírgula, acentos e aspas duplas escapadas dentro da célula
+    expect(text).toContain('"Ação, ""Comercial""');
+    expect(text).toContain("Ltda.");
+    // não há célula de fórmula exposta
+    expect(text).not.toMatch(/,"[=+@]/);
+  });
+});
+
+describe("Etapa 9 — coerência entre indicadores e dados de origem", () => {
+  it("resumo, relatórios de estoque/financeiro/caixa batem com o banco", async () => {
+    const start = at(today, "00:00:00.000");
+    const end = at(today, "23:59:59.999");
+    const range = { gte: start, lte: end };
+
+    const [summary, stockReport, cashResponse] = await Promise.all([
+      get(`/api/reports/summary?from=${today}&to=${today}`, adminACookie),
+      get("/api/reports/stock/alerts", adminACookie),
+      get(`/api/cash/summary?from=${today}&to=${today}`, adminACookie),
+    ]);
+    expect(summary.status).toBe(200);
+    expect(stockReport.status).toBe(200);
+    expect(cashResponse.status).toBe(200);
+
+    const completed = await prisma.sale.count({
+      where: { companyId: companyAId, status: "COMPLETED", createdAt: range },
+    });
+    expect(completed).toBeGreaterThan(0);
+    expect(summary.body.sales.completedCount).toBe(completed);
+
+    const newClients = await prisma.client.count({
+      where: { companyId: companyAId, createdAt: range },
+    });
+    expect(newClients).toBeGreaterThan(0);
+    expect(summary.body.clients.newClients).toBe(newClients);
+
+    const outOfStock = await prisma.product.count({
+      where: { companyId: companyAId, status: "ACTIVE", stockQuantity: 0 },
+    });
+    expect(outOfStock).toBeGreaterThan(0);
+    expect(summary.body.stock.outOfStockCount).toBe(outOfStock);
+    expect(stockReport.body.alerts.outOfStockCount).toBe(outOfStock);
+
+    const waMessages = await prisma.whatsAppMessage.count({
+      where: { companyId: companyAId, createdAt: range },
+    });
+    expect(waMessages).toBeGreaterThan(0);
+    expect(summary.body.whatsapp.total).toBe(waMessages);
+
+    await prisma.financialEntry.create({
+      data: {
+        companyId: companyAId,
+        direction: "RECEIVABLE",
+        description: "Título de coerência",
+        amount: "77.77",
+        dueDate: new Date(`${today}T18:00:00.000Z`),
+        status: "OPEN",
+        createdByUserId: adminAId,
+      },
+    });
+    const openReceivables = await prisma.financialEntry.aggregate({
+      where: { companyId: companyAId, status: "OPEN", direction: "RECEIVABLE" },
+      _sum: { amount: true },
+      _count: true,
+    });
+    const financial = await get("/api/financial/summary", adminACookie);
+    expect(financial.status).toBe(200);
+    expect(Number(openReceivables._sum.amount)).toBeGreaterThan(0);
+    expect(financial.body.openReceivablesTotal).toBe(
+      openReceivables._sum.amount?.toFixed(2),
+    );
+    expect(financial.body.openReceivablesCount).toBe(openReceivables._count);
+
+    const entriesIn = await prisma.cashMovement.aggregate({
+      where: { companyId: companyAId, type: "IN", createdAt: range },
+      _sum: { amount: true },
+    });
+    expect(cashResponse.body.totalIn).toBe(entriesIn._sum.amount?.toFixed(2) ?? "0.00");
   });
 });

@@ -562,7 +562,7 @@ export interface DashboardSummaryDto {
     exitsTotal: string;
   };
   stock: { outOfStockCount: number; lowStockCount: number };
-  clients: { newClients: number; newPets: number };
+  clients: { newClients: number };
   services: ServicesCounts;
   whatsapp: {
     total: number;
@@ -686,8 +686,6 @@ export interface ClientsReportDto {
   period: ReportPeriod;
   generatedAt: string;
   newClients: number;
-  newPets: number;
-  petsBySpecies: Array<{ species: PetSpecies; label: string; count: number }>;
   services: ServicesCounts;
 }
 

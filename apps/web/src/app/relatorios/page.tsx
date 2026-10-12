@@ -862,15 +862,10 @@ function ClientesTab({ from, to, reloadKey }: PeriodProps) {
       </div>
 
       {data && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-xs uppercase text-slate-400">Novos clientes</p>
             <p className="text-2xl font-semibold text-slate-900">{data.newClients}</p>
-            <p className="text-sm text-slate-600">pela data de cadastro (UTC)</p>
-          </div>
-          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase text-slate-400">Novos pets</p>
-            <p className="text-2xl font-semibold text-slate-900">{data.newPets}</p>
             <p className="text-sm text-slate-600">pela data de cadastro (UTC)</p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
@@ -885,32 +880,6 @@ function ClientesTab({ from, to, reloadKey }: PeriodProps) {
         </div>
       )}
 
-      {data && (
-        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-100 px-4 py-3 text-xs font-semibold uppercase text-slate-500">
-            Novos pets por espécie
-          </div>
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-                <th className="px-4 py-3">Espécie</th>
-                <th className="px-4 py-3">Pets cadastrados</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.petsBySpecies.map((row) => (
-                <tr key={row.species} className="border-b border-slate-100">
-                  <td className="px-4 py-3 text-slate-700">{row.label}</td>
-                  <td className="px-4 py-3 text-slate-900">{row.count}</td>
-                </tr>
-              ))}
-              {data.petsBySpecies.length === 0 && (
-                <EmptyRow colSpan={2} message="Nenhum pet cadastrado no período." />
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
       {!data && !error && (
         <p className="py-6 text-center text-sm text-slate-400">
           {loading ? "Carregando..." : "Sem dados."}

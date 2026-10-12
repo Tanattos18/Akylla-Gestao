@@ -2,6 +2,52 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Akylla Gestão] - 2026-10-12 - Etapa 9 — Dashboard e relatórios
+
+### Adicionado
+
+- `docs/akylla/DICIONARIO_INDICADORES.md`: **entregável da etapa** —
+  dicionário completo dos indicadores (definição exata, fórmula, fonte
+  no banco, período, estado vazio e consulta SQL de rastreabilidade),
+  cobrindo os 4 exigidos pelo roteiro (**faturamento** =
+  `reports/summary.sales.net`; **receita recebida** =
+  `financial/summary.paidInTotal`; **contas vencidas** =
+  `overdueReceivables/Payables`; **saldo de caixa** =
+  `openSession.expectedBalance` e `cash/summary.net`), a separação
+  conceitual entre eles e a separação billing-SaaS × financeiro do
+  cliente, mais as regras de CSV/paginação/gráficos.
+- `tests/reports.test.ts` (**+3 testes**): **empresa vazia** (summary,
+  vendas, clientes, `financial/summary` e `cash/summary` zerados sem
+  inventar números, `ticketAverage: null`); **CSV com caracteres
+  especiais** (acentos, vírgulas, aspas duplas escapadas, quebra de
+  linha, fórmulas `=`/`@` e fórmula **após espaço inicial** neutralizadas
+  com apóstrofo); **coerência indicadores × dados-fonte** (vendas,
+  clientes, estoque, WhatsApp, títulos AP/AR e entradas de caixa
+  conferidos contra o banco via Prisma).
+
+### Alterado
+
+- **Indicadores de nicho removidos (genéricos)**: `clients.newPets` sai
+  do `summary` do dashboard; `newPets` e `petsBySpecies` saem de
+  `GET /api/reports/clients` — substituídos pelos já existentes
+  `newClients` (clientes novos), vendas e estoque (PLANO §9). UI: card
+  "Novos clientes" do `/dashboard` e aba Clientes do `/relatorios`
+  perderam "Novos pets"/"Novos pets por espécie"; DTOs
+  (`DashboardSummaryDto.clients`, `ClientsReportDto`) atualizados.
+  Modelos `Pet`/`PetSpecies` intactos (destino na Etapa 10).
+- `apps/api/src/common/utils/csv.ts`: proteção de injeção agora também
+  neutraliza sinal de fórmula **após espaço inicial** (`" =1+1"`),
+  mantendo a cobertura original de `= + - @ TAB CR`.
+- `docs/architecture/API.md`: prefixo de arquivo CSV corrigido para
+  `akylla_*`, descrição da neutralização atualizada, seção de
+  relatórios sem menção a pets e link para o dicionário.
+
+### Verificado
+
+- `lint` 0 → `typecheck` OK → **477/477 testes** (20 arquivos; +3
+  novos, 5 assertions atualizados para o fim do nicho) → `build` OK →
+  `db:validate` OK (nenhuma migration na etapa).
+
 ## [Akylla Gestão] - 2026-10-12 - Etapa 8 — Financeiro básico (AP/AR)
 
 ### Adicionado

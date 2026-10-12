@@ -6,7 +6,6 @@ import {
   cashMovementOriginLabels,
   cashMovementTypeLabels,
   paymentMethodLabels,
-  petSpeciesLabels,
   productUnitLabels,
   saleStatusLabels,
   stockMovementTypeLabels,
@@ -102,7 +101,6 @@ export class ReportsService {
       cashGroups,
       stockCounts,
       newClients,
-      newPets,
       waGroups,
       apptCounts,
     ] = await Promise.all([
@@ -152,7 +150,6 @@ export class ReportsService {
         WHERE "companyId" = ${companyId}
           AND "status" = 'ACTIVE'`,
       this.prisma.client.count({ where: { companyId, createdAt: range } }),
-      this.prisma.pet.count({ where: { companyId, createdAt: range } }),
       this.prisma.whatsAppMessage.groupBy({
         by: ["status"],
         where: { companyId, createdAt: range },
@@ -247,7 +244,7 @@ export class ReportsService {
         outOfStockCount: Number(stockCounts[0]?.out_count ?? 0),
         lowStockCount: Number(stockCounts[0]?.low_count ?? 0),
       },
-      clients: { newClients, newPets },
+      clients: { newClients },
       services: apptCounts,
       whatsapp: {
         total: waTotal,
@@ -667,14 +664,8 @@ export class ReportsService {
     const companyId = auth.companyId;
     const range = { gte: period.start, lte: period.end };
 
-    const [newClients, newPets, bySpecies, apptCounts] = await Promise.all([
+    const [newClients, apptCounts] = await Promise.all([
       this.prisma.client.count({ where: { companyId, createdAt: range } }),
-      this.prisma.pet.count({ where: { companyId, createdAt: range } }),
-      this.prisma.pet.groupBy({
-        by: ["species"],
-        where: { companyId, createdAt: range },
-        _count: { _all: true },
-      }),
       appointmentStatusCounts(this.prisma, companyId, range),
     ]);
 
@@ -682,14 +673,6 @@ export class ReportsService {
       period: periodJson(period),
       generatedAt: new Date().toISOString(),
       newClients,
-      newPets,
-      petsBySpecies: bySpecies
-        .map((row) => ({
-          species: row.species,
-          label: petSpeciesLabels[row.species],
-          count: row._count._all,
-        }))
-        .sort((a, b) => b.count - a.count),
       services: apptCounts,
     };
   }

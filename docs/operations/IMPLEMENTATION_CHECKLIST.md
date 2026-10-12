@@ -499,6 +499,46 @@ Roteiro: `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`.
 - [x] Validações com evidência: `lint` 0 → `typecheck` OK →
       **474/474 testes** → `build` OK → `db:validate` OK
 
+## Etapa 9 (Akylla) — Dashboard e relatórios (2026-10-12)
+
+Roteiro: `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`.
+
+- [x] Instruções 1–2 confirmadas: agregação 100% server-side
+      (`reports.service.ts`, `cash.service.ts`, `financial.service.ts`),
+      `AuthGuard` global + `companyId` da sessão (`companyId` do
+      cliente é ignorado)
+- [x] Instrução 3: **entregável** `docs/akylla/DICIONARIO_INDICADORES.md`
+      com significado/fórmula/fonte/estado vazio de todos os
+      indicadores, incluindo **faturamento** (`sales.net`),
+      **receita recebida** (`financial/summary.paidInTotal`), **contas
+      vencidas** (`overdue*`) e **saldo de caixa**
+      (`openSession.expectedBalance`/`cash/summary.net`), com a
+      separação billing-SaaS × financeiro do cliente
+- [x] Instrução 4: estado vazio sem inventar números (`ticketAverage:
+      null`, listas `[]`, zero-fill) — coberto por teste novo de
+      empresa vazia
+- [x] Instrução 5: filtros de data (janela inclusiva UTC, 400 para
+      invertido/longo/inválido), paginação `pageSize` 1..100 e limite
+      `CSV_ROW_LIMIT = 5000` (CSV ignora paginação)
+- [x] Instrução 6: CSV protegido contra fórmulas — cobertura ampliada
+      para sinal após espaço inicial (`" =1+1"`), mantidos
+      `= + - @ TAB CR`
+- [x] Instrução 7: gráficos do dashboard filtrados a `COMPLETED` no
+      servidor e com período único (testes de agrupamento por dia/forma
+      de pagamento)
+- [x] **Indicadores de nicho removidos** (PLANO §9): `newPets` no
+      `summary`/dashboard e `newPets`+`petsBySpecies` no relatório de
+      clientes; UI (`/dashboard`, `/relatorios`), DTOs e testes
+      atualizados; `Pet`/`PetSpecies` intactos (destino na Etapa 10)
+- [x] `docs/architecture/API.md` atualizado (prefixo `akylla_*`,
+      neutralização ampliada, seção sem pets, link do dicionário)
+- [x] Testes da etapa: **empresa vazia**, **exportação com caracteres
+      especiais e fórmulas**, **coerência indicadores × dados-fonte**;
+      empresa com dados, filtros por data e A×B já existentes
+- [x] Validações com evidência: `lint` 0 → `typecheck` OK →
+      **477/477 testes** → `build` OK → `db:validate` OK (sem
+      migration na etapa)
+
 ## Etapas futuras — módulos de negócio
 
 - [x] Cadastro de clientes e animais (Etapa 5)

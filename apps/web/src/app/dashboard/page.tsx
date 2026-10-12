@@ -291,10 +291,6 @@ export default function DashboardPage() {
                 {summary.clients.newClients}
               </p>
               <p className="text-sm text-slate-600">cliente(s) cadastrado(s)</p>
-              <p className="mt-2 text-2xl font-semibold text-slate-900">
-                {summary.clients.newPets}
-              </p>
-              <p className="text-sm text-slate-600">pet(s) cadastrado(s)</p>
             </StatCard>
 
             <StatCard
