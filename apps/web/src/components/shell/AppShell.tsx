@@ -9,15 +9,7 @@ import { api } from "@/lib/api";
 import type { CompanyModuleDto } from "@/lib/types";
 
 const AUTH_ROUTES = ["/login", "/cadastro", "/redefinir-senha"];
-
-function initials(name: string): string {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]!.toUpperCase())
-    .join("");
-}
+const SIDEBAR_KEY = "akylla:sidebar-collapsed";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -25,8 +17,36 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [disabledModules, setDisabledModules] = useState<Set<string>>(new Set());
   const [loaded, setLoaded] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  const isAuthRoute = AUTH_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"));
+  const isAuthRoute = AUTH_ROUTES.some(
+    (r) => pathname === r || pathname.startsWith(r + "/"),
+  );
+
+  useEffect(() => {
+    try {
+      setCollapsed(localStorage.getItem(SIDEBAR_KEY) === "1");
+    } catch {
+      // localStorage indisponível — padrão expandido
+    }
+  }, []);
+
+  const toggleCollapse = useCallback(() => {
+    setCollapsed((c) => {
+      const next = !c;
+      try {
+        localStorage.setItem(SIDEBAR_KEY, next ? "1" : "0");
+      } catch {
+        // ignora
+      }
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     if (isAuthRoute) {
@@ -91,10 +111,23 @@ export function AppShell({ children }: { children: ReactNode }) {
         userRole={session.user.role}
         disabledModules={disabledModules}
         onLogout={handleLogout}
+        collapsed={collapsed}
+        onToggleCollapse={toggleCollapse}
+        mobileOpen={mobileOpen}
+        onCloseMobile={() => setMobileOpen(false)}
       />
-      <div className="pl-[260px]">
-        <Header userName={session.user.name} userInitials={initials(session.user.name)} />
-        <main className="px-8 py-8">{children}</main>
+      <div
+        className={`min-h-screen transition-[padding] duration-200 ${
+          collapsed ? "lg:pl-[72px]" : "lg:pl-[260px]"
+        }`}
+      >
+        <Header
+          userName={session.user.name}
+          userRole={session.user.role}
+          onOpenMobile={() => setMobileOpen(true)}
+          onLogout={handleLogout}
+        />
+        <main className="px-4 py-6 md:px-6 md:py-8 xl:px-8">{children}</main>
       </div>
     </div>
   );

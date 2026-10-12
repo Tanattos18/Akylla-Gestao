@@ -2,6 +2,42 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Akylla Gestão] - 2026-10-12 - Reformulação profissional do painel
+
+### Alterado
+
+- **Sidebar** reorganizada em 6 grupos (somente páginas reais): Visão
+  geral (Início, Dashboard) · Operação (PDV, Vendas, Caixa, Financeiro,
+  Serviços, Agenda) · Estoque e compras (Produtos, Categorias,
+  Fornecedores) · Relacionamento (Clientes, Pets, WhatsApp,
+  Assinaturas) · Gestão (Relatórios) · Administração (Usuários,
+  Faturamento, Planos). Removida entrada duplicada "Estoque" →
+  `/produtos`. Destaque de página ativa (`aria-current`).
+- **Sidebar recolhível** no desktop (260 px ↔ 72 px, só ícones) com
+  persistência em `localStorage` (`akylla:sidebar-collapsed`); drawer
+  mobile com overlay e botão fechar.
+- **Header** com busca global (debounce 300 ms → produtos, clientes,
+  vendas por receiptCode com navegação aos detalhes), sino de
+  notificações (estoque sem saldo / abaixo do mínimo + contas a
+  receber/pagar vencidas, com links), menu de perfil (nome, papel,
+  sair) e botão hambúrguer no mobile. Data no canto (xl+).
+- **Dashboard** com KPIs de gestão: Vendas, Recebido, Pago, A receber
+  (destaca vencidas), A pagar, Saldo do caixa; faixa compacta
+  (pedidos, canceladas, ticket médio, clientes novos, vencidas,
+  resultado); alertas de estoque baixo e contas vencidas; próximos
+  agendamentos (14 dias, SCHEDULED/CONFIRMED); atividades recentes
+  (últimas vendas); atalhos (PDV, produto, agenda, clientes, caixa,
+  relatórios); saúde do caixa com recebido/pago; WhatsApp. Período,
+  combo chart e donut mantidos.
+- `AppShell` gerencia colapso/drawer e padding dinâmico do conteúdo;
+  main com padding responsivo (`px-4` → `xl:px-8`).
+
+### Notas
+
+- Remote real: `Tanattos18/Akylla-Gestao.git` (não `PetFlow.git`).
+- Nenhuma API, regra de negócio, migration ou permissão alterada.
+- Validações: lint 0 · typecheck OK · 509/509 testes · build OK.
+
 ## [Akylla Gestão] - 2026-10-12 - Documentação — Módulo PDV
 
 ### Adicionado
