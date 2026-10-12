@@ -641,6 +641,52 @@ D1–D4 do proprietário registradas e implementadas.**
   ativar cobrança recorrente real;
 - Escrita do catálogo global de planos (exige papel de plataforma).
 
+## Etapa 12 (Akylla) — Qualidade, segurança e preparação para produção (2026-10-12)
+
+Roteiro: `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`. **Concluída — última
+etapa do roteiro.**
+
+- [x] Instrução 1: validações executadas com evidência — `lint` 0 →
+      `typecheck` OK → **509/509 testes** → `build` OK → `db:validate`
+      OK
+- [x] Instrução 2: nenhuma regressão introduzida pela adaptação
+      (509 testes verdes)
+- [x] Instrução 3: falhas preexistentes identificadas separadamente no
+      `CHECKLIST_PRE_PRODUCAO.md` §3 (L1–L14)
+- [x] Instrução 4: revisão de segurança — segredos (nenhum hardcoded;
+      `.env` fora do Git), logs (sem dados sensíveis), autenticação
+      (cookie HttpOnly + bcrypt 12 + rate limit), autorização (AuthGuard/
+      AdminGuard/ModuleGuard), tenant (`companyId` só do contexto
+      autenticado; grep `body.companyId` = 0), uploads (nenhum endpoint),
+      exportações (CSV isolado por empresa), webhooks (assinatura HMAC)
+- [x] Instrução 5: backups/restauração — **pendência registrada**
+      (exige ambiente de produção; não executável aqui)
+- [x] Instrução 6: ambientes documentados (dev/teste/produção) no
+      `CHECKLIST_PRE_PRODUCAO.md` §4
+- [x] Instrução 7: configuração e env vars documentadas sem valores
+      secretos (`.env.example` + Seção 5 do checklist)
+- [x] Instrução 8: estimativa de custos de hospedagem produzida
+      (Seção 6: R$ 55–250/mês conforme opção)
+- [x] Instrução 9: nenhum deploy nem alteração de serviço externo
+      executado
+- [x] Instrução 10: lista de limitações conhecidas e itens obrigatórios
+      antes da comercialização (Seções 3 e 7)
+- [x] Entregável: `docs/akylla/CHECKLIST_PRE_PRODUCAO.md` com evidências,
+      riscos remanescentes, custos e **decisão recomendada: não declarar
+      pronto para produção** (faltam backups+restore, LGPD, CI,
+      monitoramento, E2E Mercado Pago, resolução de vulnerabilidades de
+      dev-dependencies)
+
+### Roteiro Akylla Gestão — RESUMO FINAL (Etapas 0–12)
+
+Todas as 13 etapas do roteiro foram concluídas entre 2026-10-09 e
+2026-10-12, com validações completas por etapa (lint/typecheck/testes/
+build/db:validate) e decisões do proprietário registradas quando
+exigidas. Entregáveis em `docs/akylla/`: DIAGNOSTICO_INICIAL,
+PLANO_DE_ADAPTACAO, AUDITORIA_MULTIEMPRESA, MAPA_DE_MODULOS,
+LIMITACOES_VENDAS, MODELO_FINANCEIRO, DICIONARIO_INDICADORES,
+PLANO_MODULARIZACAO, PLANO_BILLING, CHECKLIST_PRE_PRODUCAO.
+
 ## Etapas futuras — módulos de negócio
 
 - [x] Cadastro de clientes e animais (Etapa 5)

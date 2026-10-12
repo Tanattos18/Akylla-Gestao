@@ -2,6 +2,31 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Akylla Gestão] - 2026-10-12 - Etapa 12 — Qualidade, segurança e preparação para produção
+
+### Adicionado
+
+- `docs/akylla/CHECKLIST_PRE_PRODUCAO.md`: **entregável da etapa** —
+  evidências de qualidade (lint 0 · typecheck OK · **509/509 testes** ·
+  build OK · db:validate OK), revisão de segurança (segredos, logs,
+  auth, autorização, tenant, uploads, exportações, webhooks), limitações
+  conhecidas classificadas (L1–L14, preexistentes), ambientes
+  (dev/teste/produção), variáveis de ambiente sem segredos, estimativa
+  de custos de hospedagem (R$ 55–250/mês conforme opção), checklist de
+  itens obrigatórios antes da comercialização e **decisão recomendada:
+  não declarar pronto para produção** (faltam backups com restore
+  testado, LGPD, CI, monitoramento, E2E Mercado Pago e resolução de
+  vulnerabilidades de dev-dependencies).
+
+### Notas
+
+- Nenhuma regressão introduzida pela adaptação (509 testes verdes).
+- 8 vulnerabilidades `npm audit` preexistentes — todas em
+  dependências de desenvolvimento (vitest/esbuild/postcss/tinypool);
+  correção exige upgrade do vitest (breaking change, janela dedicada).
+- Roteiro Akylla Gestão (Etapas 0–12) **concluído**. Deploy proibido
+  sem aprovação explícita do proprietário.
+
 ## [Akylla Gestão] - 2026-10-12 - Etapa 11 — Planos e assinatura SaaS
 
 ### Adicionado

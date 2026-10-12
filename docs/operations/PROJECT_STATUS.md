@@ -2,53 +2,48 @@
 
 ## Etapa atual
 
-**Etapa 11 (roteiro Akylla) — Planos e assinatura SaaS** — CONCLUÍDA
-(2026-10-12), com decisões D1–D4 do proprietário registradas e
-implementadas.
+**Roteiro Akylla Gestão (Etapas 0–12) — CONCLUÍDO** (2026-10-12).
 
-Roteiro: `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`. Entregas da etapa:
+A Etapa 12 (Qualidade, segurança e preparação para produção) é a última
+do roteiro `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`. Entregas:
 
-- **Entregável**: `docs/akylla/PLANO_BILLING.md` — separação
-  billing-SaaS × assinaturas de negócio, estado dos modelos, avaliação
-  de gateway e checklist de decisões D1–D4.
-- **D1** (manter planos do seed, sem anúncio público), **D2** (todos os
-  limites: usuários+clientes+produtos), **D3** (status quo — enforcement
-  só com assinatura `ACTIVE`), **D4** (Mercado Pago sandbox) —
-  aprovadas pelo proprietário em 2026-10-12.
-- **Limites no backend**: migration `20261012173450_tenant_plan_limits`
-  (colunas `userLimit`/`clientLimit`/`productLimit` + UPDATE dos planos
-  seed); `TenantLimitsService` chamado nos `create` de Users/Clients/
-  Products; 403 com nome do plano e limite; `TenantLimitsModule` nos
-  módulos correspondentes.
-- **Gateway Mercado Pago (sandbox)**: SDK `mercadopago`; provider
-  mock/real/Failing; `POST /api/billing/checkout` cria preapproval e
-  vincula `gateway`/`gatewaySubscriptionId`; webhook
-  `POST /api/webhooks/mercadopago` (`@Public` + assinatura HMAC,
-  idempotente); `GET /api/billing/gateway`; env vars sem segredos;
-  **cobrança recorrente real não ativada** (exige E2E sandbox +
-  aprovação).
-- **Testes**: `tenant-limits.test.ts` +7 e `mercadopago.test.ts` +12;
-  suíte completa **509/509**.
-- **Docs**: `DATABASE.md`, `API.md`, `CHANGELOG.md`,
-  `IMPLEMENTATION_CHECKLIST.md`.
+- **Entregável**: `docs/akylla/CHECKLIST_PRE_PRODUCAO.md` — evidências
+  de qualidade (lint 0 · typecheck OK · **509/509 testes** · build OK ·
+  db:validate OK), revisão de segurança, limitações conhecidas (L1–L14),
+  ambientes, env vars, estimativa de custos e checklist pré-comercial.
+- **Decisão recomendada**: **não declarar pronto para produção** —
+  faltam backups com restore testado, LGPD, CI, monitoramento, E2E
+  Mercado Pago e resolução de vulnerabilidades de dev-dependencies.
 - Validações: `lint` 0 → `typecheck` OK → **509/509 testes** → `build`
-  OK → `db:validate` OK (migration aplicada em `petflow` e
-  `petflow_test`). Commit + push por etapa.
+  OK → `db:validate` OK. Commit + push por etapa.
 
-### Pendências da Etapa 11
+### Roteiro completo (Etapas 0–12)
 
-- UI `/faturamento` exibindo limites do plano atual e uso;
-- E2E sandbox com cartão de teste do Mercado Pago + aprovação para
-  ativar cobrança recorrente real;
-- Escrita do catálogo global de planos (papel de plataforma).
+| Etapa | Tema | Status |
+|---|---|---|
+| 0 | Diagnóstico do repositório | ✅ |
+| 1 | Migração e linha de base | ✅ |
+| 2 | Identidade Akylla Gestão | ✅ |
+| 3 | Auditoria multiempresa | ✅ |
+| 4 | Núcleo genérico | ✅ |
+| 5 | Cadastro, clientes e fornecedores | ✅ |
+| 6 | Produtos, categorias e estoque | ✅ |
+| 7 | Vendas e recebimentos | ✅ |
+| 8 | Financeiro básico | ✅ |
+| 9 | Dashboard e relatórios | ✅ |
+| 10 | Módulos específicos de pet shop | ✅ |
+| 11 | Planos e assinatura SaaS | ✅ |
+| 12 | Qualidade, segurança e produção | ✅ |
 
-### ⛔ PRÓXIMA ETAPA REQUER AUTORIZAÇÃO
+### Próximos passos (fora do roteiro — requerem autorização)
 
-**Etapa 12 (Akylla) — final**: fechamento do roteiro. Inspecionar
-`docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md` §Etapa 12 para o escopo exato.
-**Parada obrigatória antes de iniciar** (regra do roteiro).
+1. Concluir checklist do `CHECKLIST_PRE_PRODUCAO.md` §7 (backups,
+   LGPD, CI, monitoramento, vitest upgrade, E2E Mercado Pago);
+2. Definir ambiente de produção (hosting + domínio + TLS);
+3. Deploy de staging → E2E sandbox Mercado Pago → aprovação →
+   produção restrita (pilotos).
 
-**Etapa 10 (Akylla, anterior) — Módulos específicos de pet shop** —
+**Etapa 11 (Akylla, anterior) — Planos e assinatura SaaS** —
 CONCLUÍDA (2026-10-12): dicionário de indicadores, remoção dos
 indicadores de nicho, CSV reforçado, +3 testes.
 
