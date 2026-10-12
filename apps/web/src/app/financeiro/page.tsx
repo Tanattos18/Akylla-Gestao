@@ -5,7 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api } from "../../lib/api";
 import { fetchSession, type Session } from "../../lib/session";
-import type { CashSummaryDto } from "../../lib/types";
+import type { CashSummaryDto, FinancialSummaryDto } from "../../lib/types";
+import FinancialEntries from "../../components/FinancialEntries";
+
+type Tab = "resumo" | "payables" | "receivables";
 
 export default function FinanceiroPage() {
   const router = useRouter();
@@ -13,7 +16,9 @@ export default function FinanceiroPage() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<CashSummaryDto | null>(null);
+  const [titlesSummary, setTitlesSummary] = useState<FinancialSummaryDto | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>("resumo");
 
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -35,8 +40,12 @@ export default function FinanceiroPage() {
       if (from) params.set("from", from);
       if (to) params.set("to", to);
       const query = params.toString();
-      const data = await api<CashSummaryDto>(`/api/cash/summary${query ? `?${query}` : ""}`);
-      setSummary(data);
+      const [cashData, titlesData] = await Promise.all([
+        api<CashSummaryDto>(`/api/cash/summary${query ? `?${query}` : ""}`),
+        api<FinancialSummaryDto>(`/api/financial/summary${query ? `?${query}` : ""}`),
+      ]);
+      setSummary(cashData);
+      setTitlesSummary(titlesData);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Não foi possível carregar o resumo.");
@@ -78,9 +87,9 @@ export default function FinanceiroPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-semibold text-slate-900">Resumo financeiro</h2>
+          <h2 className="text-xl font-semibold text-slate-900">Financeiro</h2>
           <p className="text-sm text-slate-500">
-            Totais calculados no servidor para o período selecionado.
+            Caixa realizado e títulos a pagar/receber do negócio.
           </p>
         </div>
         <div className="flex gap-2">
@@ -105,95 +114,166 @@ export default function FinanceiroPage() {
         </div>
       </div>
 
+      <div className="flex flex-wrap gap-2 border-b border-slate-200">
+        {(
+          [
+            { key: "resumo", label: "Resumo" },
+            { key: "payables", label: "A pagar" },
+            { key: "receivables", label: "A receber" },
+          ] as Array<{ key: Tab; label: string }>
+        ).map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            onClick={() => setTab(item.key)}
+            className={
+              tab === item.key
+                ? "border-b-2 border-teal-700 px-4 py-2 text-sm font-medium text-teal-800"
+                : "px-4 py-2 text-sm text-slate-500 hover:text-slate-700"
+            }
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
       {error && (
         <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}
         </div>
       )}
 
-      <form
-        onSubmit={handleFilter}
-        className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-3"
-      >
-        <div>
-          <label htmlFor="fin-from" className="mb-1 block text-sm text-slate-700">
-            De
-          </label>
-          <input
-            id="fin-from"
-            type="date"
-            value={from}
-            onChange={(event) => setFrom(event.target.value)}
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label htmlFor="fin-to" className="mb-1 block text-sm text-slate-700">
-            Até
-          </label>
-          <input
-            id="fin-to"
-            type="date"
-            value={to}
-            onChange={(event) => setTo(event.target.value)}
-            className={inputClass}
-          />
-        </div>
-        <div className="flex items-end gap-2">
-          <button
-            type="submit"
-            className="flex-1 rounded-md bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-800"
+      {tab !== "resumo" ? (
+        <FinancialEntries
+          direction={tab === "payables" ? "PAYABLE" : "RECEIVABLE"}
+          isAdmin={session.user.role === "ADMIN"}
+        />
+      ) : (
+        <>
+          <form
+            onSubmit={handleFilter}
+            className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-3"
           >
-            Aplicar período
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setFrom("");
-              setTo("");
-            }}
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
-          >
-            Limpar
-          </button>
-        </div>
-      </form>
+            <div>
+              <label htmlFor="fin-from" className="mb-1 block text-sm text-slate-700">
+                De
+              </label>
+              <input
+                id="fin-from"
+                type="date"
+                value={from}
+                onChange={(event) => setFrom(event.target.value)}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label htmlFor="fin-to" className="mb-1 block text-sm text-slate-700">
+                Até
+              </label>
+              <input
+                id="fin-to"
+                type="date"
+                value={to}
+                onChange={(event) => setTo(event.target.value)}
+                className={inputClass}
+              />
+            </div>
+            <div className="flex items-end gap-2">
+              <button
+                type="submit"
+                className="flex-1 rounded-md bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-800"
+              >
+                Aplicar período
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setFrom("");
+                  setTo("");
+                }}
+                className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+              >
+                Limpar
+              </button>
+            </div>
+          </form>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {cards.map((card) => (
-          <div key={card.label} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase text-slate-500">{card.label}</p>
-            <p
-              className={`mt-1 text-2xl font-semibold ${
-                card.tone === "green" ? "text-teal-800" : "text-red-700"
-              }`}
-            >
-              R$ {Number(card.value).toFixed(2)}
-            </p>
-          </div>
-        ))}
-      </section>
+          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {cards.map((card) => (
+              <div
+                key={card.label}
+                className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <p className="text-xs uppercase text-slate-500">{card.label}</p>
+                <p
+                  className={`mt-1 text-2xl font-semibold ${
+                    card.tone === "green" ? "text-teal-800" : "text-red-700"
+                  }`}
+                >
+                  R$ {Number(card.value).toFixed(2)}
+                </p>
+              </div>
+            ))}
+          </section>
 
-      <section className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-lg border border-teal-200 bg-teal-50 p-4">
-          <p className="text-xs uppercase text-teal-700">Líquido (entradas - saídas)</p>
-          <p className="mt-1 text-3xl font-semibold text-teal-900">R$ {net.toFixed(2)}</p>
-        </div>
-        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-xs uppercase text-slate-500">Período</p>
-          <p className="mt-1 text-sm text-slate-700">
-            {summary?.from || summary?.to
-              ? `${summary.from ?? "início"} até ${summary.to ?? "hoje"}`
-              : "Todo o histórico"}
-          </p>
-        </div>
-        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-xs uppercase text-slate-500">Estornos (saldo)</p>
-          <p className="mt-1 text-2xl font-semibold text-slate-900">
-            R$ {Number(summary?.reversalsNetTotal ?? "0").toFixed(2)}
-          </p>
-        </div>
-      </section>
+          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-lg border border-sky-200 bg-sky-50 p-4">
+              <p className="text-xs uppercase text-sky-700">
+                A receber em aberto ({titlesSummary?.openReceivablesCount ?? 0})
+              </p>
+              <p className="mt-1 text-2xl font-semibold text-sky-900">
+                R$ {Number(titlesSummary?.openReceivablesTotal ?? "0").toFixed(2)}
+              </p>
+            </div>
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+              <p className="text-xs uppercase text-amber-700">
+                A pagar em aberto ({titlesSummary?.openPayablesCount ?? 0})
+              </p>
+              <p className="mt-1 text-2xl font-semibold text-amber-900">
+                R$ {Number(titlesSummary?.openPayablesTotal ?? "0").toFixed(2)}
+              </p>
+            </div>
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+              <p className="text-xs uppercase text-red-700">
+                Vencidos a receber ({titlesSummary?.overdueReceivablesCount ?? 0})
+              </p>
+              <p className="mt-1 text-2xl font-semibold text-red-900">
+                R$ {Number(titlesSummary?.overdueReceivablesTotal ?? "0").toFixed(2)}
+              </p>
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-xs uppercase text-slate-500">Liquidado no período</p>
+              <p className="mt-1 text-sm text-slate-700">
+                Entradas: <strong>R$ {Number(titlesSummary?.paidInTotal ?? "0").toFixed(2)}</strong>
+              </p>
+              <p className="text-sm text-slate-700">
+                Saídas: <strong>R$ {Number(titlesSummary?.paidOutTotal ?? "0").toFixed(2)}</strong>
+              </p>
+            </div>
+          </section>
+
+          <section className="grid gap-4 sm:grid-cols-3">
+            <div className="rounded-lg border border-teal-200 bg-teal-50 p-4">
+              <p className="text-xs uppercase text-teal-700">Líquido (entradas - saídas)</p>
+              <p className="mt-1 text-3xl font-semibold text-teal-900">R$ {net.toFixed(2)}</p>
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-xs uppercase text-slate-500">Período</p>
+              <p className="mt-1 text-sm text-slate-700">
+                {summary?.from || summary?.to
+                  ? `${summary.from ?? "início"} até ${summary.to ?? "hoje"}`
+                  : "Todo o histórico"}
+              </p>
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-xs uppercase text-slate-500">Estornos (saldo)</p>
+              <p className="mt-1 text-2xl font-semibold text-slate-900">
+                R$ {Number(summary?.reversalsNetTotal ?? "0").toFixed(2)}
+              </p>
+            </div>
+          </section>
+        </>
+      )}
     </div>
   );
 }

@@ -456,6 +456,49 @@ caixa/venda existente").
        ARCHITECTURE, README, IMPLEMENTATION_CHECKLIST)
 - [x] Commit e push (ver PROJECT_STATUS — Git)
 
+## Etapa 8 (Akylla) — Financeiro básico AP/AR (2026-10-12)
+
+Roteiro: `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`.
+
+- [x] Detalhamento prévio em `docs/akylla/MODELO_FINANCEIRO.md`
+      (conceitos separados, modelo, transições, escopo da migration,
+      plano de reversão); decisões D1–D4 aprovadas pelo proprietário
+- [x] Schema: enums `FinancialDirection`/`FinancialStatus`/
+      `FinancialOrigin`; `CashMovementOrigin` ganha `ACCOUNT`;
+      modelo `FinancialEntry` (`Decimal(12,2)`, contrapartes `SetNull`,
+      `@@unique([companyId, origin, originId])`,
+      `@@unique([companyId, clientRequestId])`, 4 índices por empresa);
+      relações inversas em `Company`/`Category`/`Supplier`/`Client`/
+      `CashMovement`/`User`
+- [x] Migration aditiva `20261012164040_financial_entry` (aprovada)
+      aplicada em `petflow`; `npm run db:validate` OK
+- [x] Schemas Zod em `@petflow/shared` (`createFinancialEntry`,
+      `updateFinancialEntry`, `financialReason`,
+      `listFinancialQuery`, `financialSummaryQuery`, labels) +
+      `ACCOUNT` no enum/labels de origem de caixa
+- [x] Módulo `apps/api/src/financial`: `POST /api/financial` (201;
+      contraparte inválida → 400; `P2002` → 409), `GET /api/financial`
+      (direção/status/período/search + paginação), `GET /summary`
+      (abertos/vencidos/liquidados/cancelados no servidor),
+      `GET/PATCH /:id` (só `OPEN` → 409), `POST /:id/pay`
+      (`OPEN → PAID` + `lockOpenCashSession` → 409 se fechado +
+      movimento `ACCOUNT` `IN`/`OUT`), `POST /:id/cancel` e
+      `/:id/reverse` (`AdminGuard`, motivo 3..500 → 400, duplo → 409);
+      cross-tenant → 404; `@Inject()` explícito
+- [x] UI `/financeiro` com abas **Resumo | A pagar | A receber**;
+      componente `apps/web/src/components/FinancialEntries.tsx`
+      (criar/editar/liquidar; cancelar/estornar só admin; filtros,
+      paginação, badge "Vencido"); DTOs em `lib/types.ts`
+- [x] `resetDatabase` apaga `FinancialEntry` antes de `user`
+- [x] `tests/financial.test.ts` (+30): criação/validações,
+      liquidação+saldos coerentes com `/cash/summary`,
+      cancelamento/estorno auditáveis, filtros por período/status,
+      isolamento A×B, arredondamento/decimais 12,2
+- [x] Documentação: `docs/architecture/DATABASE.md`, `CHANGELOG.md`,
+      `PROJECT_STATUS.md`, checklist e status em `MODELO_FINANCEIRO.md`
+- [x] Validações com evidência: `lint` 0 → `typecheck` OK →
+      **474/474 testes** → `build` OK → `db:validate` OK
+
 ## Etapas futuras — módulos de negócio
 
 - [x] Cadastro de clientes e animais (Etapa 5)

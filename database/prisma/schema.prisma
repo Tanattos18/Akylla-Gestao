@@ -72,6 +72,24 @@ enum CashMovementOrigin {
   SALE
   SALE_CANCELMENT
   REVERSAL
+  ACCOUNT
+}
+
+enum FinancialDirection {
+  PAYABLE
+  RECEIVABLE
+}
+
+enum FinancialStatus {
+  OPEN
+  PAID
+  CANCELLED
+}
+
+enum FinancialOrigin {
+  MANUAL
+  SALE
+  SUBSCRIPTION
 }
 
 enum PetSpecies {
@@ -183,6 +201,7 @@ model Company {
   sales      Sale[]
   cashSessions   CashSession[]
   cashMovements  CashMovement[]
+  financialEntries FinancialEntry[]
   clients    Client[]
   pets       Pet[]
   services   Service[]
@@ -216,6 +235,7 @@ model User {
   cashSessionsClosed CashSession[] @relation("CashSessionClosedBy")
   cashMovements  CashMovement[]
   movementsReversed   CashMovement[] @relation("MovementReversedBy")
+  financialEntriesCreated FinancialEntry[]
   whatsappTemplatesCreated WhatsAppTemplate[]
   whatsappConsentsUpdated  WhatsAppConsent[]
   whatsappMessagesCreated  WhatsAppMessage[] @relation("WhatsAppMessageCreatedBy")
@@ -258,6 +278,7 @@ model Category {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   products    Product[]
+  financialEntries FinancialEntry[]
 
   @@unique([companyId, nameKey])
   @@index([companyId, status])
@@ -276,6 +297,7 @@ model Supplier {
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
   products  Product[]
+  financialEntries FinancialEntry[]
 
   @@index([companyId, status])
   @@index([companyId, name])
@@ -308,6 +330,7 @@ model Client {
   whatsappMessages WhatsAppMessage[]
   appointments Appointment[]
   subscriptions Subscription[]
+  financialEntries FinancialEntry[]
 
   @@index([companyId, nameKey])
   @@index([companyId, status])
@@ -539,12 +562,48 @@ model CashMovement {
   createdByUserId  String
   createdBy        User               @relation(fields: [createdByUserId], references: [id], onDelete: Restrict)
   createdAt        DateTime           @default(now())
+  financialEntries FinancialEntry[]
 
   @@unique([origin, saleId])
   @@index([companyId, createdAt])
   @@index([companyId, cashSessionId])
   @@index([companyId, saleId])
   @@index([companyId, subscriptionId])
+}
+
+model FinancialEntry {
+  id              String            @id @default(cuid())
+  companyId       String
+  company         Company           @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  direction       FinancialDirection
+  description     String
+  amount          Decimal           @db.Decimal(12, 2)
+  dueDate         DateTime
+  status          FinancialStatus   @default(OPEN)
+  paidAt          DateTime?
+  cancelReason    String?
+  clientId        String?
+  client          Client?           @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  supplierId      String?
+  supplier        Supplier?         @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  categoryId      String?
+  category        Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  origin          FinancialOrigin   @default(MANUAL)
+  originId        String?
+  clientRequestId String?
+  cashMovementId  String?
+  cashMovement    CashMovement?     @relation(fields: [cashMovementId], references: [id], onDelete: SetNull)
+  createdByUserId String
+  createdBy       User              @relation(fields: [createdByUserId], references: [id], onDelete: Restrict)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@unique([companyId, origin, originId])
+  @@unique([companyId, clientRequestId])
+  @@index([companyId, status, dueDate])
+  @@index([companyId, direction, status, dueDate])
+  @@index([companyId, clientId])
+  @@index([companyId, supplierId])
 }
 
 model SubscriptionPlan {

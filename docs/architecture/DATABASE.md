@@ -1,5 +1,50 @@
 # Banco de dados — diretrizes e modelo atual
 
+## Modelos implementados (Etapa 8 — Akylla Gestão: financeiro básico)
+
+Migration: `database/prisma/migrations/20261012164040_financial_entry`
+(aditiva — 3 enums novos, tabela nova e valor novo em enum existente;
+não altera nem remove dados existentes).
+
+| Modelo | Campos principais | Restrições/índices |
+|---|---|---|
+| `FinancialEntry` | `companyId` (FK `Restrict`), `direction` (enum `FinancialDirection`), `description`, `amount Decimal @db.Decimal(12, 2)`, `dueDate DateTime`, `status` (enum `FinancialStatus`, default `OPEN`), `paidAt?`, `cancelReason?`, `clientId?`/`supplierId?`/`categoryId?` (FK `SetNull`), `origin` (enum `FinancialOrigin`, default `MANUAL`) + `originId?`, `cashMovementId?` (FK → `CashMovement`, `SetNull`), `clientRequestId?`, `createdByUserId` (FK `Restrict`), timestamps | `@@unique([companyId, origin, originId])`, `@@unique([companyId, clientRequestId])` (idempotência); índices `[companyId, status, dueDate]`, `[companyId, direction, status, dueDate]`, `[companyId, clientId]`, `[companyId, supplierId]` |
+
+Enums novos:
+
+- `FinancialDirection`: `PAYABLE` (a pagar), `RECEIVABLE` (a receber) —
+  **decisão D1**: um único modelo com `direction` em vez de dois.
+- `FinancialStatus`: `OPEN`, `PAID`, `CANCELLED` (transições só no
+  servidor; `OVERDUE` é derivado de `dueDate < now` e nunca armazenado).
+- `FinancialOrigin`: `MANUAL`, `SALE`, `SUBSCRIPTION` (vendas viram
+  título liquidado ao criar — **decisão D2** —, assinaturas manuais
+  quando não pagas na hora).
+
+Alterações aditivas em modelos existentes:
+
+| Modelo | Alteração | Observação |
+|---|---|---|
+| `CashMovementOrigin` | ganha o valor `ACCOUNT` (**decisão D3**) | liquidação de título cria movimento de caixa `IN`/`OUT` com `origin: "ACCOUNT"`, `inCash: true` |
+| `cashMovementOriginSchema` (`@petflow/shared`) | enum Zod e labels ganham `ACCOUNT` ("Liquidação de título") | usado pelos filtros da UI e pelos relatórios (`byOrigin`) |
+| `Company`, `Category`, `Supplier`, `Client`, `CashMovement` | relações `financialEntries` (`SetNull` nas contrapartes) | contraparte excluída não apaga o histórico financeiro |
+| `User` | relação `financialEntriesCreated` (`Restrict`) | autor do título não pode ser apagado |
+| `tests/helpers/app.ts` | `resetDatabase` apaga `FinancialEntry` antes de `user` | FK `Restrict` em `createdByUserId` |
+
+Regras derivadas:
+
+- `amount` é calculado/validado no servidor (Zod `positivePriceFieldSchema`,
+  2 casas, `> 0`); DTOs sempre retornam `toFixed(2)`.
+- `clientRequestId` + `@@unique([companyId, clientRequestId])` dão
+  idempotência de criação (colisão `P2002` → HTTP 409).
+- `pay` (transação): `OPEN → PAID` + `lockOpenCashSession` + cria
+  `CashMovement` (`ACCOUNT`, `IN` se `RECEIVABLE`/`OUT` se `PAYABLE`) +
+  grava `cashMovementId` no título.
+- `reverse` (admin): `PAID → OPEN`, marca o movimento original com
+  `reversedAt`/`reversalReason` e cria movimento `REVERSAL`
+  compensatório na mesma sessão de caixa; a sessão precisa estar aberta.
+- `cancel` (admin): `OPEN → CANCELLED` com motivo obrigatório; não
+  altera caixa (nunca houve liquidação).
+
 ## Modelos implementados (Etapa 9)
 
 Migration: `database/prisma/migrations/20261010131027_etapa9_subscriptions`

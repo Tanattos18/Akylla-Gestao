@@ -355,6 +355,7 @@ export const cashMovementOriginSchema = z.enum([
   "SALE",
   "SALE_CANCELMENT",
   "REVERSAL",
+  "ACCOUNT",
 ]);
 export type CashMovementOrigin = z.infer<typeof cashMovementOriginSchema>;
 
@@ -373,6 +374,7 @@ export const cashMovementOriginLabels: Record<CashMovementOrigin, string> = {
   SALE: "Venda",
   SALE_CANCELMENT: "Cancelamento",
   REVERSAL: "Estorno",
+  ACCOUNT: "Liquidação de título",
 };
 
 export const positivePriceFieldSchema = priceFieldSchema.refine(
@@ -391,6 +393,72 @@ export const closeCashSessionSchema = z.object({
   notes: optionalText(500),
 });
 export type CloseCashSessionInput = z.infer<typeof closeCashSessionSchema>;
+
+// ---------------------------------------------------------------------------
+// Financeiro básico — contas a pagar e a receber (Etapa 8)
+// ---------------------------------------------------------------------------
+
+export const financialDirectionSchema = z.enum(["PAYABLE", "RECEIVABLE"]);
+export type FinancialDirection = z.infer<typeof financialDirectionSchema>;
+
+export const financialStatusSchema = z.enum(["OPEN", "PAID", "CANCELLED"]);
+export type FinancialStatus = z.infer<typeof financialStatusSchema>;
+
+export const financialDirectionLabels: Record<FinancialDirection, string> = {
+  PAYABLE: "A pagar",
+  RECEIVABLE: "A receber",
+};
+
+export const financialStatusLabels: Record<FinancialStatus, string> = {
+  OPEN: "Em aberto",
+  PAID: "Liquidado",
+  CANCELLED: "Cancelado",
+};
+
+export const createFinancialEntrySchema = z.object({
+  direction: financialDirectionSchema,
+  description: z
+    .string()
+    .trim()
+    .min(2, "Descrição deve ter ao menos 2 caracteres")
+    .max(200, "Descrição deve ter no máximo 200 caracteres"),
+  amount: positivePriceFieldSchema,
+  dueDate: dateField,
+  clientId: z.string().trim().min(1).max(60).optional().nullable(),
+  supplierId: z.string().trim().min(1).max(60).optional().nullable(),
+  categoryId: z.string().trim().min(1).max(60).optional().nullable(),
+  clientRequestId: z.string().trim().min(8, "Identificador de requisição inválido").max(64).optional(),
+});
+export type CreateFinancialEntryInput = z.infer<typeof createFinancialEntrySchema>;
+
+export const updateFinancialEntrySchema = createFinancialEntrySchema
+  .omit({ direction: true, clientRequestId: true })
+  .partial();
+export type UpdateFinancialEntryInput = z.infer<typeof updateFinancialEntrySchema>;
+
+export const financialReasonSchema = z.object({
+  reason: z
+    .string()
+    .trim()
+    .min(3, "Motivo é obrigatório")
+    .max(500, "Motivo deve ter no máximo 500 caracteres"),
+});
+export type FinancialReasonInput = z.infer<typeof financialReasonSchema>;
+
+export const listFinancialQuerySchema = paginationQuerySchema.extend({
+  direction: financialDirectionSchema.optional(),
+  status: financialStatusSchema.optional(),
+  search: z.string().trim().max(120).optional(),
+  from: dateField.optional(),
+  to: dateField.optional(),
+});
+export type ListFinancialQuery = z.infer<typeof listFinancialQuerySchema>;
+
+export const financialSummaryQuerySchema = z.object({
+  from: dateField.optional(),
+  to: dateField.optional(),
+});
+export type FinancialSummaryQuery = z.infer<typeof financialSummaryQuerySchema>;
 
 export const createCashMovementSchema = z
   .object({

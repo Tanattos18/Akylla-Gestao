@@ -1,22 +1,54 @@
-# Status do projeto — PetFlow
+# Status do projeto — Akylla Gestão (monorepo PetFlow)
 
 ## Etapa atual
 
-**Etapa 9 — Assinaturas e gestão comercial** — CONCLUÍDA.
+**Etapa 8 (roteiro Akylla) — Financeiro básico (AP/AR)** —
+CONCLUÍDA (2026-10-12).
+
+Roteiro: `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`. Entregas da etapa:
+
+- `docs/akylla/MODELO_FINANCEIRO.md` — detalhamento aprovado (decisões
+  D1 modelo único `direction`, D2 venda só no caixa, D3 origem
+  `ACCOUNT`, D4 aprovação da migration aditiva).
+- Migration aditiva `20261012164040_financial_entry` aplicada em
+  `petflow` (dev) + `db:validate` OK.
+- Schemas Zod em `@petflow/shared` + `ACCOUNT` no enum/labels de
+  origem de caixa.
+- Módulo API `apps/api/src/financial`: criar/listar/resumo/consultar/
+  editar/liquidar (`pay`), `cancel`/`reverse` com `AdminGuard`;
+  idempotência via `clientRequestId` → 409; cross-tenant → 404.
+- UI `/financeiro` com abas **Resumo | A pagar | A receber** e
+  componente `FinancialEntries` (criar/editar/liquidar; cancelar/
+  estornar só admin), DTOs em `apps/web/src/lib/types.ts`.
+- `tests/financial.test.ts` (+30 testes) e `resetDatabase` cobrindo
+  `FinancialEntry`; `docs/architecture/DATABASE.md` atualizado.
+- Validações: `lint` 0 → `typecheck` OK → **474/474 testes** →
+  `build` OK → `db:validate` OK. Commit + push por etapa.
+
+Próxima etapa (**aguardando autorização**): **Etapa 9 (Akylla) —
+Dashboard/relatórios genéricos** (indicadores de nicho `newPets`/
+`petsBySpecies` viram genéricos).
+
+**Etapa 9 (PetFlow, anterior) — Assinaturas e gestão comercial** —
+CONCLUÍDA.
 
 **Pós-Etapa 9 (2026-10-10)** — entregas de acesso e demonstração
 CONCLUÍDAS: redefinição de senha pelo painel, cadastro aberto de
-contas, seed de demonstração e guia de uso no README. Aguardando
-direção do proprietário para a próxima etapa.
+contas, seed de demonstração e guia de uso no README.
 
-Data: 2026-10-10.
+Data da Etapa 9 PetFlow: 2026-10-10.
 
-Etapas anteriores: Etapa 0 (2026-10-09), Etapa 1 (2026-10-09),
+Etapas anteriores (PetFlow): Etapa 0 (2026-10-09), Etapa 1 (2026-10-09),
 Etapa 2 (2026-10-09), Etapa 3 (2026-10-09), Etapa 4 (2026-10-09),
 Etapa 5 (2026-10-09), Etapa 6 (2026-10-09), Etapa 7 (2026-10-09),
 Etapa 8 (2026-10-10).
 
-Escopo (aprovado na conversa — sem prompt oficial em
+Etapas Akylla concluídas: 0–3 (auditoria/plano/identidade, 2026-10-11),
+4–5 (mapa de módulos + testes/ajustes, 2026-10-12), 6 (filtro
+`lowStock`, 2026-10-12), 7 (`LIMITACOES_VENDAS.md`, 2026-10-12),
+8 (financeiro básico, 2026-10-12).
+
+Escopo da Etapa 9 PetFlow (aprovado na conversa — sem prompt oficial em
 `Etapas_projeto/`): assinaturas recorrentes de clientes do pet shop
 (planos, criação com pagamento opcional no caixa, renovação via caixa
 e cancelamento com motivo) **e** billing da própria empresa no SaaS

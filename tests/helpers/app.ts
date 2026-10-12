@@ -46,6 +46,8 @@ export async function resetDatabase(prisma: PrismaService): Promise<void> {
   await prisma.category.deleteMany();
   await prisma.supplier.deleteMany();
   await prisma.session.deleteMany();
+  // financialEntry referencia users/company (Restrict) e client/supplier/category/cashMovement (SetNull)
+  await prisma.financialEntry.deleteMany();
   await prisma.user.deleteMany();
   await prisma.company.deleteMany();
 }

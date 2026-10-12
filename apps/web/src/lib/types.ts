@@ -839,3 +839,53 @@ export interface TenantSubscriptionDto {
   updatedAt: string;
   plan: TenantPlanDto;
 }
+
+export type FinancialDirection = "PAYABLE" | "RECEIVABLE";
+export type FinancialStatus = "OPEN" | "PAID" | "CANCELLED";
+
+export interface FinancialEntryDto {
+  id: string;
+  direction: FinancialDirection;
+  description: string;
+  amount: string;
+  dueDate: string;
+  status: FinancialStatus;
+  paidAt: string | null;
+  cancelReason: string | null;
+  clientId: string | null;
+  supplierId: string | null;
+  categoryId: string | null;
+  origin: "MANUAL" | "SALE" | "SUBSCRIPTION";
+  originId: string | null;
+  cashMovementId: string | null;
+  clientRequestId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  client: { id: string; name: string } | null;
+  supplier: { id: string; name: string } | null;
+  category: { id: string; name: string } | null;
+  createdBy: { id: string; name: string };
+}
+
+export interface FinancialListResponse {
+  items: FinancialEntryDto[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface FinancialSummaryDto {
+  openPayablesTotal: string;
+  openPayablesCount: number;
+  openReceivablesTotal: string;
+  openReceivablesCount: number;
+  overduePayablesTotal: string;
+  overduePayablesCount: number;
+  overdueReceivablesTotal: string;
+  overdueReceivablesCount: number;
+  paidOutTotal: string;
+  paidOutCount: number;
+  paidInTotal: string;
+  paidInCount: number;
+  cancelledCount: number;
+}

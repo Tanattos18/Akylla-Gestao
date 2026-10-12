@@ -10,6 +10,7 @@ import { ProductsModule } from "./products/products.module";
 import { StockModule } from "./stock/stock.module";
 import { SalesModule } from "./sales/sales.module";
 import { CashModule } from "./cash/cash.module";
+import { FinancialModule } from "./financial/financial.module";
 import { ClientsModule } from "./clients/clients.module";
 import { PetsModule } from "./pets/pets.module";
 import { ServicesModule } from "./services/services.module";
@@ -31,6 +32,7 @@ import { AuthGuard } from "./common/guards/auth.guard";
     StockModule,
     SalesModule,
     CashModule,
+    FinancialModule,
     ClientsModule,
     PetsModule,
     ServicesModule,

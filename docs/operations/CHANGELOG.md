@@ -2,21 +2,93 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
-## [Akylla Gestão] - 2026-10-12 - Etapa 8 — Financeiro básico (em andamento)
+## [Akylla Gestão] - 2026-10-12 - Etapa 8 — Financeiro básico (AP/AR)
 
-### Adicionado (aguardando aprovação)
+### Adicionado
+
+- `docs/akylla/MODELO_FINANCEIRO.md`: detalhamento prévio aprovado —
+  inspeção do modelo atual, 6 conceitos separados (títulos → liquidação
+  → caixa → fluxo previsto/realizado → billing), modelo `FinancialEntry`,
+  transições de status só no servidor (`OVERDUE` derivado), escopo
+  aditivo da migration e plano de reversão; decisões D1 (modelo único
+  com `direction`), D2 (venda vira caixa, sem título liquidado), D3
+  (origem `ACCOUNT`) e D4 (aprovação da migration) registradas.
+- **Schema** (`database/prisma/schema.prisma`): enums
+  `FinancialDirection`/`FinancialStatus`/`FinancialOrigin`;
+  `CashMovementOrigin` ganha `ACCOUNT`; modelo `FinancialEntry`
+  (`Decimal(12,2)`, contrapartes `SetNull`, `@@unique([companyId,
+  origin, originId])`, `@@unique([companyId, clientRequestId])`,
+  4 índices por empresa, `createdByUserId` `Restrict`); relações
+  inversas em `Company`/`Category`/`Supplier`/`Client`/`CashMovement`/
+  `User`.
+- **Migration** `20261012164040_financial_entry` (aditiva: 3
+  `CREATE TYPE`, `ALTER TYPE ... ADD VALUE 'ACCOUNT'`, `CREATE TABLE`,
+  índices e FKs; coluna `clientRequestId` + unique index incluídos na
+  migration); aplicada em `petflow` (dev) e `npm run db:validate` OK.
+- **Schemas Zod** em `@petflow/shared`: `financialDirectionSchema`,
+  `financialStatusSchema`, labels, `createFinancialEntrySchema`
+  (description 2..200, `positivePriceFieldSchema`, `dateField`,
+  contrapartes opcionais, `clientRequestId` 8..64),
+  `updateFinancialEntrySchema` (parcial, sem `direction`/
+  `clientRequestId`), `financialReasonSchema` (motivo 3..500),
+  `listFinancialQuerySchema` (direção/status/search/período +
+  paginação), `financialSummaryQuerySchema`; `cashMovementOriginSchema`
+  e `cashMovementOriginLabels` ganham `ACCOUNT`.
+- **Módulo API** `apps/api/src/financial` (`FinancialModule`, com
+  `@Inject()` explícito): `POST /api/financial` (201; valida
+  contrapartes da empresa → 400; `P2002` → 409), `GET /api/financial`
+  (direção/status/período/search + paginação), `GET /financial/summary`
+  (abertos, vencidos, liquidados e cancelados — calculado no
+  servidor), `GET/PATCH /:id` (só `OPEN` → 409), `POST /:id/pay`
+  (transação `OPEN → PAID` + `lockOpenCashSession` → 409 se fechado +
+  movimento `ACCOUNT` `IN`/`OUT`), `POST /:id/reverse` e `POST
+  /:id/cancel` (`AdminGuard`, motivo obrigatório → 400, duplo → 409);
+  cross-tenant → 404.
+- **UI** `/financeiro` com abas **Resumo | A pagar | A receber**:
+  resumo ganha cards de títulos abertos/vencidos/liquidados no período;
+  novo componente `apps/web/src/components/FinancialEntries.tsx`
+  (criar/editar/liquidar, cancelar/estornar para admin, filtros por
+  status, paginação, badge "Vencido"); DTOs financeiros em
+  `apps/web/src/lib/types.ts`.
+- `tests/financial.test.ts` (**+30 testes**): criação e validações
+  (valor/3 casas, zero, negativo, data fora de formato, contraparte
+  inválida, idempotência `clientRequestId` → 409), liquidação e saldos
+  (`/cash/summary` coerente, movimento `ACCOUNT`, membro pode liquidar,
+  dupla liquidação → 409, caixa fechado → 409), cancelamento/estorno
+  auditáveis (motivo registrado no banco, 400 sem motivo, 403 membro,
+  409 em estado inválido, movimento `REVERSAL` compensatório), filtros
+  por período/status, isolamento A×B (leitura/escrita/resumo → 404/0) e
+  arredondamento/decimais (12,2, `toFixed(2)`).
+
+### Corrigido
+
+- `apps/api/src/financial/financial.service.ts`: no `summary`,
+  `dueRange`/`paidRange` colidiam na chave do filtro (o `to`
+  sobrescrevia o `from`), ignorando o limite inferior do período.
+- `tests/helpers/app.ts`: `resetDatabase` agora apaga `FinancialEntry`
+  antes de `user` (FK `Restrict` em `createdByUserId`) — sem isso
+  nenhum teste iniciava após a nova tabela.
+
+### Verificado
+
+- `lint` 0 → `typecheck` OK → **474/474 testes** (20 arquivos; +30
+  novos) → `build` OK → `db:validate` OK.
+
+## [Akylla Gestão] - 2026-10-12 - Etapa 8 — detalhamento (aprovado)
+
+### Adicionado (detalhamento; sem alteração de código)
 
 - `docs/akylla/MODELO_FINANCEIRO.md`: detalhamento prévio exigido pelo
-  roteiro — inspeção do modelo atual, 6 conceitos separados (títulos ×
-  liquidação × caixa × fluxo previsto/realizado × billing), modelo
+  roteiro — inspeção do modelo atual, 6 conceitos separados (títulos →
+  liquidação → caixa → fluxo previsto/realizado → billing), modelo
   Prisma `FinancialEntry` (Decimal 12,2, contrapartes SetNull, unique
   `(companyId, origin, originId)`), transições de status só no servidor
   (`OVERDUE` derivado, não armazenado), relação com o caixa
   (`CashMovement` da venda = registro de recebimento), 6 testes
   planejados, escopo **aditivo** da migration e plano de reversão.
-- **Nenhum schema, migration ou código alterado.** Decisões D1–D4
-  (modelo único × dois, venda × títulos, origem `ACCOUNT`, aprovação da
-  migration) submetidas ao proprietário.
+- **Decisões D1–D4** submetidas e aprovadas pelo proprietário:
+  modelo único `direction`, venda só no caixa, origem `ACCOUNT`,
+  aprovação da migration aditiva.
 
 ## [Akylla Gestão] - 2026-10-12 - Etapa 7 — Vendas e recebimentos
 
