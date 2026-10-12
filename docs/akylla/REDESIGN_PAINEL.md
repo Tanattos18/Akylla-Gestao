@@ -1,21 +1,14 @@
 # Redesign do painel — Akylla Gestão
 
-> **Status: IMPLEMENTADO** (2026-10-12). Todas as decisões R1–R6 foram
-> aprovadas pelo proprietário e o redesign foi aplicado em uma única
-> entrega (decisão R6: "tudo de uma vez").
+> **Status: IMPLEMENTADO** (2026-10-12). Decisões R1–R6 aprovadas e
+> aplicadas (amber · slate-900 · Inter · home separada · Lucide · tudo
+> de uma vez).
 >
-> Aprovado: R1=Amber · R2=Slate-900 · R3=Inter · R4=Home separada ·
-> R5=Lucide React · R6=Tudo de uma vez.
->
-> **Reformulação profissional (mesmo dia):** menu lateral reorganizado
-> em 6 grupos (Visão geral · Operação · Estoque e compras ·
-> Relacionamento · Gestão · Administração), sidebar recolhível
-> (72 px) com persistência em `localStorage`, header com busca global
-> (produtos/clientes/vendas), sino de notificações (estoque + contas
-> vencidas) e menu de perfil; dashboard com KPIs de vendas/recebido/
-> pago/a receber/a pagar/saldo, faixa compacta de indicadores, alertas
-> de estoque e contas vencidas, próximos agendamentos, atividades
-> recentes e atalhos. Drawer mobile no menu lateral.
+> **Layout atual (opção B, escolhida pelo proprietário):** topbar
+> escura única sem sidebar — logo, Início/Dashboard, dropdowns
+> agrupados (Operação · Estoque · Relacionamento · Gestão ·
+> Administração), busca global, notificações e perfil. Menu mobile em
+> acordeão. Conteúdo full-width `max-w-[1440px]`.
 
 ---
 

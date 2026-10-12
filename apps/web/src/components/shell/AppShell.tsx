@@ -2,14 +2,12 @@
 
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { fetchSession, type Session } from "@/lib/session";
 import { api } from "@/lib/api";
 import type { CompanyModuleDto } from "@/lib/types";
 
 const AUTH_ROUTES = ["/login", "/cadastro", "/redefinir-senha"];
-const SIDEBAR_KEY = "akylla:sidebar-collapsed";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -17,36 +15,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [disabledModules, setDisabledModules] = useState<Set<string>>(new Set());
   const [loaded, setLoaded] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
 
   const isAuthRoute = AUTH_ROUTES.some(
     (r) => pathname === r || pathname.startsWith(r + "/"),
   );
-
-  useEffect(() => {
-    try {
-      setCollapsed(localStorage.getItem(SIDEBAR_KEY) === "1");
-    } catch {
-      // localStorage indisponível — padrão expandido
-    }
-  }, []);
-
-  const toggleCollapse = useCallback(() => {
-    setCollapsed((c) => {
-      const next = !c;
-      try {
-        localStorage.setItem(SIDEBAR_KEY, next ? "1" : "0");
-      } catch {
-        // ignora
-      }
-      return next;
-    });
-  }, []);
-
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
 
   useEffect(() => {
     if (isAuthRoute) {
@@ -74,7 +46,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           setDisabledModules(disabled);
         }
       } catch {
-        // silencioso — sidebar mostra tudo se API falhar
+        // silencioso — menu mostra tudo se API falhar
       }
       if (!cancelled) setLoaded(true);
     })();
@@ -93,7 +65,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     router.replace("/login");
   }, [router]);
 
-  // Rotas de auth: layout limpo, sem sidebar
+  // Rotas de auth: layout limpo, sem chrome
   if (isAuthRoute) {
     return <>{children}</>;
   }
@@ -105,30 +77,15 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen">
-      <Sidebar
-        companyName={session.company.name}
+      <Header
         userName={session.user.name}
         userRole={session.user.role}
         disabledModules={disabledModules}
         onLogout={handleLogout}
-        collapsed={collapsed}
-        onToggleCollapse={toggleCollapse}
-        mobileOpen={mobileOpen}
-        onCloseMobile={() => setMobileOpen(false)}
       />
-      <div
-        className={`min-h-screen transition-[padding] duration-200 ${
-          collapsed ? "lg:pl-[72px]" : "lg:pl-[260px]"
-        }`}
-      >
-        <Header
-          userName={session.user.name}
-          userRole={session.user.role}
-          onOpenMobile={() => setMobileOpen(true)}
-          onLogout={handleLogout}
-        />
-        <main className="px-4 py-6 md:px-6 md:py-8 xl:px-8">{children}</main>
-      </div>
+      <main className="mx-auto w-full max-w-[1440px] px-4 py-6 md:px-6 md:py-8 xl:px-10">
+        {children}
+      </main>
     </div>
   );
 }

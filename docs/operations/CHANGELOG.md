@@ -2,6 +2,29 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Akylla Gestão] - 2026-10-12 - Layout B: topbar única (sem sidebar)
+
+### Alterado
+
+- **Layout global trocado para o paradigma B** (topbar escura única,
+  sem sidebar), decisão do proprietário entre as opções apresentadas.
+- `Header.tsx` reescrito como **TopNav**: barra escura (slate-900) com
+  logo, links diretos (Início, Dashboard), **menus dropdown agrupados**
+  (Operação, Estoque, Relacionamento, Gestão, Administração), busca
+  global (produtos/clientes/pets/serviços/vendas), sino de
+  notificações e menu de perfil — tudo no mesmo chrome superior.
+- **Menu mobile**: painel acordeão sob a topbar (mesmos grupos e
+  filtros de módulo/permissão).
+- Breadcrumb em barra fina sob a topbar (desktop).
+- `AppShell`: conteúdo full-width com `max-w-[1440px]` centralizado;
+  removido padding lateral da sidebar e estado de colapso.
+- Removido `Sidebar.tsx` (substituído pelo topbar; nenhum
+  funcionalidade perdida).
+
+### Validações
+
+- lint 0 · typecheck OK · 509/509 testes · build OK.
+
 ## [Akylla Gestão] - 2026-10-12 - Continuação da reformulação do painel
 
 ### Alterado
