@@ -2,6 +2,22 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Akylla Gestão] - 2026-10-12 - Etapa 8 — Financeiro básico (em andamento)
+
+### Adicionado (aguardando aprovação)
+
+- `docs/akylla/MODELO_FINANCEIRO.md`: detalhamento prévio exigido pelo
+  roteiro — inspeção do modelo atual, 6 conceitos separados (títulos ×
+  liquidação × caixa × fluxo previsto/realizado × billing), modelo
+  Prisma `FinancialEntry` (Decimal 12,2, contrapartes SetNull, unique
+  `(companyId, origin, originId)`), transições de status só no servidor
+  (`OVERDUE` derivado, não armazenado), relação com o caixa
+  (`CashMovement` da venda = registro de recebimento), 6 testes
+  planejados, escopo **aditivo** da migration e plano de reversão.
+- **Nenhum schema, migration ou código alterado.** Decisões D1–D4
+  (modelo único × dois, venda × títulos, origem `ACCOUNT`, aprovação da
+  migration) submetidas ao proprietário.
+
 ## [Akylla Gestão] - 2026-10-12 - Etapa 7 — Vendas e recebimentos
 
 ### Adicionado

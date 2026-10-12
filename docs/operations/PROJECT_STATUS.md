@@ -271,7 +271,9 @@ controle em `docs/akylla/`.
   relatório por etapa; parada obrigatória antes das Etapas 10, 11, 12 e
   de qualquer migration; commit+push por etapa; "configurações da
   empresa" definida para a **Etapa 12** (Decisão D1).
-- Próxima etapa: **Etapa 8 — Financeiro básico (AP/AR)** — exige
-  aprovação do modelo de dados e da migration antes de implementar.
+- Próxima etapa: **Etapa 8 — Financeiro básico (AP/AR)** — detalhamento
+  criado (`docs/akylla/MODELO_FINANCEIRO.md`); **parada obrigatória
+  aguardando decisões D1–D4 do proprietário** (modelo, venda×títulos,
+  origem `ACCOUNT`, aprovação da migration aditiva).
 
 > Os status/etapas PetFlow acima desta seção permanecem como histórico.
