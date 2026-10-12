@@ -1,12 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api } from "../lib/api";
 import { fetchSession, type Session } from "../lib/session";
+import type { BusinessModule, CompanyModuleDto } from "../lib/types";
 
-const plannedModules = [
+const plannedModules: Array<{
+  name: string;
+  description: string;
+  href: string;
+  available: boolean;
+  module?: BusinessModule;
+}> = [
   {
     name: "Produtos e estoque",
     description: "Catálogo, categorias, fornecedores e movimentações",
@@ -36,12 +43,14 @@ const plannedModules = [
     description: "Catálogo de serviços, preços e durações",
     href: "/servicos",
     available: true,
+    module: "SERVICES",
   },
   {
     name: "Automação WhatsApp",
     description: "Integração com a Cloud API, templates, consentimento e envios",
     href: "/whatsapp",
     available: true,
+    module: "WHATSAPP",
   },
   {
     name: "Dashboard",
@@ -60,12 +69,14 @@ const plannedModules = [
     description: "Agenda de atendimentos com lembretes no WhatsApp",
     href: "/agenda",
     available: true,
+    module: "APPOINTMENTS",
   },
   {
     name: "Assinaturas",
     description: "Planos recorrentes e assinaturas de clientes",
     href: "/assinaturas",
     available: true,
+    module: "SUBSCRIPTIONS",
   },
   {
     name: "Faturamento",
@@ -78,6 +89,7 @@ const plannedModules = [
 export default function HomePage() {
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
+  const [companyModules, setCompanyModules] = useState<CompanyModuleDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -91,6 +103,30 @@ export default function HomePage() {
       setLoading(false);
     });
   }, [router]);
+
+  useEffect(() => {
+    api<CompanyModuleDto[]>("/api/company-modules")
+      .then(setCompanyModules)
+      .catch(() => setCompanyModules([]));
+  }, []);
+
+  const disabledModules = useMemo(
+    () =>
+      new Set(
+        companyModules
+          .filter((entry) => entry.status === "DISABLED")
+          .map((entry) => entry.module),
+      ),
+    [companyModules],
+  );
+
+  const visibleModules = useMemo(
+    () =>
+      plannedModules.filter(
+        (module) => !module.module || !disabledModules.has(module.module),
+      ),
+    [disabledModules],
+  );
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -179,7 +215,7 @@ export default function HomePage() {
           Módulos
         </h3>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {plannedModules.map((module) => {
+          {visibleModules.map((module) => {
             const card = (
               <div className="h-full rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
                 <div className="mb-2 flex items-start justify-between gap-2">

@@ -9,6 +9,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import {
+  BusinessModules,
   cancelWhatsAppMessageSchema,
   createWhatsAppMessageSchema,
   listWhatsAppMessagesQuerySchema,
@@ -18,11 +19,13 @@ import {
 } from "@petflow/shared";
 import { AdminGuard } from "../common/guards/admin.guard";
 import { Auth, type AuthContext } from "../common/decorators/auth.decorator";
+import { RequireModule } from "../common/decorators/require-module.decorator";
 import { ZodValidationPipe } from "../common/pipes/zod-validation.pipe";
 import { WhatsAppMessagesService } from "./whatsapp-messages.service";
 
 const listQueryPipe = new ZodValidationPipe(listWhatsAppMessagesQuerySchema);
 
+@RequireModule(BusinessModules.WHATSAPP)
 @Controller("whatsapp/messages")
 export class WhatsAppMessagesController {
   constructor(

@@ -85,7 +85,7 @@ export class WhatsAppConfigService {
       }
       if (templateVariableCount(template.body) !== APPOINTMENT_REMINDER_VARIABLE_COUNT) {
         throw new BadRequestException(
-          `Template de lembrete deve ter exatamente ${APPOINTMENT_REMINDER_VARIABLE_COUNT} variáveis ({{1}} tutor/pet, {{2}} serviço, {{3}} data e hora)`,
+          `Template de lembrete deve ter exatamente ${APPOINTMENT_REMINDER_VARIABLE_COUNT} variáveis ({{1}} cliente, {{2}} serviço, {{3}} data e hora)`,
         );
       }
     }

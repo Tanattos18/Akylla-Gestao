@@ -9,6 +9,7 @@ import {
   Query,
 } from "@nestjs/common";
 import {
+  BusinessModules,
   cancelAppointmentSchema,
   createAppointmentSchema,
   listAppointmentsQuerySchema,
@@ -21,6 +22,7 @@ import {
   type UpdateAppointmentStatusInput,
 } from "@petflow/shared";
 import { Auth, type AuthContext } from "../common/decorators/auth.decorator";
+import { RequireModule } from "../common/decorators/require-module.decorator";
 import { ZodValidationPipe } from "../common/pipes/zod-validation.pipe";
 import { AppointmentsService } from "./appointments.service";
 
@@ -31,6 +33,7 @@ const listQueryPipe = new ZodValidationPipe(listAppointmentsQuerySchema);
  * pode agendar); nenhum endpoint público e nenhuma escrita restrita a
  * ADMIN — mesma política de clientes/pets.
  */
+@RequireModule(BusinessModules.APPOINTMENTS)
 @Controller("appointments")
 export class AppointmentsController {
   constructor(

@@ -539,6 +539,51 @@ Roteiro: `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`.
       **477/477 testes** → `build` OK → `db:validate` OK (sem
       migration na etapa)
 
+## Etapa 10 (Akylla) — Módulos específicos de pet shop (2026-10-12)
+
+Roteiro: `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`. **Concluída — decisões
+D2/D3 do proprietário registradas.**
+
+- [x] Instrução 1: nenhuma exclusão de pets/agenda/serviços/WhatsApp
+      (código, tabelas, rotas, testes e páginas intactos)
+- [x] Instrução 2: mapeamento de dependências com evidência `file:line`
+      (UI, imports, FKs Restrict, testes, relatórios) registrado no
+      `PLANO_MODULARIZACAO.md` §2
+- [x] Instrução 3: recomendação por módulo no `PLANO_MODULARIZACAO.md` §3
+      (pets = opcional de nicho fora da navegação inicial; agenda,
+      serviços, WhatsApp e assinaturas = genéricos; seed = reescrever
+      após aprovação)
+- [x] Instrução 4: **backend bloqueia módulos desabilitados** —
+      `ModuleGuard` (APP_GUARD após `AuthGuard`) + `@RequireModule` em
+      pets/services/appointments/whatsapp (exceto webhook
+      `@Public`)/subscriptions/subscription-plans; 403 com mensagem;
+      ocultação de UI não é controle de acesso
+- [x] Instrução 5: `automação do whatsapp/` preservada (fora de
+      lint/build/testes; 0 imports do monorepo)
+- [x] Rótulo do lembrete generalizado (MAPA item 21): `{{1}} tutor/pet` →
+      `{{1}} cliente` em `whatsapp-config.service.ts` (erro) e
+      `whatsapp/page.tsx` (UI); comportamento (`pet?.name || client.name`)
+      e contagem de 3 variáveis intactos; grep `tutor` = 0 em
+      `apps/`, `packages/`, `tests/`
+- [x] **D2 CONFIRMADA** pelo proprietário (2026-10-12): recomendações do
+      PLANO §3 aceitas; nenhuma exclusão
+- [x] **D3 DECIDIDA: opção B (`CompanyModule`)** e implementada:
+      migration aditiva `20261012154010_company_module` (enums
+      `BusinessModule`/`CompanyModuleStatus` + tabela com
+      `@@unique([companyId, module])`); API `GET`/`PATCH
+      /api/company-modules` (`AdminGuard` na escrita); home oculta cards
+      de módulos desativados; ausência de linha = ativo; núcleo nunca
+      desativável
+- [x] `MAPA_DE_MODULOS.md` §6.2/§6.3/§7, `DATABASE.md` e `API.md`
+      atualizados
+- [x] Testes da etapa: `tests/company-modules.test.ts` **+13**
+      (listagem padrão, AdminGuard, 400 inválido, upsert idempotente,
+      403 do guard, cross-tenant, núcleo livre, webhook assinado, agenda
+      com WhatsApp off); `resetDatabase` apaga `companyModule`
+- [x] Validações com evidência: `lint` 0 → `typecheck` OK →
+      **490/490 testes** → `build` OK → `db:validate` OK (migration em
+      `petflow` e `petflow_test`)
+
 ## Etapas futuras — módulos de negócio
 
 - [x] Cadastro de clientes e animais (Etapa 5)

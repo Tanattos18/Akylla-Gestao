@@ -123,10 +123,15 @@ mistura** foi encontrada no código **[Código]**.
   bloqueio de módulo desabilitado deve ser feito no servidor.
 
 ### 6.2 Destino dos módulos de pet shop (Etapa 10)
-Pets (11), seed Mundo Pet (20) e elementos de nicho transversais (21)
-permanecem **íntegros**; a Etapa 10 decidirá: manter fora da navegação
-inicial × módulo opcional com flag × generalizar. Nenhuma exclusão nesta
-etapa.
+
+**Etapa 10 executada e decidida:** plano de modularização em
+`docs/akylla/PLANO_MODULARIZACAO.md`; **D2 confirmada pelo proprietário
+(2026-10-12)** — nenhuma exclusão; pets permanece como módulo opcional de
+nicho fora da navegação inicial; agenda/serviços/WhatsApp/assinaturas
+reutilizados como genéricos; o rótulo "{{1}} tutor/pet" do lembrete foi
+generalizado para "{{1}} cliente" (API + UI, sem mudança de
+comportamento); seed "Mundo Pet" reescrito apenas em etapa futura com
+aprovação explícita.
 
 ### 6.3 Ativação por segmento — opções, dependências e impacto (Decisão 2: somente documentar)
 
@@ -136,19 +141,21 @@ etapa.
 | B | Tabela `CompanyModule` (`companyId` + módulo + status) | 1 migration aditiva + model novo + índices | Idem; mais extensível (histórico/futuros planos) |
 | C | Derivar dos limites do `TenantSubscription` (campos de plano) | Depende do modelo da **Etapa 11** (pode não exigir tabela nova) | Acopla módulos ao billing; enforcement no backend |
 
-**Regra registrada:** nenhum campo, tabela, migration, flag ou mecanismo
-criado nesta etapa; qualquer alteração de banco futura exige avaliação e
-autorização específica (Decisão 2). Sequência natural: decidir na
-**Etapa 10**, implementar com migration aditiva autorizada, testar
-A×B por flag.
+**Decisão (2026-10-12): opção B — IMPLEMENTADA na própria Etapa 10 com
+autorização do proprietário.** Migration aditiva
+`20261012154010_company_module` (enums `BusinessModule` e
+`CompanyModuleStatus` + tabela `CompanyModule`); `ModuleGuard` bloqueia
+rotas de módulos `DISABLED` com 403 no servidor; API
+`GET`/`PATCH /api/company-modules`; home oculta cards de módulos
+desativados. Detalhes e pendências em `PLANO_MODULARIZACAO.md` §4.
 
 ## 7. Dúvidas remanescentes e decisões que dependem do proprietário
 
 | # | Questão | Situação |
 |---|---|---|
 | **D1** | **"Configurações" do núcleo inicial não existe como módulo** (sem endpoint/página de edição de `Company`). Classificado como núcleo comum **a construir**. Em qual etapa construir? Candidatas: Etapa 5 (cadastros) ou etapa própria posterior | **Aguardando decisão** |
-| **D2** | Destino final de pets/lembrete-pet/seed → **Etapa 10** (já previsto) | Em aberto por desenho |
-| **D3** | Mecanismo de ativação por segmento → **Etapa 10** (opções em §6.3) | Adiado (Decisão 2) |
+| **D2** | Destino final de pets/lembrete-pet/seed → **Etapa 10** | **CONFIRMADA (2026-10-12)** — recomendações do PLANO §3 aceitas; nenhuma exclusão; lembrete generalizado |
+| **D3** | Mecanismo de ativação por segmento → **Etapa 10** (opções em §6.3) | **DECIDIDA (2026-10-12): opção B (`CompanyModule`)** — implementada na Etapa 10 (migration aditiva + guard + API + home) |
 | **D4** | Classificação de agenda/serviços/assinaturas/WhatsApp como **opcionais genéricos** mantém ambos os documentos (roteiro item 3 × PLANO §5) coerentes — confirmar a leitura na aprovação desta matriz | **Aguardando aprovação** |
 | Nenhum módulo precisou ser marcado **inconclusivo**: todos receberam categoria com evidência de código. |
 

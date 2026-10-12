@@ -420,6 +420,28 @@ Comportamentos importantes:
 - Sem gateway e sem enforcement de limites por plano ainda — a
   assinatura é registro de comercial (pendências registradas).
 
+## Módulos por empresa (Etapa 10)
+
+Ativação/desativação de módulos de negócio por tenant (decisão D3 —
+opção B: tabela `CompanyModule`).
+
+| Método e rota | Guard | Descrição |
+|---|---|---|
+| `GET /api/company-modules` | Sessão | Lista os 5 módulos desativáveis com `module`, `status` (`ACTIVE` = padrão quando não há linha) e `label` |
+| `PATCH /api/company-modules` | `AdminGuard` | Upsert `{ module, status }` da empresa autenticada (Zod `upsertCompanyModuleSchema`) |
+
+- **Bloqueio no servidor:** `ModuleGuard` (APP_GUARD, registrado após
+  `AuthGuard`) consulta `CompanyModule`; `DISABLED` → **403** com mensagem
+  "Módulo desativado para esta empresa". Rotas marcadas com
+  `@RequireModule(...)`: `pets`, `services`, `appointments`,
+  `whatsapp/config|templates|consents|messages`,
+  `subscriptions`, `subscription-plans`. Rotas **sem** decorator e rotas
+  `@Public` (ex.: webhook `/api/webhooks/whatsapp`) nunca são bloqueadas.
+- Ocultação de cards na home acompanha o status (UI), mas **não é
+  controle de acesso** — a fonte de verdade é o guard.
+- Núcleo (clientes, produtos, vendas, caixa, financeiro, relatórios,
+  billing, usuários) não é desativável.
+
 ## Padrão para módulos futuros
 
 1. Modelo sempre com `companyId` + FK `Restrict` e índices por empresa.

@@ -370,7 +370,7 @@ export default function WhatsAppConfigPage() {
                 ))}
               </select>
               <p className="mt-1 text-xs text-slate-500">
-                Somente templates aprovados com exatamente 3 variáveis: {"{{1}}"} tutor/pet,{" "}
+                Somente templates aprovados com exatamente 3 variáveis: {"{{1}}"} cliente,{" "}
                 {"{{2}}"} serviço e {"{{3}}"} data/hora.
               </p>
             </div>

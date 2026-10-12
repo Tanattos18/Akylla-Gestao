@@ -10,6 +10,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import {
+  BusinessModules,
   createServiceSchema,
   listServicesQuerySchema,
   updateRecordStatusSchema,
@@ -21,11 +22,13 @@ import {
 } from "@petflow/shared";
 import { AdminGuard } from "../common/guards/admin.guard";
 import { Auth, type AuthContext } from "../common/decorators/auth.decorator";
+import { RequireModule } from "../common/decorators/require-module.decorator";
 import { ZodValidationPipe } from "../common/pipes/zod-validation.pipe";
 import { ServicesService } from "./services.service";
 
 const listQueryPipe = new ZodValidationPipe(listServicesQuerySchema);
 
+@RequireModule(BusinessModules.SERVICES)
 @Controller("services")
 export class ServicesController {
   constructor(@Inject(ServicesService) private readonly servicesService: ServicesService) {}

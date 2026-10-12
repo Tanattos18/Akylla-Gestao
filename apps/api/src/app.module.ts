@@ -19,7 +19,9 @@ import { SubscriptionsModule } from "./subscriptions/subscriptions.module";
 import { BillingModule } from "./billing/billing.module";
 import { WhatsAppModule } from "./whatsapp/whatsapp.module";
 import { ReportsModule } from "./reports/reports.module";
+import { CompanyModulesModule } from "./company-modules/company-modules.module";
 import { AuthGuard } from "./common/guards/auth.guard";
+import { ModuleGuard } from "./common/guards/module.guard";
 
 @Module({
   imports: [
@@ -41,8 +43,12 @@ import { AuthGuard } from "./common/guards/auth.guard";
     BillingModule,
     WhatsAppModule,
     ReportsModule,
+    CompanyModulesModule,
   ],
   controllers: [HealthController],
-  providers: [{ provide: APP_GUARD, useClass: AuthGuard }],
+  providers: [
+    { provide: APP_GUARD, useClass: AuthGuard },
+    { provide: APP_GUARD, useClass: ModuleGuard },
+  ],
 })
 export class AppModule {}

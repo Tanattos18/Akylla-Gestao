@@ -1,5 +1,30 @@
 # Banco de dados — diretrizes e modelo atual
 
+## Modelos implementados (Etapa 10 — Akylla Gestão: módulos por empresa)
+
+Migration: `database/prisma/migrations/20261012154010_company_module`
+(aditiva — 2 enums novos e 1 tabela nova; não altera nem remove dados
+existentes). Decisão D3 do roteiro Akylla (opção B aprovada pelo
+proprietário).
+
+| Modelo | Campos principais | Restrições/índices |
+|---|---|---|
+| `CompanyModule` | `companyId` (FK → `Company`, `Cascade`), `module` (enum `BusinessModule`), `status` (enum `CompanyModuleStatus`, default `ACTIVE`), timestamps | `@@unique([companyId, module])`, índice `[companyId]` |
+
+Enums novos:
+
+- `BusinessModule`: `PETS`, `APPOINTMENTS`, `SERVICES`, `WHATSAPP`,
+  `SUBSCRIPTIONS` — apenas módulos desativáveis; o núcleo (clientes,
+  produtos, vendas, caixa, financeiro, relatórios, billing) não consta e
+  nunca é desativável.
+- `CompanyModuleStatus`: `ACTIVE`, `DISABLED`.
+
+**Semântica:** ausência de linha = módulo **ativo** (padrão — todas as
+empresas existentes seguem funcionando sem seed). Linha gravada registra
+o estado explícito; `DISABLED` bloqueia as rotas do módulo no servidor
+(`ModuleGuard`, `apps/api/src/common/guards/module.guard.ts`).
+`tests/helpers/app.ts` apaga `companyModule` antes de `company`.
+
 ## Modelos implementados (Etapa 8 — Akylla Gestão: financeiro básico)
 
 Migration: `database/prisma/migrations/20261012164040_financial_entry`

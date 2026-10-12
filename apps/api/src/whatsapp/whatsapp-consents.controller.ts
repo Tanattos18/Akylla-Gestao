@@ -8,17 +8,20 @@ import {
   Query,
 } from "@nestjs/common";
 import {
+  BusinessModules,
   listWhatsAppConsentsQuerySchema,
   upsertWhatsAppConsentSchema,
   type ListWhatsAppConsentsQuery,
   type UpsertWhatsAppConsentInput,
 } from "@petflow/shared";
 import { Auth, type AuthContext } from "../common/decorators/auth.decorator";
+import { RequireModule } from "../common/decorators/require-module.decorator";
 import { ZodValidationPipe } from "../common/pipes/zod-validation.pipe";
 import { WhatsAppConsentsService } from "./whatsapp-consents.service";
 
 const listQueryPipe = new ZodValidationPipe(listWhatsAppConsentsQuerySchema);
 
+@RequireModule(BusinessModules.WHATSAPP)
 @Controller("whatsapp/consents")
 export class WhatsAppConsentsController {
   constructor(

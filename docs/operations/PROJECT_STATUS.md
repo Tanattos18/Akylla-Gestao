@@ -2,36 +2,44 @@
 
 ## Etapa atual
 
-**Etapa 9 (roteiro Akylla) — Dashboard e relatórios** —
-CONCLUÍDA (2026-10-12).
+**Etapa 10 (roteiro Akylla) — Módulos específicos de pet shop** —
+CONCLUÍDA (2026-10-12), com decisões do proprietário registradas.
 
 Roteiro: `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`. Entregas da etapa:
 
-- **Entregável**: `docs/akylla/DICIONARIO_INDICADORES.md` — dicionário
-  com definição/fórmula/fonte/estado vazio de todos os indicadores,
-  incluindo os 4 exigidos (faturamento, receita recebida, contas
-  vencidas, saldo de caixa) e como rastrear cada número por SQL.
-- **Indicadores de nicho removidos**: `newPets` (dashboard) e
-  `newPets`/`petsBySpecies` (relatório de clientes) substituídos pelos
-  genéricos `newClients`/vendas/estoque conforme PLANO §9; UI e DTOs
-  atualizados; modelos de pets intactos (Etapa 10 decide o destino).
-- **CSV reforçado**: neutralização de fórmula também após espaço
-  inicial (`" =1+1"`), mantida cobertura de `= + - @ TAB CR`.
-- **Testes**: `tests/reports.test.ts` +3 (empresa vazia, caracteres
-  especiais/fórmulas no CSV, coerência indicadores × banco); 5
-  assertions atualizados pós-remoção do nicho.
-- **Docs**: `API.md` corrigido (prefixo `akylla_*`, seção de
-  relatórios sem pets, link do dicionário).
-- Validações: `lint` 0 → `typecheck` OK → **477/477 testes** → `build`
-  OK → `db:validate` OK (etapa sem migration). Commit + push por etapa.
+- **Entregável**: `docs/akylla/PLANO_MODULARIZACAO.md` — mapeamento de
+  dependências com evidência e recomendação por módulo (pets = opcional
+  de nicho sem exclusão; agenda/serviços/WhatsApp/assinaturas =
+  genéricos; seed = reescrever após aprovação), impacto e reversão.
+- **D2 CONFIRMADA** (2026-10-12): nenhuma exclusão; lembrete WhatsApp
+  generalizado ("{{1}} tutor/pet" → "{{1}} cliente", API + UI, só
+  rótulo; comportamento intacto).
+- **D3 DECIDIDA: opção B — tabela `CompanyModule`**, implementada na
+  etapa com autorização: migration aditiva `company_module` (enums
+  `BusinessModule`/`CompanyModuleStatus`), `ModuleGuard` (403 no
+  servidor para módulos `DISABLED`; webhook público intocado),
+  `GET`/`PATCH /api/company-modules` (`AdminGuard` na escrita), home
+  ocultando cards de módulos desativados. Ausência de linha = ativo.
+- **Testes**: `tests/company-modules.test.ts` +13 (guard, AdminGuard,
+  cross-tenant, webhook, upsert); `resetDatabase` cobre
+  `companyModule`.
+- **Docs**: `DATABASE.md` (seção CompanyModule), `API.md` (seção
+  "Módulos por empresa"), MAPA §6.2/§6.3/§7.
+- Validações: `lint` 0 → `typecheck` OK → **490/490 testes** → `build`
+  OK → `db:validate` OK (migration aplicada em `petflow` e
+  `petflow_test`). Commit + push por etapa.
 
 ### ⛔ PRÓXIMA ETAPA REQUER AUTORIZAÇÃO
 
-**Etapa 10 (Akylla) — Módulos específicos de pet shop**: mapear e
-recomendar o destino de pets/agenda/WhatsApp/assinaturas (manter
-oculto, módulo opcional, reutilizar genérico ou retirar), incluindo
-confirmação de bloqueio no backend. **Decisão do proprietário —
-parada obrigatória antes de iniciar** (regra do roteiro).
+**Etapa 11 (Akylla) — Assinaturas e planos do SaaS**: planos
+comerciais, limites por plano, mensagens de upgrade e enforcement no
+backend (ex.: limites de usuários/produtos), com testes. A tabela
+`CompanyModule` é extensível para semear módulos por plano.
+**Parada obrigatória antes de iniciar** (regra do roteiro).
+
+**Etapa 9 (Akylla, anterior) — Dashboard e relatórios** —
+CONCLUÍDA (2026-10-12): dicionário de indicadores, remoção dos
+indicadores de nicho, CSV reforçado, +3 testes.
 
 **Etapa 9 (PetFlow, anterior) — Assinaturas e gestão comercial** —
 CONCLUÍDA.

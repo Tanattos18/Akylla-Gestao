@@ -9,6 +9,7 @@ import {
   Query,
 } from "@nestjs/common";
 import {
+  BusinessModules,
   createPetSchema,
   listPetsQuerySchema,
   updatePetSchema,
@@ -19,11 +20,13 @@ import {
   type UpdateRecordStatusInput,
 } from "@petflow/shared";
 import { Auth, type AuthContext } from "../common/decorators/auth.decorator";
+import { RequireModule } from "../common/decorators/require-module.decorator";
 import { ZodValidationPipe } from "../common/pipes/zod-validation.pipe";
 import { PetsService } from "./pets.service";
 
 const listQueryPipe = new ZodValidationPipe(listPetsQuerySchema);
 
+@RequireModule(BusinessModules.PETS)
 @Controller("pets")
 export class PetsController {
   constructor(@Inject(PetsService) private readonly petsService: PetsService) {}

@@ -10,6 +10,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import {
+  BusinessModules,
   createSubscriptionPlanSchema,
   listSubscriptionPlansQuerySchema,
   updateRecordStatusSchema,
@@ -21,11 +22,13 @@ import {
 } from "@petflow/shared";
 import { AdminGuard } from "../common/guards/admin.guard";
 import { Auth, type AuthContext } from "../common/decorators/auth.decorator";
+import { RequireModule } from "../common/decorators/require-module.decorator";
 import { ZodValidationPipe } from "../common/pipes/zod-validation.pipe";
 import { SubscriptionPlansService } from "./subscription-plans.service";
 
 const listQueryPipe = new ZodValidationPipe(listSubscriptionPlansQuerySchema);
 
+@RequireModule(BusinessModules.SUBSCRIPTIONS)
 @Controller("subscription-plans")
 export class SubscriptionPlansController {
   constructor(

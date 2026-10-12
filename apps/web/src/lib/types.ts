@@ -887,3 +887,18 @@ export interface FinancialSummaryDto {
   paidInCount: number;
   cancelledCount: number;
 }
+
+export type BusinessModule =
+  | "PETS"
+  | "APPOINTMENTS"
+  | "SERVICES"
+  | "WHATSAPP"
+  | "SUBSCRIPTIONS";
+
+export type CompanyModuleStatus = "ACTIVE" | "DISABLED";
+
+export interface CompanyModuleDto {
+  module: BusinessModule;
+  status: CompanyModuleStatus;
+  label: string;
+}

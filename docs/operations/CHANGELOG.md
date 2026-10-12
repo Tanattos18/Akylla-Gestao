@@ -2,6 +2,60 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Akylla Gestão] - 2026-10-12 - Etapa 10 — Módulos de pet shop (modularização)
+
+### Adicionado
+
+- `docs/akylla/PLANO_MODULARIZACAO.md`: **entregável da etapa** — plano
+  de modularização com impacto e reversão, baseado em mapeamento de
+  dependências com evidência `file:line` (rotas, tabelas, FKs Restrict,
+  testes, relatórios). Recomendação por módulo: **pets** = opcional de
+  nicho, fora da navegação inicial (sem exclusão); **agenda, serviços,
+  WhatsApp e assinaturas de clientes** = reutilizar de forma genérica;
+  **seed "Mundo Pet"** = reescrever com dados de comércio variado após
+  aprovação (etapa futura).
+- **Ativação por segmento — decisão D3 = opção B, implementada**
+  (autorização do proprietário em 2026-10-12): migration aditiva
+  `database/prisma/migrations/20261012154010_company_module` (enums
+  `BusinessModule`/`CompanyModuleStatus` + tabela `CompanyModule`,
+  `@@unique([companyId, module])`); **`ModuleGuard`** (APP_GUARD após
+  `AuthGuard`) retorna 403 para rotas de módulos `DISABLED`
+  (`@RequireModule` em pets, services, appointments, whatsapp
+  config/templates/consents/messages, subscriptions e
+  subscription-plans; webhook permanece `@Public`); API
+  `GET /api/company-modules` (sessão) e `PATCH /api/company-modules`
+  (`AdminGuard`, upsert); home oculta cards de módulos desativados
+  (`plannedModules` com `module` + fetch em `/api/company-modules`).
+  Ausência de linha = módulo ativo (nenhuma empresa existente muda de
+  comportamento); núcleo nunca é desativável. `DATABASE.md` e `API.md`
+  atualizados.
+- `tests/company-modules.test.ts` (**+13 testes**): listagem padrão
+  (5 módulos ACTIVE), AdminGuard (400 inválido, 403 para MEMBER),
+  upsert idempotente, bloqueio 403 das rotas do módulo desativado,
+  isolamento cross-tenant, núcleo nunca bloqueado, webhook público
+  assinado não recebe 403 de módulo e agenda acessível com WhatsApp
+  desativado; `resetDatabase` apaga `companyModule`.
+
+### Alterado
+
+- **Rótulo do lembrete generalizado** (MAPA item 21, escopo da Etapa 10):
+  mensagem de erro da API (`whatsapp-config.service.ts:88`) e ajuda da UI
+  (`whatsapp/page.tsx:373`) agora descrevem `{{1}}` como **cliente** em
+  vez de "tutor/pet". O comportamento de `{{1}}`
+  (`pet?.name || client.name`) e a exigência de 3 variáveis
+  (`APPOINTMENT_REMINDER_VARIABLE_COUNT`) não mudaram — só o texto.
+  Grep `tutor` em `apps/`, `packages/` e `tests/` = 0.
+- `docs/akylla/MAPA_DE_MODULOS.md`: §6.2, §6.3 e §7 atualizados —
+  **D2 CONFIRMADA** (nenhuma exclusão) e **D3 DECIDIDA: opção B**
+  (implementada na etapa).
+
+### Decisões do proprietário (2026-10-12)
+
+- **D2 — confirmada**: recomendações por módulo do plano (nenhuma
+  exclusão; seed reescrito só em etapa futura com nova aprovação).
+- **D3 — opção B escolhida** (tabela `CompanyModule` + guard no
+  backend), implementada nesta etapa com migration aditiva autorizada.
+
 ## [Akylla Gestão] - 2026-10-12 - Etapa 9 — Dashboard e relatórios
 
 ### Adicionado

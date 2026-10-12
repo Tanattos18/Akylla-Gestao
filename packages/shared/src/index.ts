@@ -1192,3 +1192,56 @@ export const cancelTenantSubscriptionSchema = z.object({
 export type CancelTenantSubscriptionInput = z.infer<
   typeof cancelTenantSubscriptionSchema
 >;
+
+// ---------------------------------------------------------------------------
+// Etapa 10 — módulos por empresa (CompanyModule, decisão D3 — opção B)
+// ---------------------------------------------------------------------------
+
+/**
+ * Módulos de negócio desativáveis por empresa. O núcleo (clientes,
+ * produtos, vendas, caixa, financeiro, relatórios, billing) não consta:
+ * nunca é desativável.
+ */
+export const businessModuleSchema = z.enum([
+  "PETS",
+  "APPOINTMENTS",
+  "SERVICES",
+  "WHATSAPP",
+  "SUBSCRIPTIONS",
+]);
+export type BusinessModule = z.infer<typeof businessModuleSchema>;
+
+export const BUSINESS_MODULES: readonly BusinessModule[] = [
+  "PETS",
+  "APPOINTMENTS",
+  "SERVICES",
+  "WHATSAPP",
+  "SUBSCRIPTIONS",
+];
+
+/** Valores literais para uso como identificadores (ex.: decorators). */
+export const BusinessModules = {
+  PETS: "PETS",
+  APPOINTMENTS: "APPOINTMENTS",
+  SERVICES: "SERVICES",
+  WHATSAPP: "WHATSAPP",
+  SUBSCRIPTIONS: "SUBSCRIPTIONS",
+} as const satisfies Record<BusinessModule, BusinessModule>;
+
+export const businessModuleLabels: Record<BusinessModule, string> = {
+  PETS: "Pets",
+  APPOINTMENTS: "Agendamentos",
+  SERVICES: "Serviços",
+  WHATSAPP: "Automação WhatsApp",
+  SUBSCRIPTIONS: "Assinaturas de clientes",
+};
+
+export const companyModuleStatusSchema = z.enum(["ACTIVE", "DISABLED"]);
+export type CompanyModuleStatus = z.infer<typeof companyModuleStatusSchema>;
+
+/** Ausência de linha = módulo ativo (padrão); linha grava o estado explícito. */
+export const upsertCompanyModuleSchema = z.object({
+  module: businessModuleSchema,
+  status: companyModuleStatusSchema,
+});
+export type UpsertCompanyModuleInput = z.infer<typeof upsertCompanyModuleSchema>;
