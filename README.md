@@ -341,18 +341,19 @@ automação do whatsapp/   base histórica preservada (fora do monorepo)
 
 ## Documentação
 
-Índice completo: [`docs/README.md`](docs/README.md)
+Este `README.md` apresenta o produto. O **índice técnico** de todos os
+documentos (estado, arquitetura, operação, histórico) está em
+[`docs/README.md`](docs/README.md).
 
 | Documento | Conteúdo |
 |---|---|
+| [Índice da documentação](docs/README.md) | mapa completo, organizado por finalidade |
 | [Documento técnico completo](docs/AKYLLA_GESTAO_DOCUMENTACAO_COMPLETA.md) | mapa único do sistema (23 seções) |
 | [Status do projeto](docs/operations/PROJECT_STATUS.md) | etapa atual, entregas e pendências |
 | [Checklist de implementação](docs/operations/IMPLEMENTATION_CHECKLIST.md) | progresso etapa a etapa |
 | [Changelog](docs/operations/CHANGELOG.md) | histórico completo de alterações |
 | [Checklist pré-produção](docs/akylla/CHECKLIST_PRE_PRODUCAO.md) | limitações e itens antes de comercializar |
 | [PDV](docs/akylla/PDV.md) | fluxo de venda, regras e API |
-| [Dicionário de indicadores](docs/akylla/DICIONARIO_INDICADORES.md) | definição exata de cada número do dashboard |
-| [Mapa de módulos](docs/akylla/MAPA_DE_MODULOS.md) | classificação núcleo/opcional/nicho |
 | [Arquitetura](docs/architecture/ARCHITECTURE.md) | tecnologias e decisões registradas |
 | [API](docs/architecture/API.md) | endpoints, permissões e payloads |
 | [Banco de dados](docs/architecture/DATABASE.md) | modelo de dados e diretrizes |

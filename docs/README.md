@@ -1,6 +1,9 @@
 # Documentação — Akylla Gestão
 
-Índice de toda a documentação do projeto, organizada por finalidade.
+**Papel deste arquivo:** índice técnico de toda a documentação do
+projeto. A apresentação de produto (para quem chega no repositório)
+está no [`../README.md`](../README.md).
+
 Para começar, leia nesta ordem:
 
 1. [`../README.md`](../README.md) — visão de produto e como executar
@@ -82,5 +85,9 @@ histórica; os prompts de adaptação Akylla estão no
   atual são reescritos quando o sistema muda (ver CHANGELOG).
 - **Nomenclatura:** `docs/akylla/` = produto/adaptação ·
   `docs/architecture/` = técnica · `docs/operations/` = processo ·
-  `docs/requirements/` = origem.
+  `docs/requirements/` = origem · `docs/historico/` = arquivos de
+  etapas antigas (prompts PetFlow).
 - **Agentes:** regras em [`../AGENTS.md`](../AGENTS.md).
+- **READMEs do repo:** este arquivo é o índice de documentação; o
+  `README.md` da raiz é a vitrine do produto; `database/README.md`
+  resume o layout Prisma. Não criar novos README sem necessidade.

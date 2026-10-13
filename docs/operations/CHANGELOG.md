@@ -2,6 +2,30 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Akylla Gestão] - 2026-10-12 - Organização dos READMEs
+
+### Alterado
+
+- `database/README.md`: reescrito para Akylla (layout atual, 12
+  migrations, bootstrap/seed via CLI da API, link para DATABASE.md);
+  removidas referências a PetFlow e "Etapa 0 sem tabelas".
+- `README.md` (raiz): seção Documentação explicita papéis — raiz =
+  vitrine do produto, `docs/README.md` = índice técnico; enxugada a
+  tabela (lista completa no índice).
+- `docs/README.md`: título e convenções deixam claro o papel de cada
+  README e documentam `docs/historico/`.
+
+### Removido
+
+- `database/seeds/README.md` e pasta `database/seeds/` vazia (seeds
+  reais são CLI: `bootstrap:admin` / `db:seed:demo`).
+- `database/prisma/migrations/README.md` (boilerplate desatualizado;
+  migrations documentadas em `database/README.md` e `DATABASE.md`).
+
+### Nota
+
+- `automação do whatsapp/README.md` preservado (base histórica).
+
 ## [Akylla Gestão] - 2026-10-12 - Organização do repositório
 
 ### Alterado
