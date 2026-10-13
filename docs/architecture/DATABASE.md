@@ -409,5 +409,7 @@ Regras derivadas:
 ## Migrations e seeds
 
 - Toda mudança de schema é migration versionada em `database/prisma/migrations/`.
-- Seeds ficam em `database/seeds/` e devem ser idempotentes.
+- **Não há seed SQL.** Dados iniciais/demonstração são CLIs da API,
+  idempotentes: `npm run bootstrap:admin` (admin via `BOOTSTRAP_*`) e
+  `npm run db:seed:demo` (empresa piloto de demonstração).
 - O schema é validado na CI/etapa com `npm run db:validate`.
