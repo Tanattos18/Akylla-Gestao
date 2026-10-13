@@ -7,11 +7,11 @@ agendamentos e comunicação com clientes em um único sistema — com
 isolamento total entre empresas, permissões por perfil e trilha de
 auditoria em cada operação.
 
-> **Status:** 10 de 12 etapas do roadmap Akylla concluídas
-> (fundação + núcleo genérico + módulos opcionais + ativação por
-> segmento). Próximas etapas: planos e limites do SaaS (Etapa 11) e
-> personalização/produção (Etapa 12). Detalhes em
-> [`docs/operations/PROJECT_STATUS.md`](docs/operations/PROJECT_STATUS.md).
+> **Status:** 12 de 12 etapas do roadmap Akylla concluídas
+> (fundação + núcleo genérico + módulos + billing SaaS + checklist
+> pré-produção). Painel com layout topbar escura (opção B). Detalhes em
+> [`docs/operations/PROJECT_STATUS.md`](docs/operations/PROJECT_STATUS.md)
+> e índice completo em [`docs/README.md`](docs/README.md).
 
 ---
 
@@ -341,16 +341,18 @@ automação do whatsapp/   base histórica preservada (fora do monorepo)
 
 ## Documentação
 
+Índice completo: [`docs/README.md`](docs/README.md)
+
 | Documento | Conteúdo |
 |---|---|
+| [Documento técnico completo](docs/AKYLLA_GESTAO_DOCUMENTACAO_COMPLETA.md) | mapa único do sistema (23 seções) |
 | [Status do projeto](docs/operations/PROJECT_STATUS.md) | etapa atual, entregas e pendências |
 | [Checklist de implementação](docs/operations/IMPLEMENTATION_CHECKLIST.md) | progresso etapa a etapa |
 | [Changelog](docs/operations/CHANGELOG.md) | histórico completo de alterações |
-| [Diagnóstico inicial](docs/akylla/DIAGNOSTICO_INICIAL.md) | linha de base do repositório na adaptação Akylla |
-| [Plano de adaptação](docs/akylla/PLANO_DE_ADAPTACAO.md) | etapas, riscos e critérios de aceitação |
-| [Mapa de módulos](docs/akylla/MAPA_DE_MODULOS.md) | classificação núcleo/opcional/nicho e decisões |
-| [Plano de modularização](docs/akylla/PLANO_MODULARIZACAO.md) | destinos dos módulos de nicho e ativação por segmento |
+| [Checklist pré-produção](docs/akylla/CHECKLIST_PRE_PRODUCAO.md) | limitações e itens antes de comercializar |
+| [PDV](docs/akylla/PDV.md) | fluxo de venda, regras e API |
 | [Dicionário de indicadores](docs/akylla/DICIONARIO_INDICADORES.md) | definição exata de cada número do dashboard |
+| [Mapa de módulos](docs/akylla/MAPA_DE_MODULOS.md) | classificação núcleo/opcional/nicho |
 | [Arquitetura](docs/architecture/ARCHITECTURE.md) | tecnologias e decisões registradas |
 | [API](docs/architecture/API.md) | endpoints, permissões e payloads |
 | [Banco de dados](docs/architecture/DATABASE.md) | modelo de dados e diretrizes |
@@ -359,4 +361,4 @@ automação do whatsapp/   base histórica preservada (fora do monorepo)
 
 ---
 
-**Akylla Gestão** — 10 de 12 etapas do roadmap entregues.
+**Akylla Gestão** — roadmap de 12 etapas concluído.

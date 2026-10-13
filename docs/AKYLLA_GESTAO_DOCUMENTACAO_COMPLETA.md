@@ -640,6 +640,14 @@ Código: `apps/api/src/company-modules`, guard em
 
 ## 16. Frontend — mapa de páginas
 
+### Layout global (topbar B)
+
+- Shell: `components/shell/Header.tsx` (topbar escura única com
+  dropdowns agrupados, busca global, sino, perfil) + `AppShell.tsx`
+  (fetch sessão/módulos; conteúdo `max-w-[1440px]` full-width).
+- Sem sidebar; menu mobile em acordeão. Rotas de auth ficam fora do
+  shell. Detalhes e evolução: `docs/akylla/REDESIGN_PAINEL.md`.
+
 ### Públicas
 `/login`, `/cadastro`, `/redefinir-senha`.
 

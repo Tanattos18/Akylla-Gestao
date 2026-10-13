@@ -2,6 +2,25 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Akylla Gestão] - 2026-10-12 - Organização da documentação
+
+### Adicionado
+
+- `docs/README.md`: índice único da documentação, organizado por
+  finalidade (estado atual, produto, arquitetura, operação, histórico
+  das etapas, requisitos) com ordem de leitura sugerida.
+
+### Alterado
+
+- `README.md`: status corrigido para 12/12 etapas; tabela de
+  documentação atualizada (PDV, checklist pré-produção, doc técnica
+  completa); link para o índice.
+- `docs/akylla/REDESIGN_PAINEL.md`: estado atual (topbar B) no topo;
+  proposta de sidebar marcada como histórica; §12 documenta a
+  evolução fase 1 → fase 2 (opção B).
+- `docs/AKYLLA_GESTAO_DOCUMENTACAO_COMPLETA.md` §16: seção de layout
+  global (topbar B) antes do mapa de páginas.
+
 ## [Akylla Gestão] - 2026-10-12 - Layout B: topbar única (sem sidebar)
 
 ### Alterado

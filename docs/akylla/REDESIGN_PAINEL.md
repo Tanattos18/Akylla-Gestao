@@ -1,18 +1,47 @@
 # Redesign do painel — Akylla Gestão
 
-> **Status: IMPLEMENTADO** (2026-10-12). Decisões R1–R6 aprovadas e
-> aplicadas (amber · slate-900 · Inter · home separada · Lucide · tudo
-> de uma vez).
->
-> **Layout atual (opção B, escolhida pelo proprietário):** topbar
-> escura única sem sidebar — logo, Início/Dashboard, dropdowns
-> agrupados (Operação · Estoque · Relacionamento · Gestão ·
-> Administração), busca global, notificações e perfil. Menu mobile em
-> acordeão. Conteúdo full-width `max-w-[1440px]`.
+> **Status: IMPLEMENTADO.** Design tokens, componentes de UI e dashboard
+> entregues na fase 1 (R1–R6). Layout de navegação evoluiu para a
+> **opção B — topbar única** (ver §13).
 
 ---
 
-## 1. Diagnóstico do estado atual
+## 1. Estado atual (layout B)
+
+A navegação do painel usa **topbar escura única, sem sidebar**
+(`components/shell/Header.tsx` + `AppShell.tsx`; `Sidebar.tsx`
+removido):
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ [a] Akylla  Início  Dashboard  Operação▾ Estoque▾ …  🔍 🔔 👤│ ← topbar slate-900
+├──────────────────────────────────────────────────────────────┤
+│ Akylla › Dashboard                                           │ ← breadcrumb fino
+├──────────────────────────────────────────────────────────────┤
+│              Conteúdo (max-w-[1440px], full-width)           │
+└──────────────────────────────────────────────────────────────┘
+```
+
+| Elemento | Comportamento |
+|---|---|
+| Dropdowns | 5 grupos (Operação, Estoque, Relacionamento, Gestão, Administração), filtrados por `CompanyModule` e perfil ADMIN |
+| Busca global | Clientes, produtos, pets, serviços e vendas |
+| Sino | Estoque baixo + contas vencidas (recarrega ao abrir) |
+| Perfil | Dados, faturamento, trocar empresa, sair |
+| Mobile `<768px` | Hambúrguer abre painel acordeão com os mesmos grupos |
+| Conteúdo | Full-width centralizado em `max-w-[1440px]` (sem padding lateral de sidebar) |
+
+> **Nota histórica:** as seções §2–§10 descrevem a proposta original
+> com **sidebar lateral fixa** (fase de design, nunca publicada como
+> estado final). O shell entregue na fase 1 usou sidebar recolhível;
+> o proprietário escolheu depois a **opção B (topbar)**, que é o
+> estado vigente. Tokens, componentes de UI e dashboard continuam
+> válidos. Seções §2–§11 = proposta original; §12 = decisões; §13 =
+> evolução para o layout atual.
+
+---
+
+## 2. Diagnóstico do estado atual (quando da proposta)
 
 | Aspecto | Hoje | Problema |
 |---|---|---|
@@ -28,7 +57,7 @@
 
 ---
 
-## 2. Layout proposto (referência visual)
+## 3. Layout proposto (referência visual — sidebar)
 
 ```
 ┌─────────────┬──────────────────────────────────────────────────┐
@@ -44,7 +73,7 @@
 └─────────────┴──────────────────────────────────────────────────┘
 ```
 
-### 2.1 Sidebar (esquerda, fixa, largura 260px)
+### 3.1 Sidebar (esquerda, fixa, largura 260px)
 
 - **Fundo escuro** (`#111827` / slate-900 ou `#0f172a`).
 - **Topo**: logo Akylla (ícone + wordmark) + seletor de empresa
@@ -65,7 +94,7 @@
   - Linha do usuário: avatar circular com iniciais, nome, papel
     (Proprietário/Membro), botão sair (ícone de logout).
 
-### 2.2 Header (topo da área de conteúdo)
+### 3.2 Header (topo da área de conteúdo)
 
 - Fundo `bg-white` com `border-b border-slate-200`.
 - **Esquerda**: breadcrumb (`Minha empresa > Visão geral`) com
@@ -74,7 +103,7 @@
   avatar do usuário (círculo com iniciais, fundo `bg-amber-100`,
   texto `text-amber-800`).
 
-### 2.3 Conteúdo (área principal)
+### 3.3 Conteúdo (área principal)
 
 - Fundo `bg-slate-50` (consistente com `--background` atual).
 - Padding interno generoso (`px-8 py-8`).
@@ -85,12 +114,12 @@
 
 ---
 
-## 3. Dashboard (Visão geral) — redesign
+## 4. Dashboard (Visão geral) — redesign
 
 A página `/dashboard` (hoje: 6 StatCards + 2 gráficos CSS) passa a
 seguir a estrutura abaixo:
 
-### 3.1 Linha de KPIs (4 cards)
+### 4.1 Linha de KPIs (4 cards)
 
 | Card | Valor | Ícone | Cor do ícone |
 |---|---|---|---|
@@ -106,7 +135,7 @@ Cada card:
 - Valor grande em `text-2xl font-semibold text-slate-900`.
 - Subtexto em `text-xs text-slate-400` (ex.: "Nenhum lançamento ativo").
 
-### 3.2 Gráfico de atividade + widgets laterais
+### 4.2 Gráfico de atividade + widgets laterais
 
 Layout em 2 colunas (`lg:grid-cols-3`):
 
@@ -121,7 +150,7 @@ Layout em 2 colunas (`lg:grid-cols-3`):
 - **Estoque atenção**: contagem de produtos abaixo do mínimo +
   link "Conferir estoque →". Fundo `bg-amber-50` quando > 0.
 
-### 3.3 Atividade recente
+### 4.3 Atividade recente
 
 - Título "Atividade recente" com ícone de relógio.
 - Lista de eventos (vendas, cancelamentos, novos clientes, etc.)
@@ -130,7 +159,7 @@ Layout em 2 colunas (`lg:grid-cols-3`):
 
 ---
 
-## 4. Design tokens (Tailwind v4 `@theme`)
+## 5. Design tokens (Tailwind v4 `@theme`)
 
 Substituir as classes `teal` inline por tokens no `globals.css`:
 
@@ -169,7 +198,7 @@ tamanhos pequenos, open-source. Alternativa: Geist Sans.
 
 ---
 
-## 5. Componentes a criar (`apps/web/src/components/ui/`)
+## 6. Componentes a criar (`apps/web/src/components/ui/`)
 
 Extrair os padrões duplicados em ~40 arquivos para componentes
 reutilizáveis:
@@ -190,7 +219,7 @@ reutilizáveis:
 
 ---
 
-## 6. Páginas afetadas
+## 7. Páginas afetadas
 
 ### Impacto direto (layout)
 - `app/layout.tsx` → substituir topbar por `AppShell` (sidebar +
@@ -210,7 +239,7 @@ reutilizáveis:
 
 ---
 
-## 7. Responsividade
+## 8. Responsividade
 
 | Breakpoint | Sidebar | Comportamento |
 |---|---|---|
@@ -220,7 +249,7 @@ reutilizáveis:
 
 ---
 
-## 8. Estados vazios e microinterações
+## 9. Estados vazios e microinterações
 
 - **Estados vazios** padronizados: ícone circular, título, descrição,
   CTA opcional. Usar em dashboard sem dados, listas vazias, etc.
@@ -232,7 +261,7 @@ reutilizáveis:
 
 ---
 
-## 9. Plano de implementação (fases)
+## 10. Plano de implementação (fases)
 
 ### Fase 1 — Fundação (sem mudar páginas)
 1. Instalar Inter via `next/font/google`.
@@ -268,7 +297,7 @@ reutilizáveis:
 
 ---
 
-## 10. Fora do escopo desta proposta
+## 11. Fora do escopo desta proposta
 
 - Mudança de regra de negócio ou API.
 - Novos endpoints ou modelos.
@@ -279,7 +308,7 @@ reutilizáveis:
 
 ---
 
-## 11. Decisões aprovadas e implementação
+## 12. Decisões aprovadas e implementação
 
 | # | Decisão | Escolha do proprietário | Status |
 |---|---|---|---|
@@ -322,3 +351,23 @@ reutilizáveis:
 ### Validações
 
 - lint 0 · typecheck OK · **509/509 testes** · build OK.
+
+---
+
+## 13. Evolução do layout (fase 2 — opção B)
+
+Após a entrega da fase 1 com sidebar recolhível, o proprietário
+escolheu o **paradigma B — topbar única** entre as opções apresentadas
+(B, E split view, palette ⌓K). Mudanças:
+
+| Item | Fase 1 (sidebar) | Fase 2 (opção B, atual) |
+|---|---|---|
+| Navegação | Sidebar escura 260/72 px, recolhível | Topbar escura única com dropdowns |
+| Header | Breadcrumb + data + avatar (conteúdo) | Tudo na topbar (busca, sino, perfil) |
+| Conteúdo | `pl-[260px]` / `pl-[72px]` | Full-width `max-w-[1440px]` |
+| Mobile | Drawer da sidebar | Acordeão sob a topbar |
+| Arquivo | `Sidebar.tsx` | **removido** |
+
+- Commits: `a942c84` (layout B) · CHANGELOG: 2026-10-12.
+- Recomendações futuras **não implementadas**: split view (lista +
+  detalhe lado a lado) e palette de comandos (⌘K).
