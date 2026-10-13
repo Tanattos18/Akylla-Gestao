@@ -20,7 +20,7 @@
 
 ## Etapa 1 — Autenticação, empresas, usuários, permissões e isolamento multiempresa
 
-Escopo definido em `Etapas_projeto/PetFlow_Prompt_OpenCode_Etapa_1.md`.
+Escopo definido em `docs/historico/etapas_petflow/PetFlow_Prompt_OpenCode_Etapa_1.md`.
 
 - [x] Ambiente verificado: PostgreSQL 17 local (sem Docker), bancos `petflow`
       e `petflow_test` criados, `DATABASE_URL` em `.env` local
@@ -50,7 +50,7 @@ Escopo definido em `Etapas_projeto/PetFlow_Prompt_OpenCode_Etapa_1.md`.
 
 ## Etapa 2 — Produtos, estoque, fornecedores e movimentações
 
-Escopo definido em `Etapas_projeto/PetFlow_Prompt_OpenCode_Etapa_2.md`.
+Escopo definido em `docs/historico/etapas_petflow/PetFlow_Prompt_OpenCode_Etapa_2.md`.
 
 - [x] Etapa 1 confirmada funcional (proteções de autenticação/tenant ativas)
 - [x] Schema: `Category`, `Supplier`, `Product`, `StockMovement`; migration
@@ -203,7 +203,7 @@ Escopo definido em `Etapas_projeto/PetFlow_Prompt_OpenCode_Etapa_2.md`.
 
 ## Etapa 6 — Integração com WhatsApp (2026-10-09)
 
-Escopo definido em `Etapas_projeto/PetFlow_Prompt_OpenCode_Etapa_6.md`.
+Escopo definido em `docs/historico/etapas_petflow/PetFlow_Prompt_OpenCode_Etapa_6.md`.
 
 - [x] Etapa 5 confirmada funcional (190/190 testes antes de iniciar;
       auditoria de lint/typecheck/build/db:validate sem problemas)
@@ -248,7 +248,7 @@ Escopo definido em `Etapas_projeto/PetFlow_Prompt_OpenCode_Etapa_6.md`.
 
 ## Etapa 7 — Dashboard e relatórios (2026-10-09)
 
-Escopo definido em `Etapas_projeto/PetFlow_Prompt_OpenCode_Etapa_7.md`.
+Escopo definido em `docs/historico/etapas_petflow/PetFlow_Prompt_OpenCode_Etapa_7.md`.
 
 - [x] Etapa 6 confirmada funcional (251/251 testes antes de iniciar;
       auditoria de lint/typecheck/build/db:validate sem problemas)
@@ -305,7 +305,7 @@ Escopo definido em `Etapas_projeto/PetFlow_Prompt_OpenCode_Etapa_7.md`.
 ## Etapa 8 — Agendamentos (2026-10-10)
 
 Escopo definido e aprovado na conversa com o proprietário (sem prompt
-oficial em `Etapas_projeto/`).
+oficial em `docs/historico/etapas_petflow/`).
 
 - [x] Etapa 7 confirmada funcional (292/292 testes antes de iniciar;
       auditoria de lint/typecheck/build/db:validate sem problemas)
@@ -374,7 +374,7 @@ oficial em `Etapas_projeto/`).
 ## Etapa 9 — Assinaturas e gestão comercial (2026-10-10)
 
 Escopo definido e aprovado na conversa com o proprietário (sem prompt
-oficial em `Etapas_projeto/`; opções "Ambos" e "pagamento via
+oficial em `docs/historico/etapas_petflow/`; opções "Ambos" e "pagamento via
 caixa/venda existente").
 
 - [x] Etapa 8 confirmada funcional (337/337 testes antes de iniciar;

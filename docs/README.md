@@ -60,6 +60,13 @@ Para começar, leia nesta ordem:
 | [Identidade e navegação](akylla/IDENTIDADE_E_NAVEGACAO.md) | 2 — rebranding PetFlow → Akylla |
 | [Passo a passo OpenCode](PASSO_A_PASSO_OPENCODE_AKYLLA.md) | roteiro das 12 etapas |
 
+### Prompts originais do PetFlow
+
+`historico/etapas_petflow/` — arquivos de escopo escritos quando o
+produto ainda se chamava PetFlow (Etapas 0–7). Mantidos como referência
+histórica; os prompts de adaptação Akylla estão no
+[`PASSO_A_PASSO_OPENCODE_AKYLLA.md`](PASSO_A_PASSO_OPENCODE_AKYLLA.md).
+
 ## Requisitos (origem PetFlow)
 
 | Documento | Conteúdo |

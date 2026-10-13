@@ -2,6 +2,21 @@
 
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Akylla Gestão] - 2026-10-12 - Organização do repositório
+
+### Alterado
+
+- Pasta `Etapas_projeto/` (prompts originais do PetFlow, Etapas 0–7)
+  movida para `docs/historico/etapas_petflow/`.
+- Referências atualizadas em `IMPLEMENTATION_CHECKLIST.md`,
+  `PROJECT_STATUS.md` e `CHANGELOG.md`.
+- `docs/README.md`: seção "Prompts originais do PetFlow".
+
+### Nota
+
+- Pasta `automação do whatsapp/` **não foi alterada** (base histórica
+  preservada conforme `AGENTS.md`).
+
 ## [Akylla Gestão] - 2026-10-12 - Organização da documentação
 
 ### Adicionado
@@ -713,7 +728,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 - **Escopo**: assinaturas recorrentes de clientes do pet shop (planos,
   criação, renovação via caixa e cancelamento com motivo) + billing da
   própria empresa no SaaS (catálogo de planos globais e assinatura do
-  tenant). Sem prompt oficial em `Etapas_projeto/` — escopo definido e
+  tenant). Sem prompt oficial em `docs/historico/etapas_petflow/` — escopo definido e
   **aprovado na conversa** com o proprietário (opções "Ambos" e
   "pagamento via caixa/venda existente"); decisões registradas:
   pagamento sempre em dinheiro no caixa (sem gateway), cancelamento
@@ -784,7 +799,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
   horário da empresa inteira, transições de status e cancelamento com
   motivo, lembretes automáticos pela fila WhatsApp existente (worker
   sem alteração) e integração com dashboard/relatórios. Sem prompt
-  oficial em `Etapas_projeto/` — escopo definido e **aprovado na
+  oficial em `docs/historico/etapas_petflow/` — escopo definido e **aprovado na
   conversa** com o proprietário; decisões registradas: conflito
   empresa-inteira, serviços em vendas/PDV fora da etapa, lembretes
   incluídos e `durationMinutes` obrigatório.

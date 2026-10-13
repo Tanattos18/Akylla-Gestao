@@ -68,7 +68,7 @@ Etapas Akylla concluídas: 0–3 (auditoria/plano/identidade, 2026-10-11),
 2026-10-12).
 
 Escopo da Etapa 9 PetFlow (aprovado na conversa — sem prompt oficial em
-`Etapas_projeto/`): assinaturas recorrentes de clientes do pet shop
+`docs/historico/etapas_petflow/`): assinaturas recorrentes de clientes do pet shop
 (planos, criação com pagamento opcional no caixa, renovação via caixa
 e cancelamento com motivo) **e** billing da própria empresa no SaaS
 (catálogo de planos globais seedados e assinatura do tenant, com

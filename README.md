@@ -319,7 +319,7 @@ packages/
   whatsapp/  cliente do provedor WhatsApp (Meta Cloud API)
   config/    configurações comuns (TypeScript)
 database/    schema Prisma, migrations e seeds
-docs/        diretrizes, arquitetura, banco de dados e operação
+docs/        documentação (ver docs/README.md)
 tests/       testes de integração (Vitest + Supertest)
 automação do whatsapp/   base histórica preservada (fora do monorepo)
 ```
