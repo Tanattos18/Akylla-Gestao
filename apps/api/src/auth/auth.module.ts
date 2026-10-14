@@ -1,7 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
-import { LoginRateLimiter } from "./login-rate.limit";
+import { LoginRateLimiter } from "./login-rate-limit";
 import { OriginCheckMiddleware } from "../common/middleware/origin-check.middleware";
 
 @Module({

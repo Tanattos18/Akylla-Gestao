@@ -111,7 +111,7 @@ controle de quem fez o quê.
 1. `npm run lint` 0 erros, `npm run typecheck` OK, `npm test` verde em
    PostgreSQL real, `npm run build` OK, `npm run db:validate` OK;
 2. Nenhuma leitura/escrita acessível entre empresas (auditoria A×B em
-   `tests/tenancy-audit.test.ts`);
+   `tests/integration/tenancy-audit.test.ts`);
 3. Toda ação restrita é negada no servidor (403), não apenas oculta na
    interface;
 4. Nenhum segredo em repositório; `.env.example` apenas com exemplos.

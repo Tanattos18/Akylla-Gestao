@@ -1,7 +1,7 @@
 import { ConflictException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.module";
-import { TenantLimitsService } from "../billing/tenant-limits.service";
+import { TenantLimitsService } from "../tenant-limits/tenant-limits.service";
 import type {
   CreateClientInput,
   ListClientsQuery,
@@ -9,6 +9,7 @@ import type {
   UpdateRecordStatusInput,
 } from "@petflow/shared";
 import type { AuthContext } from "../common/decorators/auth.decorator";
+import { clientNameKey } from "../common/utils/client-name-key";
 
 const clientSelect = {
   id: true,
@@ -35,10 +36,6 @@ type ClientRecord = Prisma.ClientGetPayload<{ select: typeof clientSelect }>;
 
 function formatClient(client: ClientRecord) {
   return client;
-}
-
-export function clientNameKey(name: string): string {
-  return name.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
 /**

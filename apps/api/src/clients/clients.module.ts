@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common";
-import { TenantLimitsModule } from "../billing/tenant-limits.module";
+import { TenantLimitsModule } from "../tenant-limits/tenant-limits.module";
 import { ClientsController } from "./clients.controller";
 import { ClientsService } from "./clients.service";
 

@@ -6,6 +6,75 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-14 - Reorganização estrutural do repositório
+
+Tarefa autorizada pelo proprietário como entrega única (fora do roteiro
+0–12). Fecha a migração de layout iniciada anteriormente e deixa a raiz,
+o código e a documentação consistentes.
+
+### Adicionado
+
+- **`config/`** — `eslint.config.mjs` e `vitest.config.ts` movidos da
+  raiz; o ESLint ganha bloco de globals para os scripts ESM de
+  `scripts/`. Scripts da raiz apontam via `--config`.
+- **`scripts/`** — `setup-dev.mjs` (`npm run setup:dev`: cria `.env`,
+  `npm ci`, `db:generate`, `db:migrate`, `bootstrap:admin`),
+  `db.mjs` (`npm run db -- reset|studio|seed|status`) e `validate.mjs`
+  (`npm run validate`: lint → typecheck → test → build → db:validate).
+- **`.github/`** — `workflows/ci.yml` (lint, typecheck, test com service
+  container PostgreSQL 17, build, `db:validate` em push/PR),
+  `workflows/cd.yml` (placeholder de staging/production) e
+  `dependabot.yml` (npm + github-actions, semanal).
+- **`tests/helpers/` + `tests/integration/`** — layout de testes
+  organizado por papel; `helpers/global-setup.ts` e
+  `helpers/setup-env.ts` passam a ser o `globalSetup`/`setupFiles` do
+  Vitest; `helpers/mercadopago-mock.ts` recebe o
+  `MockMercadoPagoProvider`.
+
+### Alterado
+
+- **Imports dos testes**: os 24 arquivos de `tests/integration/` ainda
+  apontavam para o layout antigo (`./helpers/app`, `../apps/...`) —
+  corrigidos para `../helpers/app` e `../../apps/...` (53 imports).
+- **`apps/api/package.json`**: `@petflow/whatsapp` declarado em
+  `dependencies` (era usado em 6 arquivos sem declaração) e `@types/node`
+  em devDependencies.
+- **API — organização**: `login-rate.limit.ts` → `login-rate-limit.ts`;
+  `clientNameKey` extraído de `clients.service.ts` para
+  `common/utils/client-name-key.ts` (remove import cruzado
+  `whatsapp-templates → clients`); `tenant-limits.{module,service}.ts`
+  saem de `billing/` para o módulo próprio `src/tenant-limits/`;
+  imports de `crypto` padronizados em `node:crypto`.
+- **`MockMercadoPagoProvider`** sai de
+  `apps/api/src/billing/mercadopago-provider.ts` para
+  `tests/helpers/mercadopago-mock.ts` (código de teste não é mais
+  compilado no build de produção).
+- **`.gitignore`**: cobre `.env.*` (exceto `!.env.example`), `.idea/` e
+  `.vscode/` — antes, um `.env.production` seria versionado.
+- **Documentação**: caminhos de teste atualizados em 14 documentos para
+  `tests/integration/` e `tests/helpers/`; `database/README.md` com as
+  13 migrations (última `import_batch`) e sem a pasta `seeds/`
+  inexistente; `PLANO_IMPORTACAO.md` indexado em `docs/README.md`;
+  CI descrita no `README.md`, `DEVELOPMENT.md`,
+  `AKYLLA_GESTAO_DOCUMENTACAO_COMPLETA.md` e na limitação L7 do
+  `CHECKLIST_PRE_PRODUCAO.md`; `PROJECT_STATUS.md` com a nova entrega.
+
+### Removido
+
+- **`.env.local.example`** — redundante com `.env.example` (mesmas 29
+  chaves); `setup-dev.mjs` usa apenas `.env.example`.
+- **`eslint.config.mjs`, `vitest.config.ts` e os 26 arquivos de teste
+  da raiz** (para `config/` e `tests/`).
+- **Pastas vazias** `tests/e2e`, `tests/fixtures`, `tests/unit`.
+
+### Corrigido
+
+- **`cd.yml`** — `needs: [ci]` referenciava um job inexistente no mesmo
+  workflow (o CI é outro arquivo); removido. O gate de deploy passa a
+  ser o approval do Environment.
+
+---
+
 ## [Akylla Gestão] - 2026-10-14 - Importação de planilhas (CSV)
 
 Nova capacidade autorizada fora do roteiro 0–12, conforme
@@ -38,7 +107,7 @@ Nova capacidade autorizada fora do roteiro 0–12, conforme
   download do modelo, upload com dry-run, resultado com tabela de
   erros e histórico paginado; item "Importações" na navegação apenas
   para ADMIN (`Header.tsx`).
-- **Testes** `tests/imports.test.ts` (29 cenários: autorização, validação
+- **Testes** `tests/integration/imports.test.ts` (29 cenários: autorização, validação
   de arquivo, as 5 entidades, idempotência, dry-run, limites de plano,
   BOM/`;`, tenancy A×B, histórico); `resetDatabase` agora apaga
   `ImportBatch` antes de `user`.
@@ -317,10 +386,10 @@ Nova capacidade autorizada fora do roteiro 0–12, conforme
 - `TenantPlan.userLimit/clientLimit/productLimit` e
   `TenantSubscription.gateway/gatewaySubscriptionId @unique` no Prisma
   schema e no `planSelect`/`subscriptionSelect` do billing service.
-- Testes: `tests/tenant-limits.test.ts` (7 — sem assinatura, ativa no
+- Testes: `tests/integration/tenant-limits.test.ts` (7 — sem assinatura, ativa no
   Essencial bloqueia 4º usuário, cliente limite ajustado, Completo sem
   trava, EXPIRED/CANCELLED sem trava, isolamento cross-tenant) e
-  `tests/mercadopago.test.ts` (12 — checkout admin/member/anon, plano
+  `tests/integration/mercadopago.test.ts` (12 — checkout admin/member/anon, plano
   inexistente, sem credenciais, webhook assinado ativa, idempotência,
   cancelamento, gateway desconhecido, tipo diferente, describe).
   Suíte completa: **509 testes, 23 arquivos, 0 falhas**.
@@ -371,7 +440,7 @@ Nova capacidade autorizada fora do roteiro 0–12, conforme
   Ausência de linha = módulo ativo (nenhuma empresa existente muda de
   comportamento); núcleo nunca é desativável. `DATABASE.md` e `API.md`
   atualizados.
-- `tests/company-modules.test.ts` (**+13 testes**): listagem padrão
+- `tests/integration/company-modules.test.ts` (**+13 testes**): listagem padrão
   (5 módulos ACTIVE), AdminGuard (400 inválido, 403 para MEMBER),
   upsert idempotente, bloqueio 403 das rotas do módulo desativado,
   isolamento cross-tenant, núcleo nunca bloqueado, webhook público
@@ -412,7 +481,7 @@ Nova capacidade autorizada fora do roteiro 0–12, conforme
   `openSession.expectedBalance` e `cash/summary.net`), a separação
   conceitual entre eles e a separação billing-SaaS × financeiro do
   cliente, mais as regras de CSV/paginação/gráficos.
-- `tests/reports.test.ts` (**+3 testes**): **empresa vazia** (summary,
+- `tests/integration/reports.test.ts` (**+3 testes**): **empresa vazia** (summary,
   vendas, clientes, `financial/summary` e `cash/summary` zerados sem
   inventar números, `ticketAverage: null`); **CSV com caracteres
   especiais** (acentos, vírgulas, aspas duplas escapadas, quebra de
@@ -492,7 +561,7 @@ Nova capacidade autorizada fora do roteiro 0–12, conforme
   (criar/editar/liquidar, cancelar/estornar para admin, filtros por
   status, paginação, badge "Vencido"); DTOs financeiros em
   `apps/web/src/lib/types.ts`.
-- `tests/financial.test.ts` (**+30 testes**): criação e validações
+- `tests/integration/financial.test.ts` (**+30 testes**): criação e validações
   (valor/3 casas, zero, negativo, data fora de formato, contraparte
   inválida, idempotência `clientRequestId` → 409), liquidação e saldos
   (`/cash/summary` coerente, movimento `ACCOUNT`, membro pode liquidar,
@@ -569,7 +638,7 @@ Nova capacidade autorizada fora do roteiro 0–12, conforme
 
 ### Adicionado
 
-- `tests/stock.test.ts` (+2): **requisição repetida** de movimento gera
+- `tests/integration/stock.test.ts` (+2): **requisição repetida** de movimento gera
   movimentos independentes, mantém saldo coerente e nunca deixa saldo
   negativo (terceira tentativa → 400); filtro `lowStock` exclui produtos
   **sem estoque mínimo configurado** (regressão da correção acima).
@@ -605,11 +674,11 @@ Nova capacidade autorizada fora do roteiro 0–12, conforme
 
 ### Adicionado
 
-- `tests/clients.test.ts` (+2): criação de cliente somente com nome
+- `tests/integration/clients.test.ts` (+2): criação de cliente somente com nome
   (CPF/telefone/email não obrigatórios) e **inativação preserva histórico
   de vendas** (venda com cliente → inativar → ficha com `_count.sales` e
   venda consultável).
-- `tests/catalog.test.ts` (+4): fornecedor somente com nome, busca por
+- `tests/integration/catalog.test.ts` (+4): fornecedor somente com nome, busca por
   email/telefone/documento, paginação e **inativação preserva produtos
   vinculados**.
 
@@ -668,7 +737,7 @@ Nova capacidade autorizada fora do roteiro 0–12, conforme
 
 ### Adicionado
 
-- `tests/tenancy-audit.test.ts` (+56 cenários Empresa Alfa × Empresa Bravo):
+- `tests/integration/tenancy-audit.test.ts` (+56 cenários Empresa Alfa × Empresa Bravo):
   identificação do tenant pela sessão, injeção de `companyId`
   (corpo/query/cabeçalho), leitura cruzada por ID (18 recursos), escrita
   cruzada com verificação pós-condição no banco, referências FK de outra
@@ -699,7 +768,7 @@ Nova capacidade autorizada fora do roteiro 0–12, conforme
   (`@petflow/shared`).
 - Exportações CSV: prefixos padronizados em `akylla_*` (servidor em
   `reports.service.ts` e nomes de fallback em `/relatorios`); asserção
-  correspondente atualizada em `tests/reports.test.ts` (mesma cobertura).
+  correspondente atualizada em `tests/integration/reports.test.ts` (mesma cobertura).
 - Moeda no comprovante impresso (`Receipt.tsx`, `lib/print.ts`)
   padronizada em BRL via `formatBrl()` (antes `R$ x.xx` com ponto).
 - Textos de nicho removidos de módulos genéricos (card "Clientes e

@@ -150,7 +150,7 @@ tests/        → testes compartilhados/integração
 
 - **Flags de ambiente** regem os fluxos públicos de acesso; padrão no
   código é **desabilitado** (`false`), `true` apenas em `.env`
-  local, `.env.example` e `tests/setup-env.ts`:
+  local, `.env.example` e `tests/helpers/setup-env.ts`:
   - `PASSWORD_RESET_ENABLED` → `POST /api/auth/reset-password` +
     página `/redefinir-senha` (fluxo local, **sem token de e-mail**;
     rate limit `reset|ip|email`; troca de hash + revogação de todas

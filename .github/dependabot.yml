@@ -1,0 +1,42 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "npm"
+    groups:
+      dev-dependencies:
+        patterns:
+          - "@types/*"
+          - "eslint*"
+          - "typescript*"
+          - "vitest*"
+          - "tsx"
+        update-types: ["minor", "patch"]
+      prod-dependencies:
+        patterns:
+          - "@nestjs/*"
+          - "@prisma/*"
+          - "next"
+          - "react*"
+          - "zod"
+          - "bcryptjs"
+          - "mercadopago"
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"

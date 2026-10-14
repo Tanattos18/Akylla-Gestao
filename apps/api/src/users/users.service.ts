@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common";
 import bcrypt from "bcryptjs";
 import { PrismaService } from "../prisma/prisma.module";
-import { TenantLimitsService } from "../billing/tenant-limits.service";
+import { TenantLimitsService } from "../tenant-limits/tenant-limits.service";
 import type { CreateUserInput, UpdateUserStatusInput } from "@petflow/shared";
 import type { AuthContext } from "../common/decorators/auth.decorator";
 

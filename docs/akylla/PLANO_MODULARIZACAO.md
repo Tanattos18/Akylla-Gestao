@@ -167,7 +167,7 @@ proprietário escolheu a opção B, com implementação autorizada nesta etapa
 - `npm run lint` — 0 erros;
 - `npm run typecheck` — OK;
 - `npm test` — **490/490** (477 anteriores + 13 novos em
-  `tests/company-modules.test.ts`);
+  `tests/integration/company-modules.test.ts`);
 - `npm run build` — OK;
 - `npm run db:validate` — OK (migration `20261012154010_company_module`
   aplicada em `petflow` e `petflow_test`);

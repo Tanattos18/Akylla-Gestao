@@ -203,7 +203,7 @@ para que `categoria`/`fornecedor` já existam.)
 - Botões "Importar CSV" dentro de `/produtos` e `/clientes` ficam para
   etapa futura (a página central atende o fluxo completo).
 
-## 8. Testes (`tests/imports.test.ts`)
+## 8. Testes (`tests/integration/imports.test.ts`)
 
 1. MEMBER no `POST /api/imports` → 403; no `GET` → 403.
 2. Upload sem arquivo / tipo inválido / cabeçalho errado → 400.
@@ -254,7 +254,7 @@ para que `categoria`/`fornecedor` já existam.)
 - [ ] Módulo `apps/api/src/imports` (controller/service/module,
       `@Inject()` explícito, `AdminGuard`, `TenantLimits` em lote)
 - [ ] UI `/importacoes` + navegação + `lib/types.ts`
-- [ ] `tests/imports.test.ts` (+13 cenários)
+- [ ] `tests/integration/imports.test.ts` (+13 cenários)
 - [ ] `resetDatabase` apaga `importBatch` antes de `user`
 - [ ] Docs: `DATABASE.md`, `API.md`, `CHANGELOG.md`,
       `PROJECT_STATUS.md`, `IMPLEMENTATION_CHECKLIST.md`

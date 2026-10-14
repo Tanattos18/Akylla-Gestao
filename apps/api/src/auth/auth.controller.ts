@@ -25,7 +25,7 @@ import { Auth, type AuthContext } from "../common/decorators/auth.decorator";
 import { ZodValidationPipe } from "../common/pipes/zod-validation.pipe";
 import { env } from "../config/env";
 import { AuthService } from "./auth.service";
-import { LoginRateLimiter } from "./login-rate.limit";
+import { LoginRateLimiter } from "./login-rate-limit";
 
 @Controller("auth")
 export class AuthController {

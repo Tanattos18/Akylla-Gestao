@@ -35,6 +35,7 @@ Para começar, leia nesta ordem:
 | [Modelo financeiro](akylla/MODELO_FINANCEIRO.md) | caixa, contas a pagar/receber, lançamentos |
 | [Plano de billing](akylla/PLANO_BILLING.md) | planos, limites por tenant, Mercado Pago |
 | [Limitações de vendas](akylla/LIMITACOES_VENDAS.md) | fluxo PDV validado e o que não fazemos |
+| [Plano de importação](akylla/PLANO_IMPORTACAO.md) | importação de CSVs (decisões D1–D8) |
 
 ## Arquitetura e dados
 

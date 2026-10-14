@@ -7,7 +7,7 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import type { Request } from "express";
-import { createHash, randomBytes } from "crypto";
+import { createHash, randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { PrismaService } from "../prisma/prisma.module";
 import { env } from "../config/env";

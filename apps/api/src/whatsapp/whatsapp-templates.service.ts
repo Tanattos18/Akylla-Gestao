@@ -8,7 +8,7 @@ import {
 } from "@petflow/shared";
 import { PrismaService } from "../prisma/prisma.module";
 import type { AuthContext } from "../common/decorators/auth.decorator";
-import { clientNameKey } from "../clients/clients.service";
+import { clientNameKey } from "../common/utils/client-name-key";
 
 const templateSelect = {
   id: true,

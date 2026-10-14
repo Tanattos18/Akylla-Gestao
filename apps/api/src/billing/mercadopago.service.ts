@@ -1,5 +1,5 @@
 import { BadRequestException, Inject, Injectable, Logger } from "@nestjs/common";
-import crypto from "crypto";
+import crypto from "node:crypto";
 import { PrismaService } from "../prisma/prisma.module";
 import { env } from "../config/env";
 import {

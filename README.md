@@ -228,6 +228,17 @@ bonita.
 
 ### 2. Instalação
 
+Caminho rápido (cria `.env`, instala dependências, gera o client
+Prisma, aplica migrations e cria o admin inicial):
+
+```bash
+git clone https://github.com/Tanattos18/Akylla-Gestao.git
+cd Akylla-Gestao
+npm run setup:dev
+```
+
+Ou manualmente:
+
 ```bash
 git clone https://github.com/Tanattos18/Akylla-Gestao.git
 cd Akylla-Gestao
@@ -280,6 +291,7 @@ administrador.
 ### 7. Verificações antes de qualquer alteração
 
 ```bash
+npm run validate        # roda as 5 verificações abaixo em sequência
 npm run lint           # padrão de código
 npm run typecheck      # tipagem estrita
 npm test               # testes em PostgreSQL real
@@ -317,10 +329,15 @@ apps/
 packages/
   shared/    tipos e validações compartilhados (Zod)
   whatsapp/  cliente do provedor WhatsApp (Meta Cloud API)
-  config/    configurações comuns (TypeScript)
-database/    schema Prisma, migrations e seeds
+  config/    base de TypeScript compartilhada (tsconfig)
+config/      configurações do monorepo (ESLint e Vitest)
+scripts/     utilitários locais (setup:dev, db, validate)
+database/    schema Prisma e migrations
 docs/        documentação (ver docs/README.md)
-tests/       testes de integração (Vitest + Supertest)
+tests/
+  helpers/       infraestrutura compartilhada dos testes
+  integration/   testes de integração (Vitest + Supertest)
+.github/     CI (GitHub Actions) e Dependabot
 automação do whatsapp/   base histórica preservada (fora do monorepo)
 ```
 

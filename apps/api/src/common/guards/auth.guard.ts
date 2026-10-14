@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import type { Request } from "express";
-import { createHash } from "crypto";
+import { createHash } from "node:crypto";
 import { IS_PUBLIC_KEY } from "../decorators/public.decorator";
 import type { AuthContext } from "../decorators/auth.decorator";
 import { env } from "../../config/env";

@@ -77,8 +77,8 @@ ou de 🐾 em textos visíveis (`apps/web/src`, `apps/api/src`,
 |---|---|
 | Pacotes `@petflow/*` (api, web, worker, shared, whatsapp, config) | identificador interno — adiado pelo proprietário (decisão registrada) |
 | Cookie `petflow_session` (default em `apps/api/src/config/env.ts:8`) | renomear derruba sessões abertas e exige migração; adiado |
-| `service: "petflow-api"` no payload de `/health` | assertado por `tests/health.test.ts:24`; identificador interno |
-| Nome legado do fixture `verifiedName` do provedor mock | assertado por `tests/whatsapp.test.ts:452`; infraestrutura de teste |
+| `service: "petflow-api"` no payload de `/health` | assertado por `tests/integration/health.test.ts:24`; identificador interno |
+| Nome legado do fixture `verifiedName` do provedor mock | assertado por `tests/integration/whatsapp.test.ts:452`; infraestrutura de teste |
 | Prefixo de comprovante `PF-XXXXXXXX` | identificador técnico de venda (schema/testes `sales.test.ts:212`); adiado |
 | Bancos `petflow` / `petflow_test`, tabelas, migrations | renomear exige migração de dados; adiado |
 | Comentários "// Etapa N — …" no código | documentação interna histórica; não visível ao usuário |
@@ -95,7 +95,7 @@ ou de 🐾 em textos visíveis (`apps/web/src`, `apps/api/src`,
 | `npm run build` | **OK — exit 0** | igual |
 | `npm run db:validate` | **OK — schema válido** | igual |
 
-Único teste ajustado de propósito: `tests/reports.test.ts:828` — a asserção
+Único teste ajustado de propósito: `tests/integration/reports.test.ts:828` — a asserção
 do nome do arquivo CSV exportado foi atualizada para o novo prefixo
 `akylla_vendas_…csv`, acompanhando a mudança deliberada de identidade
 (mesma cobertura; nenhum cenário removido ou enfraquecido).

@@ -6,7 +6,7 @@ conceitos") e pelo PLANO §9 ("detalhar antes de implementar").
 **Status: IMPLEMENTADO em 12/10/2026** — aprovado pelo proprietário
 (decisões D1–D4) e executado: migration aditiva
 `20261012164040_financial_entry`, módulo `apps/api/src/financial`,
-abas em `/financeiro`, `tests/financial.test.ts` (+30 testes) e
+abas em `/financeiro`, `tests/integration/financial.test.ts` (+30 testes) e
 documentação (`DATABASE.md`, `CHANGELOG.md`, `PROJECT_STATUS.md`).
 Este documento permanece como especificação de referência da etapa.
 

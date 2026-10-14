@@ -1,4 +1,4 @@
-import { createHash, createHmac, timingSafeEqual } from "crypto";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import {
   ForbiddenException,
   Inject,

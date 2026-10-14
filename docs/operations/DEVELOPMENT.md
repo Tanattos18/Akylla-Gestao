@@ -15,12 +15,25 @@
 
 ## Instalação
 
+Caminho rápido (cria `.env` a partir de `.env.example`, instala
+dependências, gera o client Prisma, aplica migrations e roda o
+bootstrap do admin):
+
+```bash
+npm run setup:dev
+```
+
+Manualmente:
+
 ```bash
 npm install
 cp .env.example .env    # ajuste as variáveis conforme necessário
 ```
 
-O `.env` não é versionado. O `.env.example` contém apenas exemplos não secretos.
+O `.env` não é versionado. O `.env.example` contém apenas exemplos não
+secretos e é a **única** fonte de exemplo (não há `.env.local.example`).
+O `.gitignore` cobre `.env.*` e só excepciona `!.env.example` — assim,
+um `.env.production` jamais é versionado por engano.
 
 ### Variáveis de ambiente (Etapa 1)
 
@@ -59,7 +72,7 @@ npm run db:validate     # valida o schema Prisma
 ```
 
 Testes criam/aplicam migrations no banco `petflow_test` automaticamente
-(`tests/global-setup.ts`).
+(`tests/helpers/global-setup.ts`).
 
 ### Bootstrap do primeiro administrador
 
@@ -81,12 +94,33 @@ npm run dev:web      # Next.js em http://localhost:3000 (proxy /api → 3001)
 npm run dev:worker   # worker: processa a fila de envios do WhatsApp (Etapa 6)
 ```
 
+## Layout de testes
+
+```
+tests/
+  helpers/        infraestrutura compartilhada (app de teste, reset do banco,
+                  setup do Vitest, mocks)
+  integration/    casos de teste (Vitest + Supertest) — um arquivo por domínio
+```
+
+O Vitest é configurado em `config/vitest.config.ts`
+(`include: tests/**/*.test.ts`, `globalSetup` e `setupFiles` em
+`tests/helpers/`).
+
+## Comandos utilitários
+
+```bash
+npm run setup:dev               # onboarding local completo (uma vez)
+npm run db -- reset|studio|seed|status   # utilitário de banco (scripts/db.mjs)
+npm run validate                # lint → typecheck → test → build → db:validate
+```
+
 ## Comandos de verificação
 
 ```bash
-npm run lint         # ESLint em todo o monorepo
+npm run lint         # ESLint em todo o monorepo (config/eslint.config.mjs)
 npm run typecheck    # TypeScript em todos os workspaces
-npm test             # Vitest (testes compartilhados em tests/)
+npm test             # Vitest (testes em tests/integration/)
 npm run build        # build de todos os workspaces
 npm run db:validate  # valida o schema Prisma (requer DATABASE_URL no .env ou no ambiente)
 npm run db:seed:demo -- --company=<slug|id|email-do-admin>  # popula empresa VAZIA com dados de demonstração
@@ -137,8 +171,8 @@ Etapa 1; os demais endpoints ficam em `/api/...`.
 - Saldo esperado/diferença e resumo financeiro são calculados no
   servidor; `inCash` separa dinheiro físico (saldo do caixa) das demais
   formas de pagamento (resumo financeiro).
-- Testes do caixa (`tests/cash.test.ts`) rodam no `petflow_test` via
-  `npm test`; a migration é aplicada no setup. `tests/sales.test.ts`
+- Testes do caixa (`tests/integration/cash.test.ts`) rodam no `petflow_test` via
+  `npm test`; a migration é aplicada no setup. `tests/integration/sales.test.ts`
   abre uma sessão de caixa no `beforeAll`.
 
 ## Clientes, pets e serviços (Etapa 5)
@@ -151,8 +185,8 @@ Etapa 1; os demais endpoints ficam em `/api/...`.
   (`(companyId, nameKey)`).
 - `/pdv` envia `clientId` opcional no payload da venda; sem seleção,
   vende rápido (comportamento da Etapa 3 preservado).
-- Testes novos em `tests/clients.test.ts`, `tests/pets.test.ts`,
-  `tests/services.test.ts` (+ casos em `tests/sales.test.ts`) rodam no
+- Testes novos em `tests/integration/clients.test.ts`, `tests/integration/pets.test.ts`,
+  `tests/integration/services.test.ts` (+ casos em `tests/integration/sales.test.ts`) rodam no
   `petflow_test` via `npm test`; a migration é aplicada no setup.
 
 ## WhatsApp (Etapa 6)
@@ -170,7 +204,7 @@ Etapa 1; os demais endpoints ficam em `/api/...`.
   `WORKER_POLL_INTERVAL_MS`, até `WHATSAPP_SEND_MAX_PER_CYCLE`
   envios/ciclo com `WHATSAPP_SEND_INTERVAL_MS` entre eles). Sem
   worker rodando, mensagens ficam `PENDING` (comportamento esperado).
-- Testes novos em `tests/whatsapp.test.ts` (provedor mock
+- Testes novos em `tests/integration/whatsapp.test.ts` (provedor mock
   determinístico) rodam no `petflow_test` via `npm test`; a migration
   é aplicada no setup.
 
@@ -192,7 +226,7 @@ Etapa 1; os demais endpoints ficam em `/api/...`.
   puro — o projeto não usa biblioteca de charts.
 - Migração da etapa: `20261010002727_etapa7_report_indexes` (apenas
   índices `(companyId, createdAt)` em `Client`/`Pet`).
-- Testes novos em `tests/reports.test.ts` rodam no `petflow_test`
+- Testes novos em `tests/integration/reports.test.ts` rodam no `petflow_test`
   via `npm test`; a migration é aplicada no setup.
 
 ## Agendamentos (Etapa 8)
@@ -222,7 +256,7 @@ Etapa 1; os demais endpoints ficam em `/api/...`.
   (`summary.services`, `clients.services`).
 - Migração da etapa: `20261010115308_etapa8_appointments` (enum +
   `Appointment` + campos de lembrete em `WhatsAppConfig`).
-- Testes novos em `tests/appointments.test.ts` (45) rodam no
+- Testes novos em `tests/integration/appointments.test.ts` (45) rodam no
   `petflow_test` via `npm test`; a migration é aplicada no setup.
 
 ## Assinaturas e billing (Etapa 9)
@@ -248,8 +282,8 @@ Etapa 1; os demais endpoints ficam em `/api/...`.
 - Migração da etapa: `20261010131027_etapa9_subscriptions` (enums +
   `SubscriptionPlan`/`Subscription`/`TenantPlan`/`TenantSubscription`
   + `CashMovement.subscriptionId` + seed de planos globais).
-- Testes novos: `tests/subscriptions.test.ts` (18) e
-  `tests/billing.test.ts` (12) rodam no `petflow_test` via `npm test`;
+- Testes novos: `tests/integration/subscriptions.test.ts` (18) e
+  `tests/integration/billing.test.ts` (12) rodam no `petflow_test` via `npm test`;
   a migration é aplicada no setup.
 
 ## Estrutura rápida

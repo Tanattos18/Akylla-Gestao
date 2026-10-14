@@ -683,7 +683,7 @@ frontend** — valores exibidos são para UX, o servidor recalcula.
 ## 17. Testes e qualidade
 
 - **509/509 aprovados em 23 arquivos** contra PostgreSQL real
-  (`petflow_test`, migrations aplicadas por `tests/global-setup.ts`).
+  (`petflow_test`, migrations aplicadas por `tests/helpers/global-setup.ts`).
 - Evolução: E1 23 → E2 76 → E3 104 → E4 141 → E5 190 → E6 251 → E7 292
   → E8 337 → E9 367 → pós-E9 380 → E10 393 (company-modules +13) →
   E11 509 (tenant-limits +7, mercadopago +12, financial +…).
@@ -764,7 +764,9 @@ Resumo das mais relevantes:
 - **8 vulnerabilidades `npm audit`** — todas em dependências de
   desenvolvimento (vitest/esbuild/postcss/tinypool); correção exige
   upgrade do vitest (breaking change).
-- **Sem CI** — validações manuais; automatizar no push.
+- **CI sem deploy** — `.github/workflows/ci.yml` cobre lint, typecheck,
+  testes (Postgres 17), build e `db:validate`; `cd.yml` ainda é placeholder
+  (migrations + `echo`) e depende de definição de hosting/secrets.
 - **Sem backups automatizados** com restore testado — antes de produção.
 - **Sem RLS no Postgres** — isolamento de tenant na camada de aplicação
   (500+ testes); adicionar RLS como defesa em profundidade.

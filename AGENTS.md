@@ -19,13 +19,19 @@ deve ser preservada e não confundida com o código do monorepo.
    justificativa no relatório/CHANGELOG quando relevante.
 6. **Sem segredos**: nunca gravar senhas, tokens ou credenciais reais em
    código, Git ou documentação. Somente variáveis de ambiente via `.env`
-   (não versionado) e `.env.example` com exemplos.
+   (não versionado) e `.env.example` com exemplos — **`.env.example` é o
+   único template** (não criar `.env.*` alternativos; o `.gitignore`
+   cobre `.env.*` e excepciona apenas `!.env.example`).
 7. **Tipagem forte**: TypeScript estrito; erros tratados explicitamente.
 8. **Banco de dados**: qualquer mudança de schema exige migration em
    `database/prisma/migrations/` e atualização de `docs/architecture/DATABASE.md`
    quando as diretrizes mudarem.
-9. **Testes**: rodar `npm run lint`, `npm run typecheck` e `npm test` antes de
-   concluir qualquer tarefa; não marcar verificação como concluída sem evidência.
+9. **Testes**: rodar `npm run validate` (ou, individualmente,
+   `npm run lint`, `npm run typecheck`, `npm test`, `npm run build` e
+   `npm run db:validate`) antes de concluir qualquer tarefa; não marcar
+   verificação como concluída sem evidência. Testes ficam em
+   `tests/integration/` e a infraestrutura em `tests/helpers/` — não
+   misturar com o código de `apps/`.
 10. **Documentação**: atualizar `docs/operations/CHANGELOG.md`,
     `docs/operations/PROJECT_STATUS.md` e
     `docs/operations/IMPLEMENTATION_CHECKLIST.md` ao final de cada etapa
@@ -64,12 +70,16 @@ deve ser preservada e não confundida com o código do monorepo.
 ## Comandos de verificação
 
 ```bash
+npm run validate      # roda as 5 verificações abaixo em sequência
 npm run lint
 npm run typecheck
 npm test
 npm run build
 npm run db:validate   # requer DATABASE_URL definida
 ```
+
+Configurações de lint/teste ficam em `config/`; utilitários locais em
+`scripts/` (`npm run setup:dev`, `npm run db`).
 
 ## Ao final de cada tarefa
 

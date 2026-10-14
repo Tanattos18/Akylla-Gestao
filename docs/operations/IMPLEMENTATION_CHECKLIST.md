@@ -4,6 +4,36 @@
 > Este checklist cobre apenas a era do Akylla Gestão. O histórico
 > anterior à adaptação está preservado no Git.
 
+## Fora do roteiro — Reorganização estrutural (2026-10-14)
+
+Tarefa autorizada pelo proprietário como entrega única.
+
+- [x] Reverter `automação do whatsapp/README.md` (alterado sem
+      autorização; regra 12 do AGENTS.md)
+- [x] Corrigir imports dos 24 arquivos de `tests/integration/`
+      (`../helpers/app`, `../../apps/...` — 53 imports quebrados pela
+      migração anterior)
+- [x] `config/` versionado (ESLint + Vitest); scripts da raiz apontam
+      via `--config`
+- [x] `scripts/` versionados (`setup:dev`, `db`, `validate`) + 3 scripts
+      novos no `package.json`
+- [x] `.github/` versionado: `ci.yml`, `cd.yml` (com `needs: [ci]`
+      inválido corrigido) e `dependabot.yml`
+- [x] `.env.local.example` removido (redundante); `.gitignore` cobre
+      `.env.*` com exceção de `.env.example`
+- [x] Pastas vazias `tests/e2e`, `tests/fixtures`, `tests/unit` removidas
+- [x] API: `@petflow/whatsapp` declarado; `login-rate-limit.ts`;
+      `common/utils/client-name-key.ts`; `src/tenant-limits/`;
+      `node:crypto` padronizado; `MockMercadoPagoProvider` em
+      `tests/helpers/`
+- [x] Documentação: 14 documentos com caminhos de teste atualizados;
+      `database/README.md` (13 migrations); `PLANO_IMPORTACAO.md`
+      indexada; CI documentada; scripts novos no `README.md` e em
+      `DEVELOPMENT.md`; `CHANGELOG.md`, `PROJECT_STATUS.md` e este
+      checklist atualizados
+- [x] Validações: `lint` · `typecheck` · `test` · `build` · `db:validate`
+- [x] Stage sem commit (revisão do proprietário pendente)
+
 ## Fora do roteiro — Importação de planilhas CSV (2026-10-14)
 
 Tarefa autorizada pelo proprietário; plano e decisões D1–D8 em
@@ -19,7 +49,7 @@ Tarefa autorizada pelo proprietário; plano e decisões D1–D8 em
       com `AdminGuard`, transação por lote e checagem de limites
 - [x] 413 para arquivo > 5 MB no `AllExceptionsFilter`
 - [x] UI `/importacoes` + item de navegação apenas para ADMIN
-- [x] `tests/imports.test.ts` (29 cenários) e `resetDatabase` com
+- [x] `tests/integration/imports.test.ts` (29 cenários) e `resetDatabase` com
       `ImportBatch`
 - [x] Documentação: `DATABASE.md`, `API.md`, `CHANGELOG.md`,
       `PROJECT_STATUS.md` e este checklist
@@ -66,7 +96,7 @@ Tarefa autorizada pelo proprietário; plano e decisões D1–D8 em
 ## Etapa 3 — Auditoria multiempresa e permissões (2026-10-12)
 
 - [x] Entregável: `docs/akylla/AUDITORIA_MULTIEMPRESA.md`
-- [x] Teste novo `tests/tenancy-audit.test.ts` (+56 cenários Empresa
+- [x] Teste novo `tests/integration/tenancy-audit.test.ts` (+56 cenários Empresa
       A × B: injeção de `companyId`, leitura/escrita cruzada, FKs,
       relatórios/CSV, perfis ADMIN/MEMBER, vazamento em erros)
 - [x] **Nenhuma falha de isolamento ou de autorização confirmada**
@@ -133,7 +163,7 @@ Tarefa autorizada pelo proprietário; plano e decisões D1–D8 em
 - [x] UI `/financeiro` com abas **Resumo | A pagar | A receber**;
       componente `FinancialEntries.tsx`; DTOs em `lib/types.ts`
 - [x] `resetDatabase` apaga `FinancialEntry` antes de `user`
-- [x] `tests/financial.test.ts` (+30): criação/validações, liquidação
+- [x] `tests/integration/financial.test.ts` (+30): criação/validações, liquidação
       + saldos coerentes com `/cash/summary`, cancelamento/estorno
       auditáveis, filtros, isolamento A×B, decimais 12,2
 - [x] Validações com evidência: `lint` 0 → `typecheck` OK →
@@ -196,7 +226,7 @@ Tarefa autorizada pelo proprietário; plano e decisões D1–D8 em
       nunca desativável
 - [x] `MAPA_DE_MODULOS.md` §6.2/§6.3/§7, `DATABASE.md` e `API.md`
       atualizados
-- [x] Testes: `tests/company-modules.test.ts` **+13**; `resetDatabase`
+- [x] Testes: `tests/integration/company-modules.test.ts` **+13**; `resetDatabase`
       apaga `companyModule`
 - [x] Validações com evidência: `lint` 0 → `typecheck` OK →
       **490/490 testes** → `build` OK → `db:validate` OK (migration em
@@ -238,8 +268,8 @@ implementadas.**
       aprovação
 - [x] Nenhum preço/limite/promessa publicado fora do sistema
       (instrução 8)
-- [x] Testes: `tests/tenant-limits.test.ts` **7** +
-      `tests/mercadopago.test.ts` **12**
+- [x] Testes: `tests/integration/tenant-limits.test.ts` **7** +
+      `tests/integration/mercadopago.test.ts` **12**
 - [x] Validações com evidência: `lint` 0 → `typecheck` OK →
       **509/509 testes** → `build` OK → `db:validate` OK (migration em
       `petflow` e `petflow_test`)

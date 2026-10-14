@@ -12,8 +12,9 @@ do roteiro `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`. Entregas:
   db:validate OK), revisão de segurança, limitações conhecidas (L1–L14),
   ambientes, env vars, estimativa de custos e checklist pré-comercial.
 - **Decisão recomendada**: **não declarar pronto para produção** —
-  faltam backups com restore testado, LGPD, CI, monitoramento, E2E
-  Mercado Pago e resolução de vulnerabilidades de dev-dependencies.
+  faltam backups com restore testado, LGPD, CD/deploy real, monitoramento,
+  E2E Mercado Pago e resolução de vulnerabilidades de dev-dependencies.
+  (CI no GitHub Actions foi adicionada depois, em 2026-10-14.)
 - Validações: `lint` 0 → `typecheck` OK → **509/509 testes** → `build`
   OK → `db:validate` OK. Commit + push por etapa.
 
@@ -38,7 +39,8 @@ do roteiro `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`. Entregas:
 ### Próximos passos (fora do roteiro — requerem autorização)
 
 1. Concluir checklist do `CHECKLIST_PRE_PRODUCAO.md` §7 (backups,
-   LGPD, CI, monitoramento, vitest upgrade, E2E Mercado Pago);
+   LGPD, CD/deploy real, monitoramento, vitest upgrade, E2E Mercado
+   Pago);
 2. Definir ambiente de produção (hosting + domínio + TLS);
 3. Deploy de staging → E2E sandbox Mercado Pago → aprovação →
    produção restrita (pilotos).
@@ -55,8 +57,33 @@ do roteiro `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`. Entregas:
 - **Migration**: `20261014114855_import_batch` (aditiva) aplicada nos
   ambientes de dev e teste.
 - Validações: `lint` → `typecheck` → **538/538 testes** (509 + 29 de
-  `tests/imports.test.ts`) → `build` → `db:validate`. Sem commit até
+  `tests/integration/imports.test.ts`) → `build` → `db:validate`. Sem commit até
   autorização do proprietário.
+
+## Entrega fora do roteiro — Reorganização estrutural (2026-10-14)
+
+**Concluída** (tarefa autorizada pelo proprietário como entrega única).
+
+- **Nova estrutura de raiz**: `config/` (ESLint + Vitest), `scripts/`
+  (`setup:dev`, `db`, `validate`), `tests/helpers/` + `tests/integration/`,
+  `.github/` (CI + Dependabot) e `.env.example` unificado (removido
+  `.env.local.example`).
+- **Correções**: imports relativos dos 24 arquivos de
+  `tests/integration/` (a migração anterior os tinha quebrado),
+  `needs: [ci]` inválido no `cd.yml`, `.gitignore` agora cobre `.env.*`
+  (exceto `.env.example`).
+- **Código da API**: `@petflow/whatsapp` declarado em
+  `apps/api/package.json`; `login-rate-limit.ts` (nomenclatura);
+  `common/utils/client-name-key.ts` (elimina import cruzado
+  whatsapp → clients); `tenant-limits/` como módulo próprio (não mais
+  dentro de `billing/`); `node:crypto` padronizado;
+  `MockMercadoPagoProvider` movido para `tests/helpers/` (fora do build).
+- **Documentação**: caminhos de teste atualizados em 14 documentos;
+  `database/README.md` (13 migrations, última `import_batch`);
+  `PLANO_IMPORTACAO.md` indexado; CI documentada; scripts novos no
+  `README.md` e em `DEVELOPMENT.md`.
+- Validações: `lint` → `typecheck` → **538/538 testes** → `build` →
+  `db:validate`. Stage sem commit até autorização.
 
 ## Entregas por etapa (jornada Akylla Gestão)
 
@@ -75,7 +102,7 @@ parada obrigatória antes das Etapas 10, 11, 12 e de qualquer migration
   `docs/akylla/IDENTIDADE_E_NAVEGACAO.md`; marca, textos, CSV e moeda do
   comprovante adaptados; identificadores internos e módulos preservados.
 - **Etapa 3** — auditoria multiempresa e permissões:
-  `docs/akylla/AUDITORIA_MULTIEMPRESA.md` + `tests/tenancy-audit.test.ts`
+  `docs/akylla/AUDITORIA_MULTIEMPRESA.md` + `tests/integration/tenancy-audit.test.ts`
   (+56 cenários A×B); **nenhuma falha de isolamento ou autorização
   confirmada**; nenhum código de produção alterado.
 - **Etapa 4** — definição do núcleo genérico (apenas análise e
@@ -141,11 +168,13 @@ empresa (`CompanyModule`).
 
 - **Limitações de produto (L1–L14)**: lista completa e canônica em
   `docs/akylla/CHECKLIST_PRE_PRODUCAO.md` §3 — inclui dev-dependências
-  vulneráveis, rate limit em memória, ausência de RLS/LGPD/CI/backups/
+  vulneráveis, rate limit em memória, ausência de RLS/LGPD/backups/
   monitoramento, seed ainda temático de pet shop e cobrança recorrente
-  não ativada.
+  não ativada. CI existe (`.github/workflows/ci.yml`), mas o CD ainda é
+  placeholder.
 - **Pré-comercial (§7 do mesmo checklist)**: backups com restore
-  testado, LGPD, CI, monitoramento, E2E Mercado Pago.
+  testado, LGPD, CD/deploy real (hosting + secrets), monitoramento,
+  E2E Mercado Pago.
 - Credenciais reais da Meta (`WHATSAPP_ACCESS_TOKEN`,
   `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN`) só no `.env` local —
   provisionamento em produção é decisão explícita do proprietário.

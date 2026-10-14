@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.module";
-import { TenantLimitsService } from "../billing/tenant-limits.service";
+import { TenantLimitsService } from "../tenant-limits/tenant-limits.service";
 import type {
   CreateProductInput,
   ListProductsQuery,

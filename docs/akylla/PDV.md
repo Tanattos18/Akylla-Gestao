@@ -237,7 +237,7 @@ reexecutadas no servidor** (fonte da verdade):
 
 ## 11. Garantias cobertas por testes
 
-`tests/sales.test.ts` (+ `cash.test.ts`):
+`tests/integration/sales.test.ts` (+ `cash.test.ts`):
 
 - Venda válida baixa estoque e registra movimento.
 - Totais recalculados no servidor (payload adulterado é ignorado).
@@ -290,7 +290,7 @@ Conforme `docs/akylla/LIMITACOES_VENDAS.md` e
 | Lock de caixa | `apps/api/src/cash/cash-session.helpers.ts` |
 | Schema Zod | `packages/shared/src/index.ts` (`createSaleSchema`, `cancelSaleSchema`, `listSalesQuerySchema`) |
 | Banco | `database/prisma/schema.prisma` (`Sale`, `SaleItem`) |
-| Testes | `tests/sales.test.ts`, `tests/cash.test.ts` |
+| Testes | `tests/integration/sales.test.ts`, `tests/integration/cash.test.ts` |
 
 ---
 

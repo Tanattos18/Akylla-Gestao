@@ -86,7 +86,7 @@ Regras gerais que valem para **todos** os indicadores abaixo:
 | `clients.newPets` ("pet(s) cadastrado(s)") | `summary` do dashboard e card "Novos clientes" | **removido** — substituído pelo já existente `newClients` (genérico); decisão registrada no PLANO §9 |
 | `newPets` e `petsBySpecies[]` ("Novos pets por espécie") | `GET /api/reports/clients` e aba Clientes | **removidos** — a aba mantém `newClients` + `services`; os modelos `Pet`/`PetSpecies` continuam existindo como módulo opcional (destino na Etapa 10) |
 
-Evidência: `tests/reports.test.ts` — "sem indicador de nicho"
+Evidência: `tests/integration/reports.test.ts` — "sem indicador de nicho"
 (`newPets`/`petsBySpecies` `toBeUndefined()`).
 
 ---
@@ -123,7 +123,7 @@ WHERE "companyId" = :empresa AND "status" = 'OPEN'
 ```
 
 Os testes automatizados de coerência
-(`tests/reports.test.ts` — "coerência entre indicadores e dados de
+(`tests/integration/reports.test.ts` — "coerência entre indicadores e dados de
 origem") executam exatamente essa comparação via Prisma para vendas,
 clientes, estoque, WhatsApp, títulos (AP/AR) e entradas de caixa.
 

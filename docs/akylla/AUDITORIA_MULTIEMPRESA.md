@@ -67,7 +67,7 @@ por perfil · comportamento intencional · inconclusivo.
 ## 3. Matriz de Empresa A × Empresa B
 
 **Legenda:** ✔ = comportamento correto verificado nesta etapa
-(`tests/tenancy-audit.test.ts`) · ✔(ex) = correto, evidência reaproveitada
+(`tests/integration/tenancy-audit.test.ts`) · ✔(ex) = correto, evidência reaproveitada
 de teste existente (arquivo:linha) · — = não aplicável.
 
 ### 3.1 Identificação e injeção de tenant
@@ -180,7 +180,7 @@ todas as rotas sem guard têm comportamento documentado e intencional.
 
 ## 5. Testes executados e resultados
 
-- **Novo:** `tests/tenancy-audit.test.ts` — **56 cenários** nomeados
+- **Novo:** `tests/integration/tenancy-audit.test.ts` — **56 cenários** nomeados
   Empresa Alfa × Empresa Bravo em 8 blocos (identificação, injeção,
   leitura cruzada, escrita cruzada, referências, relatórios/CSV, perfis,
   vazamento em erros). Exercitam o backend real (app Nest + Prisma em
@@ -278,7 +278,7 @@ Não afirmo cobertura completa. Itens **não examinados ou só citados**:
 | # | Recomendação | Prioridade |
 |---|---|---|
 | R1 | Manter o padrão `findFirst/findMany({..., companyId })` + validação de FK como **regra de revisão obrigatória** para novos recursos (checklist na Etapa 10 de arquitetura) | Alta (processo) |
-| R2 | Adicionar teste de regressão cross-tenant **por novo recurso** (modelo: `tests/tenancy-audit.test.ts`) | Alta (processo) |
+| R2 | Adicionar teste de regressão cross-tenant **por novo recurso** (modelo: `tests/integration/tenancy-audit.test.ts`) | Alta (processo) |
 | R3 | Padronizar `GET` de consentimento cross-tenant para 404, se o produto desejar consistência (mudança mínima + atualizar `whatsapp.test.ts:621` com autorização) | Baixa |
 | R4 | Avaliar RLS/`SET app.company_id` no Postgres como defesa em profundidade (etapa futura, com migration autorizada) | Média |
 | R5 | Fechar pendências da Etapa 1: verificação de e-mail, rate limit distribuído, backups | Média |
@@ -288,7 +288,7 @@ Não afirmo cobertura completa. Itens **não examinados ou só citados**:
 
 | Comando | Resultado |
 |---|---|
-| `npx vitest run tests/tenancy-audit.test.ts` | **56/56 aprovados** (primeira execução: 1 erro de seed — `endAt` obrigatório em `Appointment` — corrigido no próprio teste; sem tocar em código de produção) |
+| `npx vitest run tests/integration/tenancy-audit.test.ts` | **56/56 aprovados** (primeira execução: 1 erro de seed — `endAt` obrigatório em `Appointment` — corrigido no próprio teste; sem tocar em código de produção) |
 | `npm test` | **436/436 aprovados**, 19 arquivos, 72,6 s (base 380 + 56 novos; nenhum existente falhou) |
 | `npm run lint` | exit 0, 0 erros |
 | `npm run typecheck` | exit 0 (5 workspaces) |
