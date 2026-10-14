@@ -1,8 +1,15 @@
 # Akylla Gestão — Plano de adaptação e linha de base (Etapa 1)
 
+> **Documento histórico (Etapa 1, 12/10/2026).** Descreve o estado do
+> repositório e o plano de evolução **naquela data**. Itens marcados
+> aqui como "futuro" ou "não existe" já foram implementados nas Etapas
+> 2–12 (AP/AR, enforcement de billing, `CompanyModule`, gateway Mercado
+> Pago, CI no GitHub Actions em 2026-10-14). Para o estado atual, ver
+> `docs/operations/PROJECT_STATUS.md`.
+
 **Data:** 12/10/2026
 **Base:** `docs/akylla/DIAGNOSTICO_INICIAL.md` (preservado, não alterado) +
-diretrizes `akylla_gestao_diretrizes_opencode.md` e
+diretrizes `AKYLLA_GESTAO_DIRETRIZES_OPENCODE.md` e
 `PASSO_A_PASSO_OPENCODE_AKYLLA.md`.
 **Sequência operacional adotada:** Etapas 1–12 do passo a passo (decisão do
 proprietário em 12/10/2026), com as diretrizes gerais como requisitos

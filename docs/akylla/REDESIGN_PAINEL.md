@@ -3,6 +3,9 @@
 > **Status: IMPLEMENTADO.** Design tokens, componentes de UI e dashboard
 > entregues na fase 1 (R1–R6). Layout de navegação evoluiu para a
 > **opção B — topbar única** (ver §13).
+>
+> **Nota (2026-10-14):** a contagem de testes citada no §"evidências"
+> (509/509) é o total da Etapa 12; hoje são 538 testes em 24 arquivos.
 
 ---
 

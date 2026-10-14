@@ -4,6 +4,9 @@
 > plano de modularização com impacto e reversão. **Nenhuma exclusão** foi
 > feita. Decisão do proprietário registrada antes de qualquer exclusão
 > definitiva (critério da etapa).
+>
+> **Documento histórico (2026-10-12).** A contagem citada (490/490) é o
+> total daquela data; hoje são 538 testes em 24 arquivos.
 
 **Base normativa:**
 

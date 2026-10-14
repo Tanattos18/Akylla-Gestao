@@ -8,6 +8,14 @@
 > **Status (2026-10-12): decisões D1–D4 aprovadas e implementação
 > concluída.** Ver CHANGELOG Etapa 11 para o detalhe do que foi
 > entregue.
+>
+> **Atualização (2026-10-14):** o enforcement proposto aqui **está
+> implementado** — `TenantLimitsService` aplica `userLimit`/`clientLimit`/
+> `productLimit` nos `create` de Users/Clients/Products, apenas para
+> empresas com assinatura `ACTIVE` (decisão D3). Os campos de limite
+> existem em `TenantPlan` (migration `20261012173450_tenant_plan_limits`).
+> Trechos que dizem "sem enforcement" / "não existem colunas de limite"
+> descrevem o estado pré-Etapa 11.
 
 **Base normativa:**
 

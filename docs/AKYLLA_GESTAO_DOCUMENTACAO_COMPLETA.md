@@ -35,7 +35,7 @@ arquitetura **multiempresa (tenant)** desde a primeira etapa.
 | Item | Estado |
 |---|---|
 | Roteiro Akylla Gestão (Etapas 0–12) | **CONCLUÍDO** (2026-10-12) |
-| Testes | **509/509 aprovados** (23 arquivos, PostgreSQL real) |
+| Testes | **538/538 aprovados** (24 arquivos, PostgreSQL real) |
 | Migrations | 12 aplicadas em `petflow` e `petflow_test` |
 | Gateway Mercado Pago | Sandbox implementado; cobrança real **não ativada** |
 | Deploy / produção | **Não realizado** — requer aprovação do proprietário |
@@ -67,8 +67,8 @@ apps/worker     → tarefas em background (fila WhatsApp)
 packages/shared → @petflow/shared (schemas Zod + tipos + constantes)
 packages/config → tsconfig base
 packages/whatsapp → @petflow/whatsapp (provedor Meta/Mock, E.164, backoff)
-database/       → schema Prisma, migrations, seeds
-tests/          → testes de integração compartilhados (23 arquivos)
+database/       → schema Prisma e migrations (sem pasta de seeds)
+tests/          → testes de integração compartilhados (24 arquivos)
 docs/           → documentação
 automação do whatsapp/ → base legada PRESERVADA, fora do monorepo (não mexer)
 ```
@@ -80,7 +80,7 @@ npm run dev:api      # build de shared+whatsapp e API com tsx watch
 npm run dev:web      # Next.js
 npm run dev:worker   # worker da fila WhatsApp
 npm run lint         # ESLint no monorepo
-npm run typecheck    # tsc em todos os workspaces
+npm run typecheck    # tsc nos workspaces apps/* (api, web, worker)
 npm test             # Vitest (aplica migrations no petflow_test)
 npm run build        # build de todos os workspaces
 npm run db:validate  # valida schema Prisma
@@ -107,8 +107,8 @@ ao mesmo tempo** (ambos escrevem em `apps/web/.next`).
      `@RequireModule(...)`; módulo `DISABLED` → 403; ausência de linha =
      ativo; núcleo nunca é desativável.
    - `AdminGuard` — exige `role: ADMIN` nas escritas sensíveis.
-   Papéis: `ADMIN` e `MEMBER` (a doc às vezes chama o não-admin de
-   "STAFF").
+   Papéis: `ADMIN` e `MEMBER` (nunca `STAFF`; alguns documentos antigos
+   chamam o não-admin de "STAFF").
 4. **Tenant**: `request.user.companyId` é a única fonte de `companyId`;
    toda leitura/escrita individual usa
    `findFirst({ where: { id, companyId } })` → 404 se não achar.
@@ -162,6 +162,7 @@ OK):
 | `20261012154010_company_module` | 10 | enums `BusinessModule`/`CompanyModuleStatus` + tabela `CompanyModule` |
 | `20261012164040_financial_entry` | 8* | `FinancialEntry` (AP/AR, contas a pagar/receber) |
 | `20261012173450_tenant_plan_limits` | 11 | `TenantPlan.userLimit/clientLimit/productLimit` + `TenantSubscription.gateway/gatewaySubscriptionId` |
+| `20261014114855_import_batch` | pós-12 | `ImportBatch` + enums `ImportType`/`ImportStatus` (importação de planilhas CSV) |
 
 Padrões: FK explícitas (`Restrict` para dados de negócio, `SetNull` para
 autor/cancelador ou vínculos opcionais), índices compostos por
@@ -324,9 +325,14 @@ Código: `apps/api/src/cash` e `apps/api/src/financial`.
 
 ### Financeiro (AP/AR — contas a pagar/receber)
 - Modelo `FinancialEntry` com origens diversas (vendas, caixa,
-  assinaturas de cliente) e estados `PENDING`/`PAID`/`CANCELLED`.
-- `POST /api/financial/entries` (ADMIN), `PATCH /:id` para marcar
-  pago/cancelar; leitura com filtros por tipo, status, período.
+  assinaturas de cliente) e estados **`OPEN`/`PAID`/`CANCELLED`**
+  (enum `FinancialStatus`; nunca `PENDING`).
+- `POST /api/financial` (sessão), `PATCH /api/financial/:id` (sessão),
+  `POST /api/financial/:id/pay` (sessão, exige caixa aberto),
+  `POST /api/financial/:id/reverse` e `POST /api/financial/:id/cancel`
+  (ADMIN, auditáveis, nunca apagam); leitura com filtros por
+  `direction`, `status`, período. Detalhe em
+  [`docs/architecture/API.md`](architecture/API.md).
 - Frontend: `/financeiro` (lista + totais a pagar/receber).
 
 ### Frontend do caixa
@@ -416,7 +422,7 @@ Código: `packages/whatsapp`, `apps/api/src/whatsapp`, `apps/worker`.
    `PENDING`.
 
 ### Webhook (`@Public` + assinatura)
-- `GET /api/whatsapp/webhook`: responde o challenge da Meta em
+- `GET /api/webhooks/whatsapp`: responde o challenge da Meta em
   `text/plain`.
 - `POST`: valida `x-hub-signature-256` (HMAC-SHA256 do `rawBody` com
   `WHATSAPP_APP_SECRET`) → 403 se inválido; grava cada `(wamid, tipo)`
@@ -673,6 +679,7 @@ Código: `apps/api/src/company-modules`, guard em
 | `/planos` | assinaturas | AdminGuard |
 | `/assinaturas` (+nova/[id]) | assinaturas | |
 | `/faturamento` | billing SaaS | planos, assinatura, checkout MP |
+| `/importacoes` | importação | upload de planilha (multipart) + histórico `ImportBatch` |
 
 Frontend consome a API apenas por HTTP (rewrites `/api/:path*` → 3001),
 mantendo mesmo domínio/cookies. **Nenhuma regra de negócio vive no
@@ -682,18 +689,23 @@ frontend** — valores exibidos são para UX, o servidor recalcula.
 
 ## 17. Testes e qualidade
 
-- **509/509 aprovados em 23 arquivos** contra PostgreSQL real
+> Contagens correntes (nº de testes, arquivos, páginas, modelos):
+> [`docs/operations/PROJECT_STATUS.md`](operations/PROJECT_STATUS.md)
+> é a fonte única. Os números abaixo são o estado em 2026-10-14.
+
+- **538/538 aprovados em 24 arquivos** contra PostgreSQL real
   (`petflow_test`, migrations aplicadas por `tests/helpers/global-setup.ts`).
 - Evolução: E1 23 → E2 76 → E3 104 → E4 141 → E5 190 → E6 251 → E7 292
   → E8 337 → E9 367 → pós-E9 380 → E10 393 (company-modules +13) →
-  E11 509 (tenant-limits +7, mercadopago +12, financial +…).
+  E11 509 (tenant-limits +7, mercadopago +12, financial +19) →
+  pós-E12 538 (imports +29).
 - Arquivos: `auth`, `users`, `health`, `catalog`, `products`, `stock`,
   `sales`, `cash`, `clients`, `pets`, `services`, `whatsapp`, `reports`,
   `appointments`, `subscriptions`, `billing`, `password-reset`,
   `register`, `tenancy-audit`, `financial`, `company-modules`,
-  `tenant-limits`, `mercadopago`.
+  `tenant-limits`, `mercadopago`, `imports`.
 - Cada etapa só é encerrada com evidência: `npm run lint` (0 erros),
-  `npm run typecheck` (5 workspaces), `npm test`, `npm run build`,
+  `npm run typecheck` (workspaces `apps/*`), `npm test`, `npm run build`,
   `npm run db:validate`, varredura de segredos e validação E2E manual.
 
 ---
@@ -707,7 +719,7 @@ frontend** — valores exibidos são para UX, o servidor recalcula.
 | Autenticação | Cookie HttpOnly + SameSite=Lax + Secure opcional; bcrypt 12; SHA-256 em Session; rate limit login |
 | Autorização | AuthGuard global → ModuleGuard → AdminGuard; `@Public` pontual |
 | Tenant | `companyId` só do contexto autenticado; grep `body.companyId` = 0 |
-| Uploads | Nenhum endpoint de upload nesta versão |
+| Uploads | Importação de planilhas (`FileInterceptor`, campo `file`, **máx. 5 MB**); validação de extensão/conteúdo no servidor |
 | Exportações | CSV isolado por empresa; anti-injeção em células |
 | Webhooks | WhatsApp (`x-hub-signature-256`) e Mercado Pago (`x-signature` HMAC) assinados e idempotentes |
 
@@ -761,15 +773,16 @@ existentes no dev: **Empresa Piloto (dev)** e **Mundo Pet** (demo).
 Classificadas no `docs/akylla/CHECKLIST_PRE_PRODUCAO.md` §3 (L1–L14).
 Resumo das mais relevantes:
 
-- **8 vulnerabilidades `npm audit`** — todas em dependências de
-  desenvolvimento (vitest/esbuild/postcss/tinypool); correção exige
-  upgrade do vitest (breaking change).
+- **8 vulnerabilidades `npm audit`** — 6 em dependências de
+  desenvolvimento (vitest/esbuild/tinypool) e **2 em produção**
+  (`postcss` transitivo do `next`, severidade alta); correção exige
+  upgrade do vitest e do `next` (ambos breaking change).
 - **CI sem deploy** — `.github/workflows/ci.yml` cobre lint, typecheck,
   testes (Postgres 17), build e `db:validate`; `cd.yml` ainda é placeholder
   (migrations + `echo`) e depende de definição de hosting/secrets.
 - **Sem backups automatizados** com restore testado — antes de produção.
 - **Sem RLS no Postgres** — isolamento de tenant na camada de aplicação
-  (500+ testes); adicionar RLS como defesa em profundidade.
+  (538 testes); adicionar RLS como defesa em profundidade.
 - **Sem fluxo LGPD** — direito ao esquecimento pendente.
 - **Rate limit in-memory** — reseta no restart; para multi-instância
   usar Redis.

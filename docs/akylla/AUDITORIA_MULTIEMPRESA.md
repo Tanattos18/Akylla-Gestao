@@ -1,5 +1,10 @@
 # Akylla Gestão — Auditoria de isolamento multiempresa e permissões (Etapa 3)
 
+> **Documento histórico (Etapa 3, 12/10/2026).** Contagens citadas
+> (436/436, 19 arquivos) são a linha de base daquela data; a suíte
+> hoje tem 538 testes em 24 arquivos. Ver
+> `docs/operations/PROJECT_STATUS.md`.
+
 **Data:** 12/10/2026
 **Natureza:** auditoria e evidência — nenhuma correção, regra de negócio,
 migration, schema ou interface foi alterado nesta etapa.

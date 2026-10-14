@@ -17,25 +17,18 @@ Para começar, leia nesta ordem:
 | Documento | Conteúdo |
 |---|---|
 | [Documento técnico completo](AKYLLA_GESTAO_DOCUMENTACAO_COMPLETA.md) | 23 seções: stack, módulos, DB, auth, frontend, testes, segurança, pendências |
-| [Status do projeto](operations/PROJECT_STATUS.md) | etapa vigente, entregas, pendências |
+| [Status do projeto](operations/PROJECT_STATUS.md) | etapa vigente, entregas, pendências (fonte única das contagens correntes) |
 | [Checklist de implementação](operations/IMPLEMENTATION_CHECKLIST.md) | progresso etapa a etapa |
 | [Changelog](operations/CHANGELOG.md) | histórico completo de alterações |
-| [Checklist pré-produção](akylla/CHECKLIST_PRE_PRODUCAO.md) | evidências, limitações L1–L14, itens antes de comercializar |
-| [Dicionário de indicadores](akylla/DICIONARIO_INDICADORES.md) | definição exata de cada número do dashboard |
 
-## Produto e identidade
+## Produto (sempre atual)
 
 | Documento | Conteúdo |
 |---|---|
-| [Diretrizes do produto](akylla_gestao_diretrizes_opencode.md) | posicionamento, tom, o que anunciar/não anunciar |
-| [Mapa de módulos](akylla/MAPA_DE_MODULOS.md) | classificação núcleo/opcional/nicho e decisões |
-| [Plano de modularização](akylla/PLANO_MODULARIZACAO.md) | destinos dos módulos de nicho e ativação por segmento |
-| [Redesign do painel](akylla/REDESIGN_PAINEL.md) | evolução visual (sidebar → topbar B); design tokens |
+| [Diretrizes do produto](AKYLLA_GESTAO_DIRETRIZES_OPENCODE.md) | posicionamento, tom, o que anunciar/não anunciar |
 | [PDV](akylla/PDV.md) | fluxo de venda, API, regras, comprovante, limitações |
-| [Modelo financeiro](akylla/MODELO_FINANCEIRO.md) | caixa, contas a pagar/receber, lançamentos |
-| [Plano de billing](akylla/PLANO_BILLING.md) | planos, limites por tenant, Mercado Pago |
 | [Limitações de vendas](akylla/LIMITACOES_VENDAS.md) | fluxo PDV validado e o que não fazemos |
-| [Plano de importação](akylla/PLANO_IMPORTACAO.md) | importação de CSVs (decisões D1–D8) |
+| [Dicionário de indicadores](akylla/DICIONARIO_INDICADORES.md) | definição exata de cada número do dashboard |
 
 ## Arquitetura e dados
 
@@ -50,12 +43,12 @@ Para começar, leia nesta ordem:
 | Documento | Conteúdo |
 |---|---|
 | [Desenvolvimento](operations/DEVELOPMENT.md) | ambiente e execução local |
-| [Auditoria multiempresa](akylla/AUDITORIA_MULTIEMPRESA.md) | isolamento por tenant e permissões (Etapa 3) |
 
 ## Entregáveis de etapa
 
-> Registros de entrega por etapa. Não descrevem o estado atual do
-> produto quando conflitarem com os documentos acima.
+> Registros de entrega por etapa. Descrevem o sistema **na data da
+> entrega** e trazem banner quando já foram superados. Quando
+> conflitarem com os documentos acima, valem os de estado atual.
 
 | Documento | Etapa |
 |---|---|
@@ -64,7 +57,13 @@ Para começar, leia nesta ordem:
 | [Identidade e navegação](akylla/IDENTIDADE_E_NAVEGACAO.md) | 2 — marca, textos e navegação |
 | [Auditoria multiempresa](akylla/AUDITORIA_MULTIEMPRESA.md) | 3 — isolamento A×B |
 | [Mapa de módulos](akylla/MAPA_DE_MODULOS.md) | 4 — classificação núcleo/opcional/nicho |
-| [Passo a passo OpenCode](PASSO_A_PASSO_OPENCODE_AKYLLA.md) | roteiro das 12 etapas |
+| [Modelo financeiro](akylla/MODELO_FINANCEIRO.md) | 8 — caixa e contas a pagar/receber (AP/AR) |
+| [Redesign do painel](akylla/REDESIGN_PAINEL.md) | design tokens + layout topbar B |
+| [Plano de modularização](akylla/PLANO_MODULARIZACAO.md) | 10 — destinos dos módulos de nicho |
+| [Plano de billing](akylla/PLANO_BILLING.md) | 11 — planos, limites por tenant, Mercado Pago |
+| [Checklist pré-produção](akylla/CHECKLIST_PRE_PRODUCAO.md) | 12 — evidências e limitações L1–L14 |
+| [Plano de importação](akylla/PLANO_IMPORTACAO.md) | pós-12 — importação de CSVs (D1–D8) |
+| [Passo a passo OpenCode](PASSO_A_PASSO_OPENCODE_AKYLLA.md) | roteiro Etapas 0–12 (13 etapas) |
 
 ## Requisitos
 

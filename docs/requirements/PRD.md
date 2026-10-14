@@ -1,7 +1,7 @@
 # PRD — Akylla Gestão
 
 > **Documento de requisitos do produto.** Derivado das diretrizes
-> (`docs/akylla_gestao_diretrizes_opencode.md`), do mapa de módulos
+> (`docs/AKYLLA_GESTAO_DIRETRIZES_OPENCODE.md`), do mapa de módulos
 > aprovado (`docs/akylla/MAPA_DE_MODULOS.md`) e do documento técnico
 > completo (`docs/AKYLLA_GESTAO_DOCUMENTACAO_COMPLETA.md`).
 > Status: roteiro de construção (Etapas 0–12) concluído — ver
@@ -118,7 +118,7 @@ controle de quem fez o quê.
 
 ## 8. Referências
 
-- Diretrizes de produto: `docs/akylla_gestao_diretrizes_opencode.md`
+- Diretrizes de produto: `docs/AKYLLA_GESTAO_DIRETRIZES_OPENCODE.md`
 - Mapa de módulos (aprovado): `docs/akylla/MAPA_DE_MODULOS.md`
 - Documento técnico completo (23 seções):
   `docs/AKYLLA_GESTAO_DOCUMENTACAO_COMPLETA.md`

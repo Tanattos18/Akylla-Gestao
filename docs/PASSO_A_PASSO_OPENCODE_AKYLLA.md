@@ -8,7 +8,7 @@
 
 Orientar o OpenCode a adaptar a base existente para o Akylla Gestão com mudanças pequenas, verificáveis e reversíveis. O Akylla Gestão será um SaaS multiempresa de gestão para pequenos negócios brasileiros, começando por um núcleo comum de comércio e gestão.
 
-Este roteiro complementa `akylla_gestao_diretrizes_opencode.md`. Se houver divergência, o OpenCode deve parar, apontar a divergência e pedir decisão ao proprietário. O código real deve ser inspecionado antes de presumir que algo existe ou funciona.
+Este roteiro complementa `AKYLLA_GESTAO_DIRETRIZES_OPENCODE.md`. Se houver divergência, o OpenCode deve parar, apontar a divergência e pedir decisão ao proprietário. O código real deve ser inspecionado antes de presumir que algo existe ou funciona.
 
 ---
 
@@ -434,7 +434,7 @@ Nunca iniciar a próxima etapa automaticamente. Parar e aguardar aprovação do 
 
 # Prompt inicial para enviar ao OpenCode
 
-Leia integralmente `akylla_gestao_diretrizes_opencode.md` e `PASSO_A_PASSO_OPENCODE_AKYLLA.md`, além da documentação atual do repositório.
+Leia integralmente `AKYLLA_GESTAO_DIRETRIZES_OPENCODE.md` e `PASSO_A_PASSO_OPENCODE_AKYLLA.md`, além da documentação atual do repositório.
 
 Comece somente pela **Etapa 0 — Diagnóstico do repositório**, em modo de leitura. Não edite arquivos, não execute migrations, não instale dependências, não faça commits e não faça deploy nesta etapa.
 

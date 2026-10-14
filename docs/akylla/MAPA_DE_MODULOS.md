@@ -1,5 +1,11 @@
 # Akylla Gestão — Mapa de módulos (Etapa 4)
 
+> **Documento histórico (Etapa 4, 12/10/2026).** Matriz e contagens
+> (436/436, 19 arquivos de teste) são o estado daquela data. Itens
+> marcados como "AP/AR não existe", "construção futura" ou "enforcement
+> na Etapa 11" **já foram implementados**. Estado atual:
+> `docs/operations/PROJECT_STATUS.md`.
+
 **Data:** 12/10/2026
 **Natureza:** análise e documentação exclusivamente. Nenhum código, teste,
 schema, migration, dado ou configuração foi alterado; nenhum módulo foi

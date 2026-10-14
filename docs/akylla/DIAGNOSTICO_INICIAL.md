@@ -270,7 +270,7 @@ exibido; `.env` inspecionado apenas por nomes de variáveis.
 ## 8. Proposta de etapas e arquivos prováveis de alteração
 
 > **Divergência a decidir (regra: parar e perguntar):** os dois documentos usam
-> numerações diferentes. `akylla_gestao_diretrizes_opencode.md` §10 define
+> numerações diferentes. `AKYLLA_GESTAO_DIRETRIZES_OPENCODE.md` §10 define
 > Etapas 0–5 (macro); `PASSO_A_PASSO_OPENCODE_AKYLLA.md` define Etapas 0–12
 > (operacional, mais granular). **Recomendação:** adotar o passo a passo 0–12
 > como sequência de execução e mapear as diretrizes 1–5 sobre ele

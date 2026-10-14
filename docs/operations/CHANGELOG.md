@@ -6,6 +6,85 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-14 - Documentação: correção de erros factuais e banners
+
+Segunda entrega única autorizada pelo proprietário (fora do roteiro
+0–12). Auditoria da documentação encontrou erros factuais; este registro
+os corrige nos documentos de **estado atual** e sinaliza os entregáveis
+**datados**. Nenhum código de aplicação foi alterado.
+
+### Alterado — fatos corrigidos
+
+- **`docs/architecture/API.md`**: nova seção **Financial** (rotas reais
+  de `financial.controller.ts`, incl. `AdminGuard` em `reverse`/`cancel`);
+  webhook WhatsApp `/api/whatsapp/webhook` → **`/api/webhooks/whatsapp`**;
+  templates: `PATCH /:id/approval` removido (não existe) e `status`
+  corrigido para `ACTIVE`/`INACTIVE`; consents: `POST /consents`
+  removido (não existe); adicionado `GET /templates/:id`.
+- **`docs/architecture/DATABASE.md`**: roles `ADMIN`/`STAFF` →
+  **`ADMIN`/`MEMBER`** (enum real `UserRole`); heading
+  "Migrations e seeds" → "Migrations e dados iniciais".
+- **`docs/architecture/ARCHITECTURE.md`**: worker descrito como stub →
+  implementado (Etapa 6, fila WhatsApp); `database/` sem pasta de seeds.
+- **`docs/operations/PROJECT_STATUS.md`**: evidências 509/509 →
+  **538/538**; "CI e deploy" → só deploy/CD pendente.
+- **`docs/operations/DEVELOPMENT.md`**: path do webhook corrigido.
+- **`docs/akylla/CHECKLIST_PRE_PRODUCAO.md`**: `login-rate.limit.ts` →
+  `login-rate-limit.ts`; linha "nenhum endpoint de upload" corrigida
+  (existe `FileInterceptor` ≤ 5 MB em `imports`); defaults de
+  `PASSWORD_RESET_ENABLED`/`REGISTRATION_ENABLED` agora refletem o
+  `.env.example`; alvo do upgrade de vitest corrigido.
+- **`README.md`**: "12 de 12 etapas" → **Etapas 0–12 (13 etapas)**;
+  evidências 490 → 538; mapa de páginas com `/importacoes`.
+- **Achado novo:** `npm audit --omit=dev` reporta **2 vulnerabilidades
+  em produção** (`postcss` transitivo do `next`, alta) — a doc dizia
+  "todas em dev-dependências". Corrigido em `CHECKLIST_PRE_PRODUCAO.md`
+  (L1) e `AKYLLA_GESTAO_DOCUMENTACAO_COMPLETA.md` (§21).
+- **`docs/AKYLLA_GESTAO_DOCUMENTACAO_COMPLETA.md`**: contagens
+  (538/538 em 24 arquivos, 13 migrations, 39 páginas), migration
+  `import_batch` na tabela, financeiro com estados `OPEN`/`PAID`/
+  `CANCELLED` e rotas reais, upload documentado, webhook corrigido,
+  papéis `ADMIN`/`MEMBER`, typecheck nos workspaces `apps/*`.
+
+### Alterado — redução de duplicação
+
+- **Fonte única das contagens correntes** = `PROJECT_STATUS.md`;
+  `AKYLLA_COMPLETA` §17 e `CHECKLIST_PRE_PRODUCAO` §9 agora apontam
+  para ela em vez de competir com o número.
+- **`docs/README.md`**: AUDITORIA_MULTIEMPRESA não aparece mais em duas
+  seções; entregáveis datados (Etapas 8–12 + redesign + importação)
+  completam a tabela; seções separadas em "Produto (sempre atual)" e
+  "Entregáveis de etapa".
+
+### Alterado — banners de obsolescência
+
+Banner curto no topo de: `PLANO_IMPORTACAO.md` (status
+"AGUARDANDO APROVAÇÃO" → implementado), `PLANO_DE_ADAPTACAO.md`,
+`MAPA_DE_MODULOS.md`, `MODELO_FINANCEIRO.md`, `PDV.md`,
+`PLANO_BILLING.md` (enforcement implementado), `AUDITORIA_MULTIEMPRESA.md`,
+`PLANO_MODULARIZACAO.md`, `REDESIGN_PAINEL.md`.
+
+### Alterado — nomenclatura
+
+- **Rename:** `docs/akylla_gestao_diretrizes_opencode.md` →
+  **`docs/AKYLLA_GESTAO_DIRETRIZES_OPENCODE.md`** (padrão do repositório);
+  7 referências atualizadas (`DIAGNOSTICO_INICIAL`, `PLANO_DE_ADAPTACAO`,
+  `PRD` ×2, `PASSO_A_PASSO` ×2, `docs/README.md`). Banner no topo
+  indicando que o §10 (plano 0–5) foi superado pelo roteiro 0–12.
+
+### Verificação
+
+- 51 links relativos verificados em 30 arquivos `.md` — **0 quebrados**.
+- `npm run validate` completo: lint OK · typecheck OK · 538/538 ·
+  build OK · db:validate OK.
+
+### Preservado
+
+- Histórico do CHANGELOG; `automação do whatsapp/`; conteúdo dos
+  entregáveis datados (apenas banner e correções pontuais, sem reescrita).
+
+---
+
 ## [Akylla Gestão] - 2026-10-14 - Reorganização estrutural do repositório
 
 Tarefa autorizada pelo proprietário como entrega única (fora do roteiro

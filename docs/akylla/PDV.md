@@ -8,6 +8,10 @@
 > **Status:** implementado e coberto por testes (suíte de vendas). Não
 > anuncia recurso fiscal, de adquirente ou de conciliação — o sistema
 > registra a venda operacional e o caixa interno.
+>
+> **Nota (2026-10-14):** o texto "contas a receber (futuro)" em §9 está
+> desatualizado — o módulo **Financial (AP/AR) existe desde a Etapa 8**
+> (`apps/api/src/financial`, rota `/api/financial`).
 
 ---
 

@@ -33,10 +33,10 @@ preexistentes identificadas separadamente na Seção 3 (instrução 3).
 |---|---|---|
 | **Segredos** | ✅ Nenhum segredo hardcoded; `.env` fora do Git (`.gitignore`); `.env.example` sem valores reais | grep por padrões de senha/token/chave = 0 hits reais |
 | **Logs** | ✅ Erros logados com stack (500+); senhas/tokens nunca logados | `AllExceptionsFilter` loga apenas status + stack |
-| **Autenticação** | ✅ Cookie `HttpOnly` + `sameSite=lax` + `secure` configurável; bcrypt 12 rounds; token SHA-256 em `Session`; rate limit de login (5 tentativas/15min por IP+email) | `auth.service.ts:208-210`, `login-rate.limit.ts` |
+| **Autenticação** | ✅ Cookie `HttpOnly` + `sameSite=lax` + `secure` configurável; bcrypt 12 rounds; token SHA-256 em `Session`; rate limit de login (5 tentativas/15min por IP+email) | `auth.service.ts:208-210`, `login-rate-limit.ts` |
 | **Autorização** | ✅ `AuthGuard` global; `AdminGuard` para escrita administrativa; `ModuleGuard` para módulos desabilitados; `@Public` apenas em webhook/health/login | guards em `app.module.ts` |
 | **Tenant** | ✅ `companyId` sempre do contexto autenticado (`request.user.companyId`); nenhum `companyId` vindo de body/query/params | grep `body.companyId` = 0 |
-| **Uploads** | ✅ Nenhum endpoint de upload de arquivo nesta versão | grep `FileInterceptor`/`multipart` = 0 |
+| **Uploads** | ✅ Importação de planilhas (`FileInterceptor`, campo `file`, **máx. 5 MB**); validação de extensão/conteúdo no servidor | `imports.controller.ts` (`FileInterceptor`), `IMPORT_MAX_FILE_BYTES` em `imports.service.ts` |
 | **Exportações** | ✅ CSV de relatórios gera apenas dados da empresa autenticada | testes de isolamento em `reports.test.ts` |
 | **Webhooks** | ✅ WhatsApp e Mercado Pago `@Public` com verificação de assinatura (HMAC) | `whatsapp-webhook`, `mercadopago-webhook` |
 
@@ -50,7 +50,7 @@ Classificadas como **preexistentes** (não introduzidas pela adaptação):
 
 | # | Limitação | Severidade | Notas |
 |---|---|---|---|
-| L1 | 8 vulnerabilidades `npm audit` — todas em **dependências de desenvolvimento** (vitest/esbuild/postcss/tinypool), não no runtime de produção | Críticas/altas no dev-only | Correção exige upgrade do vitest (breaking change) — agendar janela |
+| L1 | 8 vulnerabilidades `npm audit` — **6 em dependências de desenvolvimento** (vitest/esbuild/tinypool) e **2 em produção** (`postcss` transitivo do `next`, alta) | Críticas/altas | Correção das de dev exige upgrade do vitest (breaking change); a de `postcss` exige `next@16.4.1` (breaking) |
 | L2 | Rate limit de login é **in-memory** (reseta no restart; não compartilhado entre instâncias) | Média | Adequado para 1 instância; para multi-instância usar Redis |
 | L3 | Sem **RLS** no Postgres — isolamento de tenant é aplicado na camada de aplicação | Média | 500+ testes de isolamento; adicionar RLS como defesa em profundidade antes de produção multi-instância |
 | L4 | Sem fluxo de **exclusão LGPD** (direito ao esquecimento) | Alta (compliance) | Implementar endpoint de anonimização/exclusão com retenção legal |
@@ -82,7 +82,7 @@ Classificadas como **preexistentes** (não introduzidas pela adaptação):
 | Ambiente | Banco | Uso | Status |
 |---|---|---|---|
 | **Desenvolvimento** | `petflow` (local) | Codificação, migrations de teste | ✅ Em uso |
-| **Teste** | `petflow_test` (local, reset automático por `global-setup`) | Suíte Vitest (509 testes) | ✅ Em uso |
+| **Teste** | `petflow_test` (local, reset automático por `global-setup`) | Suíte Vitest (538 testes) | ✅ Em uso |
 | **Produção** | `petflow` (servidor gerenciado) | Usuários reais | ⛔ Não configurado — requer definição de hospedagem + backup antes |
 
 ---
@@ -97,8 +97,8 @@ Todas documentadas em `.env.example` **sem valores secretos**:
 | `AUTH_COOKIE_SECURE` | `false` | **`true`** |
 | `AUTH_SESSION_TTL_HOURS` | 12 | conforme política |
 | `AUTH_RATE_LIMIT_MAX` | 5 | ajustar conforme tráfego |
-| `PASSWORD_RESET_ENABLED` | ausente/false | **ausente** (até fluxo com token) |
-| `REGISTRATION_ENABLED` | ausente/false | **ausente** (ou com anti-abuso) |
+| `PASSWORD_RESET_ENABLED` | `true` (via `.env.example`; off no código) | **ausente** (até fluxo com token) |
+| `REGISTRATION_ENABLED` | `true` (via `.env.example`; off no código) | **ausente** (ou com anti-abuso) |
 | `WHATSAPP_PROVIDER` | `mock` | `meta` + token real |
 | `WHATSAPP_ACCESS_TOKEN` | vazio | obrigatório |
 | `WHATSAPP_APP_SECRET` | vazio | obrigatório (verificação webhook) |
@@ -142,13 +142,16 @@ Checklist do proprietário — **não comercializar sem concluir**:
       fluxo com token de e-mail)
 - [ ] Decidir sobre `REGISTRATION_ENABLED` (recomendado: off + convite ou
       captcha)
-- [ ] Resolver vulnerabilidades `npm audit` (upgrade vitest → 5.x em
-      janela dedicada)
+- [ ] Resolver vulnerabilidades `npm audit` (vitest 2.1.9 → major em
+      janela dedicada; `next` → 16.4.1 para `postcss`)
 - [ ] Implementar **exclusão/anonimização LGPD**
-- [ ] Ativar **CI** (lint + test + build no push)
+- [ ] Ativar **CI** no push (existe desde 2026-10-14: `.github/workflows/ci.yml`;
+      falta o deploy em `cd.yml`)
 - [ ] Configurar monitoramento de erros (Sentry ou similar) e uptime
 - [ ] E2E sandbox do Mercado Pago com cartão de teste + aprovação antes
       de ativar cobrança recorrente
+- [ ] Remover `PASSWORD_RESET_ENABLED=true`/`REGISTRATION_ENABLED=true`
+      do `.env.example` ou documentar que são só de ambiente local
 - [ ] Reescrever seed com dados não temáticos de pet shop (após aprovação)
 - [ ] UI `/faturamento` exibindo limites e uso do plano
 
@@ -157,7 +160,7 @@ Checklist do proprietário — **não comercializar sem concluir**:
 ## 8. Decisão recomendada sobre prontidão (critério da etapa)
 
 **Recomendação: NÃO declarar pronto para produção.** O código está
-funcional, testado (509/509) e com segurança básica sólida (cookie
+funcional, testado (538/538) e com segurança básica sólida (cookie
 HttpOnly, bcrypt 12, rate limit, tenant isolado, webhooks assinados),
 **porém faltam controles operacionais e de compliance** (backups com
 restore testado, LGPD, CI, monitoramento, resolução de vulnerabilidades
@@ -173,6 +176,9 @@ produção restrita (pilotos) → produção geral.
 ## 9. Relatório final de testes
 
 - **Total:** 509 testes em 23 arquivos — **todos passando** (2026-10-12).
+  Números atuais: ver
+  [`docs/operations/PROJECT_STATUS.md`](../operations/PROJECT_STATUS.md)
+  (fonte única das contagens correntes).
 - **Cobertura funcional:** auth/tenancy, usuários, clientes, produtos,
   estoque, vendas/PDV, caixa, financeiro (AP/AR), assinaturas de cliente,
   billing SaaS + limites + Mercado Pago sandbox, WhatsApp (mock/meta),

@@ -5,6 +5,15 @@
 **Data:** 12/10/2026  
 **Objetivo:** orientar a adaptação da base existente para o Akylla Gestão, preservando componentes técnicos úteis e substituindo o foco exclusivo em pet shops por uma plataforma de gestão para pequenos negócios de diferentes segmentos.
 
+> **Uso atual (2026-10-14).** As partes **2 (visão de produto), 3–9
+> (regras, escopo, UI, arquitetura, segurança)** seguem valendo como
+> requisitos. O **§10 "Plano de adaptação por etapas" foi superado**: a
+> execução seguiu o roteiro `PASSO_A_PASSO_OPENCODE_AKYLLA.md`
+> (Etapas 0–12, concluído em 2026-10-12), com plano detalhado em
+> `akylla/PLANO_DE_ADAPTACAO.md`. Papéis implementados são
+> `ADMIN`/`MEMBER` (o `OWNER/ADMIN` e `MEMBER/STAFF` do §3.8 nunca
+> existiram no schema).
+
 ---
 
 ## 1. Instrução principal ao agente de desenvolvimento

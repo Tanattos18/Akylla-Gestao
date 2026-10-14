@@ -9,6 +9,11 @@ conceitos") e pelo PLANO §9 ("detalhar antes de implementar").
 abas em `/financeiro`, `tests/integration/financial.test.ts` (+30 testes) e
 documentação (`DATABASE.md`, `CHANGELOG.md`, `PROJECT_STATUS.md`).
 Este documento permanece como especificação de referência da etapa.
+**Atenção:** os trechos que descrevem o que "não existia" (vencimento,
+situação, contraparte) referem-se ao estado **anterior** à Etapa 8 —
+hoje `FinancialEntry` cobre exatamente isso (`OPEN`/`PAID`/`CANCELLED`,
+`dueDate`, `clientId`/`supplierId`). Rotas atuais:
+`docs/architecture/API.md` §Financial.
 
 ---
 

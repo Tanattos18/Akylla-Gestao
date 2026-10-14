@@ -32,7 +32,45 @@ Tarefa autorizada pelo proprietário como entrega única.
       `DEVELOPMENT.md`; `CHANGELOG.md`, `PROJECT_STATUS.md` e este
       checklist atualizados
 - [x] Validações: `lint` · `typecheck` · `test` · `build` · `db:validate`
-- [x] Stage sem commit (revisão do proprietário pendente)
+- [x] Commit `6048c4b` (push pendente de autorização)
+
+## Fora do roteiro — Documentação: erros factuais e banners (2026-10-14)
+
+Segunda entrega única autorizada. Nenhum código de aplicação alterado;
+detalhe em `CHANGELOG.md`.
+
+- [x] `API.md`: seção **Financial** adicionada (8 rotas reais,
+      `AdminGuard` em `reverse`/`cancel`); webhook
+      `/api/whatsapp/webhook` → `/api/webhooks/whatsapp`; removidos
+      `PATCH /templates/:id/approval` e `POST /consents` (não existem);
+      `status` de template `PENDING`/`DISABLED` → `ACTIVE`/`INACTIVE`
+- [x] `DATABASE.md`: `ADMIN`/`STAFF` → `ADMIN`/`MEMBER`; heading de
+      "seeds" corrigido
+- [x] `ARCHITECTURE.md`: worker não é mais "stub da Etapa 0"; `database/`
+      sem pasta de seeds
+- [x] `DEVELOPMENT.md`: path do webhook corrigido
+- [x] `PROJECT_STATUS.md`: 509/509 → **538/538**; "CI e deploy" → só
+      deploy/CD
+- [x] `README.md`: "12 de 12 etapas" → **Etapas 0–12 (13 etapas)**;
+      evidências 490 → 538; `/importacoes` no mapa de páginas
+- [x] `CHECKLIST_PRE_PRODUCAO.md`: `login-rate-limit.ts`; uploads
+      (existe `FileInterceptor` ≤ 5 MB); defaults de
+      `PASSWORD_RESET_ENABLED`/`REGISTRATION_ENABLED`; vitest 2.1.9
+- [x] `AKYLLA_GESTAO_DOCUMENTACAO_COMPLETA.md`: 538/538 em 24 arquivos,
+      13 migrations (+ `import_batch`), 39 páginas, financeiro
+      `OPEN`/`PAID`/`CANCELLED`, upload documentado, webhook corrigido,
+      typecheck nos workspaces `apps/*`
+- [x] **Achado novo**: `npm audit --omit=dev` = 2 vulnerabilidades em
+      produção (`postcss`/`next`) — corrigido em L1 do checklist e §21
+      da documentação completa
+- [x] Redução de duplicação: `PROJECT_STATUS.md` como fonte única das
+      contagens; `docs/README.md` reorganizado (produto sempre atual ×
+      entregáveis de etapa)
+- [x] Banners de obsolescência em 9 entregáveis datados
+- [x] Rename `akylla_gestao_diretrizes_opencode.md` →
+      `AKYLLA_GESTAO_DIRETRIZES_OPENCODE.md` + 7 referências + banner
+- [x] 51 links relativos verificados (0 quebrados) e `npm run validate`
+      completo
 
 ## Fora do roteiro — Importação de planilhas CSV (2026-10-14)
 

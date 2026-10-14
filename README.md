@@ -7,7 +7,7 @@ agendamentos e comunicação com clientes em um único sistema — com
 isolamento total entre empresas, permissões por perfil e trilha de
 auditoria em cada operação.
 
-> **Status:** 12 de 12 etapas do roadmap Akylla concluídas
+> **Status:** roteiro Akylla Gestão **Etapas 0–12 (13 etapas)** concluído
 > (fundação + núcleo genérico + módulos + billing SaaS + checklist
 > pré-produção). Painel com layout topbar escura (opção B). Detalhes em
 > [`docs/operations/PROJECT_STATUS.md`](docs/operations/PROJECT_STATUS.md)
@@ -185,6 +185,7 @@ bonita.
 | `/agenda` | Agendamentos do dia (módulo opcional) | todos |
 | `/planos`, `/assinaturas` | Planos e assinaturas de clientes (módulo opcional) | admin escreve |
 | `/faturamento` | Plano da empresa no Akylla Gestão (billing do SaaS) | admin |
+| `/importacoes` | Importar planilhas CSV (clientes/produtos) e ver o histórico | admin |
 | `/whatsapp`, `/whatsapp/*` | Config, templates, consentimento e envios (módulo opcional) | admin (leitura: todos) |
 | `/dashboard`, `/relatorios` | Indicadores, relatórios e exportação CSV | todos |
 
@@ -203,13 +204,13 @@ bonita.
 | **Concorrência tratada** | Trava pessimista (`FOR UPDATE`) em ordem fixa: caixa → produtos — vendas simultâneas nunca corrompem saldo |
 | **Exportação CSV segura** | Proteção contra injeção de fórmulas (`=`, `+`, `-`, `@`, inclusive após espaço) e limite de 5000 linhas |
 
-**Evidências de verificação (Etapa 10):**
+**Evidências de verificação (Etapa 10; números atualizados em 2026-10-14):**
 
-- `490` testes automatizados em PostgreSQL real — **490 aprovados**
-  (cobrindo autenticação, catálogo, PDV, caixa, financeiro, clientes,
-  WhatsApp, agenda, assinaturas, billing, relatórios, tenancy e
-  módulos por empresa)
-- `npm run lint` — 0 erros · `npm run typecheck` — 5 workspaces OK
+- `538` testes automatizados em PostgreSQL real — **538 aprovados em 24
+  arquivos** (cobrindo autenticação, catálogo, PDV, caixa, financeiro,
+  clientes, WhatsApp, agenda, assinaturas, billing, relatórios, tenancy,
+  módulos por empresa e importação de planilhas)
+- `npm run lint` — 0 erros · `npm run typecheck` — workspaces `apps/*` OK
 - `npm run build` — shared, whatsapp, API, web e worker compilando ·
   `npm run db:validate` — schema válido
 
@@ -379,4 +380,4 @@ documentos (estado, arquitetura, operação, histórico) está em
 
 ---
 
-**Akylla Gestão** — roadmap de 12 etapas concluído.
+**Akylla Gestão** — roadmap Akylla (Etapas 0–12) concluído.

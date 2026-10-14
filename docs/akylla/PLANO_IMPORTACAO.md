@@ -4,9 +4,13 @@
 **Natureza:** nova funcionalidade fora do roteiro 0–12, autorizada pelo
 proprietário ("aceitar importação de planilhas para alimentar os dados
 da empresa").
-**Status: AGUARDANDO APROVAÇÃO** — decisões D1–D4 já aprovadas pelo
-proprietário; decisões técnicas D5–D8 descritas neste documento
-aguardam confirmação antes de qualquer migration ou código.
+**Status (atualizado em 2026-10-14): IMPLEMENTADA e em produção de
+código.** Decisões D1–D8 aprovadas; entregue migration
+`20261014114855_import_batch`, módulo `apps/api/src/imports`
+(upload multipart `file` ≤ 5 MB, `AdminGuard`, dry-run), página
+`/importacoes`, `tests/integration/imports.test.ts` (+29 testes) e
+documentação em `DATABASE.md`/`API.md`. O texto abaixo é o plano como
+foi escrito antes da execução — mantido como registro.
 
 ---
 

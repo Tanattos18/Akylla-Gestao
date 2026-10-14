@@ -68,10 +68,10 @@ crescer módulo a módulo sem infraestrutura desnecessária.
 ```
 apps/web      → interface Next.js (porta 3000 por padrão)
 apps/api      → NestJS (porta 3001 por padrão, variável API_PORT)
-apps/worker   → processo único para tarefas em segundo plano (stub na Etapa 0)
+apps/worker   → processo único para tarefas em segundo plano (Etapa 6: envio WhatsApp)
 packages/shared → tipos e schemas Zod compartilhados
 packages/config → tsconfig base comum
-database/     → schema Prisma, migrations e seeds
+database/     → schema Prisma e migrations (sem pasta de seeds; dados iniciais via CLI da API)
 docs/         → documentação funcional, técnica e operacional
 tests/        → testes compartilhados/integração
 ```
@@ -79,8 +79,9 @@ tests/        → testes compartilhados/integração
 ## Regras de comunicação
 
 - `web` consome `api` exclusivamente via HTTP (endpoints REST).
-- `worker` será acionado nas etapas futuras (fila ou agendamento); na Etapa 0 é
-  apenas estrutura.
+- `worker` processa a fila de mensagens do WhatsApp (Etapa 6): tentativas,
+  backoff e classificação de erros; novas tarefas em segundo plano seguem
+  o mesmo processo único.
 - Nenhuma regra de negócio vive no frontend.
 
 ## Regras de evolução arquitetural

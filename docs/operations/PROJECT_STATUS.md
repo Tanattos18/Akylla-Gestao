@@ -85,6 +85,37 @@ do roteiro `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`. Entregas:
 - Validações: `lint` → `typecheck` → **538/538 testes** → `build` →
   `db:validate`. Stage sem commit até autorização.
 
+## Entrega fora do roteiro — Documentação: erros factuais e banners (2026-10-14)
+
+**Concluída** (segunda entrega única autorizada). Auditoria da
+documentação; nenhum código de aplicação alterado. Detalhe completo em
+`CHANGELOG.md`.
+
+- **Erros factuais corrigidos** nos documentos de estado atual:
+  `API.md` (seção Financial inexistente; webhook, templates e consents
+  com rotas que não existem), `DATABASE.md` (`STAFF` → `MEMBER`),
+  `ARCHITECTURE.md` (worker descrito como stub), `DEVELOPMENT.md`,
+  `PROJECT_STATUS.md`, `README.md` ("12 etapas" → **Etapas 0–12, 13
+  etapas**), `CHECKLIST_PRE_PRODUCAO.md` e
+  `AKYLLA_GESTAO_DOCUMENTACAO_COMPLETA.md` (contagens 538/538 em 24
+  arquivos, 13 migrations, 39 páginas, upload de planilhas documentado).
+- **Achado novo**: `npm audit --omit=dev` tem **2 vulnerabilidades em
+  produção** (`postcss`/`next`, alta) — a doc dizia "todas em
+  dev-dependências".
+- **Redução de duplicação**: `PROJECT_STATUS.md` é a fonte única das
+  contagens correntes; `docs/README.md` reorganizado (produto sempre
+  atual × entregáveis de etapa, sem item duplicado).
+- **Banners de obsolescência** em 9 entregáveis datados
+  (`PLANO_IMPORTACAO`, `PLANO_DE_ADAPTACAO`, `MAPA_DE_MODULOS`,
+  `MODELO_FINANCEIRO`, `PDV`, `PLANO_BILLING`, `AUDITORIA_MULTIEMPRESA`,
+  `PLANO_MODULARIZACAO`, `REDESIGN_PAINEL`).
+- **Rename**: `akylla_gestao_diretrizes_opencode.md` →
+  `AKYLLA_GESTAO_DIRETRIZES_OPENCODE.md` (+ 7 referências; banner
+  indicando que o §10 foi superado pelo roteiro 0–12).
+- Verificações: 51 links relativos (0 quebrados) e `npm run validate`
+  completo — lint OK · typecheck OK · **538/538** · build OK ·
+  db:validate OK.
+
 ## Entregas por etapa (jornada Akylla Gestão)
 
 Sequência executada entre 2026-10-12 e 2026-10-13 conforme
@@ -151,8 +182,8 @@ parada obrigatória antes das Etapas 10, 11, 12 e de qualquer migration
 |---|---|---|
 | Schema Prisma válido | `npm run db:validate` | OK |
 | Lint | `npm run lint` | OK (0 erros) |
-| Typecheck | `npm run typecheck` | OK (5 workspaces) |
-| Testes (PostgreSQL real) | `npm test` | **509/509 aprovados** (24 arquivos) |
+| Typecheck | `npm run typecheck` | OK (workspaces `apps/*`) |
+| Testes (PostgreSQL real) | `npm test` | **538/538 aprovados** (24 arquivos) |
 | Build | `npm run build` | OK (shared, whatsapp, api, web, worker) |
 | Varredura de segredos | grep de credenciais | sem achados reais |
 | Seed de demonstração | `db:seed:demo` + script de integridade | OK (INTEGRIDADE OK) |
@@ -223,7 +254,7 @@ empresa (`CompanyModule`).
   em produção, avaliar verificação de e-mail/captcha antes de habilitar.
 - UI `/faturamento` exibindo limites do plano atual e uso (backend já
   expõe campos).
-- CI e deploy (contínuos).
+- Deploy/CD (contínuos; a CI existe desde 2026-10-14).
 
 ## Identificadores técnicos legados (compatibilidade)
 
@@ -251,7 +282,7 @@ imports, asserts de teste).
 
 **Nenhuma — o roteiro das Etapas 0–12 está concluído.** Próximos
 passos possíveis (aguardando decisão do proprietário): pendências acima
-(CI/deploy, enforcement de billing, gateway de pagamento, recorrência
+(deploy/CD, enforcement de billing, gateway de pagamento, recorrência
 automática, verificação de e-mail e anti-abuso no cadastro),
 continuidade das atualizações/testes ou novas funcionalidades fora do
 roteiro.

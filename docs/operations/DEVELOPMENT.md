@@ -197,7 +197,7 @@ Etapa 1; os demais endpoints ficam em `/api/...`.
   `WHATSAPP_PROVIDER=meta` + `WHATSAPP_ACCESS_TOKEN`,
   `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_APP_SECRET` (e configure a
   empresa em `/whatsapp`). **Nunca** commite esses valores.
-- Webhook Meta (`GET/POST /api/whatsapp/webhook`): em dev local exige
+- Webhook Meta (`GET/POST /api/webhooks/whatsapp`): em dev local exige
   túnel público (ngrok/etc.) apontando para a API; a assinatura
   `x-hub-signature-256` é validada sobre o corpo bruto (`rawBody`).
 - Worker: `npm run dev:worker` processa a fila (poll

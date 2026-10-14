@@ -173,6 +173,34 @@ Comportamentos importantes:
   da venda); lançamento já estornado → 409; sessão fechada → 409;
   lançamento de outra empresa → 404.
 
+## Contas a pagar e a receber — Financial (Etapa 8)
+
+Modelo `FinancialEntry` (migration `20261012164040_financial_entry`).
+Título independente do caixa: a **liquidação** (`POST /:id/pay`) cria um
+`CashMovement` com `origin = ACCOUNT` na sessão aberta.
+
+| Método | Rota | Acesso | Descrição |
+|---|---|---|---|
+| POST | `/api/financial` | sessão | Cria título (`direction` `PAYABLE`/`RECEIVABLE`, `reason`, `dueDate`, `amount`, opcional `clientId`/`supplierId`/`notes`) |
+| GET | `/api/financial` | sessão | Lista paginada; filtros `direction`, `status`, `search`, `from`, `to`, `page`, `pageSize` |
+| GET | `/api/financial/summary` | sessão | Totais por `direction` e `status` + vencidos; filtros `from`, `to` |
+| GET | `/api/financial/:id` | sessão | Detalhe; outra empresa → **404** |
+| PATCH | `/api/financial/:id` | sessão | Edita campos não críticos (`description`, `dueDate`, `notes`); título `PAID`/`CANCELLED` → 409 |
+| POST | `/api/financial/:id/pay` | sessão | Liquida: `OPEN` → `PAID` e lança no caixa; exige sessão de caixa aberta; já liquidado → 409 |
+| POST | `/api/financial/:id/reverse` | ADMIN | Estorna liquidação auditável (exige `reason` ≥ 3) via movimento compensatório |
+| POST | `/api/financial/:id/cancel` | ADMIN | Cancela título `OPEN` (`reason` ≥ 3); nunca apaga registro |
+
+Comportamentos importantes:
+
+- `status` usa o enum `FinancialStatus`: **`OPEN` / `PAID` /
+  `CANCELLED`** (não `PENDING`).
+- Histórico imutável: correção e cancelamento geram movimentos
+  compensatórios, nunca `DELETE`.
+- `POST /:id/pay` e `POST /:id/reverse` precisam de sessão de caixa
+  `OPEN` (409 quando fechada).
+- Escopo de tenant por `companyId` da sessão; leitura individual via
+  `findFirst({ id, companyId })` → 404.
+
 ## Clientes (Etapa 5)
 
 | Método | Rota | Acesso | Descrição |
@@ -236,19 +264,19 @@ Integração com a **WhatsApp Business Cloud API** (Meta). Webhook é o
 | POST | `/api/whatsapp/config/health` | ADMIN | Testa credencial com o provedor (token sanitizado no erro) |
 | PATCH | `/api/whatsapp/config/status` | ADMIN | `ACTIVE`/`DISCONNECTED` (desconectar bloqueia envios) |
 | GET | `/api/whatsapp/templates` | sessão | Lista templates da empresa (filtros `status`, `search`) |
+| GET | `/api/whatsapp/templates/:id` | sessão | Detalhe do template |
 | POST | `/api/whatsapp/templates` | ADMIN | Cria template (`variablesCount` derivado do corpo) |
-| PATCH | `/api/whatsapp/templates/:id/approval` | ADMIN | `APPROVED`/`REJECTED` (aprovação interna) |
-| PATCH | `/api/whatsapp/templates/:id/status` | ADMIN | `PENDING`/`DISABLED` |
+| PATCH | `/api/whatsapp/templates/:id` | ADMIN | Edita campos; aceita `approval` = `PENDING_APPROVAL`/`APPROVED`/`REJECTED` (aprovação interna) |
+| PATCH | `/api/whatsapp/templates/:id/status` | ADMIN | `status` = `ACTIVE`/`INACTIVE` (enum `RecordStatus`) |
 | GET | `/api/whatsapp/consents` | sessão | Lista consentimentos (filtros `status`, `search`) |
-| POST | `/api/whatsapp/consents` | ADMIN | Registra/atualiza consentimento por telefone+cliente |
 | GET | `/api/whatsapp/consents/:clientId` | sessão | Consentimento do cliente; sem registro → **404** |
-| PUT | `/api/whatsapp/consents/:clientId` | ADMIN (opt-in) / sessão (opt-out) | `{ status, source }` — descadastro liberado a qualquer sessão |
+| PUT | `/api/whatsapp/consents/:clientId` | ADMIN (opt-in) / sessão (opt-out) | `{ status: "OPTED_IN"|"OPTED_OUT", source }` — descadastro liberado a qualquer sessão |
 | GET | `/api/whatsapp/messages` | sessão | Fila/histórico; filtros `status`, `search`, `page`, `pageSize` |
 | POST | `/api/whatsapp/messages` | sessão | Enfileira (`clientId`, `templateId`, `variables`, `clientRequestId`) |
 | GET | `/api/whatsapp/messages/:id` | sessão | Detalhe com template + tentativas |
 | POST | `/api/whatsapp/messages/:id/cancel` | sessão | Cancela `PENDING`/`RETRY` (já em andamento → 409) |
-| GET | `/api/whatsapp/webhook` | **público** | Verificação Meta (query `hub.*`) → challenge `text/plain` |
-| POST | `/api/whatsapp/webhook` | **público** | Eventos Meta; exige `x-hub-signature-256` válido → 403 se inválido |
+| GET | `/api/webhooks/whatsapp` | **público** | Verificação Meta (query `hub.*`) → challenge `text/plain` |
+| POST | `/api/webhooks/whatsapp` | **público** | Eventos Meta; exige `x-hub-signature-256` válido → 403 se inválido |
 
 Comportamentos importantes:
 

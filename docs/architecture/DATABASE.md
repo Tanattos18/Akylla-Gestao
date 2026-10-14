@@ -395,7 +395,7 @@ Migration: `database/prisma/migrations/20261009185907_etapa1_auth_tenancy`
 | Modelo | Campos principais | Restrições/índices |
 |---|---|---|
 | `Company` | `id`, `name`, `slug`, `status` (enum), `createdAt`, `updatedAt` | `slug` único |
-| `User` | `id`, `companyId` (FK → `Company`), `name`, `email`, `passwordHash`, `role` (enum `ADMIN`/`STAFF`), `status` (enum `ACTIVE`/`INACTIVE`), timestamps | único `(companyId, email)`; email normalizado (trim+minúsculas) antes da validação; `onDelete: Restrict` |
+| `User` | `id`, `companyId` (FK → `Company`), `name`, `email`, `passwordHash`, `role` (enum `ADMIN`/`MEMBER`), `status` (enum `ACTIVE`/`INACTIVE`), timestamps | único `(companyId, email)`; email normalizado (trim+minúsculas) antes da validação; `onDelete: Restrict` |
 | `Session` | `id`, `userId` (FK → `User`), `tokenHash` (SHA-256 do cookie), `expiresAt`, `createdAt` | `tokenHash` único; `userId` com cascade de exclusão lógica via revogação no logout/inativação; índices em `userId` e `expiresAt` |
 
 Regras derivadas:
@@ -443,7 +443,7 @@ Regras derivadas:
 - Enums do Postgres para estados fechados (status de venda, tipo de
   movimentação), evitando strings livres.
 
-## Migrations e seeds
+## Migrations e dados iniciais
 
 - Toda mudança de schema é migration versionada em `database/prisma/migrations/`.
 - **Não há seed SQL.** Dados iniciais/demonstração são CLIs da API,
