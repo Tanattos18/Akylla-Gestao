@@ -31,6 +31,7 @@ import {
   UserCog,
   CreditCard,
   ClipboardList,
+  FileSpreadsheet,
   type LucideIcon,
 } from "lucide-react";
 import { api } from "@/lib/api";
@@ -104,6 +105,7 @@ const navGroups: NavGroup[] = [
       { label: "Usuários", href: "/usuarios", icon: UserCog, adminOnly: true },
       { label: "Faturamento", href: "/faturamento", icon: CreditCard, adminOnly: true },
       { label: "Planos", href: "/planos", icon: ClipboardList, adminOnly: true },
+      { label: "Importações", href: "/importacoes", icon: FileSpreadsheet, adminOnly: true },
     ],
   },
 ];
@@ -128,6 +130,7 @@ const routeLabels: Record<string, string> = {
   usuarios: "Usuários",
   faturamento: "Faturamento",
   relatorios: "Relatórios",
+  importacoes: "Importações",
   novo: "Novo",
   editar: "Editar",
   movimentos: "Movimentos",

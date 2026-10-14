@@ -2,7 +2,7 @@
   "name": "@petflow/api",
   "version": "0.1.0",
   "private": true,
-  "description": "API do PetFlow (NestJS)",
+  "description": "API do Akylla Gestão (NestJS)",
   "scripts": {
     "dev": "tsx watch src/main.ts",
     "bootstrap:admin": "tsx src/cli/bootstrap-admin.ts",
@@ -19,8 +19,10 @@
     "@prisma/client": "^5.22.0",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
+    "csv-parse": "^7.0.3",
     "dotenv": "^16.6.1",
     "mercadopago": "^3.6.1",
+    "multer": "^2.4.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "zod": "^3.25.76"

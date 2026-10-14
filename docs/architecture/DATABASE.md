@@ -1,5 +1,42 @@
 # Banco de dados — diretrizes e modelo atual
 
+## Modelos implementados (Importação de planilhas — Akylla Gestão)
+
+Migration: `database/prisma/migrations/20261014114855_import_batch`
+(aditiva — 2 enums novos e 1 tabela nova; não altera nem remove dados
+existentes). Decisões D1–D8 de `docs/akylla/PLANO_IMPORTACAO.md`
+aprovadas pelo proprietário.
+
+| Modelo | Campos principais | Restrições/índices |
+|---|---|---|
+| `ImportBatch` | `companyId` (FK `Restrict`), `type` (enum `ImportType`), `status` (enum `ImportStatus`, default `COMPLETED`), `filename`, `createdCount`/`skippedCount`/`errorCount` (default 0), `errors Json?` (até 100 `errorDetails`), `createdByUserId` (FK `Restrict`), `createdAt` | índice `[companyId, createdAt]` |
+
+Enums novos:
+
+- `ImportType`: `CATEGORY`, `SUPPLIER`, `PRODUCT`, `CLIENT`, `SERVICE`
+  — as 5 entidades da decisão D1.
+- `ImportStatus`: `COMPLETED`, `FAILED`.
+
+Alterações aditivas em modelos existentes:
+
+| Modelo | Alteração | Observação |
+|---|---|---|
+| `Company`, `User` | relações `importBatches` | autor da importação não pode ser apagado (`Restrict`) |
+| `tests/helpers/app.ts` | `resetDatabase` apaga `ImportBatch` antes de `user` | FK `Restrict` em `createdByUserId` |
+
+Regras derivadas:
+
+- Um lote inteiro roda numa transação: falha → rollback e nenhum dado
+  entra; a linha `FAILED` é gravada **fora** da transação.
+- `dryRun` (query/`?dryRun=`) valida e reporta sem persistir nada —
+  inclusive sem criar `ImportBatch`.
+- Duplicidade por tipo (skip com aviso): `CATEGORY` por `nameKey`
+  (minúsculas), `SUPPLIER` por nome normalizado, `PRODUCT` por SKU ou
+  código de barras (nome não bloqueia — consistente com o sistema),
+  `CLIENT` por `nameKey`, `SERVICE` por `nameKey`.
+- Estoque inicial (`saldoinicial > 0`) cria/ajusta o produto e grava
+  `StockMovement` `IN` (notes "Estoque inicial (importação)").
+
 ## Modelos implementados (Etapa 10 — Akylla Gestão: módulos por empresa)
 
 Migration: `database/prisma/migrations/20261012154010_company_module`

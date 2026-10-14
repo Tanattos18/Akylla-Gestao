@@ -1256,3 +1256,86 @@ export const upsertCompanyModuleSchema = z.object({
   status: companyModuleStatusSchema,
 });
 export type UpsertCompanyModuleInput = z.infer<typeof upsertCompanyModuleSchema>;
+
+// ---------------------------------------------------------------------------
+// Importação de planilhas (CSV) — PLANO_IMPORTACAO.md
+// ---------------------------------------------------------------------------
+
+export const importTypeSchema = z.enum([
+  "CATEGORY",
+  "SUPPLIER",
+  "PRODUCT",
+  "CLIENT",
+  "SERVICE",
+]);
+export type ImportType = z.infer<typeof importTypeSchema>;
+
+export const IMPORT_TYPES: readonly ImportType[] = [
+  "CATEGORY",
+  "SUPPLIER",
+  "PRODUCT",
+  "CLIENT",
+  "SERVICE",
+];
+
+export const importTypeLabels: Record<ImportType, string> = {
+  CATEGORY: "Categorias",
+  SUPPLIER: "Fornecedores",
+  PRODUCT: "Produtos",
+  CLIENT: "Clientes",
+  SERVICE: "Serviços",
+};
+
+export const importTemplateQuerySchema = z.object({
+  type: importTypeSchema,
+});
+export type ImportTemplateQuery = z.infer<typeof importTemplateQuerySchema>;
+
+/** Campos do multipart de POST /api/imports (valores chegam como string). */
+export const importUploadFormSchema = z.object({
+  type: importTypeSchema,
+  dryRun: z
+    .union([z.boolean(), z.enum(["true", "false"])])
+    .transform((value) => value === true || value === "true")
+    .default(false),
+});
+export type ImportUploadForm = z.infer<typeof importUploadFormSchema>;
+
+export const importErrorDetailSchema = z.object({
+  row: z.number().int().min(1),
+  message: z.string(),
+});
+export type ImportErrorDetail = z.infer<typeof importErrorDetailSchema>;
+
+/** Relatório de um upload (real ou dryRun) — mesmo formato nos dois casos. */
+export const importReportSchema = z.object({
+  dryRun: z.boolean(),
+  batchId: z.string().nullable(),
+  type: importTypeSchema,
+  filename: z.string(),
+  totalRows: z.number().int().min(0),
+  created: z.number().int().min(0),
+  skipped: z.number().int().min(0),
+  errors: z.number().int().min(0),
+  errorDetails: z.array(importErrorDetailSchema),
+});
+export type ImportReport = z.infer<typeof importReportSchema>;
+
+export const importBatchStatusSchema = z.enum(["COMPLETED", "FAILED"]);
+export type ImportBatchStatus = z.infer<typeof importBatchStatusSchema>;
+
+export const importBatchSchema = z.object({
+  id: z.string(),
+  type: importTypeSchema,
+  status: importBatchStatusSchema,
+  filename: z.string(),
+  createdCount: z.number().int().min(0),
+  skippedCount: z.number().int().min(0),
+  errorCount: z.number().int().min(0),
+  createdByName: z.string(),
+  createdAt: z.string(),
+});
+export type ImportBatchDto = z.infer<typeof importBatchSchema>;
+
+export const listImportsQuerySchema = paginationQuerySchema;
+export type ListImportsQuery = z.infer<typeof listImportsQuerySchema>;

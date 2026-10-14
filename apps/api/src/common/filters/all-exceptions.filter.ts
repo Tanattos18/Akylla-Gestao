@@ -17,13 +17,21 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    const status =
-      exception instanceof HttpException
+    const exceptionCode =
+      typeof exception === "object" && exception !== null
+        ? (exception as { code?: unknown }).code
+        : undefined;
+    const isMulterSizeLimit = exceptionCode === "LIMIT_FILE_SIZE";
+
+    const status = isMulterSizeLimit
+      ? HttpStatus.PAYLOAD_TOO_LARGE
+      : exception instanceof HttpException
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    const detail =
-      exception instanceof HttpException
+    const detail = isMulterSizeLimit
+      ? "Arquivo maior que 5 MB"
+      : exception instanceof HttpException
         ? exception.getResponse()
         : "Erro interno não tratado";
 

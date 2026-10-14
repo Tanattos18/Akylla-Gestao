@@ -20,6 +20,7 @@ import { BillingModule } from "./billing/billing.module";
 import { WhatsAppModule } from "./whatsapp/whatsapp.module";
 import { ReportsModule } from "./reports/reports.module";
 import { CompanyModulesModule } from "./company-modules/company-modules.module";
+import { ImportsModule } from "./imports/imports.module";
 import { AuthGuard } from "./common/guards/auth.guard";
 import { ModuleGuard } from "./common/guards/module.guard";
 
@@ -44,6 +45,7 @@ import { ModuleGuard } from "./common/guards/module.guard";
     WhatsAppModule,
     ReportsModule,
     CompanyModulesModule,
+    ImportsModule,
   ],
   controllers: [HealthController],
   providers: [

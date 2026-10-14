@@ -1,464 +1,112 @@
-# Checklist geral de implementação — PetFlow
+# Checklist geral de implementação — Akylla Gestão
 
-## Etapa 0 — Base do projeto
+> Roteiro: `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md` (Etapas 0–12).
+> Este checklist cobre apenas a era do Akylla Gestão. O histórico
+> anterior à adaptação está preservado no Git.
 
-- [x] Inspecionar diretório, Git, dependências e configurações existentes
-- [x] Preservar arquivos preexistentes (`automação do whatsapp/`, documento da etapa)
-- [x] Criar monorepo (npm workspaces)
-- [x] `apps/api` — NestJS mínimo com health check e tratamento de erros
-- [x] `apps/web` — Next.js + Tailwind mínimo
-- [x] `apps/worker` — stub de tarefas em segundo plano
-- [x] `packages/shared` — tipos/validações compartilhados (base)
-- [x] `packages/config` — tsconfig base
-- [x] `database/` — schema Prisma técnico + migrations/seeds organizados
-- [x] Scripts de dev, build, lint e testes
-- [x] `.env.example` sem segredos
-- [x] `.gitignore` adequado
-- [x] Testes (health check via Vitest + Supertest)
-- [x] Documentação: PRD, ARCHITECTURE, DATABASE, DEVELOPMENT, CHANGELOG, PROJECT_STATUS, AGENTS.md
-- [x] Validações executadas com evidência
+## Fora do roteiro — Importação de planilhas CSV (2026-10-14)
 
-## Etapa 1 — Autenticação, empresas, usuários, permissões e isolamento multiempresa
+Tarefa autorizada pelo proprietário; plano e decisões D1–D8 em
+`docs/akylla/PLANO_IMPORTACAO.md`.
 
-Escopo definido em `docs/historico/etapas_petflow/PetFlow_Prompt_OpenCode_Etapa_1.md`.
+- [x] Plano escrito e aprovado (D1 entidades · D2 CSV · D3 skip de
+      duplicatas · D4 `ImportBatch` + migration · D5 dry-run · D6
+      `csv-parse`/`multer` · D7 sem auto-criação · D8 limites de plano)
+- [x] Migration aditiva `20261014114855_import_batch` (2 enums + tabela)
+      aplicada em `petflow` e `petflow_test`; `db:validate` OK
+- [x] Schemas Zod/tipos em `@petflow/shared`
+- [x] Módulo da API `apps/api/src/imports` (template, upload, histórico)
+      com `AdminGuard`, transação por lote e checagem de limites
+- [x] 413 para arquivo > 5 MB no `AllExceptionsFilter`
+- [x] UI `/importacoes` + item de navegação apenas para ADMIN
+- [x] `tests/imports.test.ts` (29 cenários) e `resetDatabase` com
+      `ImportBatch`
+- [x] Documentação: `DATABASE.md`, `API.md`, `CHANGELOG.md`,
+      `PROJECT_STATUS.md` e este checklist
+- [x] Validações: `lint` · `typecheck` · `test` · `build` · `db:validate`
 
-- [x] Ambiente verificado: PostgreSQL 17 local (sem Docker), bancos `petflow`
-      e `petflow_test` criados, `DATABASE_URL` em `.env` local
-- [x] Schema Prisma: `Company`, `User`, `Session` + enums; migration
-      `20261009185907_etapa1_auth_tenancy` aplicada nos dois bancos
-- [x] `npm run db:validate` — schema válido
-- [x] Bootstrap seguro e idempotente via CLI (`npm run bootstrap:admin`,
-      credenciais por `BOOTSTRAP_*` no ambiente, sem senha padrão)
-- [x] Login/logout/`me` com cookie HttpOnly (token SHA-256 em `Session`),
-      revogação efetiva no logout e na inativação de usuário
-- [x] Endpoints privados protegidos por `AuthGuard` global; permissão
-      administrativa verificada no backend (`AdminGuard`)
-- [x] Isolamento multiempresa: `companyId` derivado do contexto autenticado;
-      testes de acesso cruzado (404/escopo) aprovados
-- [x] Rate limit de login, verificação de `Origin`, CORS com allowlist
-- [x] Frontend: `/login`, área protegida `/` (empresa + usuário + logout),
-      `/usuarios` (admin), proxy rewrites Next → API
-- [x] Testes de integração com PostgreSQL real: 23/23 aprovados
-      (`tests/auth.test.ts`, `tests/users.test.ts`, `tests/health.test.ts`)
-- [x] `npm run lint` — 0 erros
-- [x] `npm run typecheck` — OK (4 workspaces)
-- [x] `npm run build` — OK (shared, api, web, worker)
-- [x] Validação manual E2E: health 200, login 200 (API e via proxy web),
-      `me` 200, `users` 200, logout 200, `me` 401 após logout, páginas 200
-- [x] Documentação atualizada (CHANGELOG, PROJECT_STATUS, ARCHITECTURE,
-      DATABASE, DEVELOPMENT, AGENTS)
+## Etapa 0 — Diagnóstico do repositório (2026-10-12)
 
-## Etapa 2 — Produtos, estoque, fornecedores e movimentações
+- [x] Inspecão somente leitura do monorepo herdado (workspaces, stack,
+      schema, testes, documentação)
+- [x] Contagem de testes e verificação de ambiente (sem execução de
+      testes nesta etapa)
+- [x] Varredura de referências de marca e de nicho em textos visíveis
+- [x] Lacunas identificadas (AP/AR inexistente, billing sem
+      enforcement, sem edição de empresa, CSV parcial, indicadores de
+      nicho)
+- [x] Entregável: `docs/akylla/DIAGNOSTICO_INICIAL.md`
+- [x] Nenhum arquivo de código alterado
 
-Escopo definido em `docs/historico/etapas_petflow/PetFlow_Prompt_OpenCode_Etapa_2.md`.
+## Etapa 1 — Plano e linha de base (2026-10-12)
 
-- [x] Etapa 1 confirmada funcional (proteções de autenticação/tenant ativas)
-- [x] Schema: `Category`, `Supplier`, `Product`, `StockMovement`; migration
-      `20261009194843_etapa2_products_stock` aplicada em `petflow` e
-      `petflow_test`; `npm run db:validate` OK
-- [x] CRUD de categorias (nome único por empresa, inativação) pela API
-- [x] CRUD de fornecedores (dados opcionais, inativação) pela API
-- [x] CRUD de produtos (SKU/barcode únicos por empresa, categoria/fornecedor
-      validados no servidor, preços/estoque mínimo não negativos)
-- [x] Entradas/saídas/ajustes com saldo materializado + lock `FOR UPDATE`;
-      ajustes exigem justificativa e ADMIN; saída não deixa saldo negativo
-- [x] Saldo, histórico paginado (autor, data, tipo, motivo) e alertas de
-      estoque baixo
-- [x] Escrita de catálogo/produtos/ajustes restrita a ADMIN no backend;
-      leitura e entradas/saídas para qualquer usuário autenticado
-- [x] Frontend integrado: `/produtos`, detalhe com movimentações,
-      `/produtos/novo`, `/produtos/[id]/editar`, `/categorias`,
-      `/fornecedores` (busca, filtros, paginação, confirmação de inativação)
-- [x] Testes: 76/76 aprovados em PostgreSQL real (CRUD, validações,
-      duplicidade, isolamento multiempresa, concorrência, alertas)
-- [x] `npm run lint`, `npm run typecheck`, `npm run build` OK
-- [x] Validação E2E manual: login, categoria 201, fornecedor 201, produto
-      201, entrada 10 → saldo 10, saída 3 → saldo 7, saída 999 → 400,
-      ajuste −1 → saldo 6, saldo/histórico/alertas corretos, páginas 200
-- [x] Documentação atualizada (CHANGELOG, STATUS, DATABASE, API, DEVELOPMENT,
-      ARCHITECTURE, AGENTS)
-- [x] Commit e push (ver relatório final / PROJECT_STATUS)
+- [x] Entregável: `docs/akylla/PLANO_DE_ADAPTACAO.md` (classificação
+      de módulos reaproveitáveis × específicos, riscos priorizados,
+      plano de rollback/migrations, custos estimados, critérios de
+      aceite por etapa)
+- [x] `npm ci` executado; verificação completa de linha de base:
+      `lint` 0 erros · `typecheck` OK · **380/380 testes** · `build`
+      OK · `db:validate` OK
+- [x] Nenhum schema/banco/migration alterado
+- [x] Vulnerabilidades de dev-dependências registradas (8)
 
-## Etapa 3 — Vendas e PDV (2026-10-09)
+## Etapa 2 — Identidade Akylla Gestão (2026-10-12)
 
-- [x] Etapa 2 confirmada funcional (76/76 testes antes de iniciar)
-- [x] Schema: `Sale`, `SaleItem`; enums `PaymentMethod`, `SaleStatus`;
-      migration `20261009205135_etapa3_sales_pdv` aplicada em `petflow` e
-      `petflow_test`; `npm run db:validate` OK
-- [x] `POST /api/sales`: recálculo de preços/totais no servidor, snapshot
-      de nome/SKU/preço nos itens, baixa de estoque + movimentos `OUT` na
-      mesma transação, lock `FOR UPDATE` dos produtos
-- [x] Prevenção de venda duplicada (`clientRequestId` idempotente → 409) e
-      código de comprovante (`PF-XXXXXXXX`) único por empresa
-- [x] Rejeições: produto inexistente/inativo/de outra empresa (404/400),
-      quantidade zero/negativa, estoque insuficiente, desconto negativo ou
-      acima do subtotal; adulteração de preços/totais pelo cliente
-      ignorada (servidor recalcula)
-- [x] `GET /api/sales` (histórico paginado, filtros status/código/período)
-      e `GET /api/sales/:id` (detalhe com itens e snapshots)
-- [x] `POST /api/sales/:id/cancel`: ADMIN, motivo obrigatório, devolução
-      única de estoque com movimentos `IN` compensatórios, auditoria
-      (autor/data/motivo), venda nunca apagada fisicamente
-- [x] Frontend: `/pdv` (busca por nome/SKU/barcode, carrinho com
-      quantidades, desconto, formas de pagamento, finalização com
-      confirmação e comprovante imprimível), `/vendas` (histórico com
-      filtros), `/vendas/[id]` (detalhe + cancelamento com motivo e
-      confirmação); sessão expirada redireciona para `/login`
-- [x] Testes: 104/104 aprovados em PostgreSQL real (28 novos: validações,
-      snapshots, idempotência, concorrência, cancelamento único,
-      isolamento multiempresa)
-- [x] `npm run lint`, `npm run typecheck`, `npm run build` OK
-- [x] Validação E2E manual: 25/25 verificações (venda 3× com desconto →
-      total do banco, estoque 10→7→10 no cancelamento, reenvio e
-      recancelamento 409, páginas 200)
-- [x] Documentação atualizada (CHANGELOG, STATUS, DATABASE, API,
-      DEVELOPMENT, ARCHITECTURE)
-- [x] Commit e push (ver relatório final / PROJECT_STATUS)
+- [x] Entregável: `docs/akylla/IDENTIDADE_E_NAVEGACAO.md`
+- [x] Marca, textos de tela, metadados, rodapé e log de boot
+      adaptados para **Akylla Gestão** ("Gestão para pequenos
+      negócios")
+- [x] Exportações CSV com prefixo `akylla_*` (servidor e UI)
+- [x] Moeda do comprovante padronizada em BRL (pt-BR)
+- [x] Textos de nicho removidos de módulos genéricos
+- [x] Identificadores internos e módulos preservados (compatibilidade
+      técnica registrada)
+- [x] Validações 5/5 verdes (380/380 testes)
 
-## Etapa 4 — Caixa e financeiro (2026-10-09)
+## Etapa 3 — Auditoria multiempresa e permissões (2026-10-12)
 
-- [x] Etapa 3 confirmada funcional (104/104 testes antes de iniciar;
-      auditoria de lint/typecheck/build/db:validate sem problemas)
-- [x] Schema: `CashSession`, `CashMovement`; enums `CashSessionStatus`,
-      `CashMovementType`, `CashMovementOrigin`; `Sale.cashSessionId`;
-      migration `20261009212628_etapa4_cash_finance` aplicada em `petflow`
-      e `petflow_test`; `npm run db:validate` OK
-- [x] `POST /api/cash/sessions` (ADMIN, uma aberta por empresa com lock
-      na `Company` → 409 em duplicidade) e `GET /sessions/current`
-      (404 sem sessão aberta)
-- [x] Movimentações manuais (ADMIN, sessão aberta; `OUT` exige
-      justificativa; valores positivos validados no Zod) e histórico com
-      filtros (período, sessão, tipo, origem) + paginação
-- [x] `POST /sessions/:id/close` (ADMIN): saldo esperado e diferença
-      calculados no servidor (apenas `inCash`); duplo fechamento → 409
-- [x] Estorno auditável (`POST /movements/:id/reversal`): apenas
-      `MANUAL` não estornado na sessão aberta; cria `REVERSAL`
-      compensatório e marca o original (`updateMany` condicional → dupla
-      corrida 409); venda → 400; sessão fechada → 409
-- [x] `GET /api/cash/summary`: totais por origem/tipo/período/sessão
-      calculados no servidor (vendas, manuais, cancelamentos, estornos,
-      entradas, saídas, líquido)
-- [x] Integração com vendas: `POST /sales` e `/sales/:id/cancel` exigem
-      caixa aberto (409) e gravam `cashSessionId` + lançamento único
-      (`SALE`/`SALE_CANCELMENT`) na mesma transação; `inCash` conforme
-      `paymentMethod === "CASH"`; lock de sessão antes dos produtos
-- [x] Frontend: `/caixa` (situação, abertura, form entrada/saída,
-      movimentações recentes), `/caixa/fechar`, `/caixa/movimentos`
-      (filtros + estorno), `/caixa/sessoes`, `/financeiro`; banner e
-      bloqueio de venda no `/pdv` com caixa fechado; home módulo
-      disponível; badge "Etapa 4"
-- [x] Testes: 141/141 aprovados em PostgreSQL real (37 novos em
-      `cash.test.ts`; `sales.test.ts` abrindo caixa no `beforeAll`)
-- [x] `npm run lint`, `npm run typecheck`, `npm run build`,
-      `npm run db:validate` OK
-- [x] Validação E2E manual: 30/30 verificações (venda com caixa fechado
-      409, abertura, `inCash` dinheiro/Pix, saída sem justificativa 400,
-      cancelamento único, duplo estorno 409, resumo, fechamento com
-      diferença −2.50, duplo fechamento 409, reabertura, páginas 200)
-- [x] Documentação atualizada (CHANGELOG, STATUS, DATABASE, API,
-      ARCHITECTURE, DEVELOPMENT)
-- [x] Commit e push (ver relatório final / PROJECT_STATUS)
+- [x] Entregável: `docs/akylla/AUDITORIA_MULTIEMPRESA.md`
+- [x] Teste novo `tests/tenancy-audit.test.ts` (+56 cenários Empresa
+      A × B: injeção de `companyId`, leitura/escrita cruzada, FKs,
+      relatórios/CSV, perfis ADMIN/MEMBER, vazamento em erros)
+- [x] **Nenhuma falha de isolamento ou de autorização confirmada**
+- [x] Suíte 436/436; `lint`/`typecheck`/`build` OK
+- [x] Nenhum código de produção alterado
 
-## Etapa 5 — Clientes, pets e serviços (2026-10-09)
+## Etapa 4 — Definição do núcleo genérico (2026-10-12)
 
-- [x] Etapa 4 confirmada funcional (141/141 testes antes de iniciar;
-      auditoria de lint/typecheck/build/db:validate sem problemas)
-- [x] Schema: `Client`, `Pet`, `Service`; enums `PetSpecies`, `PetSex`;
-      `Sale.clientId` opcional (FK `SetNull` + índice); migration aditiva
-      `20261009222638_etapa5_clients_pets_services` aplicada em `petflow`
-      e `petflow_test`; `npm run db:validate` OK
-- [x] CRUD de clientes pela API com busca (nome/telefone/email/CPF),
-      paginação e status; endereço estruturado; contatos normalizados
-      (telefone só dígitos, email minúsculo)
-- [x] Política de duplicidade de cliente: `nameKey` + contato igual com
-      cliente ativo → 409; homônimos sem contato e famílias com mesmo
-      telefone permitidos; cliente inativo não bloqueia novo cadastro
-- [x] CRUD de pets pela API (espécie/sexo/nascimento/peso/raça/cor),
-      responsável validado no servidor (ativo e da mesma empresa), troca
-      de responsável, busca por pet/raça/cor/responsável e filtros
-- [x] CRUD de serviços pela API: nome único por empresa (case-insensitive
-      com espaços colapsados), preço obrigatório ≥ 0, duração 1..1440;
-      escrita restrita a ADMIN, leitura autenticada
-- [x] `GET /api/clients/:id/pets` (pets do responsável) e detalhe de pet
-      com responsável
-- [x] Integração venda–cliente: `POST /sales` aceita `clientId` opcional
-      validado (ativo + mesma empresa → 400 caso contrário); listagem e
-      detalhe retornam `client`; venda rápida sem cliente preservada
-- [x] Frontend: `/clientes` (lista/busca/cadastro completo/inativação),
-      `/clientes/[id]` (ficha + pets), `/pets` (listagem com filtros +
-      cadastro/edição), `/servicos` (escrita ADMIN); `/pdv` com seletor
-      opcional de cliente; `/vendas` e detalhe com cliente; home com
-      módulos disponíveis; badge "Etapa 5"
-- [x] Testes: 190/190 aprovados em PostgreSQL real (49 novos:
-      `clients.test.ts` 20, `pets.test.ts` 12, `services.test.ts` 13,
-      `sales.test.ts` +4)
-- [x] `npm run lint`, `npm run typecheck`, `npm run build`,
-      `npm run db:validate` OK
-- [x] Validação E2E manual: 40/40 verificações (normalizações, 409 de
-      duplicidade, validações 400, venda com cliente, venda rápida sem
-      cliente, páginas 200)
-- [x] Documentação atualizada (CHANGELOG, STATUS, DATABASE, API,
-      ARCHITECTURE, DEVELOPMENT, README)
-- [x] Commit e push (ver relatório final / PROJECT_STATUS)
+- [x] Entregável: `docs/akylla/MAPA_DE_MODULOS.md` — matriz de 23
+      itens nas 4 categorias aprovadas (núcleo, opcionais genéricos,
+      nicho, transversais), inventário completo conferido
+- [x] **Aprovada pelo proprietário** (decisões D1–D4 registradas)
+- [x] Nenhum código/schema/teste alterado (etapa de análise)
 
-## Etapa 6 — Integração com WhatsApp (2026-10-09)
+## Etapa 5 — Cadastros, clientes e fornecedores (2026-10-12)
 
-Escopo definido em `docs/historico/etapas_petflow/PetFlow_Prompt_OpenCode_Etapa_6.md`.
+- [x] Cadastros confirmados genéricos e isolados por tenant
+- [x] Busca de fornecedores ampliada (nome/email/telefone/documento)
+- [x] +6 testes: opcionalidade de CPF/documento e preservação de
+      histórico na inativação
+- [x] Suíte 442/442; `lint`/`typecheck` OK
+- [x] Navegação de pets na tela de clientes diferida para a Etapa 10
 
-- [x] Etapa 5 confirmada funcional (190/190 testes antes de iniciar;
-      auditoria de lint/typecheck/build/db:validate sem problemas)
-- [x] Decisões registradas: Cloud API oficial da Meta (nada de
-      scraping/Selenium/QR); fila em Postgres no `apps/worker` (sem
-      Redis/BullMQ); dashboard continua Etapa 7; `automação do whatsapp/`
-      intocada
-- [x] Schema: `WhatsAppConfig`, `WhatsAppTemplate`,
-      `WhatsAppConsent`, `WhatsAppMessage`, `WhatsAppSendAttempt`,
-      `WhatsAppWebhookEvent` + 8 enums; migration
-      `20261009232055_etapa6_whatsapp_integration` aplicada em
-      `petflow` e `petflow_test`; `npm run db:validate` OK
-- [x] Pacote `@petflow/whatsapp`: E.164, classificação de erro
-      (TRANSIENT 429/408/5xx), backoff exponencial, opt-out textual,
-      `MetaCloudProvider` + `MockWhatsAppProvider`
-- [x] Schemas Zod E6 em `@petflow/shared` (+ regex de linguagem
-      corrigido para `pt_BR` com underscore)
-- [x] `GET/PUT /api/whatsapp/config`, `POST /whatsapp/config/health`
-      (sem vazar token), `PATCH /whatsapp/config/status` (ADMIN)
-- [x] `GET/POST /api/whatsapp/templates`, `PATCH /:id/approval`,
-      `PATCH /:id/status` (escrita ADMIN; variáveis validadas)
-- [x] `GET/POST /api/whatsapp/consents`,
-      `GET/PUT /whatsapp/consents/:clientId` (opt-in ADMIN, opt-out
-      auditável, 404 cross-tenant)
-- [x] `GET/POST /api/whatsapp/messages` (enfileiramento idempotente),
-      `GET /whatsapp/messages/:id`, `POST /:id/cancel`
-- [x] Webhook Meta (`@Public`): challenge GET, `POST` com
-      verificação `x-hub-signature-256` sobre `rawBody` (403 inválido),
-      idempotência por `wamid`, status de entrega, "SAIR" → opt-out
-- [x] Worker: claim atômico, backoff, `MAX_ATTEMPTS=3`, rate limit por
-      ciclo, heartbeat e shutdown gracioso; envs `WORKER_*`/`WHATSAPP_*`
-- [x] Frontend: `/whatsapp`, `/whatsapp/templates`,
-      `/whatsapp/mensagens`, `/whatsapp/mensagens/[id]`, seção de
-      consentimento em `/clientes/[id]`, card na home, badge "Etapa 6"
-- [x] Testes: 251/251 aprovados em PostgreSQL real (61 novos em
-      `tests/whatsapp.test.ts`)
-- [x] `npm run lint`, `npm run typecheck`, `npm run build`,
-      `npm run db:validate` OK
-- [x] Documentação atualizada (CHANGELOG, STATUS, DATABASE, API,
-      ARCHITECTURE, DEVELOPMENT, README, `.env.example`)
-- [x] Commit e push (ver relatório final / PROJECT_STATUS)
+## Etapa 6 — Produtos, categorias e estoque (2026-10-12)
 
-## Etapa 7 — Dashboard e relatórios (2026-10-09)
+- [x] Os 10 itens do roteiro confirmados no código
+- [x] Correção do filtro `lowStock` (exigir `minimumStock > 0`)
+- [x] +2 testes: requisição repetida e exclusão de mínimo zero
+- [x] Suíte 444/444; `lint`/`typecheck` OK
 
-Escopo definido em `docs/historico/etapas_petflow/PetFlow_Prompt_OpenCode_Etapa_7.md`.
+## Etapa 7 — Vendas e recebimentos (2026-10-12)
 
-- [x] Etapa 6 confirmada funcional (251/251 testes antes de iniciar;
-      auditoria de lint/typecheck/build/db:validate sem problemas)
-- [x] Auditoria inicial: fontes de dados reais das Etapas 1–6,
-      serviços realizados sem estado → indicador indisponível, sem
-      lib de gráficos (decisão: barras CSS, zero dependências novas)
-- [x] Schemas Zod E7 em `@petflow/shared`: `reportDateField` com
-      validação de calendário real, `checkReportPeriod` (`from ≤ to`,
-      máx. 366 dias), default 30 dias, `json|csv` e schemas dos 6
-      relatórios (+ paginação reutilizando `paginationQuerySchema`)
-- [x] Migration aditiva `20261010002727_etapa7_report_indexes`
-      (`Client`/`Pet` com `@@index([companyId, createdAt])`)
-      aplicada em `petflow` e `petflow_test`; `npm run db:validate` OK
-- [x] `GET /api/reports/summary` — vendas (concluídas/canceladas,
-      líquido/bruto/descontos, ticket `null` sem vendas), por dia e
-      forma de pagamento (SQL puro), caixa (saldo esperado da sessão
-      aberta, `inCash`/totais), estoque (baixo/zerado), clientes e
-      pets novos, WhatsApp por status, `servicesRealized` com
-      `available:false`
-- [x] `GET /api/reports/sales` — totais separados concluídas ×
-      canceladas (filtro `status` afeta só a lista; `paymentMethod`
-      afeta os totais), lista paginada, filtros e isolamento
-- [x] `GET /api/reports/stock/alerts` (sem estoque ou no mínimo,
-      inativos excluídos, paginação) e
-      `/stock/movements` (totais por tipo zero-fill, filtros
-      `productId`/`type`/período)
-- [x] `GET /api/reports/cash` (inCash vs todos, estornos por
-      origem, sessões fechadas com diferença), `/clients` (novos +
-      pets por espécie), `/whatsapp` (status atual, falhas por
-      motivo — aceitação ≠ entrega)
-- [x] Período em UTC inclusivo (`T00:00:00.000Z`–`T23:59:59.999Z`),
-      documentado; validações 400 (inverso, >366 dias, formato e
-      data inválidas)
-- [x] CSV (`format=csv`) em vendas, alertas e movimentações:
-      helper com aspas/CRLF, anti-injeção (prefixo `'` em
-      `=+-@`), teto 5000 linhas, ignora paginação, filename com
-      data
-- [x] Leitura exige apenas sessão (sem `AdminGuard`); `companyId`
-      sempre da sessão (parâmetro de cliente ignorado); MEMBER pode
-      ler
-- [x] Frontend: `/dashboard` (período, KPIs, barras CSS por dia e
-      por forma de pagamento, card serviços indisponível),
-      `/relatorios` (abas vendas/estoque/caixa/clientes/whatsapp
-      com filtros, paginação e CSV), `lib/format.ts`,
-      `downloadCsv()`, home com cards, badge "Etapa 7"
-- [x] Testes: 292/292 aprovados em PostgreSQL real (41 novos em
-      `tests/reports.test.ts`)
-- [x] `npm run lint`, `npm run typecheck`, `npm run build`,
-      `npm run db:validate` OK; varredura de segredos sem achados
-- [x] Documentação atualizada (CHANGELOG, STATUS, DATABASE, API,
-      ARCHITECTURE, DEVELOPMENT, README)
-- [x] Commit e push (ver relatório final / PROJECT_STATUS)
+- [x] Fluxo validado sem alteração de código (todos os 9 itens e 7
+      testes do roteiro cobertos)
+- [x] Entregável `docs/akylla/LIMITACOES_VENDAS.md` com 9 limitações
+      explícitas
+- [x] Caixa por turno mantido (decisão registrada)
+- [x] Suíte 444/444; `lint`/`typecheck` OK
 
-## Etapa 8 — Agendamentos (2026-10-10)
-
-Escopo definido e aprovado na conversa com o proprietário (sem prompt
-oficial em `docs/historico/etapas_petflow/`).
-
-- [x] Etapa 7 confirmada funcional (292/292 testes antes de iniciar;
-      auditoria de lint/typecheck/build/db:validate sem problemas)
-- [x] Decisões registradas: conflito de horário da empresa inteira,
-      serviços em vendas/PDV fora da etapa, lembretes automáticos
-      incluídos pela fila WhatsApp existente, `durationMinutes`
-      obrigatório (1..1440)
-- [x] Schemas Zod E8 em `@petflow/shared`: `localDateTimeField` com
-      calendário real, `create/update/cancel/update-status/list
-      appointments`, constantes de status bloqueante/terminal,
-      constantes de lembrete (3 variáveis, lead 5..40320 default
-      1440); `updateWhatsAppConfigSchema` com `reminderTemplateId` e
-      `reminderLeadMinutes`
-- [x] Migration `20261010115308_etapa8_appointments`: enum
-      `AppointmentStatus`, modelo `Appointment` (FK `Restrict` para
-      empresa/cliente/pet/serviço/autor, `cancelledByUserId`
-      `SetNull`, índices `[companyId, startLocal]`, `[companyId,
-      status, startAt]`, `[clientId]`, `[petId]`) e
-      `WhatsAppConfig.reminderTemplateId`/`reminderLeadMinutes`;
-      aplicada em `petflow` (dev); `npm run db:validate` OK
-- [x] `POST /api/appointments` (201): `startAt`/`endAt` calculados no
-      servidor (`startLocal` + offset leste-positivo ±840), passado
-      recusado (tolerância 60 s), cliente/pet/serviço validados
-- [x] `GET /api/appointments` (filtros `from/to` sobre `startLocal`,
-      `status`, `clientId`, `petId`, `serviceId`, `search`,
-      paginação) e `GET /:id` (404 cross-tenant)
-- [x] `PATCH /:id` (campos parciais, reagendamento recalcula
-      `startAt`, apenas status não-terminal), `PATCH /:id/status`
-      (CONFIRMED/COMPLETED/NO_SHOW; terminal → 409), `POST /:id/cancel`
-      (201, motivo 3..500, guarda de status → dupla corrida 409)
-- [x] Conflito em transação com `FOR UPDATE` na `Company`: sobreposição
-      em SCHEDULED/CONFIRMED → 409; fim-início exato permitido;
-      terminal/cancelado não bloqueia; edição exclui o próprio registro
-- [x] Sem `AdminGuard` (agenda é operação diária — MEMBER agenda);
-      `companyId` sempre da sessão
-- [x] Lembretes (`syncReminder`, fila WhatsApp + worker intactos):
-      chave `appointment-reminder:<id>` por empresa,
-      `origin=SERVICE_REMINDER`, `nextAttemptAt = max(now, startAt −
-      lead)`, variáveis pet/serviço/data-hora local, revalidação de
-      config/template/consentimento/telefone a cada mutação, atualiza
-      pendente ao reagendar, cancela ao cancelar/concluir ou tornar
-      inelegível; falha só loga (CRUD nunca falha)
-- [x] `GET/PUT /api/whatsapp/config` com campos de lembrete; PUT
-      valida template da mesma empresa com exatamente 3 variáveis (400)
-- [x] Relatórios: `summary.services` (contagens por status,
-      zero-fill), `modules.servicesRealized = {available: true,
-      reason: null}`; `clients.services` substitui `servicesRealized`
-- [x] Frontend: `/agenda` (visão por dia, navegação ←/Hoje/→/date
-      picker, filtros, paginação), `/agenda/novo`, `/agenda/[id]`
-      (transições + cancelamento com motivo), `/agenda/[id]/editar`,
-      `components/AppointmentForm.tsx`, helpers em `lib/format.ts`,
-      bloco E8 em `lib/types.ts`; home card "Agendamentos"; badge
-      "Etapa 8 — Agendamentos"; `/whatsapp` com select de template de
-      lembrete e antecedência; dashboard/relatórios com contagens
-- [x] Testes: 337/337 aprovados em PostgreSQL real (45 novos em
-      `tests/appointments.test.ts`; asserts de `servicesRealized`
-      atualizados em `tests/reports.test.ts`; `resetDatabase` cobre
-      `Appointment` e o novo FK)
-- [x] `npm run lint`, `npm run typecheck`, `npm run build`,
-      `npm run db:validate` OK; varredura de segredos sem achados
-      reais
-- [x] Documentação atualizada (CHANGELOG, STATUS, DATABASE, API,
-      ARCHITECTURE, DEVELOPMENT, README)
-- [x] Commit e push (ver relatório final / PROJECT_STATUS)
-
-## Etapa 9 — Assinaturas e gestão comercial (2026-10-10)
-
-Escopo definido e aprovado na conversa com o proprietário (sem prompt
-oficial em `docs/historico/etapas_petflow/`; opções "Ambos" e "pagamento via
-caixa/venda existente").
-
-- [x] Etapa 8 confirmada funcional (337/337 testes antes de iniciar;
-      auditoria de lint/typecheck/build/db:validate sem problemas)
-- [x] Decisões registradas: pagamento sempre pelo caixa existente (sem
-      gateway), `TenantPlan`/`TenantSubscription` globais como exceção
-      documentável à regra de `companyId`, catálogo global do billing
-      sem escrita via API, cancelamento com motivo obrigatório
-      (cliente) e opcional (billing), assinatura de cliente sem
-      edição de campos (cancelar + criar nova)
-- [x] Schemas Zod E9 em `@petflow/shared`: `subscription/
-      tenantSubscriptionStatusSchema` + labels, constantes de duração
-      (1..3650 e 30 dias), `create/update/listSubscriptionPlans`,
-      `create/listSubscriptions` (`startAt` opcional ISO,
-      `registerPayment`), `cancelSubscription` (reason 3..500),
-      `updateTenantSubscription`, `cancelTenantSubscription` (reason
-      opcional ≤ 500)
-- [x] Migration `20261010131027_etapa9_subscriptions`: enums
-      `SubscriptionStatus`/`TenantSubscriptionStatus`; modelos
-      `SubscriptionPlan`/`Subscription` (FK `Restrict`, índices por
-      empresa e `[clientId]`), `TenantPlan`/`TenantSubscription`
-      (globais, `companyId` `@unique`), `CashMovement.subscriptionId`
-      (FK `SetNull` + índice); seed dos 3 `TenantPlan` iniciais na
-      própria migration (bytes reescritos em UTF-8 após P3015); nota:
-      `petflow_test` recebeu via global-setup; `npm run db:validate` OK
-- [x] `GET/POST /api/subscription-plans` (201, AdminGuard; nome único
-      por empresa → 409), `GET /:id`, `PATCH /:id`,
-      `PATCH /:id/status`; cross-tenant → 404
-- [x] `GET /api/subscriptions` (filtros `status`/`clientId`/`search`,
-      paginação) e `GET /:id` com expiração lazy nas leituras
-- [x] `POST /api/subscriptions` (201): cliente ativo e plano ativo
-      validados; `registerPayment` cria `CashMovement` IN/MANUAL em
-      transação após `lockOpenCashSession` (caixa fechado → 409)
-- [x] `POST /:id/renew` (201): exige caixa aberto, estende a partir de
-      `max(now, endAt)`, `renewalCount+1`, `lastPaymentAt`, movimento
-      de caixa vinculado; cancelada → 409; `POST /:id/cancel` (201,
-      motivo 3..500, `updateMany` com guarda → dupla corrida 409)
-- [x] `GET /api/billing/plans`, `GET /api/billing/subscription` (404
-      se ausente; expiração lazy), `PUT /api/billing/subscription`
-      (AdminGuard; upsert reinicia período e reativa; valida plano),
-      `POST .../renew` (201; cancelada → 409), `POST .../cancel`
-      (201; duplo → 409); escrita do catálogo global não exposta
-- [x] Frontend: `/planos` (CRUD ADMIN), `/assinaturas` (filtros +
-      paginação), `/assinaturas/nova` (cliente/plano/opção de caixa),
-      `/assinaturas/[id]` (detalhe, pagamentos, renovar/cancelar),
-      `/faturamento` (situação + troca/renovação/cancelamento); cards
-      "Assinaturas" e "Faturamento" na home; bloco E9 em `lib/types.ts`;
-      badge "Etapa 9 — Assinaturas"
-- [x] Testes: 367/367 aprovados em PostgreSQL real (18 novos em
-       `tests/subscriptions.test.ts` + 12 em `tests/billing.test.ts`;
-       `resetDatabase` cobre `Subscription` e `TenantSubscription`)
-- [x] `npm run lint`, `npm run typecheck`, `npm run build`,
-      `npm run db:validate` OK; varredura de segredos sem achados
-      reais
-- [x] Documentação atualizada (CHANGELOG, STATUS, DATABASE, API,
-      ARCHITECTURE, DEVELOPMENT, README)
-- [x] Commit e push (ver relatório final / PROJECT_STATUS)
-
-## Pós-Etapa 9 — acesso e demonstração (2026-10-10)
-
-- [x] **Redefinição de senha pelo painel**: `POST /api/auth/reset-password`
-       (flag `PASSWORD_RESET_ENABLED`, rate limit, transação com
-       revogação de sessões), página `/redefinir-senha`, link no login,
-       7 testes em `tests/password-reset.test.ts`
-- [x] **Cadastro aberto**: `POST /api/auth/register` (flag
-       `REGISTRATION_ENABLED`, rate limit por IP, empresa nova + admin,
-       auto-login), página `/cadastro`, link "Cadastre-se", refactor
-       `AuthService.createSession()`, 6 testes em `tests/register.test.ts`
-- [x] **Seed de demonstração**: `apps/api/src/cli/seed-demo.ts`
-       (`db:seed:demo`, transação única, só em empresa vazia); roda
-       aplicado na empresa "Mundo Pet" com verificação de integridade
-       (estoque, totais, caixa, agenda)
-- [x] **README**: guia "Como usar o sistema" (primeiro acesso, perfis,
-       rotina, receitas por módulo, mapa de páginas) + "Dados de
-       demonstração"
-- [x] Testes: 380/380 aprovados em PostgreSQL real (18 arquivos)
-- [x] `npm run lint`, `npm run typecheck`, `npm run build` OK
-- [x] Documentação atualizada (CHANGELOG, STATUS, DEVELOPMENT, API,
-       ARCHITECTURE, README, IMPLEMENTATION_CHECKLIST)
-- [x] Commit e push (ver PROJECT_STATUS — Git)
-
-## Etapa 8 (Akylla) — Financeiro básico AP/AR (2026-10-12)
-
-Roteiro: `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`.
+## Etapa 8 — Financeiro básico AP/AR (2026-10-12)
 
 - [x] Detalhamento prévio em `docs/akylla/MODELO_FINANCEIRO.md`
       (conceitos separados, modelo, transições, escopo da migration,
@@ -467,9 +115,7 @@ Roteiro: `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`.
       `FinancialOrigin`; `CashMovementOrigin` ganha `ACCOUNT`;
       modelo `FinancialEntry` (`Decimal(12,2)`, contrapartes `SetNull`,
       `@@unique([companyId, origin, originId])`,
-      `@@unique([companyId, clientRequestId])`, 4 índices por empresa);
-      relações inversas em `Company`/`Category`/`Supplier`/`Client`/
-      `CashMovement`/`User`
+      `@@unique([companyId, clientRequestId])`, 4 índices por empresa)
 - [x] Migration aditiva `20261012164040_financial_entry` (aprovada)
       aplicada em `petflow`; `npm run db:validate` OK
 - [x] Schemas Zod em `@petflow/shared` (`createFinancialEntry`,
@@ -478,160 +124,128 @@ Roteiro: `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`.
       `ACCOUNT` no enum/labels de origem de caixa
 - [x] Módulo `apps/api/src/financial`: `POST /api/financial` (201;
       contraparte inválida → 400; `P2002` → 409), `GET /api/financial`
-      (direção/status/período/search + paginação), `GET /summary`
-      (abertos/vencidos/liquidados/cancelados no servidor),
+      (direção/status/período/search + paginação), `GET /summary`,
       `GET/PATCH /:id` (só `OPEN` → 409), `POST /:id/pay`
       (`OPEN → PAID` + `lockOpenCashSession` → 409 se fechado +
-      movimento `ACCOUNT` `IN`/`OUT`), `POST /:id/cancel` e
-      `/:id/reverse` (`AdminGuard`, motivo 3..500 → 400, duplo → 409);
-      cross-tenant → 404; `@Inject()` explícito
+      movimento `ACCOUNT`), `POST /:id/cancel` e `/:id/reverse`
+      (`AdminGuard`, motivo 3..500 → 400, duplo → 409); cross-tenant
+      → 404; `@Inject()` explícito
 - [x] UI `/financeiro` com abas **Resumo | A pagar | A receber**;
-      componente `apps/web/src/components/FinancialEntries.tsx`
-      (criar/editar/liquidar; cancelar/estornar só admin; filtros,
-      paginação, badge "Vencido"); DTOs em `lib/types.ts`
+      componente `FinancialEntries.tsx`; DTOs em `lib/types.ts`
 - [x] `resetDatabase` apaga `FinancialEntry` antes de `user`
-- [x] `tests/financial.test.ts` (+30): criação/validações,
-      liquidação+saldos coerentes com `/cash/summary`,
-      cancelamento/estorno auditáveis, filtros por período/status,
-      isolamento A×B, arredondamento/decimais 12,2
-- [x] Documentação: `docs/architecture/DATABASE.md`, `CHANGELOG.md`,
-      `PROJECT_STATUS.md`, checklist e status em `MODELO_FINANCEIRO.md`
+- [x] `tests/financial.test.ts` (+30): criação/validações, liquidação
+      + saldos coerentes com `/cash/summary`, cancelamento/estorno
+      auditáveis, filtros, isolamento A×B, decimais 12,2
 - [x] Validações com evidência: `lint` 0 → `typecheck` OK →
       **474/474 testes** → `build` OK → `db:validate` OK
 
-## Etapa 9 (Akylla) — Dashboard e relatórios (2026-10-12)
+## Etapa 9 — Dashboard e relatórios (2026-10-12)
 
-Roteiro: `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`.
-
-- [x] Instruções 1–2 confirmadas: agregação 100% server-side
-      (`reports.service.ts`, `cash.service.ts`, `financial.service.ts`),
-      `AuthGuard` global + `companyId` da sessão (`companyId` do
-      cliente é ignorado)
-- [x] Instrução 3: **entregável** `docs/akylla/DICIONARIO_INDICADORES.md`
-      com significado/fórmula/fonte/estado vazio de todos os
-      indicadores, incluindo **faturamento** (`sales.net`),
-      **receita recebida** (`financial/summary.paidInTotal`), **contas
-      vencidas** (`overdue*`) e **saldo de caixa**
-      (`openSession.expectedBalance`/`cash/summary.net`), com a
-      separação billing-SaaS × financeiro do cliente
-- [x] Instrução 4: estado vazio sem inventar números (`ticketAverage:
-      null`, listas `[]`, zero-fill) — coberto por teste novo de
-      empresa vazia
-- [x] Instrução 5: filtros de data (janela inclusiva UTC, 400 para
+- [x] Instruções 1–2 confirmadas: agregação 100% server-side,
+      `AuthGuard` global + `companyId` da sessão (parâmetro de cliente
+      ignorado)
+- [x] **Entregável** `docs/akylla/DICIONARIO_INDICADORES.md` com
+      significado/fórmula/fonte/estado vazio de todos os indicadores
+- [x] Estado vazio sem inventar números (`ticketAverage: null`,
+      listas `[]`, zero-fill) — coberto por teste de empresa vazia
+- [x] Filtros de data (janela inclusiva UTC, 400 para
       invertido/longo/inválido), paginação `pageSize` 1..100 e limite
-      `CSV_ROW_LIMIT = 5000` (CSV ignora paginação)
-- [x] Instrução 6: CSV protegido contra fórmulas — cobertura ampliada
-      para sinal após espaço inicial (`" =1+1"`), mantidos
-      `= + - @ TAB CR`
-- [x] Instrução 7: gráficos do dashboard filtrados a `COMPLETED` no
-      servidor e com período único (testes de agrupamento por dia/forma
-      de pagamento)
-- [x] **Indicadores de nicho removidos** (PLANO §9): `newPets` no
-      `summary`/dashboard e `newPets`+`petsBySpecies` no relatório de
-      clientes; UI (`/dashboard`, `/relatorios`), DTOs e testes
-      atualizados; `Pet`/`PetSpecies` intactos (destino na Etapa 10)
-- [x] `docs/architecture/API.md` atualizado (prefixo `akylla_*`,
-      neutralização ampliada, seção sem pets, link do dicionário)
-- [x] Testes da etapa: **empresa vazia**, **exportação com caracteres
-      especiais e fórmulas**, **coerência indicadores × dados-fonte**;
-      empresa com dados, filtros por data e A×B já existentes
+      `CSV_ROW_LIMIT = 5000`
+- [x] CSV protegido contra injeção de fórmulas (cobertura ampliada
+      para sinal após espaço inicial)
+- [x] Gráficos do dashboard filtrados a `COMPLETED` no servidor e com
+      período único
+- [x] **Indicadores de nicho removidos** (`newPets`, `petsBySpecies`);
+      UI, DTOs e testes atualizados; `Pet`/`PetSpecies` intactos
+      (destino na Etapa 10)
+- [x] `docs/architecture/API.md` atualizado; testes novos: empresa
+      vazia, exportação com caracteres especiais/fórmulas, coerência
+      indicadores × dados-fonte
 - [x] Validações com evidência: `lint` 0 → `typecheck` OK →
       **477/477 testes** → `build` OK → `db:validate` OK (sem
       migration na etapa)
 
-## Etapa 10 (Akylla) — Módulos específicos de pet shop (2026-10-12)
+## Etapa 10 — Módulos específicos de pet shop (2026-10-12)
 
-Roteiro: `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`. **Concluída — decisões
-D2/D3 do proprietário registradas.**
+**Concluída — decisões D2/D3 do proprietário registradas.**
 
 - [x] Instrução 1: nenhuma exclusão de pets/agenda/serviços/WhatsApp
       (código, tabelas, rotas, testes e páginas intactos)
-- [x] Instrução 2: mapeamento de dependências com evidência `file:line`
-      (UI, imports, FKs Restrict, testes, relatórios) registrado no
-      `PLANO_MODULARIZACAO.md` §2
-- [x] Instrução 3: recomendação por módulo no `PLANO_MODULARIZACAO.md` §3
-      (pets = opcional de nicho fora da navegação inicial; agenda,
-      serviços, WhatsApp e assinaturas = genéricos; seed = reescrever
-      após aprovação)
+- [x] Instrução 2: mapeamento de dependências com evidência
+      `file:line` registrado no `PLANO_MODULARIZACAO.md` §2
+- [x] Instrução 3: recomendação por módulo no `PLANO_MODULARIZACAO.md`
+      §3 (pets = opcional de nicho; agenda, serviços, WhatsApp e
+      assinaturas = genéricos; seed = reescrever após aprovação)
 - [x] Instrução 4: **backend bloqueia módulos desabilitados** —
       `ModuleGuard` (APP_GUARD após `AuthGuard`) + `@RequireModule` em
       pets/services/appointments/whatsapp (exceto webhook
       `@Public`)/subscriptions/subscription-plans; 403 com mensagem;
       ocultação de UI não é controle de acesso
-- [x] Instrução 5: `automação do whatsapp/` preservada (fora de
+- [x] Instrução 5: pasta `automação do whatsapp/` preservada (fora de
       lint/build/testes; 0 imports do monorepo)
-- [x] Rótulo do lembrete generalizado (MAPA item 21): `{{1}} tutor/pet` →
-      `{{1}} cliente` em `whatsapp-config.service.ts` (erro) e
-      `whatsapp/page.tsx` (UI); comportamento (`pet?.name || client.name`)
-      e contagem de 3 variáveis intactos; grep `tutor` = 0 em
-      `apps/`, `packages/`, `tests/`
-- [x] **D2 CONFIRMADA** pelo proprietário (2026-10-12): recomendações do
-      PLANO §3 aceitas; nenhuma exclusão
+- [x] Rótulo do lembrete generalizado (`{{1}} cliente`); comportamento
+      e contagem de 3 variáveis intactos
+- [x] **D2 CONFIRMADA**: recomendações do PLANO §3 aceitas; nenhuma
+      exclusão
 - [x] **D3 DECIDIDA: opção B (`CompanyModule`)** e implementada:
       migration aditiva `20261012154010_company_module` (enums
       `BusinessModule`/`CompanyModuleStatus` + tabela com
       `@@unique([companyId, module])`); API `GET`/`PATCH
-      /api/company-modules` (`AdminGuard` na escrita); home oculta cards
-      de módulos desativados; ausência de linha = ativo; núcleo nunca
-      desativável
+      /api/company-modules` (`AdminGuard` na escrita); home oculta
+      cards de módulos desativados; ausência de linha = ativo; núcleo
+      nunca desativável
 - [x] `MAPA_DE_MODULOS.md` §6.2/§6.3/§7, `DATABASE.md` e `API.md`
       atualizados
-- [x] Testes da etapa: `tests/company-modules.test.ts` **+13**
-      (listagem padrão, AdminGuard, 400 inválido, upsert idempotente,
-      403 do guard, cross-tenant, núcleo livre, webhook assinado, agenda
-      com WhatsApp off); `resetDatabase` apaga `companyModule`
+- [x] Testes: `tests/company-modules.test.ts` **+13**; `resetDatabase`
+      apaga `companyModule`
 - [x] Validações com evidência: `lint` 0 → `typecheck` OK →
       **490/490 testes** → `build` OK → `db:validate` OK (migration em
       `petflow` e `petflow_test`)
 
-## Etapa 11 (Akylla) — Planos e assinatura SaaS (2026-10-12)
+## Etapa 11 — Planos e assinatura SaaS (2026-10-12)
 
-Roteiro: `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`. **Concluída — decisões
-D1–D4 do proprietário registradas e implementadas.**
+**Concluída — decisões D1–D4 do proprietário registradas e
+implementadas.**
 
 - [x] Instrução 1: separação billing-SaaS × assinaturas de negócio
       formalizada no `PLANO_BILLING.md` §1 (models, API/UI, guard,
       testes — sem mistura)
-- [x] Instrução 2: estado atual dos modelos documentado (`PLANO_BILLING.md`
-      §2) com lacunas identificadas (limites inexistentes, sem gateway)
+- [x] Instrução 2: estado atual dos modelos documentado no
+      `PLANO_BILLING.md` §2 (limites inexistentes, sem gateway)
 - [x] Instrução 3: **D1 aprovada** — planos do seed mantidos (79,90 /
       149,90 / 249,90; 30 dias); **não anunciados publicamente**
 - [x] Instrução 4: **D2 aprovada — todos os limites**;
       `userLimit`/`clientLimit`/`productLimit` em `TenantPlan` via
-      migration `20261012173450_tenant_plan_limits` (Essencial 3/200/100;
-      Profissional 10/1000/500; Completo ilimitado)
-- [x] Instrução 5: estados/vigência/cancelamento/renovação já modelados
-      e testados (12 testes em `billing.test.ts`, inalterados)
-- [x] **D3 aprovada — status quo**: enforcement (`TenantLimitsService`)
-      **apenas** para empresas com assinatura `ACTIVE`; sem assinatura,
-      expirada ou cancelada — nenhum bloqueio; aplicado nos `create` de
-      Users/Clients/Products (403 com nome do plano e limite)
+      migration `20261012173450_tenant_plan_limits` (Essencial
+      3/200/100; Profissional 10/1000/500; Completo ilimitado)
+- [x] Instrução 5: estados/vigência/cancelamento/renovação já
+      modelados e testados (12 testes em `billing.test.ts`)
+- [x] **D3 aprovada — status quo**: enforcement
+      (`TenantLimitsService`) **apenas** para empresas com assinatura
+      `ACTIVE`; sem assinatura, expirada ou cancelada — nenhum
+      bloqueio; aplicado nos `create` de Users/Clients/Products (403
+      com nome do plano e limite)
 - [x] **D4 aprovada — Mercado Pago (sandbox)**: SDK oficial
-      `mercadopago`; provider mock/real/Failing com override para testes;
-      `POST /api/billing/checkout` (AdminGuard) cria preapproval e
-      vincula `gateway`/`gatewaySubscriptionId` na assinatura (status
-      `EXPIRED` até webhook confirmar); webhook
-      `POST /api/webhooks/mercadopago` (`@Public` + assinatura HMAC
-      `x-signature`, idempotente por `gatewaySubscriptionId`);
-      `GET /api/billing/gateway` descreve ambiente/credenciais; env vars
-      em `.env.example` sem segredos; sem token — checkout retorna 400
-      explícito
-- [x] Cobrança recorrente real **não ativada** (instrução 7): sandbox
-      por padrão; ativação exige E2E com cartão de teste + aprovação
+      `mercadopago`; provider mock/real/Failing com override para
+      testes; `POST /api/billing/checkout` (AdminGuard) cria
+      preapproval e vincula `gateway`/`gatewaySubscriptionId`;
+      webhook `POST /api/webhooks/mercadopago` (`@Public` + assinatura
+      HMAC `x-signature`, idempotente); `GET /api/billing/gateway`
+      descreve ambiente/credenciais; env vars em `.env.example` sem
+      segredos; sem token — checkout retorna 400 explícito
+- [x] Cobrança recorrente real **não ativada** (instrução 7):
+      sandbox por padrão; ativação exige E2E com cartão de teste +
+      aprovação
 - [x] Nenhum preço/limite/promessa publicado fora do sistema
       (instrução 8)
-- [x] Testes da etapa: `tests/tenant-limits.test.ts` **7** (sem
-      assinatura, ativa bloqueia 4º usuário, cliente limite, Completo sem
-      trava, EXPIRED/CANCELLED sem trava, isolamento cross-tenant) +
-      `tests/mercadopago.test.ts` **12** (checkout admin/member/anon,
-      plano inexistente, sem credenciais, webhook assinado ativa,
-      idempotência, cancelamento, gateway desconhecido, tipo diferente,
-      describe)
+- [x] Testes: `tests/tenant-limits.test.ts` **7** +
+      `tests/mercadopago.test.ts` **12**
 - [x] Validações com evidência: `lint` 0 → `typecheck` OK →
       **509/509 testes** → `build` OK → `db:validate` OK (migration em
       `petflow` e `petflow_test`)
 - [x] Docs: `PLANO_BILLING.md` (entregável, decisões), `DATABASE.md`
-      (novas colunas), `API.md` (checkout/gateway/webhook), `CHANGELOG.md`
+      (novas colunas), `API.md` (checkout/gateway/webhook),
+      `CHANGELOG.md`
 
 ### Pendências registradas (Etapa 11)
 
@@ -641,24 +255,23 @@ D1–D4 do proprietário registradas e implementadas.**
   ativar cobrança recorrente real;
 - Escrita do catálogo global de planos (exige papel de plataforma).
 
-## Etapa 12 (Akylla) — Qualidade, segurança e preparação para produção (2026-10-12)
+## Etapa 12 — Qualidade, segurança e preparação para produção (2026-10-12)
 
-Roteiro: `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`. **Concluída — última
-etapa do roteiro.**
+**Concluída — última etapa do roteiro.**
 
 - [x] Instrução 1: validações executadas com evidência — `lint` 0 →
-      `typecheck` OK → **509/509 testes** → `build` OK → `db:validate`
-      OK
+      `typecheck` OK → **509/509 testes** → `build` OK →
+      `db:validate` OK
 - [x] Instrução 2: nenhuma regressão introduzida pela adaptação
-      (509 testes verdes)
 - [x] Instrução 3: falhas preexistentes identificadas separadamente no
       `CHECKLIST_PRE_PRODUCAO.md` §3 (L1–L14)
 - [x] Instrução 4: revisão de segurança — segredos (nenhum hardcoded;
       `.env` fora do Git), logs (sem dados sensíveis), autenticação
-      (cookie HttpOnly + bcrypt 12 + rate limit), autorização (AuthGuard/
-      AdminGuard/ModuleGuard), tenant (`companyId` só do contexto
-      autenticado; grep `body.companyId` = 0), uploads (nenhum endpoint),
-      exportações (CSV isolado por empresa), webhooks (assinatura HMAC)
+      (cookie HttpOnly + bcrypt 12 + rate limit), autorização
+      (AuthGuard/AdminGuard/ModuleGuard), tenant (`companyId` só do
+      contexto autenticado; grep `body.companyId` = 0), uploads (nenhum
+      endpoint), exportações (CSV isolado por empresa), webhooks
+      (assinatura HMAC)
 - [x] Instrução 5: backups/restauração — **pendência registrada**
       (exige ambiente de produção; não executável aqui)
 - [x] Instrução 6: ambientes documentados (dev/teste/produção) no
@@ -671,33 +284,19 @@ etapa do roteiro.**
       executado
 - [x] Instrução 10: lista de limitações conhecidas e itens obrigatórios
       antes da comercialização (Seções 3 e 7)
-- [x] Entregável: `docs/akylla/CHECKLIST_PRE_PRODUCAO.md` com evidências,
-      riscos remanescentes, custos e **decisão recomendada: não declarar
-      pronto para produção** (faltam backups+restore, LGPD, CI,
-      monitoramento, E2E Mercado Pago, resolução de vulnerabilidades de
-      dev-dependencies)
+- [x] Entregável: `docs/akylla/CHECKLIST_PRE_PRODUCAO.md` com
+      evidências, riscos remanescentes, custos e **decisão recomendada:
+      não declarar pronto para produção**
 
-### Roteiro Akylla Gestão — RESUMO FINAL (Etapas 0–12)
+## Roteiro Akylla Gestão — RESUMO FINAL (Etapas 0–12)
 
-Todas as 13 etapas do roteiro foram concluídas entre 2026-10-09 e
-2026-10-12, com validações completas por etapa (lint/typecheck/testes/
-build/db:validate) e decisões do proprietário registradas quando
-exigidas. Entregáveis em `docs/akylla/`: DIAGNOSTICO_INICIAL,
-PLANO_DE_ADAPTACAO, AUDITORIA_MULTIEMPRESA, MAPA_DE_MODULOS,
+Todas as 13 etapas do roteiro foram concluídas em 2026-10-12, com
+validações completas por etapa (lint/typecheck/testes/build/db:validate)
+e decisões do proprietário registradas quando exigidas. Entregáveis em
+`docs/akylla/`: DIAGNOSTICO_INICIAL, PLANO_DE_ADAPTACAO,
+IDENTIDADE_E_NAVEGACAO, AUDITORIA_MULTIEMPRESA, MAPA_DE_MODULOS,
 LIMITACOES_VENDAS, MODELO_FINANCEIRO, DICIONARIO_INDICADORES,
 PLANO_MODULARIZACAO, PLANO_BILLING, CHECKLIST_PRE_PRODUCAO.
 
-## Etapas futuras — módulos de negócio
-
-- [x] Cadastro de clientes e animais (Etapa 5)
-- [x] Produtos e estoque (Etapa 2)
-- [x] Vendas e PDV (Etapa 3)
-- [x] Caixa e financeiro (Etapa 4)
-- [x] Automação WhatsApp (Etapa 6 — Cloud API + fila + webhook + UI)
-- [x] Dashboard e relatórios (Etapa 7)
-- [x] Agendamentos (Etapa 8 — CRUD + conflito + lembretes + `/agenda`)
-- [x] Assinaturas/multiempresa comercial (Etapa 9 — planos,
-      assinaturas de cliente, billing do SaaS)
-
-> Regra: nenhuma etapa é iniciada sem autorização explícita; marcar itens aqui
-> apenas com evidência de execução.
+> Regra: nenhuma etapa é iniciada sem autorização explícita; marcar
+> itens aqui apenas com evidência de execução.

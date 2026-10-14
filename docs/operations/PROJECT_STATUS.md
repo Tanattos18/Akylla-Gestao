@@ -1,4 +1,4 @@
-# Status do projeto — Akylla Gestão (monorepo PetFlow)
+# Status do projeto — Akylla Gestão
 
 ## Etapa atual
 
@@ -43,150 +43,112 @@ do roteiro `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`. Entregas:
 3. Deploy de staging → E2E sandbox Mercado Pago → aprovação →
    produção restrita (pilotos).
 
-**Etapa 11 (Akylla, anterior) — Planos e assinatura SaaS** —
-CONCLUÍDA (2026-10-12): dicionário de indicadores, remoção dos
-indicadores de nicho, CSV reforçado, +3 testes.
+## Entrega fora do roteiro — Importação de planilhas (2026-10-14)
 
-**Etapa 9 (PetFlow, anterior) — Assinaturas e gestão comercial** —
-CONCLUÍDA.
+**Concluída** (tarefa autorizada; plano e decisões D1–D8 em
+`docs/akylla/PLANO_IMPORTACAO.md`).
 
-**Pós-Etapa 9 (2026-10-10)** — entregas de acesso e demonstração
-CONCLUÍDAS: redefinição de senha pelo painel, cadastro aberto de
-contas, seed de demonstração e guia de uso no README.
+- **Entregável**: importação de CSVs para as 5 entidades (categorias,
+  fornecedores, produtos com estoque inicial, clientes e serviços) via
+  `/importacoes` — modelo CSV, dry-run, skip de duplicatas, checagem de
+  limites de plano e histórico `ImportBatch`.
+- **Migration**: `20261014114855_import_batch` (aditiva) aplicada nos
+  ambientes de dev e teste.
+- Validações: `lint` → `typecheck` → **538/538 testes** (509 + 29 de
+  `tests/imports.test.ts`) → `build` → `db:validate`. Sem commit até
+  autorização do proprietário.
 
-Data da Etapa 9 PetFlow: 2026-10-10.
+## Entregas por etapa (jornada Akylla Gestão)
 
-Etapas anteriores (PetFlow): Etapa 0 (2026-10-09), Etapa 1 (2026-10-09),
-Etapa 2 (2026-10-09), Etapa 3 (2026-10-09), Etapa 4 (2026-10-09),
-Etapa 5 (2026-10-09), Etapa 6 (2026-10-09), Etapa 7 (2026-10-09),
-Etapa 8 (2026-10-10).
+Sequência executada entre 2026-10-12 e 2026-10-13 conforme
+`docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`, com relatório por etapa e
+parada obrigatória antes das Etapas 10, 11, 12 e de qualquer migration
+(sem aprovação prévia). Documentos de controle em `docs/akylla/`.
 
-Etapas Akylla concluídas: 0–3 (auditoria/plano/identidade, 2026-10-11),
-4–5 (mapa de módulos + testes/ajustes, 2026-10-12), 6 (filtro
-`lowStock`, 2026-10-12), 7 (`LIMITACOES_VENDAS.md`, 2026-10-12),
-8 (financeiro básico, 2026-10-12), 9 (dashboard/relatórios,
-2026-10-12).
+- **Etapa 0** — diagnóstico somente leitura:
+  `docs/akylla/DIAGNOSTICO_INICIAL.md`.
+- **Etapa 1** — plano + linha de base:
+  `docs/akylla/PLANO_DE_ADAPTACAO.md`; verificação completa executada
+  (lint 0, typecheck OK, testes aprovados, build OK, `db:validate` OK);
+  nenhum schema/banco/migration alterados.
+- **Etapa 2** — identidade Akylla Gestão:
+  `docs/akylla/IDENTIDADE_E_NAVEGACAO.md`; marca, textos, CSV e moeda do
+  comprovante adaptados; identificadores internos e módulos preservados.
+- **Etapa 3** — auditoria multiempresa e permissões:
+  `docs/akylla/AUDITORIA_MULTIEMPRESA.md` + `tests/tenancy-audit.test.ts`
+  (+56 cenários A×B); **nenhuma falha de isolamento ou autorização
+  confirmada**; nenhum código de produção alterado.
+- **Etapa 4** — definição do núcleo genérico (apenas análise e
+  documentação): `docs/akylla/MAPA_DE_MODULOS.md`; matriz de 23 itens
+  nas 4 categorias aprovadas; **aprovada pelo proprietário**.
+- **Etapa 5** — cadastros, clientes e fornecedores: busca de
+  fornecedores ampliada; +6 testes (opcionalidade de CPF/documento e
+  preservação de histórico na inativação).
+- **Etapa 6** — produtos, categorias e estoque: correção do filtro
+  `lowStock` (exigir `minimumStock > 0`); +2 testes.
+- **Etapa 7** — vendas e recebimentos: fluxo validado sem alteração de
+  código; entregável `docs/akylla/LIMITACOES_VENDAS.md` com 9
+  limitações explícitas; caixa por turno mantido (decisão).
+- **Etapa 8** — financeiro básico (AP/AR): entregável
+  `docs/akylla/MODELO_FINANCEIRO.md`; decisões D1–D4 aprovadas;
+  modelo `FinancialEntry` + módulo `apps/api/src/financial` + UI
+  `/financeiro` com abas Resumo | A pagar | A receber; +30 testes.
+- **Etapa 9** — dashboard e relatórios: entregável
+  `docs/akylla/DICIONARIO_INDICADORES.md`; agregação 100% server-side,
+  remoção dos indicadores de nicho, CSV reforçado; +3 testes.
+- **Etapa 10** — módulos específicos de pet shop: nenhuma exclusão;
+  `docs/akylla/PLANO_MODULARIZACAO.md`; **opção B aprovada** — tabela
+  `CompanyModule` + `ModuleGuard` (403 no servidor) + API
+  `/company-modules`; +13 testes.
+- **Etapa 11** — planos e assinatura SaaS:
+  `docs/akylla/PLANO_BILLING.md`; decisões D1–D4 (planos seed,
+  limites de uso, enforcement só com assinatura ACTIVE, Mercado Pago
+  sandbox com checkout + webhook HMAC idempotente);
+  `TenantPlan.userLimit/clientLimit/productLimit` via migration;
+  +19 testes (`tenant-limits` 7, `mercadopago` 12).
+- **Etapa 12** — qualidade, segurança e produção:
+  `docs/akylla/CHECKLIST_PRE_PRODUCAO.md` (evidências, revisão de
+  segurança, limitações L1–L14, ambientes, custos, checklist
+  pré-comercial).
 
-Escopo da Etapa 9 PetFlow (aprovado na conversa — sem prompt oficial em
-`docs/historico/etapas_petflow/`): assinaturas recorrentes de clientes do pet shop
-(planos, criação com pagamento opcional no caixa, renovação via caixa
-e cancelamento com motivo) **e** billing da própria empresa no SaaS
-(catálogo de planos globais seedados e assinatura do tenant, com
-troca/renovação/cancelamento). Pagamento sempre pela
-caixa/venda existente (sem gateway); decisões registradas —
-`TenantPlan`/`TenantSubscription` globais como exceção documentável,
-catálogo global do billing sem escrita via API nesta etapa,
-cancelamento com motivo obrigatório (cliente) e opcional (billing).
+### Modelo operacional aprovado
 
-## Entregas concluídas (Etapa 9)
+- Execução contínua com relatório por etapa; parada obrigatória antes
+  das Etapas 10, 11, 12 e de qualquer migration; commit + push por
+  etapa; "configurações da empresa" definida para a Etapa 12 (Decisão
+  D1).
 
-- [x] Schemas Zod E9 em `@petflow/shared` (seção "Etapa 9"):
-      `subscriptionStatusSchema`/`tenantSubscriptionStatusSchema` +
-      labels, `SUBSCRIPTION_MIN/MAX_DURATION_DAYS` (1/3650),
-      `TENANT_PLAN_DEFAULT_DURATION_DAYS=30`, `create/update/
-      listSubscriptionPlans*`, `create/listSubscriptions*`
-      (`startAt` opcional ISO, `registerPayment`), `cancelSubscriptionSchema`
-      (reason 3..500), `updateTenantSubscriptionSchema` e
-      `cancelTenantSubscriptionSchema` (reason opcional ≤ 500).
-- [x] Migration `20261010131027_etapa9_subscriptions`: enums
-      `SubscriptionStatus`/`TenantSubscriptionStatus`; modelos
-      `SubscriptionPlan`/`Subscription` (FK `Restrict`, índices por
-      empresa e `[clientId]`), `TenantPlan`/`TenantSubscription`
-      (globais; `companyId` `@unique`); `CashMovement.subscriptionId`
-      (FK `SetNull` + índice `[companyId, subscriptionId]`); seed dos 3
-      `TenantPlan` iniciais na própria migration; aplicada em `petflow`
-      (dev); `db:validate` OK.
-- [x] Módulo `apps/api/src/subscriptions` (escrita com `AdminGuard`):
-      `GET/POST /api/subscription-plans` (201; nome único por empresa →
-      409), `GET/PATCH /:id`, `PATCH /:id/status`; `GET /api/subscriptions`
-      (filtros `status`/`clientId`/`search` + paginação) e `GET /:id`
-      (expiração lazy); `POST /api/subscriptions` (201; cliente/plano
-      ativos; `registerPayment` em transação com `lockOpenCashSession`
-      → caixa fechado 409); `POST /:id/renew` (201; estende a partir de
-      `max(now, endAt)`, `renewalCount+1`, movimento de caixa
-      vinculado; cancelada → 409); `POST /:id/cancel` (201; motivo
-      3..500, guarda de status → 409). Cross-tenant → 404.
-- [x] Módulo `apps/api/src/billing`: `GET /api/billing/plans`,
-      `GET /api/billing/subscription` (404 se ausente; expiração lazy),
-      `PUT /api/billing/subscription` (AdminGuard; upsert reinicia o
-      período e reativa), `POST .../renew` (201; cancelada → 409),
-      `POST .../cancel` (201; duplo → 409); escrita do catálogo global
-      não exposta.
-- [x] Frontend: `/planos` (CRUD ADMIN), `/assinaturas` (filtros +
-      paginação), `/assinaturas/nova`, `/assinaturas/[id]` (detalhe,
-      pagamentos, renovar/cancelar), `/faturamento` (situação + troca/
-      renovação/cancelamento), cards na home, badge "Etapa 9 —
-      Assinaturas"; DTOs E9 em `lib/types.ts`.
-- [x] `resetDatabase` cobre `Subscription` e `TenantSubscription`.
-
-## Entregas concluídas (pós-Etapa 9 — 2026-10-10)
-
-- [x] **Redefinição de senha pelo painel**: endpoint público
-      `POST /api/auth/reset-password` (só com
-      `PASSWORD_RESET_ENABLED=true`, senão 404; rate limit
-      `reset|ip|email`; política 8..72; 404 inexistente/inativo, 400
-      conta duplicada; troca de hash + revogação de sessões na mesma
-      transação), página `/redefinir-senha` e link no login;
-      `tests/password-reset.test.ts` (7).
-- [x] **Cadastro aberto de contas**: endpoint público
-      `POST /api/auth/register` (201; só com
-      `REGISTRATION_ENABLED=true`, senão 404; rate limit por IP
-      `register|ip`; email global único → 409; slug único gerado do
-      nome; cria empresa + administrador e loga automaticamente),
-      página `/cadastro` e link "Cadastre-se" no login; refatoração
-      de sessão em `AuthService.createSession()` (login + registro);
-      `tests/register.test.ts` (6).
-- [x] **Seed de demonstração**: `apps/api/src/cli/seed-demo.ts`
-      (`npm run db:seed:demo -- --company=<slug|id|e-mail>`), roda em
-      transação única e **só em empresa vazia**; aplicado na empresa
-      "Mundo Pet" (6 categorias, 5 fornecedores, 32 produtos, 24
-      clientes, 26 pets, 8 serviços, 4 planos, 44 vendas, 8 sessões
-      de caixa, 20 agendamentos, 8 assinaturas, tenant Profissional,
-      WhatsApp completo); integridade conferida (estoque×movimentos,
-      totais de venda, saldos/diferenças de caixa,
-      `startLocal`×`startAt`).
-- [x] **README**: guia "Como usar o sistema" (primeiro acesso com
-      cadastro/redefinição, perfis, rotina, receitas por módulo,
-      mapa de páginas) e seção "Dados de demonstração".
-- [x] Flags `PASSWORD_RESET_ENABLED`/`REGISTRATION_ENABLED` (padrão
-      desabilitado) em `env.ts`, `.env.example`, `.env` local e
-      `tests/setup-env.ts`.
-
-## Testes executados
+## Testes e verificações
 
 | Verificação | Comando | Resultado |
 |---|---|---|
 | Schema Prisma válido | `npm run db:validate` | OK |
 | Lint | `npm run lint` | OK (0 erros) |
 | Typecheck | `npm run typecheck` | OK (5 workspaces) |
-| Testes (PostgreSQL real) | `npm test` | 380/380 aprovados (18 arquivos) |
+| Testes (PostgreSQL real) | `npm test` | **509/509 aprovados** (24 arquivos) |
 | Build | `npm run build` | OK (shared, whatsapp, api, web, worker) |
 | Varredura de segredos | grep de credenciais | sem achados reais |
 | Seed de demonstração | `db:seed:demo` + script de integridade | OK (INTEGRIDADE OK) |
 
-Cobertura dos testes novos (30, Etapa 9): `tests/subscriptions.test.ts`
-(18) — CRUD de planos (nome duplicado 409, escrita só ADMIN,
-cross-tenant 404), criação de assinatura (validações, cliente/plano
-inativos, `registerPayment` com caixa aberto e 409 fechado), listagem
-com filtros, renovação (período, contador, movimento de caixa,
-cancelada 409, caixa fechado 409) e cancelamento (motivo obrigatório,
-duplo 409); `tests/billing.test.ts` (12) — catálogo global, GET 404,
-upsert/troca de plano (reinicia período, valida plano), renew
-(cancelada 409, expiração lazy), cancel (duplo 409) e guards ADMIN.
-
-Cobertura dos testes novos (13, pós-Etapa 9):
-`tests/password-reset.test.ts` (7) — 404 com flag desligada, 400
-validação, 404 inexistente, 400 conta duplicada, sucesso + sessão
-antiga revogada, rate limit; `tests/register.test.ts` (6) — criação
-com auto-login e login em seguida, slug único, 409 e-mail duplicado,
-400 política de senha, 404 com flag desligada, rate limit por IP.
+Cobertura por área: autenticação, cadastro e redefinição de senha,
+catálogo, estoque, vendas/PDV, caixa, financeiro (AP/AR), clientes,
+pets, serviços, WhatsApp (config, templates, consentimento, fila,
+webhooks), agenda/lembretes, assinaturas de clientes, billing do SaaS
+(Mercado Pago), relatórios/CSV, tenancy (auditoria A×B) e módulos por
+empresa (`CompanyModule`).
 
 ## Pendências conhecidas
 
-- CI (lint + typecheck + testes) quando solicitado.
-- Credenciais reais da Meta (`WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_APP_SECRET`,
-  `WHATSAPP_VERIFY_TOKEN`) só no `.env` local — provisionamento em
-  produção é decisão explícita do proprietário.
+- **Limitações de produto (L1–L14)**: lista completa e canônica em
+  `docs/akylla/CHECKLIST_PRE_PRODUCAO.md` §3 — inclui dev-dependências
+  vulneráveis, rate limit em memória, ausência de RLS/LGPD/CI/backups/
+  monitoramento, seed ainda temático de pet shop e cobrança recorrente
+  não ativada.
+- **Pré-comercial (§7 do mesmo checklist)**: backups com restore
+  testado, LGPD, CI, monitoramento, E2E Mercado Pago.
+- Credenciais reais da Meta (`WHATSAPP_ACCESS_TOKEN`,
+  `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN`) só no `.env` local —
+  provisionamento em produção é decisão explícita do proprietário.
 - Webhook Meta exige URL pública (ngrok/túnel/domínio) — fora do
   ambiente local.
 - Botões interativos e mídia (imagem/áudio/documento) — camada de
@@ -200,131 +162,67 @@ com auto-login e login em seguida, slug único, 409 e-mail duplicado,
 - Duplicidade de clientes: janela de corrida aceita (sem unique duro de
   `nameKey`).
 - Itens de serviço em vendas/PDV: continua fora; venda de serviço
-  segue pelo catálogo de produtos (decisão registrada na Etapa 8).
+  segue pelo catálogo de produtos (decisão registrada).
 - Agenda: visão por dia apenas (semana/mês, recorrência, profissionais
   e horário de funcionamento ficam para etapa futura).
-- Lembretes: antecipação fixa por empresa (sem janela de silêncio
-  por cliente nem lembrete de confirmação pós-atendimento).
+- Lembretes: antecipação fixa por empresa (sem janela de silêncio por
+  cliente nem lembrete de confirmação pós-atendimento).
 - Gráficos avançados (biblioteca, tooltips, zoom): introduzir
   dependência só quando houver necessidade real — hoje barras CSS
   atendem.
-- Estoque negativo nunca é permitido por padrão; backorder seria decisão
-  explícita.
-- Formas de pagamento configuráveis além de Dinheiro/Cartão/Pix/Outro.
-- Vendas anteriores à Etapa 4 (sem `cashSessionId`/lançamento) ficam fora
-  do financeiro — limitação de dados de desenvolvimento.
+- Estoque negativo nunca é permitido por padrão; backorder seria
+  decisão explícita.
+- Formas de pagamento configuráveis além de
+  Dinheiro/Cartão/Pix/Outro.
+- Vendas antigas sem `cashSessionId`/lançamento de caixa ficam fora do
+  financeiro — limitação de dados de desenvolvimento.
 - CSV de caixa, clientes e WhatsApp: não implementado (opcional no
   escopo; JSON cobre os casos).
-- **Billing (Etapa 9)**: escrita do catálogo global `TenantPlan` não
-  exposta via API (exige papel de plataforma); gating/limites de uso
-  por plano (clientes, usuários, módulos) não implementados — a
-  assinatura do tenant hoje é registro, ainda sem enforcement.
-- **Assinaturas (Etapa 9)**: pagamento sempre em Dinheiro no caixa
+- **Billing SaaS**: escrita do catálogo global `TenantPlan` não
+  exposta via API (exige papel de plataforma); enforcement de limites
+  ativo apenas para empresas com assinatura `ACTIVE` (decisão D3).
+- **Assinaturas de clientes**: pagamento sempre em Dinheiro no caixa
   (sem escolha de método/cartão); renovação manual, sem cobrança
   recorrente automática; assinatura de cliente não tem edição de
   campos (cancelar + criar nova, decisão registrada).
-- **Redefinição de senha pelo painel** (pós-Etapa 9): fluxo local sem
-  token de e-mail (flag `PASSWORD_RESET_ENABLED` + rate limit) — em
-  produção, manter a flag desabilitada e implementar redefinição com
-  token enviado por e-mail.
-- **Cadastro aberto** (pós-Etapa 9): cria tenant sem verificação de
-  email nem anti-abuso além do rate limit por IP (flag
-  `REGISTRATION_ENABLED`) — em produção, avaliar verificação de
-  email/captcha antes de habilitar.
+- **Redefinição de senha pelo painel**: fluxo local sem token de e-mail
+  (flag `PASSWORD_RESET_ENABLED` + rate limit) — em produção, manter a
+  flag desabilitada e implementar redefinição com token enviado por
+  e-mail.
+- **Cadastro aberto**: cria tenant sem verificação de e-mail nem
+  anti-abuso além do rate limit por IP (flag `REGISTRATION_ENABLED`) —
+  em produção, avaliar verificação de e-mail/captcha antes de habilitar.
+- UI `/faturamento` exibindo limites do plano atual e uso (backend já
+  expõe campos).
 - CI e deploy (contínuos).
+
+## Identificadores técnicos legados (compatibilidade)
+
+Mantidos no código por decisão registrada e documentados como
+compatibilidade técnica — **não são a marca do produto**:
+
+- Pacotes `@petflow/*` (api, web, worker, shared, whatsapp, config);
+- Cookie de sessão `petflow_session`;
+- Bancos `petflow` (dev) e `petflow_test` (testes);
+- `service: "petflow-api"` no payload de `/health`;
+- Prefixo de comprovante `PF-`.
+
+Renomeá-los exige etapa dedicada com plano de migração (sessões abertas,
+imports, asserts de teste).
 
 ## Git
 
-- Branch: `main`; remoto: `origin` → `https://github.com/Tanattos18/PetFlow.git`.
-- `3b77828` feat(etapa-1): autenticação, usuários, permissões e multiempresa
-- `6a36407` feat(etapa-2): implementa produtos e controle de estoque
-- `e305d52` docs: registra hashes dos commits e push da etapa 2
-- `912d1c8` feat(etapa-3): implementa vendas e ponto de venda
-- `6ae287d` feat(etapa-4): implementa caixa e financeiro
-- `bf2d5a9` docs: registra hash do commit da etapa 4
-- `398ad85` docs: registra push da etapa 4
-- `59ef5a2` docs: reescreve README com roadmap das 9 etapas
-- `9d273b9` feat(etapa-5): implementa clientes, pets e serviços
-- `e7bfd34` docs: registra hash do commit da etapa 5
-- `f81db3c` feat(etapa-6): integra WhatsApp Cloud API com fila, webhook e frontend
-- `4e902d0` docs: registra hash do commit da etapa 6
-- `2287bec` docs: registra push da etapa 6
-- `f81a077` feat(etapa-7): implementa dashboard e relatorios com agregacao server-side
-- `016ecaf` docs: registra hash do commit da etapa 7
-- `a186e52` docs: registra push da etapa 7
-- `cb018e5` feat(etapa-8): implementa agendamentos com conflito, lembretes e agenda
-- `671b3d6` docs: registra hash do commit da etapa 8
-- `fcd468b` docs: registra push da etapa 8
-- `7e7c1bb` feat(etapa-9): implementa assinaturas de clientes e billing do saas
-- `a25f533` docs: registra hash do commit da etapa 9
-- `d42d8c0` feat: adiciona redefinicao de senha pelo painel e guia de uso no readme
-- `69b2c3a` feat: adiciona cadastro aberto de contas e seed de demonstracao
-- `a9055e2` docs: registra hash do commit de cadastro e seed
-- Push confirmado: `34cbec6..a9055e2 main -> main` (inclui redefinição
-  de senha, cadastro aberto, seed de demonstração e docs pós-Etapa 9).
-- Push confirmado: `fcd468b..a25f533 main -> main` (inclui a Etapa 9).
-- Push anterior: `671b3d6..fcd468b main -> main` (inclui a Etapa 8).
+- Branch: `main`; remoto: `origin` →
+  `https://github.com/Tanattos18/Akylla-Gestao.git`.
+- O histórico do Git deste repositório começa na importação da base
+  técnica que deu origem ao produto; o histórico anterior não foi
+  preservado (squash na importação).
 
 ## Próxima etapa autorizada
 
-**Nenhuma — as 9 etapas do roadmap e as entregas pós-Etapa 9
-(redefinição de senha, cadastro aberto, seed de demonstração, guia de
-uso) estão concluídas.** Próximos passos possíveis (aguardando decisão
-do proprietário): pendências acima (CI/deploy, enforcement de billing,
-gateway de pagamento, recorrência automática, verificação de e-mail e
-anti-abuso no cadastro), continuidade das atualizações/testes ou novas
-funcionalidades fora do roadmap.
-
----
-
-## Projeto Akylla Gestão — jornada de adaptação (a partir de 2026-10-12)
-
-O repositório foi reutilizado como fundação do **Akylla Gestão** (SaaS
-multiempresa de gestão para pequenos negócios). Sequência operacional:
-Etapas 1–12 de `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`. Documentos de
-controle em `docs/akylla/`.
-
-- **Etapa 0 (2026-10-12)** — diagnóstico somente leitura:
-  `docs/akylla/DIAGNOSTICO_INICIAL.md`.
-- **Etapa 1 (2026-10-12)** — plano + linha de base:
-  `docs/akylla/PLANO_DE_ADAPTACAO.md`; `npm ci` e verificação completa
-  executadas: lint 0 erros, typecheck OK, **380/380 testes**, build OK,
-  `db:validate` OK. Nenhum schema/banco/migration alterados.
-- **Etapa 2 (2026-10-12)** — identidade Akylla Gestão:
-  `docs/akylla/IDENTIDADE_E_NAVEGACAO.md`; marca, textos, CSV e moeda do
-  comprovante adaptados; identificadores internos e módulos preservados;
-  validações 5/5 verdes (380/380 testes).
-- **Etapa 3 (2026-10-12)** — auditoria multiempresa e permissões:
-  `docs/akylla/AUDITORIA_MULTIEMPRESA.md` + `tests/tenancy-audit.test.ts`
-  (+56 cenários A×B); **nenhuma falha de isolamento ou autorização
-  confirmada**; suíte **436/436**, lint/typecheck/build OK; nenhum código
-  de produção alterado.
-- **Etapa 4 (2026-10-12)** — definição do núcleo genérico (apenas análise
-  e documentação): `docs/akylla/MAPA_DE_MODULOS.md`; matriz de 23 itens
-  nas 4 categorias aprovadas, inventário completo conferido; **aprovada
-  pelo proprietário**; nenhum código/schema/teste alterado.
-- **Etapa 5 (2026-10-12)** — cadastros, clientes e fornecedores:
-  cadastros confirmados genéricos e isolados por tenant; busca de
-  fornecedores ampliada (nome/email/telefone/documento); +6 testes
-  (opcionalidade de CPF/documento e preservação de histórico na
-  inativação); suíte **442/442**, lint/typecheck OK; navegação de pets
-  na tela de clientes diferida para a Etapa 10.
-- **Etapa 6 (2026-10-12)** — produtos, categorias e estoque: todos os 10
-  itens do roteiro confirmados no código; correção do filtro `lowStock`
-  (exigir `minimumStock > 0`); +2 testes (requisição repetida e exclusão
-  de mínimo zero); suíte **444/444**, lint/typecheck OK.
-- **Etapa 7 (2026-10-12)** — vendas e recebimentos: fluxo validado sem
-  alteração de código (todos os 9 itens e 7 testes do roteiro cobertos);
-  entregável `docs/akylla/LIMITACOES_VENDAS.md` com 9 limitações
-  explícitas; caixa por turno mantido (decisão); suíte **444/444**,
-  lint/typecheck OK.
-- **Modelo operacional aprovado:** execução contínua das Etapas 5→9 com
-  relatório por etapa; parada obrigatória antes das Etapas 10, 11, 12 e
-  de qualquer migration; commit+push por etapa; "configurações da
-  empresa" definida para a **Etapa 12** (Decisão D1).
-- Próxima etapa: **Etapa 8 — Financeiro básico (AP/AR)** — detalhamento
-  criado (`docs/akylla/MODELO_FINANCEIRO.md`); **parada obrigatória
-  aguardando decisões D1–D4 do proprietário** (modelo, venda×títulos,
-  origem `ACCOUNT`, aprovação da migration aditiva).
-
-> Os status/etapas PetFlow acima desta seção permanecem como histórico.
+**Nenhuma — o roteiro das Etapas 0–12 está concluído.** Próximos
+passos possíveis (aguardando decisão do proprietário): pendências acima
+(CI/deploy, enforcement de billing, gateway de pagamento, recorrência
+automática, verificação de e-mail e anti-abuso no cadastro),
+continuidade das atualizações/testes ou novas funcionalidades fora do
+roteiro.

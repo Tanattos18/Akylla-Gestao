@@ -902,3 +902,42 @@ export interface CompanyModuleDto {
   status: CompanyModuleStatus;
   label: string;
 }
+
+export type ImportType = "CATEGORY" | "SUPPLIER" | "PRODUCT" | "CLIENT" | "SERVICE";
+
+export const importTypeLabels: Record<ImportType, string> = {
+  CATEGORY: "Categorias",
+  SUPPLIER: "Fornecedores",
+  PRODUCT: "Produtos",
+  CLIENT: "Clientes",
+  SERVICE: "Serviços",
+};
+
+export interface ImportErrorDetail {
+  row: number;
+  message: string;
+}
+
+export interface ImportReport {
+  dryRun: boolean;
+  batchId: string | null;
+  type: ImportType;
+  filename: string;
+  totalRows: number;
+  created: number;
+  skipped: number;
+  errors: number;
+  errorDetails: ImportErrorDetail[];
+}
+
+export interface ImportBatchDto {
+  id: string;
+  type: ImportType;
+  status: "COMPLETED" | "FAILED";
+  filename: string;
+  createdCount: number;
+  skippedCount: number;
+  errorCount: number;
+  createdByName: string;
+  createdAt: string;
+}

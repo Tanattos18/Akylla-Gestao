@@ -1,4 +1,4 @@
-# API — PetFlow
+# API — Akylla Gestão
 
 Prefixo global: `/api` (exceto `GET /health`). Autenticação por cookie
 `petflow_session` (HttpOnly) — ver `ARCHITECTURE.md`. Todos os endpoints
@@ -456,6 +456,47 @@ opção B: tabela `CompanyModule`).
   controle de acesso** — a fonte de verdade é o guard.
 - Núcleo (clientes, produtos, vendas, caixa, financeiro, relatórios,
   billing, usuários) não é desativável.
+
+## Importação de planilhas (CSV)
+
+Upload de CSV em massa para alimentar dados da empresa (decisões D1–D8
+de `docs/akylla/PLANO_IMPORTACAO.md`). Plano aberto: `/importacoes`
+(UI `apps/web/src/app/importacoes/page.tsx`), rota na navegação apenas
+para ADMIN.
+
+| Método e rota | Guard | Descrição |
+|---|---|---|
+| `GET /api/imports/template?type=CATEGORY` | `AdminGuard` | Modelo CSV da entidade (`text/csv` com BOM e `;`, `Content-Disposition: attachment; filename=akylla_modelo_<entidade>.csv`) |
+| `POST /api/imports` | `AdminGuard` | Upload multipart `file` (CSV ≤ 5 MB, ≤ 5000 linhas de dados) + campos `type` (obrigatório) e `dryRun` (`"true"`/`"false"`, padrão `false`) |
+| `GET /api/imports?page=1&pageSize=10` | `AdminGuard` | Histórico paginado de `ImportBatch` da empresa (mais novo primeiro), com `createdByName` |
+
+- **Tipos aceitos:** `CATEGORY`, `SUPPLIER`, `PRODUCT`, `CLIENT`,
+  `SERVICE` (Zod `importTypeSchema` em `@petflow/shared`).
+- **Resposta do upload** (`importReportSchema`): `batchId`, `type`,
+  `filename`, `dryRun`, `totalRows`, `created`, `skipped`, `errors`,
+  `errorDetails[]` (`row` = linha física, `field`, `message`; máx. 100).
+- **Erros por linha** não abortam o lote (400 com `errorDetails` só
+  quando falha a estrutura: extensão ≠ `.csv`, cabeçalho sem colunas
+  obrigatórias, arquivo vazio, > 5000 linhas, delimitador não
+  detectado).
+- **Duplicidades** são puladas com aviso (não são erro): ver
+  `DATABASE.md` a regra por tipo; duplicidade interna do arquivo também
+  conta como `skipped`.
+- **Limites de plano (D8):** com assinatura `ACTIVE`, o total atual +
+  linhas do lote não pode exceder `clientLimit`/`productLimit` → **403**
+  "Limite do plano <nome> atingido". Sem assinatura não há limite
+  (regra "sem assinatura = sem limite" preservada). Checagem única
+  pré-lote, antes do dry-run.
+- **Referências por nome:** produtos podem citar `categoria`/`fornecedor`
+  pelo nome (match por `nameKey`/nome normalizado); inexistente → erro
+  na linha (não auto-cria — decisão D7).
+- **Delimitador:** detectado na primeira linha (`,` vs `;`); BOM UTF-8
+  aceito; preços em formato BR (`1.234,56`) e telefones normalizados no
+  servidor.
+- Arquivo > 5 MB → **413** (Multer `LIMIT_FILE_SIZE` tratado em
+  `AllExceptionsFilter`).
+- Nenhuma rota marcada `@Public()`; todas exigem sessão +
+  `AdminGuard` (MEMBER → 403).
 
 ## Padrão para módulos futuros
 

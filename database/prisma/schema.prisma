@@ -215,6 +215,7 @@ model Company {
   subscriptions        Subscription[]
   tenantSubscription   TenantSubscription?
   modules     CompanyModule[]
+  importBatches ImportBatch[]
 }
 
 enum BusinessModule {
@@ -223,6 +224,37 @@ enum BusinessModule {
   SERVICES
   WHATSAPP
   SUBSCRIPTIONS
+}
+
+enum ImportType {
+  CATEGORY
+  SUPPLIER
+  PRODUCT
+  CLIENT
+  SERVICE
+}
+
+enum ImportStatus {
+  COMPLETED
+  FAILED
+}
+
+model ImportBatch {
+  id              String       @id @default(cuid())
+  companyId       String
+  company         Company      @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  type            ImportType
+  status          ImportStatus @default(COMPLETED)
+  filename        String
+  createdCount    Int          @default(0)
+  skippedCount    Int          @default(0)
+  errorCount      Int          @default(0)
+  errors          Json?
+  createdByUserId String
+  createdBy       User         @relation(fields: [createdByUserId], references: [id], onDelete: Restrict)
+  createdAt       DateTime     @default(now())
+
+  @@index([companyId, createdAt])
 }
 
 enum CompanyModuleStatus {
@@ -273,6 +305,7 @@ model User {
   subscriptionsCreated     Subscription[] @relation("SubscriptionCreatedBy")
   subscriptionsCancelled   Subscription[] @relation("SubscriptionCancelledBy")
   tenantSubscriptionChanged TenantSubscription[] @relation("TenantSubscriptionChangedBy")
+  importBatches ImportBatch[]
 
   @@unique([companyId, email])
   @@index([companyId, status])
