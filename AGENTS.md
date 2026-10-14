@@ -1,8 +1,8 @@
-# Instruções para agentes de desenvolvimento — PetFlow
+# Instruções para agentes de desenvolvimento — Akylla Gestão
 
-Este repositório contém: (1) o monorepo do **PetFlow** (etapa ativa do
-projeto) e (2) a pasta `automação do whatsapp/`, base existente que deve ser
-preservada e não confundida com o código do PetFlow.
+Este repositório contém: (1) o monorepo do **Akylla Gestão** (produto em
+desenvolvimento) e (2) a pasta `automação do whatsapp/`, base histórica que
+deve ser preservada e não confundida com o código do monorepo.
 
 ## Regras obrigatórias
 
@@ -33,9 +33,15 @@ preservada e não confundida com o código do PetFlow.
 11. **Commits**: somente quando solicitado pelo proprietário; mensagem objetiva
     no padrão do repositório.
 12. **Pasta `automação do whatsapp/`**: não modificar sem instrução; não é
-    parte do monorepo PetFlow (excluída do lint e do build).
+    parte do monorepo Akylla Gestão (excluída do lint e do build).
 
-## Padrões permanentes (desde a Etapa 1)
+## Padrões permanentes
+
+- **Identificadores técnicos legados** (compatibilidade — não são a
+  marca do produto): pacotes `@petflow/*`, cookie `petflow_session`,
+  bancos `petflow`/`petflow_test`, `service: "petflow-api"` e prefixo
+  de comprovante `PF-`. Não renomear sem etapa dedicada com plano de
+  migração.
 
 - **`@Inject()` explícito** nos construtores de providers com injeção de
   dependência na API: o runtime de dev `tsx` (esbuild) não emite
@@ -48,7 +54,7 @@ preservada e não confundida com o código do PetFlow.
 - Escopo de tenant: `companyId` sempre do contexto autenticado
   (`request.user.companyId`), nunca do cliente; proteger novas rotas com
   `AuthGuard` global + `@Public()` apenas onde for realmente público.
-- Módulos de negócio (desde a Etapa 2): novos modelos com `companyId` +
+- Módulos de negócio: novos modelos com `companyId` +
   FK `Restrict` + índices por empresa; leitura individual via
   `findFirst({ id, companyId })` → 404; saldo/valores críticos sempre
   calculados no servidor (nunca aceitar do cliente); histórico de

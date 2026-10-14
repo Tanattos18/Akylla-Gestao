@@ -6,9 +6,9 @@
 > 2026-10-12), com os processos internos de cada módulo: fluxos,
 > transações, locks, validações, permissões, endpoints, telas e testes.
 >
-> **Origem:** monorepo PetFlow adaptado e renomeado para **Akylla Gestão**
-> — SaaS multiempresa para pequenos negócios brasileiros (nicho pet shop
-> removido da navegação; módulos genéricos reutilizáveis).
+> **Produto:** **Akylla Gestão** — SaaS multiempresa para pequenos
+> negócios brasileiros (nicho pet shop removido da navegação; módulos
+> genéricos reutilizáveis). Monorepo adaptado e renomeado em 2026-10-12.
 >
 > Fonte: `docs/**` + árvore de código real. Sem segredos, senhas ou
 > credenciais neste documento.

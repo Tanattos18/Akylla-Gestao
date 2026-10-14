@@ -6,7 +6,7 @@
 
 ## Objetivo
 
-Orientar o OpenCode a adaptar o projeto existente PetFlow para o Akylla Gestão com mudanças pequenas, verificáveis e reversíveis. O Akylla Gestão será um SaaS multiempresa de gestão para pequenos negócios brasileiros, começando por um núcleo comum de comércio e gestão.
+Orientar o OpenCode a adaptar a base existente para o Akylla Gestão com mudanças pequenas, verificáveis e reversíveis. O Akylla Gestão será um SaaS multiempresa de gestão para pequenos negócios brasileiros, começando por um núcleo comum de comércio e gestão.
 
 Este roteiro complementa `akylla_gestao_diretrizes_opencode.md`. Se houver divergência, o OpenCode deve parar, apontar a divergência e pedir decisão ao proprietário. O código real deve ser inspecionado antes de presumir que algo existe ou funciona.
 
@@ -104,7 +104,7 @@ Adaptar a identidade visível sem quebrar os componentes internos.
 - Login e navegação principal.
 - Verificação de títulos, links e mensagens.
 - Testes existentes de frontend/build.
-- Busca por referências visíveis a PetFlow e classificação de cada ocorrência.
+- Busca por referências visíveis à marca anterior e classificação de cada ocorrência.
 
 ## Entregável
 Atualizar a interface e criar `docs/akylla/IDENTIDADE_E_NAVEGACAO.md`, listando as referências mantidas por compatibilidade.

@@ -3,7 +3,7 @@
 **Documento-base para o OpenCode**  
 **Versão:** 1.0  
 **Data:** 12/10/2026  
-**Objetivo:** orientar a adaptação do projeto existente PetFlow para o Akylla Gestão, preservando componentes técnicos úteis e substituindo o foco exclusivo em pet shops por uma plataforma de gestão para pequenos negócios de diferentes segmentos.
+**Objetivo:** orientar a adaptação da base existente para o Akylla Gestão, preservando componentes técnicos úteis e substituindo o foco exclusivo em pet shops por uma plataforma de gestão para pequenos negócios de diferentes segmentos.
 
 ---
 
@@ -19,7 +19,7 @@ Adapte o projeto gradualmente para se tornar o **Akylla Gestão**, um SaaS multi
 2. Gere um diagnóstico inicial com:
    - funcionalidades que existem no código;
    - funcionalidades descritas, mas não confirmadas;
-   - funcionalidades específicas do PetFlow;
+   - funcionalidades específicas da base original;
    - componentes reutilizáveis;
    - riscos e dependências;
    - plano de adaptação por etapas.
@@ -124,7 +124,7 @@ O MVP deve priorizar os seguintes recursos:
 
 A ordem final de execução deve ser definida depois do diagnóstico do repositório e da verificação das funcionalidades que já existem.
 
-### 4.2 Funcionalidades que podem ser aproveitadas do PetFlow
+### 4.2 Funcionalidades que podem ser aproveitadas da base herdada
 
 Avaliar e reutilizar, quando tecnicamente apropriado:
 
@@ -319,7 +319,7 @@ O agente deve confirmar ou ajustar as etapas após o diagnóstico inicial. Não 
 
 - Inspecionar o repositório real.
 - Identificar o que funciona e o que não foi validado.
-- Mapear dependências do PetFlow e módulos específicos do segmento.
+- Mapear dependências da base herdada e módulos específicos do segmento.
 - Listar migrações necessárias e riscos.
 - Apresentar o plano antes de realizar mudanças amplas.
 
@@ -412,7 +412,7 @@ Não inventar decisões comerciais definitivas. Apresentar opções e aguardar a
 - cobrança recorrente e provedor de pagamento;
 - política de teste grátis;
 - nichos e funcionalidades prioritários após o MVP;
-- exclusão definitiva de módulos específicos do PetFlow;
+- exclusão definitiva de módulos específicos da base original;
 - deploy, domínio, custos e serviços pagos;
 - importação ou exclusão de dados existentes.
 
@@ -440,7 +440,7 @@ Atualizar os documentos de status, changelog e checklist. Não fazer commit sem 
 
 **Não comece implementando todas as mudanças.**
 
-Comece pela **Etapa 0 — Diagnóstico e plano**. Examine o projeto PetFlow existente e produza um relatório de adaptação para o Akylla Gestão. Diferencie claramente:
+Comece pela **Etapa 0 — Diagnóstico e plano**. Exame da base existente e produção de um relatório de adaptação para o Akylla Gestão. Diferencie claramente:
 
 - o que o código confirma;
 - o que a documentação afirma;

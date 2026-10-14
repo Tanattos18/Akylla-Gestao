@@ -1,7 +1,7 @@
 # PDV — Ponto de Venda do Akylla Gestão
 
-> **Natureza:** documento funcional do módulo PDV (Etapa 3 do roteiro
-> PetFlow, mantido no Akylla Gestão). Descreve o fluxo de tela, as regras
+> **Natureza:** documento funcional do módulo PDV (módulo do núcleo,
+> mantido no Akylla Gestão). Descreve o fluxo de tela, as regras
 > de negócio, a API, o modelo de dados, a integração com caixa/estoque/
 > financeiro e as garantias de segurança.
 >

@@ -2,7 +2,7 @@
   "name": "@petflow/shared",
   "version": "0.1.0",
   "private": true,
-  "description": "Tipos e validações compartilhados do PetFlow",
+  "description": "Tipos e validações compartilhados do Akylla Gestão",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {

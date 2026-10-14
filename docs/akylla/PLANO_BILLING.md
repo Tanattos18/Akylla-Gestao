@@ -15,7 +15,8 @@
   decidir planos/limites com o proprietário, aplicar limites no backend,
   modelar estados, avaliar gateway antes de integrar;
 - `docs/akylla/MAPA_DE_MODULOS.md` §5: separação billing-SaaS ×
-  financeiro do cliente (decisão permanente desde a Etapa 1 PetFlow);
+  financeiro do cliente (decisão permanente desde a fundação do
+  produto);
 - `docs/akylla/DIAGNOSTICO_INICIAL.md`: lacuna registrada —
   `TenantPlan` sem campos de limite e sem enforcement.
 

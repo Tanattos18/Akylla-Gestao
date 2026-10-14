@@ -14,14 +14,14 @@ complementares.
 |---|---|
 | **[Código]** | confirmado pela inspeção direta do arquivo-fonte |
 | **[Teste]** | confirmado por teste **executado nesta etapa** com resultado observado |
-| **[Doc]** | vem apenas da documentação do PetFlow; não re-verificado |
+| **[Doc]** | vem apenas da documentação herdada; não re-verificado |
 | **[Hipótese]** | decisão ainda não tomada / comportamento não observado |
 
 ---
 
 ## 1. Resumo executivo
 
-O PetFlow é uma base tecnicamente madura: monorepo NestJS + Next.js +
+A base herdada é tecnicamente madura: monorepo NestJS + Next.js +
 PostgreSQL/Prisma com multiempresa imposto no servidor, 380 testes de
 integração **executados e aprovados nesta etapa**, lint/typecheck/build/
 db:validate limpos. A adaptação para o Akylla Gestão é, em sua maior parte,
@@ -166,7 +166,7 @@ sem decisão explícita do proprietário (Etapa 10):
 |---|---|---|---|
 | Modelo/UI de **Pets** | `apps/api/src/pets`, `apps/web/src/app/pets`, DTOs em `lib/types.ts` | Client (FK Restrict), Appointment (`petId`), relatórios ("pets por espécie"), dashboard ("pet(s) cadastrado(s)"), seed | Ocultar da navegação comum; manter como módulo opcional |
 | **Lembretes de agendamento** com variável "pet" | `appointments.service.ts` (syncReminder), template com 3 variáveis | WhatsApp fila | Tornar variável genérica (cliente/serviço/data) |
-| Textos de marca "PetFlow"/"gestão para pet shops"/pata 🐾 | `layout.tsx`, `login`, `cadastro`, `faturamento`, `page.tsx`, `Receipt.tsx`, CSVs `petflow_*` | — | Substituídos na **Etapa 2 (identidade)** |
+| Textos da marca anterior/"gestão para pet shops"/pata 🐾 | `layout.tsx`, `login`, `cadastro`, `faturamento`, `page.tsx`, `Receipt.tsx`, CSVs | — | Substituídos na **Etapa 2 (identidade)** |
 | Seed de demonstração "Mundo Pet" | `apps/api/src/cli/seed-demo.ts` | todos os módulos | Reescrever com dados de comércio variado (Etapa futura, com aprovação) |
 | Pasta legada `automação do whatsapp/` | raiz | nenhuma do monorepo | **Preservada intocada permanentemente** |
 
@@ -350,7 +350,7 @@ Recomendações:
 | R6 | Rate limit in-memory não escala | Média | [Código] | Pós-1º cliente em produção |
 | R7 | Sem backup/monitoramento/plano de incidente (produção inexistente) | Alta no lançamento | [Código]/[Doc] | Etapa 12 |
 | R8 | LGPD: sem exportação/exclusão de titular, sem retenção | Média/Alta no lançamento | [Código] | Etapa 12/pré-produção |
-| R9 | Histórico Git do PetFlow perdido (squash em 1 commit) | Média | [Código] `git log` | Aceito; manter histórico limpo a partir de agora |
+| R9 | Histórico Git anterior perdido (squash em 1 commit) | Média | [Código] `git log` | Aceito; manter histórico limpo a partir de agora |
 | R10 | Projeto dentro de pasta OneDrive (sync pode travar arquivos/`node_modules`) | Baixa/Média | [Código] caminho atual | Considerar mover para pasta não sincronizada quando houver CI |
 | R11 | Upgrade de major (Prisma 8, Next 16, Vitest 5) pode quebrar | Média | [Teste] avisos | Só com janela de regressão; nunca em etapa de recurso |
 | R12 | Navegação sem componente único (menu = grade da home) | Baixa | [Código] | Etapa 2/4 |
@@ -386,7 +386,7 @@ Recomendações:
 
 | Etapa | Critério de aceite (verificável) |
 |---|---|
-| 2 | `lint`+`typecheck`+`test`+`build` verdes; grep de "PetFlow"/"pet shop"/🐾 em textos visíveis = 0 (com lista do que permaneceu por compatibilidade); login e navegação manuais OK |
+| 2 | `lint`+`typecheck`+`test`+`build` verdes; grep da marca anterior/"pet shop"/🐾 em textos visíveis = 0 (com lista do que permaneceu por compatibilidade); login e navegação manuais OK |
 | 3 | Suíte verde; casos nomeados de acesso cruzado (listar/abrir/editar/excluir/associar) para os 10 recursos críticos; relatório `AUDITORIA_MULTIEMPRESA.md` com achados e correções |
 | 4 | `MAPA_DE_MODULOS.md` aprovado pelo proprietário; nenhum código excluído |
 | 5–7 | Suíte verde + casos novos por etapa; fluxo venda ponta a ponta com estoque/financeiro consistentes |
@@ -419,7 +419,7 @@ comprado ou conectado** nesta etapa.
 ## Conclusão e próxima etapa
 
 Linha de base sólida: **lint 0 erros · typecheck OK · 380/380 testes
-aprovados (executados) · build OK · schema Prisma válido**. A base PetFlow
+aprovados (executados) · build OK · schema Prisma válido**. A base herdada
 pode ser adaptada ao Akylla Gestão sem reescritas; o único módulo novo
 confirmado como necessário para o MVP é **AP/AR (Etapa 8)**, além do
 enforcement de planos (Etapa 11) e da identidade (Etapa 2).

@@ -2,7 +2,7 @@
   "name": "@petflow/whatsapp",
   "version": "0.1.0",
   "private": true,
-  "description": "Adapter do WhatsApp Business Cloud API (Meta) do PetFlow — oficial, mockável, sem credenciais embutidas",
+  "description": "Adapter do WhatsApp Business Cloud API (Meta) do Akylla Gestão — oficial, mockável, sem credenciais embutidas",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {

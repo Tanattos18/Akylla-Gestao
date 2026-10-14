@@ -51,7 +51,7 @@ Para começar, leia nesta ordem:
 | [Desenvolvimento](operations/DEVELOPMENT.md) | ambiente e execução local |
 | [Auditoria multiempresa](akylla/AUDITORIA_MULTIEMPRESA.md) | isolamento por tenant e permissões (Etapa 3) |
 
-## Histórico das etapas (adaptação PetFlow → Akylla)
+## Entregáveis de etapa
 
 > Registros de entrega por etapa. Não descrevem o estado atual do
 > produto quando conflitarem com os documentos acima.
@@ -60,21 +60,16 @@ Para começar, leia nesta ordem:
 |---|---|
 | [Diagnóstico inicial](akylla/DIAGNOSTICO_INICIAL.md) | 0 — linha de base |
 | [Plano de adaptação](akylla/PLANO_DE_ADAPTACAO.md) | 1 — etapas, riscos, aceitação |
-| [Identidade e navegação](akylla/IDENTIDADE_E_NAVEGACAO.md) | 2 — rebranding PetFlow → Akylla |
+| [Identidade e navegação](akylla/IDENTIDADE_E_NAVEGACAO.md) | 2 — marca, textos e navegação |
+| [Auditoria multiempresa](akylla/AUDITORIA_MULTIEMPRESA.md) | 3 — isolamento A×B |
+| [Mapa de módulos](akylla/MAPA_DE_MODULOS.md) | 4 — classificação núcleo/opcional/nicho |
 | [Passo a passo OpenCode](PASSO_A_PASSO_OPENCODE_AKYLLA.md) | roteiro das 12 etapas |
 
-### Prompts originais do PetFlow
-
-`historico/etapas_petflow/` — arquivos de escopo escritos quando o
-produto ainda se chamava PetFlow (Etapas 0–7). Mantidos como referência
-histórica; os prompts de adaptação Akylla estão no
-[`PASSO_A_PASSO_OPENCODE_AKYLLA.md`](PASSO_A_PASSO_OPENCODE_AKYLLA.md).
-
-## Requisitos (origem PetFlow)
+## Requisitos
 
 | Documento | Conteúdo |
 |---|---|
-| [PRD](requirements/PRD.md) | requisitos originais do PetFlow (base preservada) |
+| [PRD](requirements/PRD.md) | requisitos do Akylla Gestão (produto, escopo, não funcionais) |
 
 ---
 
@@ -83,10 +78,9 @@ histórica; os prompts de adaptação Akylla estão no
 - **Idioma:** português do Brasil.
 - **Estado:** documentos de etapa usam data; documentos de estado
   atual são reescritos quando o sistema muda (ver CHANGELOG).
-- **Nomenclatura:** `docs/akylla/` = produto/adaptação ·
+- **Nomenclatura:** `docs/akylla/` = produto/entregáveis de etapa ·
   `docs/architecture/` = técnica · `docs/operations/` = processo ·
-  `docs/requirements/` = origem · `docs/historico/` = arquivos de
-  etapas antigas (prompts PetFlow).
+  `docs/requirements/` = requisitos do produto.
 - **Agentes:** regras em [`../AGENTS.md`](../AGENTS.md).
 - **READMEs do repo:** este arquivo é o índice de documentação; o
   `README.md` da raiz é a vitrine do produto; `database/README.md`

@@ -2,7 +2,7 @@
   "name": "@petflow/web",
   "version": "0.1.0",
   "private": true,
-  "description": "Interface web do PetFlow (Next.js)",
+  "description": "Interface web do Akylla Gestão (Next.js)",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

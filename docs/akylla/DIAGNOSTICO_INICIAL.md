@@ -15,7 +15,7 @@ Legenda de classificação usada abaixo:
 - **[NT]** não testado / não re-executado nesta sessão.
 
 > Atenção à regra 7 das diretrizes: nada aqui pode ser afirmado como "testado"
-> sem execução real. A documentação do PetFlow afirma 380/380 testes aprovados
+> sem execução real. A documentação herdada afirma 380/380 testes aprovados
 > em 10/10/2026, mas **esta sessão não executou os testes** (ver §7). Portanto
 > os módulos estão classificados como **documentados como testados [D/NT]**,
 > não como testados.
@@ -26,7 +26,7 @@ Legenda de classificação usada abaixo:
 
 | Item | Estado verificado |
 |---|---|
-| Git | Branch `main`, **um único commit** `9e08aeb` ("chore: importa base tecnica do PetFlow como fundacao do Akylla Gestao") — o histórico do PetFlow **não** foi preservado neste repositório [C] |
+| Git | Branch `main`, **um único commit** `9e08aeb` ("importa base técnica como fundação do Akylla Gestão") — o histórico anterior **não** foi preservado neste repositório [C] |
 | Remoto | `origin` → `https://github.com/Tanattos18/Akylla-Gestao.git` [C] |
 | Trabalho pendente | 1 arquivo untracked: `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`; working tree limpa [C] |
 | `node_modules` | **ausente** em todas as workspaces; `dist/` e `.next/` ausentes [C] |
@@ -52,7 +52,7 @@ Monorepo npm workspaces (`package.json:6-9`) com 5 workspaces:
 | `apps/api` | NestJS 11 + Prisma 5 + Zod (pipe por-parâmetro, sem ValidationPipe global) [C] |
 | `apps/web` | Next.js 15 (App Router, tudo client-side) + Tailwind 4 [C] |
 | `apps/worker` | Node puro + Prisma — fila WhatsApp em Postgres (poll + claim atômico), sem Redis [C] |
-| `packages/shared` | Schemas/DTOs Zod compartilhados; constante `APP_NAME = "PetFlow"` [C] |
+| `packages/shared` | Schemas/DTOs Zod compartilhados; constante `APP_NAME` apontando para a marca anterior [C] |
 | `packages/whatsapp` | Abstração de provedor (`meta`/`mock`), E.164, backoff, opt-out [C] |
 | `packages/config` | tsconfig base |
 | `database/` | Um único `schema.prisma` + 9 migrations versionadas |
@@ -189,12 +189,12 @@ Reaproveitar **parcialmente / adaptar**:
 | **Serviços** | Appointment, planos | **Genérico** — manter [C] |
 | **WhatsApp + lembretes de agendamento** | Appointment (origem `SERVICE_REMINDER`), template com 3 variáveis (uma delas "pet") | **Genérico com adaptação** — lembrete reutilizável; texto das variáveis/placeholder "pet" a generalizar [C] |
 | **Assinaturas de clientes** | Client, CashMovement | **Genérico** — renomear rótulos para não sugerir plano de banho [C] |
-| Textos de marca "PetFlow" / "gestão para pet shops" / emoji pata | layout, login, cadastro, faturamento, Receipt, CSV filenames | **Substituir na Etapa de identidade** (~18 linhas visíveis + constantes) [C] |
+| Textos da marca anterior / "gestão para pet shops" / emoji pata | layout, login, cadastro, faturamento, Receipt, CSV filenames | **Substituir na Etapa de identidade** (~18 linhas visíveis + constantes) [C] |
 | Pasta legada `automação do whatsapp/` | nenhum do monorepo (projeta independente) | **Preservar intocada** (regra AGENTS.md 12) [C] |
 
-Identificadores internos com nome PetFlow que **não** devem ser renomeados em
+Identificadores técnicos legados que **não** devem ser renomeados em
 massa sem plano próprio: pacotes `@petflow/*` (~45 arquivos de import),
-`APP_NAME`, cookie `petflow_session`, prefixo de CSV `petflow_*`,
+`APP_NAME`, cookie `petflow_session`, prefixo de CSV legado,
 `service: "petflow-api"` no health, `PF-XXXXXXXX` no código de comprovante,
 bancos `petflow`/`petflow_test` [C].
 
@@ -208,7 +208,7 @@ bancos `petflow`/`petflow_test` [C].
    testes, build e `db:validate` não rodam. Toda a base de qualidade é
    **documental**, não verificada nesta sessão [C/NT].
 2. **Histórico Git perdido**: o repositório Akylla contém um único commit
-   squashed; os hashes citados em `PROJECT_STATUS.md` (PetFlow) não existem
+   squashed; os hashes do histórico anterior não existem
    aqui. Revert granular e auditoria de mudanças ficam mais difíceis [C].
 3. **`TenantSubscription` sem enforcement** — risco comercial (uso sem
    assinatura válida) e risco de anunciar recurso inexistente [C].
@@ -239,7 +239,7 @@ bancos `petflow`/`petflow_test` [C].
 13. Verificação do webhook usa comparação simples (não `timingSafeEqual`) no
     `verify_token` GET — aceitável para bootstrap [C].
 14. Duplicidade de cliente com janela de corrida aceita (sem unique duro de
-    `nameKey`) — limitação já registrada no PetFlow [D].
+    `nameKey`) — limitação já registrada na base original [D].
 15. Navegação sem sidebar/header de links: o menu de facto é a grade da home
     (`app/page.tsx`) — ocultar módulo = editar esse arquivo [C].
 
@@ -317,7 +317,7 @@ limites de plano.
 
 ## 10. Conclusão
 
-A base do PetFlow é tecnicamente sólida e, em sua maior parte, **já é o núcleo
+A base herdada é tecnicamente sólida e, em sua maior parte, **já é o núcleo
 do Akylla Gestão**: multiempresa de verdade, autenticação por sessão,
 cadastros, estoque, vendas, caixa, relatórios e um esqueleto separado de
 billing SaaS. O trabalho de adaptação é majoritariamente **cosmético

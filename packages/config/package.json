@@ -2,7 +2,7 @@
   "name": "@petflow/config",
   "version": "0.1.0",
   "private": true,
-  "description": "Configurações comuns reutilizáveis do PetFlow",
+  "description": "Configurações comuns reutilizáveis do Akylla Gestão",
   "files": [
     "tsconfig.base.json"
   ]
