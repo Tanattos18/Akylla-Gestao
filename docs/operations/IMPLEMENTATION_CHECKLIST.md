@@ -4,6 +4,30 @@
 > Este checklist cobre apenas a era do Akylla Gestão. O histórico
 > anterior à adaptação está preservado no Git.
 
+## Fora do roteiro — Catálogo de melhorias e pasta de backup (2026-10-14)
+
+Terceira entrega única autorizada pelo proprietário. Nenhum código de
+aplicação alterado; nenhuma ideia executada — este checklist **só
+registra** a criação da base de decisão.
+
+- [x] `upgrade/MELHORIAS.md` — 29 ideias (backend, segurança, operação,
+      infra, produto), cada uma com função, impacto real no projeto,
+      ponto de partida e prioridade P0–P3 + tabela-resumo + sequência
+- [x] `upgrade/MELHORIAS_DESIGN.md` — catálogo de design (tokens,
+      componentes, movimento, a11y, responsividade, estados, dados,
+      impressão) com regras de ouro
+- [x] 7 débitos medidos no frontend e documentados (D-1 a D-7),
+      incluindo contraste reprovado em 3 pares de cor (medido com
+      razão WCAG) e 32 tabelas inline
+- [x] `backup/README.md` — estrutura, comandos de dump/restore, drill
+      obrigatório e regra de não versionar dados sensíveis
+- [x] `.gitignore`: `/backup/*` ignorado com exceção do README;
+      comportamento verificado com dump simulado
+- [x] `docs/README.md` indexando as duas pastas; `MELHORIAS.md` com
+      linha de escopo apontando o catálogo de design
+- [x] 33 arquivos `.md` / 60 links relativos verificados (0 quebrados)
+      e UTF-8 validado nos arquivos novos
+
 ## Fora do roteiro — Reorganização estrutural (2026-10-14)
 
 Tarefa autorizada pelo proprietário como entrega única.

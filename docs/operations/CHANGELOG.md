@@ -6,6 +6,66 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-14 - Catálogo de melhorias e pasta de backup
+
+Terceira entrega única autorizada pelo proprietário (fora do roteiro
+0–12). Cria a base de decisão para evolução do produto — **nenhum
+código de aplicação alterado**, nenhuma ideia executada.
+
+### Adicionado
+
+- **`upgrade/MELHORIAS.md`** — catálogo com **29 ideias** de melhoria
+  em 6 categorias (segurança e compliance, operação e resiliência,
+  desempenho e escala, qualidade e testes, produto e UX, plataforma e
+  DX). Cada item traz função, o que melhora **neste projeto** (com
+  arquivo ou limitação L1–L14 real), ponto de partida e prioridade
+  P0–P3, mais tabela-resumo e sequência sugerida.
+- **`upgrade/MELHORIAS_DESIGN.md`** — catálogo de **design de
+  interface** (tokens/CSS, componentes, movimento/JS, a11y,
+  responsividade, estados, dados e visualização, performance
+  percebida, impressão), no mesmo formato. Inclui regras de ouro
+  (servidor manda; dinheiro não otimiza UI; acessível por padrão;
+  `prefers-reduced-motion`).
+- **`backup/README.md`** — estrutura e regras de uso da pasta de
+  cópias de segurança locais (dump/restore, drill obrigatório, nada
+  sensível no Git).
+
+### Achados medidos no frontend (catálogo de design, §0)
+
+Inspeção de `apps/web/` produziu 7 débitos concretos, **D-1 a D-7**:
+
+| | Achado |
+|---|---|
+| D-1 | `color: var(--foreground)` em `globals.css:39` — variável nunca definida |
+| D-2 | fonte: `--font-inter` injetada no `<html>` mas não lida; CSS usa a string `"Inter"` |
+| D-3 | CSS e comentários de sidebar mortos (topbar opção B removeu a sidebar) |
+| D-4 | 32 `<table>` escritos inline nas páginas |
+| D-5 | nenhum `loading.tsx`/`error.tsx`/`not-found.tsx` no App Router |
+| D-6 | `components/ui/` sem `Table`, `Modal`, `Select`, `Toast`, `Tabs` |
+| D-7 | **contraste reprovado**: `text-amber-500`/branco = 2.15, `text-success-500`/branco = 2.49, `text-amber-600`/branco = 3.19 (AA = 4.5), em 194 usos de `text-primary`/`text-amber` |
+
+### Alterado
+
+- **`.gitignore`**: `/backup/*` ignorado com exceção de
+  `!/backup/README.md` (mesmo padrão do `.env.example`). Testado:
+  dump `.sql` simulado fica ignorado, o README não.
+- **`docs/README.md`**: seção "Fora de `docs/` — pastas da raiz"
+  indexando as duas pastas novas; `MELHORIAS.md` ganhou linha de
+  escopo apontando o catálogo de design.
+
+### Verificação
+
+- 33 arquivos `.md`, 60 links relativos — **0 quebrados**.
+- UTF-8 validado byte a byte nos arquivos novos (0 U+FFFD, 0 mojibake).
+- Nenhum arquivo sensível versionado.
+
+### Preservado
+
+- Nenhum arquivo existente sobrescrito; `automação do whatsapp/`
+  intocado; `AGENTS.md` intocado.
+
+---
+
 ## [Akylla Gestão] - 2026-10-14 - Documentação: correção de erros factuais e banners
 
 Segunda entrega única autorizada pelo proprietário (fora do roteiro

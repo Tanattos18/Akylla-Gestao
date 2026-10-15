@@ -38,12 +38,51 @@ do roteiro `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`. Entregas:
 
 ### Próximos passos (fora do roteiro — requerem autorização)
 
+> **Catálogos de decisão (2026-10-14):** `upgrade/MELHORIAS.md` (29
+> ideias de backend/segurança/operação/produto) e
+> `upgrade/MELHORIAS_DESIGN.md` (design + 7 débitos medidos no
+> frontend). Prioridades P0–P3 e sequência sugerida estão lá; nada
+> entra em execução sem decisão do proprietário.
+
 1. Concluir checklist do `CHECKLIST_PRE_PRODUCAO.md` §7 (backups,
    LGPD, CD/deploy real, monitoramento, vitest upgrade, E2E Mercado
    Pago);
 2. Definir ambiente de produção (hosting + domínio + TLS);
 3. Deploy de staging → E2E sandbox Mercado Pago → aprovação →
    produção restrita (pilotos).
+
+## Entrega fora do roteiro — Catálogo de melhorias e pasta de backup (2026-10-14)
+
+**Concluída** (terceira entrega única autorizada). Nenhum código de
+aplicação alterado; nenhuma ideia executada — a entrega é a **base de
+decisão** para a evolução do produto.
+
+- **`upgrade/MELHORIAS.md`** — 29 ideias em 6 categorias (segurança e
+  compliance, operação e resiliência, desempenho e escala, qualidade e
+  testes, produto e UX, plataforma e DX). Cada uma com função, o que
+  melhora no Akylla (referenciando limitação L1–L14 ou arquivo real),
+  ponto de partida e prioridade P0–P3. Inclui tabela-resumo e
+  sequência sugerida.
+- **`upgrade/MELHORIAS_DESIGN.md`** — design de interface: tokens
+  semânticos, componentes, movimento/JS, acessibilidade,
+  responsividade, estados (loading/erro/vazio), dados e visualização,
+  performance percebida e impressão. Regras de ouro: servidor manda ·
+  dinheiro não otimiza UI · acessível por padrão ·
+  `prefers-reduced-motion`.
+- **`backup/README.md`** — estrutura e regras de cópias de segurança
+  locais (dump/restore, drill obrigatório, nada sensível no Git).
+  Responde parcialmente à lacuna L8, ainda pendente para produção.
+- **7 débitos medidos no frontend (D-1 a D-7):** `--foreground`
+  indefinida, variável de fonte órfã, CSS morto de sidebar, 32 tabelas
+  inline, ausência de `loading/error/not-found`, primitivos faltando
+  (`Table`/`Modal`/`Select`/`Toast`) e **contraste reprovado** em 3
+  pares de cor (2.15, 2.49 e 3.19 contra o mínimo AA 4.5), em 194
+  usos.
+- **`.gitignore`**: `/backup/*` ignorado com exceção do README
+  (verificado com dump simulado).
+- Verificações: 33 arquivos `.md` / 60 links (0 quebrados) e UTF-8
+  validado nos arquivos novos. `npm run validate` mantido verde da
+  entrega anterior (esta entrega não tocou código).
 
 ## Entrega fora do roteiro — Importação de planilhas (2026-10-14)
 
