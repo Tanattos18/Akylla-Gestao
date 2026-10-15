@@ -4,6 +4,32 @@
 > Este checklist cobre apenas a era do Akylla Gestão. O histórico
 > anterior à adaptação está preservado no Git.
 
+## Fora do roteiro — Plano: primeiro cliente pagante (2026-10-14)
+
+**Aguardando autorização** (regra 2 do `AGENTS.md`). Documento de
+plano criado; **nenhum item executado**.
+
+Plano em [`CHECKLIST_PRIMEIRO_CLIENTE.md`](CHECKLIST_PRIMEIRO_CLIENTE.md)
+— 3 semanas até o primeiro cliente pagante, com itens obrigatórios,
+comandos concretos e critério de aceite **go/no-go**.
+
+- [ ] **Semana 1 — Poder hospedar**: definir hosting · fechar o
+      `cd.yml` (substituir os placeholders em `cd.yml:40` e `:75`) ·
+      `pg_dump` agendado **com restore testado** · Sentry + uptime
+- [ ] **Semana 2 — Poder confiar**: `next`→16.4.1 e `vitest` (zerar
+      `npm audit --omit=dev`) · endpoint LGPD de anonimização
+      (`apps/api/src/lgpd/`) · D-7 contraste do design · termos de uso
+      e política de privacidade
+- [ ] **Semana 3 — Poder cobrar**: E2E real do Mercado Pago em sandbox
+      (assinatura `ACTIVE` por pagamento real) · seed neutro ·
+      roteiro comercial de migração ensaiado
+- [ ] **Critério de aceite final (go/no-go)** no próprio checklist:
+      9 verificações, todas obrigatórias
+
+Fora de escopo deste plano (exige decisão nova): cobrança recorrente
+em produção, RLS, multi-instância/Redis, dark mode, funcionalidades
+novas.
+
 ## Fora do roteiro — Catálogo de melhorias e pasta de backup (2026-10-14)
 
 Terceira entrega única autorizada pelo proprietário. Nenhum código de

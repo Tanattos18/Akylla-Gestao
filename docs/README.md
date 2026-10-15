@@ -20,6 +20,7 @@ Para começar, leia nesta ordem:
 | [Status do projeto](operations/PROJECT_STATUS.md) | etapa vigente, entregas, pendências (fonte única das contagens correntes) |
 | [Checklist de implementação](operations/IMPLEMENTATION_CHECKLIST.md) | progresso etapa a etapa |
 | [Changelog](operations/CHANGELOG.md) | histórico completo de alterações |
+| [Checklist — primeiro cliente](operations/CHECKLIST_PRIMEIRO_CLIENTE.md) | roteiro executável (3 semanas) até o primeiro cliente pagante, com critério de aceite go/no-go |
 
 ## Produto (sempre atual)
 

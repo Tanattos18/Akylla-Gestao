@@ -6,6 +6,54 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-14 - Plano executável: primeiro cliente pagante
+
+Quarta entrega única autorizada. Transforma as ideias dos catálogos
+`upgrade/` em **plano de execução testável**. Nenhum item do plano foi
+executado — apenas o documento foi criado.
+
+### Adicionado
+
+- **`docs/operations/CHECKLIST_PRIMEIRO_CLIENTE.md`** — roteiro de 3
+  semanas até o primeiro cliente **pago em produção**:
+  - **Semana 1 (poder hospedar):** definir hosting, fechar o
+    `cd.yml` (placeholders em `cd.yml:40` e `:75`), backup com
+    **restore testado**, monitoramento e alerta.
+  - **Semana 2 (poder confiar):** zerar `npm audit --omit=dev`
+    (`next`→16.4.1, `vitest`), endpoint LGPD de anonimização
+    (`apps/api/src/lgpd/`, hoje inexistente), D-7 do contraste,
+    termos de uso e política de privacidade com aceite registrado.
+  - **Semana 3 (poder cobrar):** E2E real do Mercado Pago em sandbox
+    (assinatura `ACTIVE` por **pagamento real**, não pelo mock), seed
+    neutro (fecha L11) e roteiro comercial de migração ensaiado.
+- Cada item traz **comando ou arquivo concreto** e **critério de
+  aceite testável**; o documento fecha com **critério go/no-go de 9
+  verificações**, modelo comercial de piloto (setup + 90 dias, sem
+  recorrente no cliente 1) e tabela de riscos aceitos.
+
+### Alterado
+
+- **`docs/README.md`**: checklist indexado em "Estado atual do
+  produto".
+- **`docs/operations/PROJECT_STATUS.md`**: bloco de Próximos passos
+  aponta o plano como plano de execução proposto, aguardando
+  autorização.
+- **`docs/operations/IMPLEMENTATION_CHECKLIST.md`**: seção "Fora do
+  roteiro — Plano: primeiro cliente pagante" com os itens `[ ]`
+  pendentes.
+
+### Verificação
+
+- Links relativos verificados (0 quebrados).
+- Nenhum arquivo de código alterado; nenhum item do plano executado.
+
+### Estado
+
+**Aguardando autorização** para iniciar a Semana 1 (regra 2 do
+`AGENTS.md`).
+
+---
+
 ## [Akylla Gestão] - 2026-10-14 - Catálogo de melhorias e pasta de backup
 
 Terceira entrega única autorizada pelo proprietário (fora do roteiro

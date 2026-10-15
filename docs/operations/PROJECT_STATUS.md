@@ -43,6 +43,12 @@ do roteiro `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`. Entregas:
 > `upgrade/MELHORIAS_DESIGN.md` (design + 7 débitos medidos no
 > frontend). Prioridades P0–P3 e sequência sugerida estão lá; nada
 > entra em execução sem decisão do proprietário.
+>
+> **Plano de execução proposto:**
+> `docs/operations/CHECKLIST_PRIMEIRO_CLIENTE.md` — 3 semanas até o
+> primeiro cliente pagante (hospedar → confiar → cobrar), com itens
+> obrigatórios, comandos concretos e **critério de aceite go/no-go**.
+> Aguarda autorização para iniciar.
 
 1. Concluir checklist do `CHECKLIST_PRE_PRODUCAO.md` §7 (backups,
    LGPD, CD/deploy real, monitoramento, vitest upgrade, E2E Mercado
