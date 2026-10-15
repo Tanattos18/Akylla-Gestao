@@ -86,8 +86,7 @@ export class BillingService {
     });
   }
 
-  async getSubscription(auth: AuthContext) {
-    await this.expireStale(auth.companyId);
+  async getSubscription(auth: AuthContext) {    await this.expireStale(auth.companyId);
 
     const subscription = await this.prisma.tenantSubscription.findUnique({
       where: { companyId: auth.companyId },
@@ -99,6 +98,30 @@ export class BillingService {
     }
 
     return formatSubscription(subscription);
+  }
+
+  /**
+   * Uso do plano (N3 · 6.1): limites do plano da assinatura + consumo atual
+   * (usuários, clientes, produtos) da própria empresa. `NULL` = ilimitado.
+   * Sem assinatura, retorna `subscription: null` com o consumo mesmo assim.
+   */
+  async getUsage(auth: AuthContext) {
+    await this.expireStale(auth.companyId);
+
+    const [subscription, users, clients, products] = await Promise.all([
+      this.prisma.tenantSubscription.findUnique({
+        where: { companyId: auth.companyId },
+        select: subscriptionSelect,
+      }),
+      this.prisma.user.count({ where: { companyId: auth.companyId } }),
+      this.prisma.client.count({ where: { companyId: auth.companyId } }),
+      this.prisma.product.count({ where: { companyId: auth.companyId } }),
+    ]);
+
+    return {
+      subscription: subscription ? formatSubscription(subscription) : null,
+      usage: { users, clients, products },
+    };
   }
 
   async upsertSubscription(auth: AuthContext, input: UpdateTenantSubscriptionInput) {

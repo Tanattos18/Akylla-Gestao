@@ -54,6 +54,11 @@ export class BillingController {
     return this.billingService.getSubscription(auth);
   }
 
+  @Get("usage")
+  getUsage(@Auth() auth: AuthContext) {
+    return this.billingService.getUsage(auth);
+  }
+
   @Put("subscription")
   @UseGuards(AdminGuard)
   upsertSubscription(

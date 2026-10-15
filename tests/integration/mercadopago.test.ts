@@ -41,7 +41,7 @@ async function login(email: string): Promise<string> {
   return sessionCookieFrom(response);
 }
 
-function signedHeaders(dataId: string, secret: string, ts = "1728734400"): Record<string, string> {
+function signedHeaders(dataId: string, secret: string, ts = Math.floor(Date.now() / 1000).toString()): Record<string, string> {
   const manifest = `id:${dataId};request-id:test-req;ts:${ts};`;
   const v1 = crypto.createHmac("sha256", secret).update(manifest).digest("hex");
   return {
@@ -218,6 +218,17 @@ describe("Mercado Pago — webhook", () => {
       .post("/api/webhooks/mercadopago?type=preapproval&data.id=mp_desconhecido")
       .set(headers)
       .send({ type: "preapproval", data: { id: "mp_desconhecido" } });
+
+    expect(response.status).toBe(200);
+    expect(response.body.processed).toBe(false);
+  });
+
+  it("webhook com timestamp expirado não processa (anti-replay)", async () => {
+    const headers = signedHeaders("mp_preapp_mock_1", "test-webhook-secret", "1728734400");
+    const response = await request(app.getHttpServer())
+      .post("/api/webhooks/mercadopago?type=preapproval&data.id=mp_preapp_mock_1")
+      .set(headers)
+      .send({ type: "preapproval", data: { id: "mp_preapp_mock_1" } });
 
     expect(response.status).toBe(200);
     expect(response.body.processed).toBe(false);

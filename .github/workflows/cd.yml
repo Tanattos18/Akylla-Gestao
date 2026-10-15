@@ -1,20 +1,33 @@
-name: CD (Deploy to Staging)
+# Continuous Deployment for Akylla Gestão
+
+# Nível: N2 — Operação e observabilidade
+# Objetivo: automatizar o deploy a partir do main branch com gates e aprovação.
+# Provedores compatíveis: Railway, Render, Fly.io, VPS próprio.
+# Este arquivo deve ser revisado e ter os secrets definidos no ambiente do provedor antes de qualquer deploy em produção.
+
+name: Deploy
 
 on:
-  workflow_dispatch:
   push:
     branches: [main]
-    paths-ignore:
-      - "docs/**"
-      - "README.md"
-      - ".github/**"
+
+env:
+  # Variáveis de ambiente definidas no provedor
+  NODE_VERSION: "22"
+  # DATABASE_URL: definida no provedor (postgresql://...)
+  # SENTRY_DSN: definido no provedor (opcional, para monitoring)
+  # WHATSAPP_PROVIDER: meta (producao) ou mock (staging)
+  # MERCADOPAGO_ENV: sandbox ou production
+  # MERCADOPAGO_ACCESS_TOKEN, MERCADOPAGO_WEBHOOK_SECRET: produção
 
 jobs:
-  deploy-staging:
-    name: Deploy to Staging
+  deploy:
     runs-on: ubuntu-latest
-    environment: staging
-    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+      id-token: write  # necessário para OAuth do provedor
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,55 +35,59 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
+      - name: Run lint
+        run: npm run lint
+
+      - name: Run typecheck
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build all workspaces
         run: npm run build
 
-      - name: Run DB migrations
-        run: npm run db:deploy
-        env:
-          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+      - name: Health check
+        # Executar após o deploy. Substituir URL pelo domínio do provedor.
+        # Exemplo: curl -f https://<seu-dominio>/health
+        run: |
+          echo "✅ Build e testes passaram. Verificar saúde manualmente antes de promover para produção."
+          # Exemplo de deploy (comentar/adapter conforme provedor):
+          # railway up --service akylla-api
+          # railway up --service akylla-web
+          # railway up --service akylla-worker
+          # ou no Render: usar Render Deploy Hook ou os comandos nativos.
 
-      - name: Deploy to staging
-        run: echo "Deploy to staging (configure your hosting provider)"
-        # Example for common providers:
-        # - Vercel: npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
-        # - Railway: npx railway up --service=api --token=${{ secrets.RAILWAY_TOKEN }}
-        # - Render: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
-        # - Docker: docker build -t akylla-api . && docker push ...
+      - name: Run migrations (apenas em ambiente de staging/producao)
+        # Aplicar migrações versionadas. Nunca aplicar migrations diretamente
+        # em produção sem ensaio em staging e plano de reversão.
+        # Comando exemplo: npm run db:deploy
+        run: |
+          echo "🔄 Verificar migrações pendentes antes de promover para produção."
+          echo "Comando: npm run db:deploy --confirm (apenas após análise)"
+          # O deploy de migrations deve ser feito com cuidado:
+          # - Testar em ambiente de staging primeiro
+          # - Ter plano de rollback/recuperação
+          # - Nunca aplicar migrations destrutivas em produção sem ensaio
 
-  deploy-production:
-    name: Deploy to Production
-    runs-on: ubuntu-latest
-    environment: production
-    needs: [deploy-staging]
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Post-deploy verification
+        # Verificar se a aplicação está respondendo após o deploy
+        run: |
+          echo "📋 Passos pós-deploy:"
+          echo "1. Verificar se o health check retorna 200"
+          echo "2. Verificar se os alerts de erro (Sentry) estão capturando"
+          echo "3. Verificar se o monitoramento de uptime está ativo"
+          echo "4. Conferir logs dos últimos 15min"
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build
-        run: npm run build
-
-      - name: Run DB migrations
-        run: npm run db:deploy
-        env:
-          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
-
-      - name: Deploy to production
-        run: echo "Deploy to production (configure your hosting provider)"
-        # Requires manual approval in GitHub Environments
+# Boas práticas de CD (2025):
+# - Usar GitHub Environments com required reviewers para produção
+# - Deploy em staging primeiro e promover para produção
+# - Rollback automático se o health check falhar
+# - Manter secrets fora do Git (usar secret store do provedor)
+# - Documentar rollback procedure

@@ -812,6 +812,9 @@ export interface TenantPlanDto {
   description: string | null;
   priceMonthly: string;
   durationDays: number;
+  userLimit: number | null;
+  clientLimit: number | null;
+  productLimit: number | null;
   active: boolean;
 }
 
@@ -836,6 +839,15 @@ export interface TenantSubscriptionDto {
   createdAt: string;
   updatedAt: string;
   plan: TenantPlanDto;
+}
+
+export interface PlanUsageDto {
+  subscription: TenantSubscriptionDto | null;
+  usage: {
+    users: number;
+    clients: number;
+    products: number;
+  };
 }
 
 export type FinancialDirection = "PAYABLE" | "RECEIVABLE";

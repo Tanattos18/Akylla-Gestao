@@ -14,6 +14,9 @@ type WebhookQuery = {
 
 type WebhookHeaders = Record<string, string | string[] | undefined>;
 
+/** Janela de tolerância do anti-replay do webhook (15 minutos). */
+const WEBHOOK_TS_TOLERANCE_MS = 15 * 60 * 1000;
+
 /**
  * Integração sandbox do Mercado Pago (Etapa 11, decisão D4).
  *
@@ -198,10 +201,13 @@ export class MercadoPagoService {
   /**
    * Verificação de assinatura do webhook (header x-signature do Mercado Pago).
    * Manifesto: `id:[data.id];request-id:[x-request-id];ts:[ts];` com HMAC-SHA256.
+   * Endurecimentos (N3): comparação em tempo constante, anti-replay por
+   * frescura do `ts` e fail-closed sem segredo configurado.
    */
   verifyWebhookSignature(
     headers: WebhookHeaders,
     dataId: string,
+    nowMs: number = Date.now(),
   ): boolean {
     const secret = this.webhookSecretOverride ?? env.MERCADOPAGO_WEBHOOK_SECRET;
     if (!secret) return false;
@@ -220,16 +226,30 @@ export class MercadoPagoService {
     const v1 = parts.v1;
     if (!ts || !v1) return false;
 
+    // Anti-replay: `ts` é unix epoch (segundos ou ms). Rejeita eventos
+    // fora da janela de tolerância (passado ou futuro).
+    const tsNum = Number(ts);
+    if (!Number.isFinite(tsNum) || tsNum <= 0) return false;
+    const tsMs = tsNum < 1e12 ? tsNum * 1000 : tsNum;
+    if (Math.abs(nowMs - tsMs) > WEBHOOK_TS_TOLERANCE_MS) {
+      this.logger.warn(`Webhook Mercado Pago recusado: timestamp fora da janela (ts=${ts})`);
+      return false;
+    }
+
     const rawRequestId = headers["x-request-id"];
     const requestId = Array.isArray(rawRequestId) ? rawRequestId[0] : rawRequestId ?? "";
 
     const manifest = `id:${dataId};request-id:${requestId};ts:${ts};`;
     const expected = crypto.createHmac("sha256", secret).update(manifest).digest("hex");
 
-    // Comparação em tempo constante.
-    const expectedBuf = Buffer.from(expected, "hex");
-    const receivedBuf = Buffer.from(v1, "hex");
-    if (expectedBuf.length !== receivedBuf.length) return false;
-    return crypto.timingSafeEqual(expectedBuf, receivedBuf);
+    // Comparação em tempo constante (anti timing attack).
+    try {
+      const expectedBuf = Buffer.from(expected, "hex");
+      const receivedBuf = Buffer.from(v1, "hex");
+      if (expectedBuf.length !== receivedBuf.length) return false;
+      return crypto.timingSafeEqual(expectedBuf, receivedBuf);
+    } catch {
+      return false;
+    }
   }
 }

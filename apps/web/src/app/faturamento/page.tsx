@@ -8,6 +8,7 @@ import { fetchSession, type Session } from "../../lib/session";
 import { formatBrl, formatDate } from "../../lib/format";
 import {
   tenantSubscriptionStatusLabels,
+  type PlanUsageDto,
   type TenantPlanDto,
   type TenantSubscriptionDto,
 } from "../../lib/types";
@@ -22,6 +23,7 @@ export default function FaturamentoPage() {
   const [loading, setLoading] = useState(true);
   const [plans, setPlans] = useState<TenantPlanDto[]>([]);
   const [subscription, setSubscription] = useState<TenantSubscriptionDto | null>(null);
+  const [planUsage, setPlanUsage] = useState<PlanUsageDto | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -42,6 +44,8 @@ export default function FaturamentoPage() {
           throw err;
         }
       }
+      const usage = await api<PlanUsageDto>("/api/billing/usage");
+      setPlanUsage(usage);
       setError(null);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Falha ao carregar o faturamento.");
@@ -223,6 +227,62 @@ export default function FaturamentoPage() {
         ) : (
           <p className="text-sm text-slate-500">
             Nenhuma assinatura ativa para esta empresa. Escolha um plano abaixo.
+          </p>
+        )}
+      </div>
+
+      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">
+          Uso do plano
+        </h3>
+        {planUsage?.subscription ? (
+          <div className="space-y-4">
+            {(
+              [
+                { label: "Usuários", used: planUsage.usage.users, limit: planUsage.subscription.plan.userLimit },
+                { label: "Clientes", used: planUsage.usage.clients, limit: planUsage.subscription.plan.clientLimit },
+                { label: "Produtos", used: planUsage.usage.products, limit: planUsage.subscription.plan.productLimit },
+              ] as { label: string; used: number; limit: number | null }[]
+            ).map((row) => {
+              const pct = row.limit === null ? 0 : Math.min(100, Math.round((row.used / row.limit) * 100));
+              const bar = row.limit === null ? "bg-primary-500" : pct >= 100 ? "bg-red-500" : pct >= 80 ? "bg-amber-500" : "bg-primary-500";
+              return (
+                <div key={row.label}>
+                  <div className="mb-1 flex items-baseline justify-between text-sm">
+                    <span className="text-slate-600">{row.label}</span>
+                    <span className="font-medium text-slate-800">
+                      {row.used}
+                      {row.limit === null ? " · ilimitado" : ` de ${row.limit}`}
+                    </span>
+                  </div>
+                  <div
+                    className="h-2 overflow-hidden rounded-full bg-slate-100"
+                    role="progressbar"
+                    aria-valuenow={row.limit === null ? undefined : row.used}
+                    aria-valuemax={row.limit ?? undefined}
+                    aria-label={`${row.label}: ${row.used}${row.limit === null ? ", ilimitado" : ` de ${row.limit}`}`}
+                  >
+                    <div className={`h-full rounded-full ${bar}`} style={{ width: row.limit === null ? "100%" : `${pct}%` }} />
+                  </div>
+                  {row.limit !== null && pct >= 80 && (
+                    <p className="mt-1 text-xs text-amber-700">
+                      {pct >= 100
+                        ? `Limite de ${row.label.toLowerCase()} atingido no plano ${planUsage.subscription?.plan.name}.`
+                        : `Você já usou ${pct}% do limite de ${row.label.toLowerCase()}.`}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+            <p className="text-xs text-slate-500">
+              Limites aplicados apenas com assinatura ativa. Sem assinatura, expirada ou
+              cancelada, nenhum bloqueio é aplicado.
+            </p>
+          </div>
+        ) : (
+          <p className="text-sm text-slate-500">
+            Sem assinatura no momento — os limites do plano passam a valer quando
+            a assinatura estiver ativa.
           </p>
         )}
       </div>

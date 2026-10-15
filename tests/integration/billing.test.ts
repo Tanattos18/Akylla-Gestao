@@ -268,3 +268,59 @@ describe("Billing — renovação e expiração", () => {
     expect(anon.status).toBe(401);
   });
 });
+
+describe("Billing — uso do plano (N3)", () => {
+  it("expõe limites do plano e consumo atual da própria empresa", async () => {
+    const company = await prisma.company.create({
+      data: { name: "Empresa Uso", slug: "billing-uso" },
+    });
+    await prisma.user.create({
+      data: {
+        companyId: company.id,
+        name: "Admin Uso",
+        email: "admin@billing-uso.test",
+        passwordHash: await bcrypt.hash(PASSWORD, 4),
+        role: "ADMIN",
+      },
+    });
+    await prisma.client.create({
+      data: { companyId: company.id, name: "Cliente Uso", nameKey: "cliente uso" },
+    });
+    await prisma.product.create({
+      data: { companyId: company.id, name: "Produto Uso", sku: "USO-1" },
+    });
+
+    const cookie = await login("admin@billing-uso.test");
+
+    const put = await request(app.getHttpServer())
+      .put("/api/billing/subscription")
+      .set("Cookie", cookie)
+      .send({ planId: "tenantplan_essencial" });
+    expect(put.status).toBe(200);
+
+    const response = await request(app.getHttpServer())
+      .get("/api/billing/usage")
+      .set("Cookie", cookie);
+
+    expect(response.status).toBe(200);
+    expect(response.body.subscription.plan.userLimit).toBe(3);
+    expect(response.body.subscription.plan.clientLimit).toBe(200);
+    expect(response.body.subscription.plan.productLimit).toBe(100);
+    expect(response.body.usage).toMatchObject({ users: 1, clients: 1, products: 1 });
+  });
+
+  it("sem assinatura retorna consumo com subscription null", async () => {
+    const response = await request(app.getHttpServer())
+      .get("/api/billing/usage")
+      .set("Cookie", adminBCookie);
+
+    expect(response.status).toBe(200);
+    expect(response.body.subscription).toBeNull();
+    expect(response.body.usage.users).toBe(1);
+  });
+
+  it("exige sessão (401)", async () => {
+    const response = await request(app.getHttpServer()).get("/api/billing/usage");
+    expect(response.status).toBe(401);
+  });
+});
