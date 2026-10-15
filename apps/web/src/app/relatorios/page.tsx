@@ -485,7 +485,7 @@ function EstoqueTab({ from, to, reloadKey }: PeriodProps) {
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-xs uppercase text-slate-400">Estoque baixo</p>
-            <p className="text-xl font-semibold text-amber-600">
+            <p className="text-xl font-semibold text-amber-700">
               {alerts.alerts.lowStockCount}
             </p>
             <p className="text-sm text-slate-600">abaixo do mínimo (exclui zerados)</p>

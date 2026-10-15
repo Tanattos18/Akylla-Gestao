@@ -30,21 +30,20 @@
   --color-surface: #ffffff;
   --color-background: #f8fafc;
 
-  /* Fonte Inter (aprovado R3) */
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  /* Cor de texto padrão do corpo (D-1).
+     Antes era var(--foreground), que nunca foi definida — a cor do texto
+     caía no default do browser. Agora é um token do @theme. */
+  --color-foreground: #0f172a;
+
+  /* Fonte Inter (aprovado R3) (D-2).
+     Usa a variável --font-inter que o next/font injeta no <html>;
+     antes havia a string literal "Inter" e a variável era desperdiçada. */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    sans-serif;
 }
 
 body {
   background: var(--color-background);
-  color: var(--foreground);
+  color: var(--color-foreground);
   font-family: var(--font-sans);
-}
-
-/* Scrollbar suave na sidebar */
-.sidebar-scroll::-webkit-scrollbar {
-  width: 4px;
-}
-.sidebar-scroll::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 4px;
 }

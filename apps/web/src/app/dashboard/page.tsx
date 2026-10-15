@@ -540,7 +540,7 @@ export default function DashboardPage() {
                             className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
                               sale.status === "CANCELLED"
                                 ? "bg-red-50 text-red-500"
-                                : "bg-primary-50 text-primary-600"
+                                : "bg-primary-50 text-primary-700"
                             }`}
                           >
                             <Receipt className="h-4 w-4" />
@@ -701,7 +701,7 @@ export default function DashboardPage() {
                     </p>
                   </div>
                   <div className="rounded-lg bg-amber-50 p-3">
-                    <p className="text-[11px] font-medium uppercase tracking-wider text-amber-600">
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-amber-700">
                       Pago
                     </p>
                     <p className="mt-0.5 text-lg font-semibold text-amber-700">

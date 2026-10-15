@@ -151,7 +151,7 @@ export default function NovaAssinaturaPage() {
               <p className="mt-1 text-xs text-red-600">{fieldErrors.clientId}</p>
             )}
             {clients.length === 0 && (
-              <p className="mt-1 text-xs text-amber-600">
+              <p className="mt-1 text-xs text-amber-700">
                 Nenhum cliente ativo cadastrado.
               </p>
             )}
@@ -178,7 +178,7 @@ export default function NovaAssinaturaPage() {
               <p className="mt-1 text-xs text-red-600">{fieldErrors.planId}</p>
             )}
             {plans.length === 0 && (
-              <p className="mt-1 text-xs text-amber-600">
+              <p className="mt-1 text-xs text-amber-700">
                 Nenhum plano ativo. Cadastre em{" "}
                 <Link href="/planos" className="underline">
                   Planos

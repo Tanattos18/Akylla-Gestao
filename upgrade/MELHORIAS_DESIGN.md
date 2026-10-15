@@ -32,20 +32,44 @@ Não é plano aprovado — é catálogo para decisão (regra 2 do `AGENTS.md`).
 São **bugs e débitos reais** encontrados ao inspecionar o frontend. Não
 são ideias — são correções.
 
-| # | Achado | Arquivo | Efeito |
-|---|---|---|---|
-| **D-1** | `color: var(--foreground)` — **`--foreground` nunca é definida** no `@theme` | `apps/web/src/app/globals.css:39` | a cor do texto cai no default do browser; qualquer tema futuro ou componente que dependa da variável quebra em silêncio |
-| **D-2** | Fonte carregada como `variable: "--font-inter"` mas o CSS usa a **string literal** `"Inter"`; a variável `--font-inter` é setada no `<html>` e **nunca lida** | `layout.tsx:6-9` × `globals.css:34` | duplicação frágil: trocar a fonte exige editar 2 lugares e a variável que o Next injeta é desperdiçada |
-| **D-3** | Classes e comentários de **sidebar** mortos — a sidebar foi removida pela topbar (opção B) | `globals.css:16-21, 43-50`; `.sidebar-scroll` | CSS sem uso; confunde quem for manter |
-| **D-4** | **32 `<table>` escritos inline** nas páginas, sem componente compartilhado | `apps/web/src/app/**` | cabeçalho, zebra, alinhamento de moeda e responsividade se repetem e divergem página a página |
-| **D-5** | **Nenhum** `loading.tsx`, `error.tsx` ou `not-found.tsx` no App Router | `apps/web/src/app/` (só `layout.tsx` e `page.tsx`) | toda navegação mostra a tela anterior congelada até o dado chegar; 404 e 500 caem na página branca do Next |
-| **D-6** | Primitivos de UI faltam: **sem `Table`, `Modal`/`Dialog`, `Select`, `Toast`, `Tabs`** | `components/ui/` (só Badge, Button, Card, Input, Progress, Skeleton, StatCard, EmptyState, 2 charts) | cada tela inventa a própria versão; é a origem do D-4 |
-| **D-7** | **Contraste reprovado** em tokens usados como texto: `text-amber-500`/branco = **2.15**, `text-success-500`/branco = **2.49**, `text-amber-600`/branco = **3.19** (mínimo AA = 4.5) | `globals.css` + **194** usos de `text-primary`/`text-amber` | parte do texto informativo do produto não atinge WCAG AA; ver §4.3 |
+**Status em 2026-10-15:** **D-1, D-2, D-3, D-5 e D-7 RESOLVIDOS.**
+Restam **D-4** e **D-6** (dependem do componente `Table` — §2.1).
+
+| # | Achado | Arquivo | Efeito | Status |
+|---|---|---|---|---|
+| **D-1** | `color: var(--foreground)` — **`--foreground` nunca é definida** no `@theme` | `apps/web/src/app/globals.css:39` | a cor do texto cai no default do browser; qualquer tema futuro ou componente que dependa da variável quebra em silêncio | ✅ **RESOLVIDO** — token `--color-foreground: #0f172a` no `@theme` |
+| **D-2** | Fonte carregada como `variable: "--font-inter"` mas o CSS usa a **string literal** `"Inter"`; a variável `--font-inter` é setada no `<html>` e **nunca lida** | `layout.tsx:6-9` × `globals.css:34` | duplicação frágil: trocar a fonte exige editar 2 lugares e a variável que o Next injeta é desperdiçada | ✅ **RESOLVIDO** — `--font-sans: var(--font-inter), ui-sans-serif, ...` |
+| **D-3** | Classes e comentários de **sidebar** mortos — a sidebar foi removida pela topbar (opção B) | `globals.css:16-21, 43-50`; `.sidebar-scroll` | CSS sem uso; confunde quem for manter | ✅ **RESOLVIDO** — bloco `.sidebar-scroll` removido. **Os tokens `--color-sidebar*` foram preservados**: são usados pela topbar escura e pelo drawer mobile |
+| **D-4** | **32 `<table>` escritos inline** nas páginas, sem componente compartilhado | `apps/web/src/app/**` | cabeçalho, zebra, alinhamento de moeda e responsividade se repetem e divergem página a página | ⏳ **PENDENTE** — depende de §2.1 |
+| **D-5** | **Nenhum** `loading.tsx`, `error.tsx` ou `not-found.tsx` no App Router | `apps/web/src/app/` (só `layout.tsx` e `page.tsx`) | toda navegação mostra a tela anterior congelada até o dado chegar; 404 e 500 caem na página branca do Next | ✅ **RESOLVIDO** — os 3 arquivos criados. Nota: 31/39 páginas são client-side com `useEffect`, então `loading.tsx` cobre o segmento raiz; limites de *loading* por rota é §3.2 |
+| **D-6** | Primitivos de UI faltam: **sem `Table`, `Modal`/`Dialog`, `Select`, `Toast`, `Tabs`** | `components/ui/` (só Badge, Button, Card, Input, Progress, Skeleton, StatCard, EmptyState, 2 charts) | cada tela inventa a própria versão; é a origem do D-4 | ⏳ **PENDENTE** |
+| **D-7** | **Contraste reprovado** em tokens usados como texto: `text-amber-500`/branco = **2.15**, `text-success-500`/branco = **2.49**, `text-amber-600`/branco = **3.19** (mínimo AA = 4.5) | `globals.css` + **194** usos de `text-primary`/`text-amber` | parte do texto informativo do produto não atinge WCAG AA; ver §4.3 | ✅ **RESOLVIDO** — regra "texto só nos stops 700+" aplicada em 7 ocorrências |
 
 > **D-1 e D-2 são correções de 15 minutos** e não afetam nenhum teste de
 > backend. **D-7** é uma busca e substituição (`text-amber-600` →
 > `text-amber-700`). **D-5** usa infraestrutura que o Next.js já traz —
 > custo quase zero.
+
+### Detalhe da correção do D-7 (2026-10-15)
+
+Varredura completa de `text-{amber,success,primary}-\d+` em
+`apps/web/src`. **7 ocorrências corrigidas**, todas texto informativo:
+
+| Arquivo | Antes | Depois |
+|---|---|---|
+| `app/dashboard/page.tsx` | `text-primary-600` | `text-primary-700` |
+| `app/dashboard/page.tsx` | `text-amber-600` | `text-amber-700` |
+| `app/assinaturas/nova/page.tsx` (×2) | `text-amber-600` | `text-amber-700` |
+| `app/relatorios/page.tsx` | `text-amber-600` | `text-amber-700` |
+| `app/whatsapp/mensagens/[id]/page.tsx` | `text-amber-500` | `text-amber-700` |
+| `components/shell/Header.tsx` (×2, ícones) | `text-amber-500` | `text-amber-700` |
+
+**3 ocorrências preservadas de propósito** (não são violações):
+
+| Arquivo | Valor | Por que fica |
+|---|---|---|
+| `components/shell/Header.tsx:712` | `text-primary-400` | avatar sobre a **topbar escura** (`bg-primary-500/20` sobre `#0f172a`) — âmbar claro sobre fundo escuro é o correto |
+| `components/ui/StatCard.tsx:8,10` | `text-amber-600`, `text-primary-600` | **cor de ícone** (`iconBackgrounds`), não texto — 3.19:1, acima do mínimo 3:1 de WCAG 1.4.11 para componentes não-texto |
 
 ---
 

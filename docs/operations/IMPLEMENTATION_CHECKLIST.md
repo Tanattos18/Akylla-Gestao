@@ -4,6 +4,30 @@
 > Este checklist cobre apenas a era do Akylla Gestão. O histórico
 > anterior à adaptação está preservado no Git.
 
+## Fora do roteiro — Débitos de design D-1 a D-7 (2026-10-15)
+
+Concluída. Lote "uma tarde" de `upgrade/MELHORIAS_DESIGN.md` §0 — só
+frontend (`apps/web`); nenhum backend, teste ou migration alterado.
+
+- [x] **D-1** `--color-foreground: #0f172a` no `@theme` (`globals.css`)
+      — antes `var(--foreground)` referenciava variável inexistente
+- [x] **D-2** `--font-sans: var(--font-inter), ...` — antes usava a
+      string literal `"Inter"` e ignorava a variável do `next/font`
+- [x] **D-3** bloco `.sidebar-scroll` removido. Tokens
+      `--color-sidebar*` **preservados** (inspeção mostrou uso ativo na
+      topbar escura, apesar do catálogo listá-los como mortos)
+- [x] **D-5** `loading.tsx` + `error.tsx` + `not-found.tsx` criados em
+      `apps/web/src/app/`, reaproveitando `Skeleton.tsx`
+- [x] **D-7** contraste: **7 ocorrências** de texto em stop < 700
+      corrigidas; **3 preservadas de propósito** (`Header.tsx:712`
+      sobre topbar escura; `StatCard.tsx:8,10` = cor de ícone, passa
+      3:1 de WCAG 1.4.11)
+- [ ] **D-4** e **D-6** — **pendentes**; dependem do componente
+      `Table` (§2.1 do catálogo), lote "uma semana"
+
+Verificado com `npm run validate` verde (lint · typecheck · 538/538 ·
+build · db:validate).
+
 ## Fora do roteiro — Documentação técnica consolidada (2026-10-14)
 
 Entregue. `docs/AKYLLA_GESTAO_DOCUMENTACAO_COMPLETA.md` atualizado de

@@ -655,7 +655,7 @@ export function Header({
                           onClick={() => setNotifOpen(false)}
                           className="flex items-start gap-3 px-4 py-3 hover:bg-slate-50"
                         >
-                          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
                           <div>
                             <p className="text-sm text-slate-800">
                               {notif.lowStock} produto(s) com estoque baixo
@@ -685,7 +685,7 @@ export function Header({
                           onClick={() => setNotifOpen(false)}
                           className="flex items-start gap-3 px-4 py-3 hover:bg-slate-50"
                         >
-                          <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                          <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
                           <div>
                             <p className="text-sm text-slate-800">
                               {notif.overduePayables} conta(s) a pagar vencida(s)

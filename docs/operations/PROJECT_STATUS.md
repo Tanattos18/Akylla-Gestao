@@ -66,6 +66,33 @@ do roteiro `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`. Entregas:
 3. Deploy de staging → E2E sandbox Mercado Pago → aprovação →
    produção restrita (pilotos).
 
+## Entrega fora do roteiro — Débitos de design D-1 a D-7 (2026-10-15)
+
+**Concluída.** Primeira alteração de código desde a Etapa 12 — só
+frontend (`apps/web`); nenhum backend, teste ou migration alterado.
+Executa o lote "uma tarde" de `upgrade/MELHORIAS_DESIGN.md` §0, que o
+catálogo classifica como correção de débito (executável sem design
+review).
+
+| Débito | O que era | Resultado |
+|---|---|---|
+| **D-1** | `color: var(--foreground)` — variável nunca definida; a cor do texto caía no default do browser | token `--color-foreground: #0f172a` no `@theme` |
+| **D-2** | `--font-sans` usava a string literal `"Inter"`; a variável `--font-inter` do `next/font` era injetada e nunca lida | `var(--font-inter), ui-sans-serif, ...` |
+| **D-3** | bloco `.sidebar-scroll` morto desde a topbar | removido. Tokens `--color-sidebar*` **preservados** (usados pela topbar escura) |
+| **D-5** | nenhum `loading.tsx`/`error.tsx`/`not-found.tsx` | os 3 criados, reaproveitando `Skeleton` |
+| **D-7** | contraste reprovado: `text-amber-500`=2.15, `text-amber-600`=3.19 (AA exige 4.5) | **7 ocorrências** de texto viraram stop 700; 3 preservadas por não serem violação |
+
+**Preservados de propósito:** `Header.tsx:712` (`text-primary-400`
+sobre a topbar **escura** — contraste alto, correto) e
+`StatCard.tsx:8,10` (**cor de ícone**, 3.19:1, acima do mínimo 3:1 de
+WCAG 1.4.11 para componentes não-texto).
+
+**Restam D-4 e D-6** — dependem do componente `Table`
+(`MELHORIAS_DESIGN.md` §2.1), lote "uma semana".
+
+Verificado: `npm run validate` verde (lint · typecheck · **538/538** ·
+build · `db:validate`).
+
 ## Entrega fora do roteiro — Catálogo de melhorias e pasta de backup (2026-10-14)
 
 **Concluída** (terceira entrega única autorizada). Nenhum código de

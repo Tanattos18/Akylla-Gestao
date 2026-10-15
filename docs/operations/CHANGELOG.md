@@ -6,6 +6,82 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-15 - Débitos de design D-1, D-2, D-3, D-5 e D-7
+
+Sexta entrega única autorizada. Primeira execução de código desde a
+Etapa 12. **Só frontend** — nenhum arquivo de backend, teste ou
+migration alterado.
+
+Executa o lote "uma tarde" do `upgrade/MELHORIAS_DESIGN.md` §0 e §Sequência,
+que o próprio catálogo classifica como *correção de débito, não
+melhoria: podem ser executados assim que autorizados, sem design
+review*.
+
+### Adicionado
+
+- **`apps/web/src/app/not-found.tsx`** — página 404 própria com caminho
+  de volta. Fecha o caso que o catálogo aponta: recurso de outra
+  empresa **deve** responder 404 (regra permanente) e antes caía na
+  página branca do Next.
+- **`apps/web/src/app/error.tsx`** — boundary de erro global. Mensagem
+  genérica em produção; `error.message` só em dev; `error.digest`
+  sempre exibido; botão `reset`. Não vaza stack em produção.
+- **`apps/web/src/app/loading.tsx`** — esqueleto de carregamento
+  reaproveitando `Skeleton.tsx` já existente, com `role="status"` e
+  `aria-label`.
+
+### Alterado
+
+- **`globals.css` — D-1:** `color: var(--foreground)` referenciava uma
+  variável **que nunca foi definida**; a cor do texto caía no default
+  do browser. Criado o token `--color-foreground: #0f172a` no `@theme`
+  (slate-900; ~17:1 sobre o `--color-background`).
+- **`globals.css` — D-2:** `--font-sans` usava a string literal
+  `"Inter"` enquanto o `next/font` injetava a variável `--font-inter`
+  no `<html>` **sem que ninguém a lesse**. Agora
+  `var(--font-inter), ui-sans-serif, system-ui, ...` — a fonte
+  otimizada pelo Next passa a ser a usada de fato.
+- **`globals.css` — D-3:** removido o bloco `.sidebar-scroll`, morto
+  desde que a sidebar foi substituída pela topbar (opção B).
+  **Preservados** os tokens `--color-sidebar*` (§0, linhas 16-21) —
+  são usados pela topbar escura e pelo drawer mobile. O catálogo os
+  listava junto, mas inspeção confirmou uso ativo.
+- **D-7 — contraste (WCAG AA):** regra "texto só nos stops 700+"
+  aplicada em **7 ocorrências** de texto informativo:
+  - `dashboard/page.tsx` ×2 (`text-primary-600`, `text-amber-600`)
+  - `assinaturas/nova/page.tsx` ×2 (`text-amber-600`)
+  - `relatorios/page.tsx` (`text-amber-600`)
+  - `whatsapp/mensagens/[id]/page.tsx` (`text-amber-500` → era rótulo
+    `<dt>`)
+  - `shell/Header.tsx` ×2 (ícones `AlertTriangle`/`CalendarClock`
+    a 16px sobre fundo claro: 2.15:1 reprovava até no mínimo 3:1 de
+    WCAG 1.4.11)
+
+### Preservado (não eram violações)
+
+| Local | Valor | Motivo |
+|---|---|---|
+| `Header.tsx:712` | `text-primary-400` | avatar sobre a topbar **escura** (`bg-primary-500/20` sobre `#0f172a`) — âmbar claro sobre fundo escuro é o correto |
+| `StatCard.tsx:8,10` | `text-amber-600`, `text-primary-600` | **cor de ícone** (`iconBackgrounds`), não texto — 3.19:1, acima do mínimo 3:1 de WCAG 1.4.11 para componentes não-texto |
+
+### Não alterado nesta entrega
+
+- **D-4** (32 `<table>` inline) e **D-6** (faltam `Table`, `Modal`,
+  `Select`, `Toast`, `Tabs`) — dependem do componente `Table`
+  (`MELHORIAS_DESIGN.md` §2.1), lote "uma semana".
+- Limites de *loading* por rota: 31/39 páginas são client-side com
+  `useEffect`, então o `loading.tsx` de raiz cobre o segmento raiz;
+  skeletons por tela é §3.2 do catálogo.
+
+### Verificação
+
+- `npm run validate` **verde**: lint · typecheck · **538/538** ·
+  build · `db:validate`.
+- Rota `/_not-found` agora renderiza o componente próprio.
+- **Nenhum teste de backend alterado** — a suíte permanece em 538.
+
+---
+
 ## [Akylla Gestão] - 2026-10-14 - Documentação técnica consolidada (29 seções)
 
 Quinta entrega única autorizada. `AKYLLA_GESTAO_DOCUMENTACAO_COMPLETA.md`

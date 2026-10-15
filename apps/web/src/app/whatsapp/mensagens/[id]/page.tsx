@@ -211,7 +211,7 @@ export default function WhatsAppMensagemDetalhePage() {
           )}
           {message.cancelReason && (
             <div className="sm:col-span-2 lg:col-span-3">
-              <dt className="text-xs uppercase text-amber-500">Cancelamento</dt>
+              <dt className="text-xs uppercase text-amber-700">Cancelamento</dt>
               <dd className="text-amber-700">{message.cancelReason}</dd>
             </div>
           )}
