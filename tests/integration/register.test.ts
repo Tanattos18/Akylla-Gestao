@@ -23,7 +23,7 @@ function register(payload: {
 }) {
   return request(app.getHttpServer())
     .post("/api/auth/register")
-    .send(payload);
+    .send({ ...payload, acceptTerms: true, termsVersion: "1.0" });
 }
 
 beforeAll(async () => {

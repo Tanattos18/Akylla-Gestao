@@ -12,6 +12,7 @@ export default function CadastroPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
@@ -29,6 +30,7 @@ export default function CadastroPage() {
     if (password.length < 8) issues.password = "Senha deve ter ao menos 8 caracteres";
     else if (password.length > 72) issues.password = "Senha deve ter no máximo 72 caracteres";
     if (confirm !== password) issues.confirm = "As senhas não coincidem";
+    if (!acceptTerms) issues.acceptTerms = "É necessário aceitar os Termos e a Política de Privacidade";
     if (Object.keys(issues).length > 0) {
       setFieldErrors(issues);
       return;
@@ -43,6 +45,8 @@ export default function CadastroPage() {
           name: name.trim(),
           email: email.trim(),
           password,
+          acceptTerms,
+          termsVersion: "1.0",
         }),
       });
       router.push("/");
@@ -167,6 +171,33 @@ export default function CadastroPage() {
             <p className="mb-3 text-xs text-red-600">{fieldErrors.confirm}</p>
           )}
           {!fieldErrors.confirm && <div className="mb-5" />}
+
+          <div className="mb-5">
+            <label className="flex items-start gap-2 text-sm text-slate-700">
+              <input
+                id="acceptTerms"
+                type="checkbox"
+                checked={acceptTerms}
+                onChange={(event) => setAcceptTerms(event.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                aria-invalid={Boolean(fieldErrors.acceptTerms)}
+              />
+              <span>
+                Li e aceito os{" "}
+                <Link href="/termos" className="text-primary-700 hover:underline" target="_blank">
+                  Termos de Uso
+                </Link>{" "}
+                e a{" "}
+                <Link href="/privacidade" className="text-primary-700 hover:underline" target="_blank">
+                  Política de Privacidade
+                </Link>
+                .
+              </span>
+            </label>
+            {fieldErrors.acceptTerms && (
+              <p className="mt-1 text-xs text-red-600">{fieldErrors.acceptTerms}</p>
+            )}
+          </div>
 
           <button
             type="submit"

@@ -44,6 +44,35 @@ const schema = z.object({
   MERCADOPAGO_PUBLIC_KEY: z.string().optional(),
   MERCADOPAGO_WEBHOOK_SECRET: z.string().optional(),
   MERCADOPAGO_ENV: z.enum(["sandbox", "production"]).default("sandbox"),
+}).superRefine((value, ctx) => {
+  if (value.NODE_ENV !== "production") return;
+
+  if (value.AUTH_COOKIE_SECURE !== true) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["AUTH_COOKIE_SECURE"],
+      message:
+        "Em produção, AUTH_COOKIE_SECURE deve ser true (cookie de sessão seguro via HTTPS)",
+    });
+  }
+
+  if (value.PASSWORD_RESET_ENABLED === true) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["PASSWORD_RESET_ENABLED"],
+      message:
+        "Em produção, a redefinição de senha sem token de e-mail é insegura. Mantenha desabilitado ou implemente fluxo com token.",
+    });
+  }
+
+  if (value.REGISTRATION_ENABLED === true) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["REGISTRATION_ENABLED"],
+      message:
+        "Em produção, o cadastro aberto exige verificação de e-mail e controles anti-abuso. Mantenha desabilitado ou configure proteções.",
+    });
+  }
 });
 
 const parsed = schema.safeParse(process.env);

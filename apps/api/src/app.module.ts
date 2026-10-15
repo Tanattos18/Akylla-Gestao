@@ -21,6 +21,7 @@ import { WhatsAppModule } from "./whatsapp/whatsapp.module";
 import { ReportsModule } from "./reports/reports.module";
 import { CompanyModulesModule } from "./company-modules/company-modules.module";
 import { ImportsModule } from "./imports/imports.module";
+import { LgpdModule } from "./lgpd/lgpd.module";
 import { AuthGuard } from "./common/guards/auth.guard";
 import { ModuleGuard } from "./common/guards/module.guard";
 
@@ -46,6 +47,7 @@ import { ModuleGuard } from "./common/guards/module.guard";
     ReportsModule,
     CompanyModulesModule,
     ImportsModule,
+    LgpdModule,
   ],
   controllers: [HealthController],
   providers: [

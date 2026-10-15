@@ -28,13 +28,19 @@
     "db:validate": "prisma validate --schema database/prisma/schema.prisma",
     "db:generate": "prisma generate --schema database/prisma/schema.prisma",
     "db:migrate": "prisma migrate dev --schema database/prisma/schema.prisma",
-    "db:deploy": "prisma migrate deploy --schema database/prisma/schema.prisma"
+    "db:deploy": "prisma migrate deploy --schema database/prisma/schema.prisma",
+    "db:backup": "node scripts/db-backup.mjs backup",
+    "db:restore": "node scripts/db-backup.mjs restore",
+    "db:restore:test": "node scripts/db-backup.mjs restore:test",
+    "check:secrets": "node scripts/check-secrets.mjs",
+    "check:migrations": "node scripts/check-migrations.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.12.0",
     "@types/multer": "^2.3.0",
     "@types/supertest": "^6.0.2",
     "eslint": "^9.12.0",
+    "playwright": "^1.64.1",
     "prisma": "^5.22.0",
     "supertest": "^7.0.0",
     "typescript": "^5.6.2",

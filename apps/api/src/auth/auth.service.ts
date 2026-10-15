@@ -101,6 +101,25 @@ export class AuthService {
         },
       });
 
+      await tx.legalConsent.createMany({
+        data: [
+          {
+            companyId: company.id,
+            userId: user.id,
+            role: "USER",
+            type: "TERMS",
+            version: input.termsVersion,
+          },
+          {
+            companyId: company.id,
+            userId: user.id,
+            role: "USER",
+            type: "PRIVACY",
+            version: input.termsVersion,
+          },
+        ],
+      });
+
       return { userId: user.id, user, company };
     }).then(async (created) => {
       const token = await this.createSession(created.userId, request);

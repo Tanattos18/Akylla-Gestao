@@ -27,6 +27,17 @@ enum RecordStatus {
   INACTIVE
 }
 
+enum LegalConsentType {
+  TERMS
+  PRIVACY
+  DATA_PROCESSING
+}
+
+enum LegalConsentRole {
+  USER
+  CLIENT
+}
+
 enum ProductUnit {
   UNIDADE
   KG
@@ -216,6 +227,7 @@ model Company {
   tenantSubscription   TenantSubscription?
   modules     CompanyModule[]
   importBatches ImportBatch[]
+  legalConsents LegalConsent[]
 }
 
 enum BusinessModule {
@@ -306,6 +318,7 @@ model User {
   subscriptionsCancelled   Subscription[] @relation("SubscriptionCancelledBy")
   tenantSubscriptionChanged TenantSubscription[] @relation("TenantSubscriptionChangedBy")
   importBatches ImportBatch[]
+  legalConsents LegalConsent[]
 
   @@unique([companyId, email])
   @@index([companyId, status])
@@ -391,6 +404,7 @@ model Client {
   appointments Appointment[]
   subscriptions Subscription[]
   financialEntries FinancialEntry[]
+  legalConsents LegalConsent[]
 
   @@index([companyId, nameKey])
   @@index([companyId, status])
@@ -399,6 +413,25 @@ model Client {
   @@index([companyId, mobile])
   @@index([companyId, email])
   @@index([companyId, createdAt])
+}
+
+model LegalConsent {
+  id         String          @id @default(cuid())
+  companyId  String
+  company    Company         @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  userId     String?
+  user       User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  clientId   String?
+  client     Client?         @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  role       LegalConsentRole
+  type       LegalConsentType
+  version    String
+  acceptedAt DateTime        @default(now())
+  ip         String?
+
+  @@index([companyId, acceptedAt])
+  @@index([userId])
+  @@index([clientId])
 }
 
 model Pet {

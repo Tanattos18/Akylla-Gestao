@@ -61,6 +61,10 @@ export const registerSchema = z.object({
   name: z.string().trim().min(2, "Nome deve ter ao menos 2 caracteres").max(120),
   email: emailFieldSchema,
   password: passwordFieldSchema,
+  acceptTerms: z
+    .boolean()
+    .refine((value) => value === true, "É necessário aceitar os Termos de Uso e a Política de Privacidade"),
+  termsVersion: z.string().trim().min(1, "Versão dos termos é obrigatória").max(60).default("1.0"),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
@@ -1339,3 +1343,86 @@ export type ImportBatchDto = z.infer<typeof importBatchSchema>;
 
 export const listImportsQuerySchema = paginationQuerySchema;
 export type ListImportsQuery = z.infer<typeof listImportsQuerySchema>;
+
+// ---------------------------------------------------------------------------
+// LGPD — consentimento e direitos do titular (N1)
+// ---------------------------------------------------------------------------
+
+export const lgpdConsentRoleSchema = z.enum(["USER", "CLIENT"]);
+export type LgpdConsentRole = z.infer<typeof lgpdConsentRoleSchema>;
+
+export const lgpdConsentTypeSchema = z.enum([
+  "TERMS",
+  "PRIVACY",
+  "DATA_PROCESSING",
+]);
+export type LgpdConsentType = z.infer<typeof lgpdConsentTypeSchema>;
+
+export const lgpdConsentTypeLabels: Record<LgpdConsentType, string> = {
+  TERMS: "Termos de uso",
+  PRIVACY: "Política de privacidade",
+  DATA_PROCESSING: "Tratamento de dados",
+};
+
+export const lgpdConsentVersionSchema = z
+  .string()
+  .trim()
+  .min(1, "Versão é obrigatória")
+  .max(60, "Versão deve ter no máximo 60 caracteres");
+
+/** Registro de aceite de um documento legal (termos/privacidade/tratamento). */
+export const createLegalConsentSchema = z.object({
+  type: lgpdConsentTypeSchema,
+  version: lgpdConsentVersionSchema,
+  role: lgpdConsentRoleSchema.default("USER"),
+  clientId: z.string().trim().max(60).optional().nullable(),
+});
+export type CreateLegalConsentInput = z.infer<typeof createLegalConsentSchema>;
+
+export const lgpdConsentSchema = z.object({
+  id: z.string(),
+  type: lgpdConsentTypeSchema,
+  role: lgpdConsentRoleSchema,
+  version: z.string(),
+  acceptedAt: z.string(),
+});
+export type LgpdConsentDto = z.infer<typeof lgpdConsentSchema>;
+
+export const lgpdDataExportSchema = z.object({
+  client: z
+    .object({
+      id: z.string(),
+      name: z.string().nullable(),
+      phone: z.string().nullable(),
+      mobile: z.string().nullable(),
+      email: z.string().nullable(),
+      cpf: z.string().nullable(),
+      street: z.string().nullable(),
+      number: z.string().nullable(),
+      complement: z.string().nullable(),
+      district: z.string().nullable(),
+      city: z.string().nullable(),
+      state: z.string().nullable(),
+      zip: z.string().nullable(),
+      notes: z.string().nullable(),
+      createdAt: z.string(),
+    })
+    .nullable(),
+  sales: z.array(z.unknown()),
+  financialEntries: z.array(z.unknown()),
+  subscriptions: z.array(z.unknown()),
+  consents: z.array(lgpdConsentSchema),
+});
+export type LgpdDataExportDto = z.infer<typeof lgpdDataExportSchema>;
+
+/** Resposta de anonimização — retorna apenas o que foi feito. */
+export const lgpdAnonymizeSchema = z.object({
+  clientId: z.string(),
+  anonymizedAt: z.string(),
+  retained: z.object({
+    sales: z.number().int().min(0),
+    financialEntries: z.number().int().min(0),
+    subscriptions: z.number().int().min(0),
+  }),
+});
+export type LgpdAnonymizeDto = z.infer<typeof lgpdAnonymizeSchema>;
