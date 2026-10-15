@@ -17,6 +17,9 @@ const schema = z.object({
     .int()
     .nonnegative()
     .default(15 * 60 * 1000),
+  // Rate limit distribuído (N4 · 1.3): reservado para o store Redis em
+  // produção multi-instância. Ausente = store em memória (comportamento atual).
+  REDIS_URL: z.string().optional(),
   // Redefinição de senha pelo painel (/redefinir-senha) — desabilitada por
   // padrão; habilitar apenas em ambiente local/controllado (sem verificação
   // por token de e-mail nesta versão)

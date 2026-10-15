@@ -10,11 +10,15 @@ import type { Request } from "express";
 import { createHash, randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { PrismaService } from "../prisma/prisma.module";
-import { env } from "../config/env";
-import type {
-  LoginInput,
-  RegisterInput,
-  ResetPasswordInput,
+import { allowedOrigins, env } from "../config/env";
+import { MAIL_PROVIDER, type MailProvider } from "../mail/mail.module";
+import {
+  PASSWORD_RESET_TOKEN_TTL_MS,
+  type ConfirmPasswordResetInput,
+  type LoginInput,
+  type RegisterInput,
+  type RequestPasswordResetInput,
+  type ResetPasswordInput,
 } from "@petflow/shared";
 import type { AuthContext } from "../common/decorators/auth.decorator";
 
@@ -31,7 +35,10 @@ function slugify(value: string): string {
 
 @Injectable()
 export class AuthService {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(MAIL_PROVIDER) private readonly mail: MailProvider,
+  ) {}
 
   async login(input: LoginInput, request: Request) {
     const email = input.email;
@@ -213,6 +220,84 @@ export class AuthService {
       this.prisma.session.updateMany({
         where: { userId: user.id, revokedAt: null },
         data: { revokedAt: new Date() },
+      }),
+    ]);
+  }
+
+  /**
+   * Solicita redefinição por token de e-mail (N4 · 1.5). Nunca revela se o
+   * e-mail existe: responde da mesma forma nos dois casos. Retorna o token
+   * bruto para o chamador interno (testes); o controller o descarta e o
+   * envio real passa pelo `MailProvider`.
+   */
+  async requestPasswordReset(input: RequestPasswordResetInput): Promise<{ token: string | null }> {
+    const user = await this.prisma.user.findFirst({
+      where: { email: input.email, status: "ACTIVE", company: { status: "ACTIVE" } },
+      select: { id: true, email: true },
+    });
+
+    if (!user) {
+      return { token: null };
+    }
+
+    const token = randomBytes(32).toString("base64url");
+    const tokenHash = createHash("sha256").update(token).digest("hex");
+
+    await this.prisma.passwordResetToken.create({
+      data: {
+        userId: user.id,
+        tokenHash,
+        expiresAt: new Date(Date.now() + PASSWORD_RESET_TOKEN_TTL_MS),
+      },
+    });
+
+    const base = allowedOrigins[0] ?? "http://localhost:3000";
+    await this.mail.sendPasswordReset(
+      user.email,
+      `${base}/redefinir-senha?token=${token}`,
+    );
+
+    return { token };
+  }
+
+  /**
+   * Confirma a redefinição com token de uso único: valida hash, expiração e
+   * uso anterior; troca a senha, revoga sessões e marca o token como usado.
+   */
+  async confirmPasswordReset(input: ConfirmPasswordResetInput): Promise<void> {
+    const tokenHash = createHash("sha256").update(input.token).digest("hex");
+
+    const record = await this.prisma.passwordResetToken.findUnique({
+      where: { tokenHash },
+      select: { id: true, userId: true, expiresAt: true, usedAt: true },
+    });
+
+    if (!record || record.usedAt || record.expiresAt.getTime() <= Date.now()) {
+      throw new BadRequestException("Token inválido ou expirado");
+    }
+
+    const user = await this.prisma.user.findFirst({
+      where: { id: record.userId, status: "ACTIVE", company: { status: "ACTIVE" } },
+      select: { id: true },
+    });
+    if (!user) {
+      throw new BadRequestException("Token inválido ou expirado");
+    }
+
+    const passwordHash = await bcrypt.hash(input.password, BCRYPT_ROUNDS);
+
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash },
+      }),
+      this.prisma.session.updateMany({
+        where: { userId: user.id, revokedAt: null },
+        data: { revokedAt: new Date() },
+      }),
+      this.prisma.passwordResetToken.update({
+        where: { id: record.id },
+        data: { usedAt: new Date() },
       }),
     ]);
   }

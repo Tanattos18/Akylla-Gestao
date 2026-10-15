@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import type request from "supertest";
 import { AppModule } from "../../apps/api/src/app.module";
 import { AllExceptionsFilter } from "../../apps/api/src/common/filters/all-exceptions.filter";
+import { securityHeadersMiddleware } from "../../apps/api/src/common/middleware/security-headers.middleware";
 import { PrismaService } from "../../apps/api/src/prisma/prisma.module";
 
 export async function createTestApp(): Promise<{
@@ -13,6 +14,7 @@ export async function createTestApp(): Promise<{
   const app = await NestFactory.create(AppModule, { logger: false, rawBody: true });
   app.setGlobalPrefix("api", { exclude: ["health"] });
   app.use(cookieParser());
+  app.use(securityHeadersMiddleware);
   app.useGlobalFilters(new AllExceptionsFilter());
   await app.init();
 
@@ -50,6 +52,7 @@ export async function resetDatabase(prisma: PrismaService): Promise<void> {
   await prisma.financialEntry.deleteMany();
   await prisma.importBatch.deleteMany();
   await prisma.legalConsent.deleteMany();
+  await prisma.passwordResetToken.deleteMany();
   await prisma.user.deleteMany();
   await prisma.companyModule.deleteMany();
   await prisma.company.deleteMany();

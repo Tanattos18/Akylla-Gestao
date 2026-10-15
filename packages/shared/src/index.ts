@@ -52,6 +52,26 @@ export const resetPasswordSchema = z.object({
 
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 
+// ---------------------------------------------------------------------------
+// N4 — redefinição de senha com token de e-mail (1.5)
+// ---------------------------------------------------------------------------
+
+/** Validade do token de redefinição: 1 hora. */
+export const PASSWORD_RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
+
+export const requestPasswordResetSchema = z.object({
+  email: emailFieldSchema,
+});
+
+export type RequestPasswordResetInput = z.infer<typeof requestPasswordResetSchema>;
+
+export const confirmPasswordResetSchema = z.object({
+  token: z.string().trim().min(16, "Token inválido").max(128, "Token inválido"),
+  password: passwordFieldSchema,
+});
+
+export type ConfirmPasswordResetInput = z.infer<typeof confirmPasswordResetSchema>;
+
 export const registerSchema = z.object({
   companyName: z
     .string()

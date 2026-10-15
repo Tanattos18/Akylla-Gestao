@@ -38,6 +38,19 @@ enum LegalConsentRole {
   CLIENT
 }
 
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
 enum ProductUnit {
   UNIDADE
   KG
@@ -319,6 +332,7 @@ model User {
   tenantSubscriptionChanged TenantSubscription[] @relation("TenantSubscriptionChangedBy")
   importBatches ImportBatch[]
   legalConsents LegalConsent[]
+  passwordResetTokens PasswordResetToken[]
 
   @@unique([companyId, email])
   @@index([companyId, status])

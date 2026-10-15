@@ -34,4 +34,13 @@ describe("PetFlow API - health check", () => {
     expect(response.body).toMatchObject({ statusCode: 404 });
     expect(typeof response.body.timestamp).toBe("string");
   });
+
+  it("respostas trazem cabeçalhos básicos de segurança (N4)", async () => {
+    const response = await request(app.getHttpServer()).get("/health");
+
+    expect(response.status).toBe(200);
+    expect(response.headers["x-content-type-options"]).toBe("nosniff");
+    expect(response.headers["x-frame-options"]).toBe("DENY");
+    expect(response.headers["referrer-policy"]).toBe("no-referrer");
+  });
 });

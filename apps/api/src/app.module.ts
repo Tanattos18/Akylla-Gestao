@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { APP_GUARD } from "@nestjs/core";
 import { HealthController } from "./health/health.controller";
 import { PrismaModule } from "./prisma/prisma.module";
+import { MailModule } from "./mail/mail.module";
 import { AuthModule } from "./auth/auth.module";
 import { UsersModule } from "./users/users.module";
 import { CategoriesModule } from "./categories/categories.module";
@@ -29,6 +30,7 @@ import { ModuleGuard } from "./common/guards/module.guard";
 @Module({
   imports: [
     PrismaModule,
+    MailModule,
     AuthModule,
     UsersModule,
     CategoriesModule,

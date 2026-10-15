@@ -15,9 +15,13 @@ import {
   loginSchema,
   registerSchema,
   resetPasswordSchema,
+  requestPasswordResetSchema,
+  confirmPasswordResetSchema,
+  type ConfirmPasswordResetInput,
   type LoginInput,
   type MeResponse,
   type RegisterInput,
+  type RequestPasswordResetInput,
   type ResetPasswordInput,
 } from "@petflow/shared";
 import { Public } from "../common/decorators/public.decorator";
@@ -90,6 +94,38 @@ export class AuthController {
     const rateKey = `reset|${ip}|${body.email}`;
     this.rateLimiter.check(rateKey);
     await this.authService.resetPassword(body);
+    this.rateLimiter.reset(rateKey);
+
+    return { ok: true };
+  }
+
+  @Public()
+  @Post("request-password-reset")
+  @HttpCode(200)
+  async requestPasswordReset(
+    @Body(new ZodValidationPipe(requestPasswordResetSchema))
+    body: RequestPasswordResetInput,
+    @Ip() ip: string,
+  ) {
+    const rateKey = `request-reset|${ip}|${body.email}`;
+    this.rateLimiter.check(rateKey);
+    await this.authService.requestPasswordReset(body);
+    this.rateLimiter.reset(rateKey);
+
+    return { ok: true };
+  }
+
+  @Public()
+  @Post("confirm-password-reset")
+  @HttpCode(200)
+  async confirmPasswordReset(
+    @Body(new ZodValidationPipe(confirmPasswordResetSchema))
+    body: ConfirmPasswordResetInput,
+    @Ip() ip: string,
+  ) {
+    const rateKey = `confirm-reset|${ip}`;
+    this.rateLimiter.check(rateKey);
+    await this.authService.confirmPasswordReset(body);
     this.rateLimiter.reset(rateKey);
 
     return { ok: true };

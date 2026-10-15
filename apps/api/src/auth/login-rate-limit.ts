@@ -1,41 +1,29 @@
-import { Injectable, HttpException, HttpStatus } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { env } from "../config/env";
+import {
+  InMemoryRateLimitStore,
+  type RateLimitStore,
+} from "../common/rate-limit/rate-limit-store";
 
-interface Attempt {
-  count: number;
-  resetAt: number;
-}
+export const RATE_LIMIT_STORE = "RATE_LIMIT_STORE";
 
+/**
+ * Guarda de rate limit de login/cadastro/reset (N4 · 1.3).
+ * Delega ao `RateLimitStore` (memória hoje; Redis em produção
+ * multi-instância). Comportamento idêntico ao anterior.
+ */
 @Injectable()
 export class LoginRateLimiter {
-  private readonly attempts = new Map<string, Attempt>();
+  constructor(
+    @Inject(RATE_LIMIT_STORE)
+    private readonly store: RateLimitStore = new InMemoryRateLimitStore(),
+  ) {}
 
   check(key: string): void {
-    if (env.AUTH_RATE_LIMIT_MAX <= 0) return;
-
-    const now = Date.now();
-    const attempt = this.attempts.get(key);
-
-    if (!attempt || attempt.resetAt <= now) {
-      this.attempts.set(key, { count: 1, resetAt: now + env.AUTH_RATE_LIMIT_WINDOW_MS });
-      return;
-    }
-
-    if (attempt.count >= env.AUTH_RATE_LIMIT_MAX) {
-      const seconds = Math.ceil((attempt.resetAt - now) / 1000);
-      throw new HttpException(
-        {
-          message: "Muitas tentativas de login. Tente novamente em alguns minutos.",
-          retryAfterSeconds: seconds,
-        },
-        HttpStatus.TOO_MANY_REQUESTS,
-      );
-    }
-
-    attempt.count += 1;
+    this.store.hit(key, env.AUTH_RATE_LIMIT_MAX, env.AUTH_RATE_LIMIT_WINDOW_MS);
   }
 
   reset(key: string): void {
-    this.attempts.delete(key);
+    this.store.reset(key);
   }
 }

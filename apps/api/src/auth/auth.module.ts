@@ -1,12 +1,17 @@
 import { MiddlewareConsumer, Module, NestModule } from "@nestjs/common";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
-import { LoginRateLimiter } from "./login-rate-limit";
+import { LoginRateLimiter, RATE_LIMIT_STORE } from "./login-rate-limit";
+import { InMemoryRateLimitStore } from "../common/rate-limit/rate-limit-store";
 import { OriginCheckMiddleware } from "../common/middleware/origin-check.middleware";
 
 @Module({
   controllers: [AuthController],
-  providers: [AuthService, LoginRateLimiter],
+  providers: [
+    AuthService,
+    LoginRateLimiter,
+    { provide: RATE_LIMIT_STORE, useClass: InMemoryRateLimitStore },
+  ],
   exports: [AuthService],
 })
 export class AuthModule implements NestModule {
