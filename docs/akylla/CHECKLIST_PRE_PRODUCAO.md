@@ -150,8 +150,11 @@ Checklist do proprietário — **não comercializar sem concluir**:
 - [ ] Configurar monitoramento de erros (Sentry ou similar) e uptime
 - [ ] E2E sandbox do Mercado Pago com cartão de teste + aprovação antes
       de ativar cobrança recorrente
-- [ ] Remover `PASSWORD_RESET_ENABLED=true`/`REGISTRATION_ENABLED=true`
-      do `.env.example` ou documentar que são só de ambiente local
+- [ ] No deploy de produção, **não copiar o `.env.example`**: deixar
+      `PASSWORD_RESET_ENABLED`/`REGISTRATION_ENABLED` ausentes (padrão
+      off no código). Os comentários do `.env.example` já marcam isso
+      como "apenas ambiente local/controllado"; os testes definem os
+      flags em `tests/helpers/setup-env.ts` e não dependem do template.
 - [ ] Reescrever seed com dados não temáticos de pet shop (após aprovação)
 - [ ] UI `/faturamento` exibindo limites e uso do plano
 
