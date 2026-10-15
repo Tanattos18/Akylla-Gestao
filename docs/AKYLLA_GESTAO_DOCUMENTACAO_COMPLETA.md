@@ -18,8 +18,14 @@
 > cliente pagante está no §28.
 >
 > **O que este documento NÃO é:** não é plano aprovado. As seções §26–§28
-> são **catálogos e propostas** — nada deles foi executado. Regra 2 do
-> `AGENTS.md` vale: sem autorização do proprietário, não se avança.
+> são **catálogos e propostas**. Regra 2 do `AGENTS.md` vale: sem
+> autorização do proprietário, não se avança.
+>
+> **Parcialmente executado (2026-10-15, commit `5874e89`):** o lote de
+> débitos de design §0 do catálogo — **D-1, D-2, D-3, D-5 e D-7**
+> (só frontend; nenhum backend, teste ou migration alterado). Restam
+> **D-4** e **D-6**. Nada mais dos catálogos foi feito: §26 continua
+> integralmente proposta, e §27 §1–§9 e o §28 também.
 >
 > Fonte: `docs/**`, `upgrade/**` + árvore de código real. Sem segredos,
 > senhas ou credenciais neste documento.
@@ -38,7 +44,7 @@
 | **24** | **Importação de planilhas CSV** | **Fato** — implementado e testado |
 | **25** | **Entregas fora do roteiro** | **Fato** — entregues em 2026-10 |
 | **26** | **Catálogo de melhorias (backend/segurança/operação)** | **Proposta** — não executado |
-| **27** | **Catálogo de design (frontend)** | **Proposta** — não executado |
+| **27** | **Catálogo de design (frontend)** | **Proposta** — §0 executado (D-1/2/3/5/7); §1–§9 não |
 | **28** | **Plano do primeiro cliente pagante** | **Proposta** — não executado |
 | **29** | **Mapa de documentos do projeto** | Índice das fontes |
 
@@ -64,7 +70,7 @@ arquitetura **multiempresa (tenant)** desde a primeira etapa.
 | Item | Estado |
 |---|---|
 | Roteiro Akylla Gestão (Etapas 0–12) | **CONCLUÍDO** (2026-10-12) |
-| Entregas fora do roteiro | **5 concluídas** (§25): importação, reorganização, correção documental, catálogos, plano comercial |
+| Entregas fora do roteiro | **6 concluídas** (§25): importação, reorganização, correção documental, catálogos, plano comercial, débitos de design |
 | Testes | **538/538 aprovados** (24 arquivos, PostgreSQL real) |
 | Código | 26 controllers · 28 models · 32 enums · 39 páginas · 13 migrations |
 | CI | Ativa — lint, typecheck, testes (Postgres 17), build, `db:validate` |
@@ -919,7 +925,9 @@ existentes no dev: **Empresa Piloto (dev)** e **Mundo Pet** (demo).
 - **PDV não imprime** — cupom não fiscal e second display fora do
   escopo. Solução: §26 §5.6.
 - **Débitos de design medidos** — 7 achados reais no frontend
-  (D-1 a D-7), incluindo contraste reprovado em WCAG AA. Solução: §27 §0.
+  (D-1 a D-7), incluindo contraste reprovado em WCAG AA.
+  **D-1, D-2, D-3, D-5 e D-7 já resolvidos** (2026-10-15); restam
+  **D-4** e **D-6**. Solução: §27 §0.
 
 ---
 
@@ -1056,7 +1064,7 @@ máx. 100).
 
 ## 25. Entregas fora do roteiro (outubro de 2026)
 
-Cinco entregas autorizadas pelo proprietário após a conclusão da
+Seis entregas autorizadas pelo proprietário após a conclusão da
 Etapa 12. **Nenhuma alterou código de negócio.**
 
 | # | Entrega | Commits | O que fez |
@@ -1066,6 +1074,7 @@ Etapa 12. **Nenhuma alterou código de negócio.**
 | 3 | **Correção documental e banners** | `7137489`, `bb2413b` | Auditou `docs/**` contra o código; corrigiu erros factuais (enums, rotas, webhook, contagens); adicionou banners de obsolescência em 9 docs; renomeou `akylla_gestao_diretrizes_opencode.md` → `docs/AKYLLA_GESTAO_DIRETRIZES_OPENCODE.md` |
 | 4 | **Catálogos de melhoria** | `77afedd`, `babb475` | `upgrade/MELHORIAS.md` (29 ideias) + `upgrade/MELHORIAS_DESIGN.md` (design + 7 débitos medidos) — §26 e §27 |
 | 5 | **Plano do primeiro cliente** | `0d23847` | `docs/operations/CHECKLIST_PRIMEIRO_CLIENTE.md` — roteiro de 3 semanas com critério go/no-go — §28 |
+| 6 | **Débitos de design D-1..D-7** | `5874e89` | Correções de frontend: tokens, fonte, CSS morto, rotas de estado e contraste — §27 §0. Só `apps/web`; nenhum backend, teste ou migration alterado |
 
 ### Pasta `backup/`
 
@@ -1178,30 +1187,58 @@ entra em execução sem autorização (regra 2 do `AGENTS.md`).
 
 ## 27. Catálogo de design — frontend
 
-> **PROPOSTA — nada executado.** Fonte completa:
+> **PROPOSTA — parcialmente executada.** Fonte completa:
 > `upgrade/MELHORIAS_DESIGN.md` (455 linhas). Base inspecionada:
 > `apps/web/` (Next.js 15 + React 19 + Tailwind v4),
 > `components/ui/`, `components/shell/`, `globals.css`,
 > `docs/akylla/REDESIGN_PAINEL.md`.
+>
+> **Executado em 2026-10-15 (commit `5874e89`):** o lote de débitos
+> §0 — **D-1, D-2, D-3, D-5 e D-7**. Nada além disso: as categorias
+> §1–§9 continuam **proposta**.
 
 ### §0. Achados concretos no código (débitos medidos — resolver primeiro)
 
 Não são ideias — são **correções**. Podem ser executadas assim que
 autorizadas, sem design review.
 
-| # | Achado | Arquivo | Efeito |
-|---|---|---|---|
-| **D-1** | `color: var(--foreground)` — **`--foreground` nunca é definida** no `@theme` | `globals.css:39` | a cor do texto cai no default do browser; qualquer tema futuro quebra em silêncio |
-| **D-2** | Fonte carregada como `variable: "--font-inter"` mas o CSS usa a **string literal** `"Inter"`; a variável é setada no `<html>` e **nunca lida** | `layout.tsx:6-9` × `globals.css:34` | trocar a fonte exige editar 2 lugares |
-| **D-3** | Classes e comentários de **sidebar** mortos | `globals.css:16-21, 43-50` | CSS sem uso; confunde quem manter |
-| **D-4** | **32 `<table>` escritos inline**, sem componente compartilhado | `apps/web/src/app/**` | cabeçalho, zebra, alinhamento de moeda e responsividade divergem página a página |
-| **D-5** | **Nenhum** `loading.tsx`, `error.tsx` ou `not-found.tsx` | `apps/web/src/app/` | navegação mostra a tela anterior congelada; 404 e 500 caem na página branca |
-| **D-6** | Primitivos faltam: **sem `Table`, `Modal`/`Dialog`, `Select`, `Toast`, `Tabs`** | `components/ui/` (só Badge, Button, Card, Input, Progress, Skeleton, StatCard, EmptyState, 2 charts) | cada tela inventa a própria versão; é a origem do D-4 |
-| **D-7** | **Contraste reprovado** (WCAG AA exige 4.5) | `globals.css` + **194** usos | `text-amber-500`/branco = **2.15**; `text-success-500` = **2.49**; `text-amber-600` = **3.19**. `text-amber-700` = **5.02** ✅ |
+> **Status em 2026-10-15:** **D-1, D-2, D-3, D-5 e D-7 RESOLVIDOS**
+> (commit `5874e89`, só frontend — nenhum backend, teste ou migration
+> alterado). Restam **D-4** e **D-6**, que dependem do componente
+> `Table` (§2.1).
 
-> **D-1, D-2 e D-7 são correções de 15 minutos.** D-7 é uma busca e
+| # | Achado | Arquivo | Efeito | Status |
+|---|---|---|---|---|
+| **D-1** | `color: var(--foreground)` — **`--foreground` nunca é definida** no `@theme` | `globals.css:39` | a cor do texto cai no default do browser; qualquer tema futuro quebra em silêncio | ✅ **RESOLVIDO** — token `--color-foreground: #0f172a` no `@theme` |
+| **D-2** | Fonte carregada como `variable: "--font-inter"` mas o CSS usa a **string literal** `"Inter"`; a variável é setada no `<html>` e **nunca lida** | `layout.tsx:6-9` × `globals.css:34` | trocar a fonte exige editar 2 lugares | ✅ **RESOLVIDO** — `var(--font-inter), ui-sans-serif, ...` |
+| **D-3** | Classes e comentários de **sidebar** mortos | `globals.css:16-21, 43-50` | CSS sem uso; confunde quem manter | ✅ **RESOLVIDO** — só o bloco `.sidebar-scroll` removido; **tokens `--color-sidebar*` preservados** (usados pela topbar escura) |
+| **D-4** | **32 `<table>` escritos inline**, sem componente compartilhado | `apps/web/src/app/**` | cabeçalho, zebra, alinhamento de moeda e responsividade divergem página a página | ⏳ **PENDENTE** |
+| **D-5** | **Nenhum** `loading.tsx`, `error.tsx` ou `not-found.tsx` | `apps/web/src/app/` | navegação mostra a tela anterior congelada; 404 e 500 caem na página branca | ✅ **RESOLVIDO** — os 3 criados. Nota: 31/39 páginas são client-side com `useEffect`, então `loading.tsx` cobre o segmento raiz; limites por rota é §3.2 |
+| **D-6** | Primitivos faltam: **sem `Table`, `Modal`/`Dialog`, `Select`, `Toast`, `Tabs`** | `components/ui/` (só Badge, Button, Card, Input, Progress, Skeleton, StatCard, EmptyState, 2 charts) | cada tela inventa a própria versão; é a origem do D-4 | ⏳ **PENDENTE** |
+| **D-7** | **Contraste reprovado** (WCAG AA exige 4.5) | `globals.css` + **194** usos | `text-amber-500`/branco = **2.15**; `text-success-500` = **2.49**; `text-amber-600` = **3.19**. `text-amber-700` = **5.02** ✅ | ✅ **RESOLVIDO** — **7 ocorrências** de texto viraram stop 700; 3 preservadas por não serem violação |
+
+> **D-1 e D-2 são correções de 15 minutos.** D-7 é uma busca e
 > substituição (`text-amber-600` → `text-amber-700`). D-5 usa
 > infraestrutura que o Next.js já traz — custo quase zero.
+
+### Detalhe da correção do D-7 (2026-10-15)
+
+**7 ocorrências corrigidas** (todas texto informativo):
+
+| Arquivo | Antes | Depois |
+|---|---|---|
+| `app/dashboard/page.tsx` (×2) | `text-primary-600`, `text-amber-600` | stop `700` |
+| `app/assinaturas/nova/page.tsx` (×2) | `text-amber-600` | `text-amber-700` |
+| `app/relatorios/page.tsx` | `text-amber-600` | `text-amber-700` |
+| `app/whatsapp/mensagens/[id]/page.tsx` | `text-amber-500` (rótulo `<dt>`) | `text-amber-700` |
+| `components/shell/Header.tsx` (×2, ícones 16px) | `text-amber-500` | `text-amber-700` |
+
+**3 preservadas de propósito** — não são violações:
+
+| Arquivo | Valor | Por que fica |
+|---|---|---|
+| `Header.tsx:712` | `text-primary-400` | avatar sobre a **topbar escura** (`bg-primary-500/20` sobre `#0f172a`) — âmbar claro sobre fundo escuro é o correto |
+| `StatCard.tsx:8,10` | `text-amber-600`, `text-primary-600` | **cor de ícone** (`iconBackgrounds`), não texto — 3.19:1, acima do mínimo 3:1 de WCAG 1.4.11 |
 
 ### Contraste medido (WCAG AA)
 
@@ -1296,7 +1333,9 @@ fundo, borda e ícone grande.
 
 ### Sequência sugerida
 
-1. **Uma tarde:** D-1, D-2, D-3, D-5, **D-7**, 7.2, 1.2.
+1. ~~**Uma tarde:** D-1, D-2, D-3, D-5, **D-7**, 7.2, 1.2.~~ ✅
+   **Concluído 2026-10-15** (exceto 7.2 e 1.2, que não são débitos).
+   Restam D-4 e D-6, que pertencem ao passo 2.
 2. **Uma semana:** `Table` (2.1) + rotas de estado + skeletons + empty
    states + erros in-line. Sai o "site genérico" e entra um produto.
 3. **Duas semanas:** tokens semânticos (1.1) + Modal + Toast +
