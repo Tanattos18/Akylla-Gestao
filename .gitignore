@@ -5,6 +5,8 @@ coverage/
 .env
 .env.*
 !.env.example
+/backup/*
+!/backup/README.md
 *.log
 .DS_Store
 *.tsbuildinfo

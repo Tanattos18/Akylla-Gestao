@@ -71,6 +71,17 @@ Para começar, leia nesta ordem:
 |---|---|
 | [PRD](requirements/PRD.md) | requisitos do Akylla Gestão (produto, escopo, não funcionais) |
 
+## Fora de `docs/` — pastas da raiz
+
+| Pasta | Conteúdo |
+|---|---|
+| [`../upgrade/MELHORIAS.md`](../upgrade/MELHORIAS.md) | melhorias de backend, operação, segurança e produto (P0–P3), cada uma com função, impacto e ponto de partida |
+| [`../upgrade/MELHORIAS_DESIGN.md`](../upgrade/MELHORIAS_DESIGN.md) | melhorias de design de interface — tokens, componentes, movimento, a11y, estados e impressão; inclui 7 débitos já medidos no código |
+| [`../backup/`](../backup/README.md) | cópias de segurança locais (conteúdo ignorado pelo Git; só o README é versionado) |
+
+Nenhuma ideia de `upgrade/` vale como plano sem decisão do proprietário
+(regra 2 do `AGENTS.md`).
+
 ---
 
 ## Convenções
