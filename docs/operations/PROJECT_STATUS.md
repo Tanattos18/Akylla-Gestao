@@ -38,6 +38,15 @@ do roteiro `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`. Entregas:
 
 ### Próximos passos (fora do roteiro — requerem autorização)
 
+> **Documento técnico consolidado (2026-10-14):**
+> `docs/AKYLLA_GESTAO_DOCUMENTACAO_COMPLETA.md` — **29 seções,
+> 1503 linhas**, fonte única para leitura por IA. Além das 23 seções
+> originais, incorpora: importação de planilhas (§24), entregas fora
+> do roteiro (§25), catálogo de melhorias P0–P3 (§26), catálogo de
+> design com 7 débitos medidos e tabela de contraste WCAG (§27), plano
+> do primeiro cliente com critério go/no-go (§28) e mapa de documentos
+> (§29). Numeração §1–§23 preservada (referenciada externamente).
+>
 > **Catálogos de decisão (2026-10-14):** `upgrade/MELHORIAS.md` (29
 > ideias de backend/segurança/operação/produto) e
 > `upgrade/MELHORIAS_DESIGN.md` (design + 7 débitos medidos no

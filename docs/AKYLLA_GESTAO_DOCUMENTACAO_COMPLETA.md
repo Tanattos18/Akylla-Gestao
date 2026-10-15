@@ -1,17 +1,46 @@
 # Akylla Gestão — Documentação técnica completa
 
-> Documento autocontido, gerado para ser lido por um modelo de IA (GPT) como
-> fonte única de contexto sobre o projeto. Resume **tudo o que foi
-> desenvolvido** (Roteiro Akylla Gestão — Etapas 0→12, concluído em
-> 2026-10-12), com os processos internos de cada módulo: fluxos,
-> transações, locks, validações, permissões, endpoints, telas e testes.
+> Documento **autocontido**, gerado para ser lido por um modelo de IA
+> como fonte única de contexto sobre o projeto. Resume **tudo o que
+> existe**: o Roteiro Akylla Gestão (Etapas 0→12, concluído em
+> 2026-10-12), todas as entregas **fora do roteiro** (importação de
+> planilhas, reorganização estrutural, correção documental, catálogos
+> de melhoria e plano comercial) e os processos internos de cada
+> módulo: fluxos, transações, locks, validações, permissões,
+> endpoints, telas e testes.
 >
 > **Produto:** **Akylla Gestão** — SaaS multiempresa para pequenos
 > negócios brasileiros (nicho pet shop removido da navegação; módulos
 > genéricos reutilizáveis). Monorepo adaptado e renomeado em 2026-10-12.
 >
-> Fonte: `docs/**` + árvore de código real. Sem segredos, senhas ou
-> credenciais neste documento.
+> **Estado em 2026-10-14:** código completo e testado (**538/538**),
+> sem deploy, sem backup e sem cobrança real. O caminho até o primeiro
+> cliente pagante está no §28.
+>
+> **O que este documento NÃO é:** não é plano aprovado. As seções §26–§28
+> são **catálogos e propostas** — nada deles foi executado. Regra 2 do
+> `AGENTS.md` vale: sem autorização do proprietário, não se avança.
+>
+> Fonte: `docs/**`, `upgrade/**` + árvore de código real. Sem segredos,
+> senhas ou credenciais neste documento.
+
+---
+
+## Índice de navegação
+
+| § | Seção | Natureza |
+|---|---|---|
+| 1–15 | Visão geral, stack, convenções e módulos | **Fato** — código implementado |
+| 16 | Frontend — mapa de páginas | **Fato** |
+| 17–20 | Testes, segurança, demo, ambientes | **Fato** |
+| 21–22 | Pendências e padrão de módulos | **Fato** (lacunas) + regra |
+| 23 | Roteiro Etapas 0–12 | **Fato** (histórico) |
+| **24** | **Importação de planilhas CSV** | **Fato** — implementado e testado |
+| **25** | **Entregas fora do roteiro** | **Fato** — entregues em 2026-10 |
+| **26** | **Catálogo de melhorias (backend/segurança/operação)** | **Proposta** — não executado |
+| **27** | **Catálogo de design (frontend)** | **Proposta** — não executado |
+| **28** | **Plano do primeiro cliente pagante** | **Proposta** — não executado |
+| **29** | **Mapa de documentos do projeto** | Índice das fontes |
 
 ---
 
@@ -30,16 +59,37 @@ arquitetura **multiempresa (tenant)** desde a primeira etapa.
   via `CompanyModule` (Etapa 10); o núcleo (clientes, produtos, vendas,
   caixa, financeiro, relatórios) é sempre ativo.
 
-### Situação atual
+### Situação atual (2026-10-14)
 
 | Item | Estado |
 |---|---|
 | Roteiro Akylla Gestão (Etapas 0–12) | **CONCLUÍDO** (2026-10-12) |
+| Entregas fora do roteiro | **5 concluídas** (§25): importação, reorganização, correção documental, catálogos, plano comercial |
 | Testes | **538/538 aprovados** (24 arquivos, PostgreSQL real) |
-| Migrations | 12 aplicadas em `petflow` e `petflow_test` |
-| Gateway Mercado Pago | Sandbox implementado; cobrança real **não ativada** |
-| Deploy / produção | **Não realizado** — requer aprovação do proprietário |
-| Próximos passos | Checklist pré-produção (`docs/akylla/CHECKLIST_PRE_PRODUCAO.md`) |
+| Código | 26 controllers · 28 models · 32 enums · 39 páginas · 13 migrations |
+| CI | Ativa — lint, typecheck, testes (Postgres 17), build, `db:validate` |
+| CD / deploy | **Não realizado** — `cd.yml` é placeholder; requer decisão de hosting |
+| Backup | **Não existe** — sem `pg_dump` agendado nem restore testado |
+| LGPD | **Não existe** — direito ao esquecimento pendente |
+| Gateway Mercado Pago | Sandbox implementado; **cobrança real nunca validada** |
+| Monitoramento | **Não existe** |
+| `npm audit --omit=dev` | **2 vulnerabilidades** (`postcss` via `next`, severidade alta) |
+| Próximo passo | §28 — plano de 3 semanas até o primeiro cliente pagante (aguarda autorização) |
+
+---
+
+## 1.1. Resumo executivo para quem lê pela primeira vez
+
+Em uma frase: **é um SaaS de gestão multiempresa completo e
+extensivamente testado, que ainda não foi para o ar.**
+
+| Pergunta | Resposta |
+|---|---|
+| O que faz? | Gestão para pequenos negócios: cadastros, estoque, PDV, caixa, financeiro, clientes, serviços, WhatsApp, agendamentos, relatórios e assinatura SaaS |
+| Como isola empresas? | `companyId` obrigatório em toda entidade; sempre derivado da sessão; recurso alheio responde 404 |
+| Qual o diferencial técnico? | 538 testes contra PostgreSQL real; trilha de auditoria imutável (correção = movimento compensatório); importação de planilhas; WhatsApp nativo com consentimento |
+| O que falta para produzir? | Deploy, backup com restore testado, LGPD, monitoramento, E2E real do Mercado Pago (§21 e §28) |
+| Dá para vender hoje? | Não para produção paga; sim para **piloto fechado e pago** (§28) |
 
 ---
 
@@ -68,29 +118,59 @@ packages/shared → @petflow/shared (schemas Zod + tipos + constantes)
 packages/config → tsconfig base
 packages/whatsapp → @petflow/whatsapp (provedor Meta/Mock, E.164, backoff)
 database/       → schema Prisma e migrations (sem pasta de seeds)
-tests/          → testes de integração compartilhados (24 arquivos)
+config/         → ESLint 9 flat config, Vitest, Playwright, tsconfig base
+scripts/        → setup:dev, db.mjs (reset|studio|seed|status)
+tests/          → testes de integração (integration/) + helpers compartilhados
+backup/         → README de procedimento de backup (contém SÓ o README)
+upgrade/        → catálogos de melhoria (backend MELHORIAS.md, design MELHORIAS_DESIGN.md)
+.github/        → workflows ci.yml (ativo) e cd.yml (placeholder)
 docs/           → documentação
 automação do whatsapp/ → base legada PRESERVADA, fora do monorepo (não mexer)
 ```
 
+A pasta `automação do whatsapp/` é história do projeto e está
+**excluída** do lint e do build (regra 12 do `AGENTS.md`).
+
 ### Comandos
 
 ```bash
-npm run dev:api      # build de shared+whatsapp e API com tsx watch
-npm run dev:web      # Next.js
-npm run dev:worker   # worker da fila WhatsApp
-npm run lint         # ESLint no monorepo
-npm run typecheck    # tsc nos workspaces apps/* (api, web, worker)
-npm test             # Vitest (aplica migrations no petflow_test)
-npm run build        # build de todos os workspaces
-npm run db:validate  # valida schema Prisma
-npm run db:migrate   # aplica migrations pendentes
+# desenvolvimento
+npm run dev:api        # build de shared+whatsapp e API com tsx watch
+npm run dev:web        # Next.js
+npm run dev:worker     # worker da fila WhatsApp
+npm run setup:dev      # setup inicial do ambiente
+
+# verificação (sequência padrão antes de concluir qualquer tarefa)
+npm run validate       # roda as 5 abaixo em sequência
+npm run lint           # ESLint no monorepo
+npm run typecheck      # tsc nos workspaces apps/* (api, web, worker)
+npm test               # Vitest (aplica migrations no petflow_test)
+npm run build          # build de todos os workspaces
+npm run db:validate    # valida schema Prisma (requer DATABASE_URL)
+
+# banco de dados
+npm run db:generate                # gera o client Prisma
+npm run db:migrate                 # aplica migrations pendentes
+npm run db:deploy                  # aplica migrations em produção (migrate deploy)
+npm run db -- reset                # drop + migrations + seed (DEV ONLY)
+npm run db -- studio               # Prisma Studio
+npm run db -- seed                 # aplica seed de demonstração
+npm run db -- status               # status das migrations
 npm run db:seed:demo -- --company=<slug|id|email>   # dados de demonstração
 npm run bootstrap:admin                              # empresa + 1º ADMIN (idempotente)
 ```
 
 Atenção operacional: `npm run build` e `npm run dev:web` **não podem rodar
 ao mesmo tempo** (ambos escrevem em `apps/web/.next`).
+
+### CI (GitHub Actions)
+
+| Workflow | Gatilho | O que faz |
+|---|---|---|
+| `ci.yml` | push/PR | lint → typecheck → testes com **PostgreSQL 17 real** (serviço) → build → `db:validate` |
+| `cd.yml` | push em `main` | **placeholder**: sobe dependências, build, `db:deploy`, e um `echo` no lugar do deploy real (`cd.yml:40` e `cd.yml:75`) |
+
+A CI é ativa e verde. O CD ainda não entrega nada — é a pendência L7.
 
 ---
 
@@ -704,9 +784,18 @@ frontend** — valores exibidos são para UX, o servidor recalcula.
   `appointments`, `subscriptions`, `billing`, `password-reset`,
   `register`, `tenancy-audit`, `financial`, `company-modules`,
   `tenant-limits`, `mercadopago`, `imports`.
+- **Cobertura real dos testes:** API de ponta a ponta em PostgreSQL real
+  — controllers, guards, transações, limites de plano, webhooks e
+  importação. **Não** cobrem: componentes React, `fetch` do `AppShell`,
+  rewrites do Next, nem navegador (§26 §4.2). Um link quebrado no
+  frontend passa 100% verde hoje.
+- **Só existe validação automatizada em API.** A validação E2E de
+  interface é **manual** por regra de encerramento de etapa.
 - Cada etapa só é encerrada com evidência: `npm run lint` (0 erros),
   `npm run typecheck` (workspaces `apps/*`), `npm test`, `npm run build`,
   `npm run db:validate`, varredura de segredos e validação E2E manual.
+- O atalho único é `npm run validate` (lint + typecheck + test +
+  build + db:validate em sequência).
 
 ---
 
@@ -770,32 +859,67 @@ existentes no dev: **Empresa Piloto (dev)** e **Mundo Pet** (demo).
 
 ## 21. Pendências conhecidas e limitações
 
-Classificadas no `docs/akylla/CHECKLIST_PRE_PRODUCAO.md` §3 (L1–L14).
-Resumo das mais relevantes:
+> Classificadas no `docs/akylla/CHECKLIST_PRE_PRODUCAO.md` §3 (L1–L14).
+> As **ideias de solução** para cada uma estão catalogadas no §26
+> (backend/operação) e §27 (design). O **plano de execução** está no §28.
 
-- **8 vulnerabilidades `npm audit`** — 6 em dependências de
+### Bloqueiam produção (L1, L4, L7, L8, L9, L13)
+
+- **L1 — 8 vulnerabilidades `npm audit`** — 6 em dependências de
   desenvolvimento (vitest/esbuild/tinypool) e **2 em produção**
-  (`postcss` transitivo do `next`, severidade alta); correção exige
-  upgrade do vitest e do `next` (ambos breaking change).
-- **CI sem deploy** — `.github/workflows/ci.yml` cobre lint, typecheck,
-  testes (Postgres 17), build e `db:validate`; `cd.yml` ainda é placeholder
+  (`postcss` transitivo do `next`, severidade alta: XSS e path
+  traversal); correção exige upgrade do `vitest` e do `next` (ambos
+  breaking change). Solução: §26 §4.3.
+- **L7 — CI sem deploy** — `ci.yml` cobre lint, typecheck, testes
+  (Postgres 17), build e `db:validate`; `cd.yml` ainda é placeholder
   (migrations + `echo`) e depende de definição de hosting/secrets.
-- **Sem backups automatizados** com restore testado — antes de produção.
-- **Sem RLS no Postgres** — isolamento de tenant na camada de aplicação
-  (538 testes); adicionar RLS como defesa em profundidade.
-- **Sem fluxo LGPD** — direito ao esquecimento pendente.
-- **Rate limit in-memory** — reseta no restart; para multi-instância
-  usar Redis.
-- **Cobrança recorrente real não ativada** — sandbox implementado;
-  ativar exige E2E com cartão de teste + aprovação.
-- **UI `/faturamento` não exibe limites/uso do plano** — backend pronto.
-- **Seed ainda temático de pet shop** — reescrever com aprovação.
-- **Escrita do catálogo global de planos não exposta** — exige papel de
-  plataforma.
-- **Redefinição de senha sem token de e-mail**; cadastro aberto sem
-  captcha (flags desligadas por padrão).
+  Solução: §26 §2.2.
+- **L8 — Sem backups automatizados** com restore testado. Solução:
+  §26 §1.1. **É o risco mais alto**: um `db:reset` acidental = perda
+  total de dado do cliente pagante.
+- **L4 — Sem fluxo LGPD** — `Client` guarda nome, telefone, e-mail,
+  CPF e endereço **sem nenhum caminho de remoção**. Solução: §26 §1.2.
+- **L9 — Sem monitoramento** — um erro 500 em produção é descoberto
+  pelo cliente. Solução: §26 §2.1.
+- **L13 — Cobrança recorrente real não ativada** — o gateway está
+  implementado e testado com `MockMercadoPagoProvider`, que prova a
+  lógica interna, **não** a integração real. Solução: §26 §2.4.
+
+### Degradam a operação (L2, L3, L5, L6, L10, L12, L14)
+
+- **L2 — Rate limit in-memory** — reseta no restart e não vale entre
+  instâncias. Solução: §26 §1.3.
+- **L3 — Sem RLS no Postgres** — isolamento de tenant depende
+  inteiramente da aplicação lembrar de filtrar por `companyId`
+  (538 testes cobrem isso, mas é defesa em profundidade). Solução:
+  §26 §1.4.
+- **L5 — Redefinição de senha sem token** — `PASSWORD_RESET_ENABLED`
+  redefine **sem qualquer token**; quem habilita em produção entrega a
+  conta de qualquer usuário. Solução: §26 §1.5.
+- **L6 — Cadastro público sem anti-abuso** — `REGISTRATION_ENABLED`
+  permite criar empresa + ADMIN ilimitadamente. Solução: §26 §1.6.
+- **L10 — Expiração de assinatura lazy** — acontece na leitura; empresa
+  com assinatura vencida funciona até alguém abrir a tela certa.
+  Solução: §26 §2.3.
+- **L12 — `/faturamento` não exibe limites/uso do plano** — o backend
+  já expõe `userLimit`/`clientLimit`/`productLimit`; falta a tela.
+  Solução: §26 §5.1.
+- **L14 — Catálogo global de planos não editável** — os planos se
+  alteram **no banco**, sem trilha. Solução: §26 §6.4.
+
+### Menores e de produto
+
+- **L11 — Seed ainda temático de pet shop** ("Mundo Pet") — reescrever
+  com aprovação. Solução: §26 §6.3.
+- **Sem edição dos dados da empresa** — lacuna D1 do
+  `MAPA_DE_MODULOS.md`: `Company` tem `name`/`slug` e **não há nenhuma
+  forma de editar**. Solução: §26 §5.2.
 - **Agenda**: visão por dia apenas (semana/mês, recorrência,
-  profissionais fora do escopo).
+  profissionais fora do escopo). Solução: §26 §5.3.
+- **PDV não imprime** — cupom não fiscal e second display fora do
+  escopo. Solução: §26 §5.6.
+- **Débitos de design medidos** — 7 achados reais no frontend
+  (D-1 a D-7), incluindo contraste reprovado em WCAG AA. Solução: §27 §0.
 
 ---
 
@@ -839,3 +963,541 @@ Resumo das mais relevantes:
 Todos os entregáveis estão em `docs/akylla/`. Roteiro **concluído** em
 2026-10-12. Deploy e comercialização exigem aprovação explícita do
 proprietário.
+
+---
+
+## 24. Módulo importação de planilhas CSV
+
+> Entrega **fora do roteiro** (§25), implementada e testada: +29 testes
+> (509 → 538). É o módulo que permite ao cliente migrar do Excel.
+
+### Arquivos
+
+| Arquivo | Papel |
+|---|---|
+| `apps/api/src/imports/imports.module.ts` | módulo Nest |
+| `apps/api/src/imports/imports.controller.ts` | rotas |
+| `apps/api/src/imports/imports.service.ts` | parsing, classificação, inserção |
+| `tests/integration/imports.test.ts` | 29 testes |
+| `database/prisma/migrations/..._import_batch/` | modelo `ImportBatch` |
+| `apps/web/src/app/importacoes/` | tela de upload + histórico |
+
+### Rotas (todas com `AdminGuard`)
+
+| Método | Rota | Descrição |
+|---|---|---|
+| `GET` | `/api/imports/template?type=` | baixa o modelo CSV daquele tipo (com BOM, separador `;`, exemplos) |
+| `POST` | `/api/imports` | upload multipart (`file`) + `type` + `dryRun` |
+| `GET` | `/api/imports` | histórico paginado de `ImportBatch` |
+
+### Tipos suportados
+
+`CATEGORY` · `SUPPLIER` · `PRODUCT` · `CLIENT` · `SERVICE`
+
+Cada tipo tem `REQUIRED_COLUMNS` e `TEMPLATE_HEADERS` próprios. Exemplo
+— `PRODUCT` exige `nome`; aceita `sku`, `codigo_barras`, `unidade`,
+`preco_custo`, `preco_venda`, `estoque_minimo`, `saldo_inicial`,
+`categoria`, `fornecedor`.
+
+### Fluxo do upload (`ImportsService.upload`)
+
+1. **Validação do arquivo**: presença, extensão `.csv`, tamanho ≤
+   `IMPORT_MAX_FILE_BYTES` (5 MB), `originalname` truncado em 255.
+2. **Parsing** (`parseRows`): UTF-8 com BOM; **delimitador autodetectado**
+   (conta `;` vs `,` na primeira linha); cabeçalhos **normalizados**
+   (remove acento, lowercase, só `[a-z0-9]` — `preço de custo` vira
+   `precocusto`); valida colunas obrigatórias; descarta linhas vazias.
+   Limite de **5000 linhas** de dados.
+3. **Contexto** (`buildContext`): carrega categorias, fornecedores e
+   chaves existentes da **empresa autenticada** para deduplicação.
+4. **Classificação** (`classify`): por linha, aplica o schema Zod
+   correspondente de `@petflow/shared`; classifica como **payload**
+   (válido e novo), **skip** (duplicado existente ou repetido na
+   planilha) ou **erro** (validação falhou, com `row` + mensagem).
+   - Números aceitam **formato BR** (`1.234,56`) e neutro (`1234.56`) —
+     `parseDecimalCell`.
+   - `PRODUCT` resolve `categoria`/`fornecedor` **por nome**; se não
+     achar, erro de linha (não cria órfão).
+   - `saldo_inicial > 0` gera `StockMovement` `IN` com `reference` =
+     filename — o estoque inicial tem origem auditável.
+5. **Limite de plano** (`assertPlanLimit`): só para `CLIENT` e
+   `PRODUCT`, e **somente se a assinatura for `ACTIVE`**. Se
+   `current + count > limit`, lança `403` com o nome do plano.
+   Assinatura nula ou não-ativa = **sem limite** (equivalente ao plano
+   Completo — ver `tenant-limits.service.ts`).
+6. **Dry run**: retorna o relatório **sem gravar nada** (`batchId:
+   null`). É o modo de revisão antes de confirmar.
+7. **Gravação**: **transação única** — ou tudo entra, ou nada. No
+   sucesso cria `ImportBatch` com contagens e até 100
+   `errorDetails`. Na falha, cria `ImportBatch` `FAILED` (best-effort)
+   e relança.
+
+### Relatório (`ImportReport`)
+
+`dryRun`, `batchId`, `type`, `filename`, `totalRows`, `created`,
+`skipped`, `errors`, `errorDetails[]` (cada um com `row` e `message`,
+máx. 100).
+
+### Segurança
+
+- `AdminGuard` em todas as rotas.
+- `companyId` sempre do contexto autenticado.
+- Limite de 5 MB e 5000 linhas (anti-DoS).
+- Parsing sem `eval`; CSV tratado como dados.
+- Deduplicação por empresa — nunca cruza tenants.
+
+### Tela
+
+`/importacoes`: escolher tipo, baixar modelo, enviar CSV, rodar em
+`dryRun`, revisar o relatório e confirmar. Abaixo, histórico de
+`ImportBatch` com autor, contagens e status.
+
+---
+
+## 25. Entregas fora do roteiro (outubro de 2026)
+
+Cinco entregas autorizadas pelo proprietário após a conclusão da
+Etapa 12. **Nenhuma alterou código de negócio.**
+
+| # | Entrega | Commits | O que fez |
+|---|---|---|---|
+| 1 | **Importação de planilhas** | (Etapa 12.5) | Novo módulo completo com 29 testes — §24 |
+| 2 | **Reorganização estrutural** | `d37b7ec`, `8707d47` | Extração de `config/` (ESLint, Vitest, Playwright, tsconfig), `scripts/`, separação de `tests/`, workflows `.github/`, `.gitignore` corrigido com `backup/` |
+| 3 | **Correção documental e banners** | `7137489`, `bb2413b` | Auditou `docs/**` contra o código; corrigiu erros factuais (enums, rotas, webhook, contagens); adicionou banners de obsolescência em 9 docs; renomeou `akylla_gestao_diretrizes_opencode.md` → `docs/AKYLLA_GESTAO_DIRETRIZES_OPENCODE.md` |
+| 4 | **Catálogos de melhoria** | `77afedd`, `babb475` | `upgrade/MELHORIAS.md` (29 ideias) + `upgrade/MELHORIAS_DESIGN.md` (design + 7 débitos medidos) — §26 e §27 |
+| 5 | **Plano do primeiro cliente** | `0d23847` | `docs/operations/CHECKLIST_PRIMEIRO_CLIENTE.md` — roteiro de 3 semanas com critério go/no-go — §28 |
+
+### Pasta `backup/`
+
+Contém **apenas** `README.md` — o procedimento de backup. O conteúdo
+real de backup é operação e **não deve ser versionado**. O `.gitignore`
+contém `/backup/*` com exceção `!/backup/README.md`.
+
+### Pasta `upgrade/`
+
+Catálogos de decisão (§26 e §27). Não é plano aprovado — nada de lá
+entra em execução sem autorização (regra 2 do `AGENTS.md`).
+
+---
+
+## 26. Catálogo de melhorias — backend, segurança, operação e produto
+
+> **PROPOSTA — nada executado.** Fonte completa:
+> `upgrade/MELHORIAS.md` (428 linhas). Esta seção é o resumo; o
+> catálogo traz, para cada item, o que é, o que melhora **neste
+> projeto**, por onde começar e a prioridade.
+
+### Legenda de prioridade
+
+| | Significado |
+|---|---|
+| **P0** | bloqueia produção / risco de dados ou segurança |
+| **P1** | necessário antes de escalar ou de confiar na operação |
+| **P2** | valor claro, fazer após estabilizar |
+| **P3** | exploratório / quando houver demanda |
+
+### §1. Segurança e compliance
+
+| # | Ideia | P | Fecha |
+|---|---|---|---|
+| 1.1 | **Backup automatizado com restore testado** — `pg_dump` agendado (cron/GHA/gerenciado), retenção e *drill* automatizado em ambiente isolado | **P0** | L8 |
+| 1.2 | **Exclusão/anonimização LGPD** — endpoint ADMIN que mascarar PII preservando `FinancialEntry`/`Sale`, com trilha | **P0** | L4 |
+| 1.3 | **Rate limit distribuído (Redis)** — interface `RateLimitStore`; hoje em memória, morre no restart e não vale entre instâncias | P1 | L2 |
+| 1.4 | **RLS no Postgres** — `WHERE company_id = current_setting('app.company_id')` além do filtro da aplicação; defesa em profundidade | P1 | L3 |
+| 1.5 | **Senha por token de e-mail** — token de uso único com expiração; hoje `PASSWORD_RESET_ENABLED` redefine sem token | P1 | L5 |
+| 1.6 | **Cadastro anti-abuso** — limite por IP/CPF, captcha ou convite + verificação de e-mail | P1 | L6 |
+| 1.7 | **2FA/MFA para ADMIN** — TOTP no mesmo serviço de sessão (já guarda hash SHA-256), sem JWT | P2 | — |
+| 1.8 | **Trilha de auditoria exportável** — log append-only de ações sensíveis (quem, o quê, quando, IP) | P2 | D1 |
+
+### §2. Operação e confiabilidade
+
+| # | Ideia | P | Fecha |
+|---|---|---|---|
+| 2.1 | **Monitoramento** — Sentry/GlitchTip no `AllExceptionsFilter` + uptime em `GET /health` | P1 | L9 |
+| 2.2 | **CD real** — fechar `cd.yml` (hoje `echo`), staging + produção + rollback | P1 | L7 |
+| 2.3 | **Expiração de assinatura por job** — cron no worker; hoje é lazy | P2 | L10 |
+| 2.4 | **E2E Mercado Pago em sandbox** — checkout → preapproval → webhook → `ACTIVE` com cartão de teste | P1 | L13 |
+| 2.5 | **Fila real (BullMQ/Redis)** — substituir polling do worker por fila com retries e dead-letter | P2 | — |
+
+### §3. Desempenho e escala
+
+| # | Ideia | P |
+|---|---|---|
+| 3.1 | Cache de relatórios/dashboard, invalidado em `create` de `Sale`/`CashMovement`/`FinancialEntry` | P2 |
+| 3.2 | Índices sob demanda a partir do `pg_stat_statements` (validar com dados reais) | P2 |
+| 3.3 | Paginação/limites obrigatórios em **toda** rota `GET` (varredura: `/whatsapp/consents`, `/cash/sessions`, listas de importação) | P1 |
+
+### §4. Qualidade de código e testes
+
+| # | Ideia | P |
+|---|---|---|
+| 4.1 | Cobertura medida na CI (`vitest run --coverage` + diff-cover no PR) — hoje há 538 testes verdes mas **não se sabe o que não cobrem** | P1 |
+| 4.2 | E2E de interface (Playwright) — hoje a validação E2E é **manual**; nenhum teste passa por componente React nem pelos rewrites do Next | P1 |
+| 4.3 | Upgrade de dependências — `next`→16.4.1, `vitest`→major; branch dedicada, um pacote por commit | P1 |
+| 4.4 | OpenAPI gerado (`@nestjs/swagger`) — `API.md` é escrito à mão e foi justamente a fonte dos erros corrigidos | P2 |
+| 4.5 | Lint de contrato entre workspaces — checar que `API.md`, schemas e controllers batem | P2 |
+
+### §5. Produto e UX
+
+| # | Ideia | P | Fecha |
+|---|---|---|---|
+| 5.1 | Exibir limites e uso do plano em `/faturamento` — backend **já expõe** os limites | P1 | L12 |
+| 5.2 | Edição dos dados da empresa (`PATCH /api/company`) — hoje não existe forma de editar | P1 | D1 |
+| 5.3 | Agenda: visão de semana/mês, recorrência, múltiplos profissionais | P2 | — |
+| 5.4 | CSV de caixa, clientes e WhatsApp (utilitário de exportação **já existe**) | P2 | — |
+| 5.5 | Busca global com resultados agrupados por tipo | P2 | — |
+| 5.6 | Impressão de cupom não fiscal (ESC/POS/PDF) e second display no PDV | P2 | — |
+| 5.7 | Modo offline/reativo no PDV — alto impacto, alta complexidade | P3 | — |
+
+### §6. Plataforma e DX
+
+| # | Ideia | P | Fecha |
+|---|---|---|---|
+| 6.1 | Contrato de tipos entre frontend e API automático | P2 | — |
+| 6.2 | Staging efêmero por PR (URL de preview) | P2 | — |
+| 6.3 | Seed de demonstração neutro por segmento | P3 | L11 |
+| 6.4 | Catálogo global de planos editável por papel de plataforma | P3 | L14 |
+
+### Resumo por prioridade
+
+| P | Itens |
+|---|---|
+| **P0** | 1.1 backup com restore testado · 1.2 LGPD |
+| **P1** | 1.3 rate limit · 1.4 RLS · 1.5 senha por e-mail · 1.6 anti-abuso · 2.1 monitoramento · 2.2 CD · 2.4 E2E MP · 3.3 limites de leitura · 4.1 cobertura · 4.2 E2E UI · 4.3 upgrades · 5.1 uso do plano · 5.2 editar empresa |
+| **P2** | 1.7 2FA · 1.8 auditoria · 2.3 expiração por job · 2.5 fila · 3.1 cache · 3.2 índices · 4.4 OpenAPI · 4.5 contrato · 5.3 agenda · 5.4 CSV · 5.5 busca · 5.6 impressão · 6.1 tipos · 6.2 staging |
+| **P3** | 5.7 offline · 6.3 seed neutro · 6.4 catálogo global |
+
+### Sequência sugerida
+
+1. **Antes de qualquer produção:** 1.1 → 1.2 → 1.4 → 2.2 → 2.1.
+2. **Primeiro mês:** 4.3 → 4.1 → 4.2 → 2.4.
+3. **Primeiro trimestre:** 1.5 → 1.6 → 5.1 → 5.2 → 1.3.
+4. **Depois:** escala e DX (3.x, 5.3–5.6, 6.x).
+
+---
+
+## 27. Catálogo de design — frontend
+
+> **PROPOSTA — nada executado.** Fonte completa:
+> `upgrade/MELHORIAS_DESIGN.md` (455 linhas). Base inspecionada:
+> `apps/web/` (Next.js 15 + React 19 + Tailwind v4),
+> `components/ui/`, `components/shell/`, `globals.css`,
+> `docs/akylla/REDESIGN_PAINEL.md`.
+
+### §0. Achados concretos no código (débitos medidos — resolver primeiro)
+
+Não são ideias — são **correções**. Podem ser executadas assim que
+autorizadas, sem design review.
+
+| # | Achado | Arquivo | Efeito |
+|---|---|---|---|
+| **D-1** | `color: var(--foreground)` — **`--foreground` nunca é definida** no `@theme` | `globals.css:39` | a cor do texto cai no default do browser; qualquer tema futuro quebra em silêncio |
+| **D-2** | Fonte carregada como `variable: "--font-inter"` mas o CSS usa a **string literal** `"Inter"`; a variável é setada no `<html>` e **nunca lida** | `layout.tsx:6-9` × `globals.css:34` | trocar a fonte exige editar 2 lugares |
+| **D-3** | Classes e comentários de **sidebar** mortos | `globals.css:16-21, 43-50` | CSS sem uso; confunde quem manter |
+| **D-4** | **32 `<table>` escritos inline**, sem componente compartilhado | `apps/web/src/app/**` | cabeçalho, zebra, alinhamento de moeda e responsividade divergem página a página |
+| **D-5** | **Nenhum** `loading.tsx`, `error.tsx` ou `not-found.tsx` | `apps/web/src/app/` | navegação mostra a tela anterior congelada; 404 e 500 caem na página branca |
+| **D-6** | Primitivos faltam: **sem `Table`, `Modal`/`Dialog`, `Select`, `Toast`, `Tabs`** | `components/ui/` (só Badge, Button, Card, Input, Progress, Skeleton, StatCard, EmptyState, 2 charts) | cada tela inventa a própria versão; é a origem do D-4 |
+| **D-7** | **Contraste reprovado** (WCAG AA exige 4.5) | `globals.css` + **194** usos | `text-amber-500`/branco = **2.15**; `text-success-500` = **2.49**; `text-amber-600` = **3.19**. `text-amber-700` = **5.02** ✅ |
+
+> **D-1, D-2 e D-7 são correções de 15 minutos.** D-7 é uma busca e
+> substituição (`text-amber-600` → `text-amber-700`). D-5 usa
+> infraestrutura que o Next.js já traz — custo quase zero.
+
+### Contraste medido (WCAG AA)
+
+| Par | Razão | Situação |
+|---|---|---|
+| `--color-sidebar-text` `#94a3b8` sobre `#0f172a` | 6.96 | ✅ |
+| `text-primary-700` `#b45309` sobre branco | 5.02 | ✅ |
+| `text-amber-700` sobre branco | 5.02 | ✅ |
+| `text-amber-600` `#d97706` sobre branco | 3.19 | ❌ |
+| `text-amber-500` `#f59e0b` sobre branco | 2.15 | ❌ |
+| `text-success-500` `#14b8a6` sobre branco | 2.49 | ❌ |
+
+**Regra de correção:** banir os stops 300/400/500/600 como **cor de
+texto** — texto só nos stops 700+. Os 500/600 continuam válidos como
+fundo, borda e ícone grande.
+
+### §1. Fundamentos: tokens e CSS
+
+| # | Ideia | P |
+|---|---|---|
+| 1.1 | **Design tokens semânticos** (`--color-accent`, `--color-danger`, `--text-muted`, `--border-subtle`...) usados só nos componentes — hoje os tokens são nomes de paleta | **P0** |
+| 1.2 | Completar a escala (faltam `danger`, `warning`, `info`; `success` só tem 4 stops) e remover a "segunda paleta" improvisada de utilitários Tailwind | P1 |
+| 1.3 | Escuro por tokens, não por classe `dark:` (hoje `dark:` nunca aparece) | P2 |
+| 1.4 | Tema por segmento — paleta `primary` trocada por tenant, resolvida no servidor | P3 |
+
+### §2. Componentes: parar de reinventar
+
+| # | Ideia | P |
+|---|---|---|
+| 2.1 | **`Table` compartilhado** — colunas tipadas, alinhamento à direita para moeda, estado vazio, versão empilhada no mobile (resolve D-4) | **P0** |
+| 2.2 | `Modal`/`Dialog` acessível — foco preso, `Esc`, devolve foco, `aria-modal`; a API já exige `reason ≥ 3` em estorno/cancelamento | P1 |
+| 2.3 | `Select`, `Combobox`, `DateInput` — nativos estilizados, `label` ligado, `aria-invalid` | P1 |
+| 2.4 | `Toast` — hoje criar cliente, liquidar título ou enfileirar WhatsApp **não gera feedback visível**; consumir o shape `{ statusCode, message, issues[] }` do Zod | P1 |
+| 2.5 | `PageHeader` e `FilterBar` (39 páginas repetem o mesmo topo) | P2 |
+
+### §3. Movimento
+
+| # | Ideia | P |
+|---|---|---|
+| 3.1 | Transições 150–200 ms em hover/focus/pressed — há **11 ocorrências** de `animate|transition|@keyframes` em todo o `apps/web`; sem biblioteca de animação; respeitar `prefers-reduced-motion` | P1 |
+| 3.2 | Skeletons coerentes com a geometria real (`Skeleton.tsx` já existe) | P1 |
+| 3.3 | Optimistic UI **só em status** — nunca em dinheiro (regra permanente) | P2 |
+| 3.4 | Gráficos com animação de entrada e transição ao trocar período | P2 |
+
+### §4. Acessibilidade
+
+| # | Ideia | P |
+|---|---|---|
+| 4.1 | Auditoria `@axe-core/playwright` na CI — há apenas ~63 ocorrências de `aria-|role=` em 39 páginas + 22 componentes | P1 |
+| 4.2 | `focus-visible` consistente e ordem de tabulação coerente (quem opera o PDV de teclado) | P1 |
+| 4.3 | Contraste medido — **já há reprovações** (tabela acima) | P1 |
+| 4.4 | Regiões `aria-live` — anunciar "12 clientes encontrados", "caixa fechado com diferença de R$ 2,00" | P2 |
+
+### §5. Responsividade
+
+| # | Ideia | P |
+|---|---|---|
+| 5.1 | Mobile-first no fluxo do balcão — testar em 360 px; as 32 tabelas não têm versão empilhada (resolve junto com 2.1) | P1 |
+| 5.2 | Áreas de toque ≥ 44 px e modo denso opcional | P2 |
+
+### §6. Estados
+
+| # | Ideia | P |
+|---|---|---|
+| 6.1 | `loading.tsx`, `error.tsx`, `not-found.tsx` (resolve D-5; `not-found` dá caminho de volta quando o 404 de outra empresa aparece) | **P0** |
+| 6.2 | Estados vazios com ação (`EmptyState.tsx` já existe) — a primeira hora do usuário é tela vazia | P1 |
+| 6.3 | Erros in-line no campo via `aria-describedby`, mostrando a primeira `issue` do Zod | P1 |
+| 6.4 | Skeleton/fallback no fetch do `AppShell` (evita flash de menu incompleto) | P2 |
+
+### §7. Dados e visualização
+
+| # | Ideia | P |
+|---|---|---|
+| 7.1 | Ordenação e busca local (< 500 linhas) — a paginação no servidor já é ótima, mas ordenar por dia de movimentos por round-trip parece lento | P2 |
+| 7.2 | `formatBRL()` único com `Intl.NumberFormat("pt-BR")` — sem isso uma hora aparece `R$ 1.500,0` | P1 |
+| 7.3 | Texto alternativo dos gráficos (dashboard é a tela de decisão) | P2 |
+
+### §8. Performance percebida
+
+| # | Ideia | P |
+|---|---|---|
+| 8.1 | `useOptimistic`/`useTransition` nas navegações — evita duplo clique, crítico em `POST /api/sales` | P2 |
+| 8.2 | Fechar D-2 (usar a variável do `next/font`) — a Inter já é otimizada; é só o débito | P2 |
+| 8.3 | PWA para o tablet de balcão — **não** prometer offline aqui (isso é §5.6 do outro catálogo) | P3 |
+
+### §9. Impressão
+
+| # | Ideia | P |
+|---|---|---|
+| 9.1 | `@media print` para recibo e relatórios (hoje sai com topbar e cores de tela) | P2 |
+| 9.2 | Página de recibo standalone (URL imprimível/reenviável por WhatsApp) | P2 |
+
+### Sequência sugerida
+
+1. **Uma tarde:** D-1, D-2, D-3, D-5, **D-7**, 7.2, 1.2.
+2. **Uma semana:** `Table` (2.1) + rotas de estado + skeletons + empty
+   states + erros in-line. Sai o "site genérico" e entra um produto.
+3. **Duas semanas:** tokens semânticos (1.1) + Modal + Toast +
+   microinterações + auditoria axe na CI.
+4. **Depois:** dark mode, print, gráficos, tema por segmento.
+
+### Regras de ouro do design neste produto
+
+1. **O servidor manda.** Nenhum valor, saldo, total ou limite
+   calculado no cliente (regra permanente).
+2. **Dinheiro não otimiza.** UI pode ser otimista em status; em
+   caixa/venda/financeiro, sempre esperar o servidor.
+3. **Acessível por padrão.** Focus visível, contraste, label ligado —
+   comportamento, não enfeite.
+4. **Consistência > criatividade.** O usuário opera o mesmo fluxo 50
+   vezes por dia; quer previsibilidade.
+5. **`prefers-reduced-motion` respeitado.** Toda animação tem
+   desligar.
+
+---
+
+## 28. Plano do primeiro cliente pagante
+
+> **PROPOSTA — nada executado.** Fonte completa:
+> `docs/operations/CHECKLIST_PRIMEIRO_CLIENTE.md`. Roteiro de 3
+> semanas com itens obrigatórios, comandos concretos e **critério de
+> aceite go/no-go**.
+
+### Veredito comercial (leitura de 2026-10-14)
+
+**Não para produção paga ainda; sim para um piloto fechado e pago.**
+
+| Pergunta | Resposta |
+|---|---|
+| Dá para mostrar para um cliente? | **Sim, hoje** |
+| Dá para cobrar piloto? | **Sim**, com contrato de 90 dias e backup manual |
+| Dá para cobrar assinatura recorrente? | **Não** — falta deploy, backup, LGPD e E2E real do MP |
+| Tempo até produção? | **~3 semanas** focadas |
+
+### O que já vende (diferencial real)
+
+| Diferencial | Por que vende |
+|---|---|
+| Multiempresa de verdade | `companyId` obrigatório + isolamento coberto por teste |
+| 538 testes em PostgreSQL real | raro até em produto pago |
+| Trilha de auditoria | correção é movimento compensatório com autor, data e motivo — é o que o contador pergunta |
+| Importação de planilhas | ninguém troca de sistema sem conseguir levar os dados |
+| WhatsApp nativo | fila, templates, consentimento LGPD |
+| PDV + caixa por turno | fechamento com saldo esperado × contado |
+
+### Semana 1 — Poder hospedar
+
+1. **Definir hosting** (VPS+Docker, Railway, Render, Fly.io) —
+   provisionar banco, domínio, TLS e secrets.
+2. **Fechar o `cd.yml`** — substituir os placeholders em `cd.yml:40`
+   e `cd.yml:75`; adicionar verificação pós-deploy; ativar *manual
+   approval* em produção.
+3. **Backup com restore testado** — criar `npm run db -- backup`
+   (hoje `scripts/db.mjs` não tem esse subcomando); agendar `pg_dump`
+   diário com retenção de 30 dias **fora** da máquina da app;
+   **restaurar em banco efêmero e rodar `npm run validate`**.
+4. **Monitoramento** — Sentry na API e no worker; UptimeRobot em
+   `GET /health`.
+
+### Semana 2 — Poder confiar
+
+1. **Zerar `npm audit --omit=dev`** — `next`→16.4.1, `vitest`→major,
+   branch dedicada, um pacote por commit.
+2. **Endpoint LGPD** — `DELETE /api/clients/:id/anonymize`, `AdminGuard`,
+   anonimizar PII preservando `Sale`/`CashMovement`/`FinancialEntry`,
+   com trilha.
+3. **D-7 do contraste** — trocar `text-amber-600` → `-700`.
+4. **Termos de uso e política de privacidade** — `/termos`,
+   `/privacidade`, checkbox obrigatório no `/cadastro` com versão e
+   timestamp do aceite.
+
+### Semana 3 — Poder cobrar
+
+1. **E2E real do Mercado Pago** — cartão de teste em sandbox, fluxo
+   completo até `TenantSubscription.status = ACTIVE`; repetir com
+   pagamento recusado. **Aceite:** evidência de `ACTIVE` por
+   pagamento real, não pelo mock.
+2. **Seed neutro por segmento** — hoje é 100% "Mundo Pet".
+3. **Argumento comercial de migração** — roteiro começando pela
+   importação; 2 planilhas-exemplo prontas.
+
+### Modelo comercial do piloto
+
+| | |
+|---|---|
+| Formato | setup + uso por 90 dias, com desconto |
+| Escopo | 1 empresa, 1 segmento, módulos núcleo + WhatsApp |
+| Exigido do cliente | planilha de migração, 1 operador treinado, testador do caixa diário |
+| Exigido de você | SLA mínimo, backup diário, canal de suporte |
+| Ao fim | reavaliar preço e converter para assinatura |
+
+**Cláusulas mínimas:** responsabilidade sobre dado (backup + LGPD);
+nível de serviço mínimo; cobrança recorrente ativada após o piloto.
+
+### Critério de aceite final (go/no-go)
+
+Marcar **GO** só se **todos** forem verdadeiros:
+
+- `https://<dominio>/health` 200 e deploy automático funcionando
+- Existe dump com data **e** restore concluído registrado
+- Alerta de uptime e de erro 500 recebidos pelo menos uma vez
+- `npm audit --omit=dev` = 0 vulnerabilidades
+- Endpoint LGPD testado de ponta a ponta
+- Evidência de assinatura `ACTIVE` via pagamento real do sandbox
+- Termos + privacidade publicados e aceite registrado
+- `npm run validate` verde no commit de produção
+- Demo ensaiado 2 vezes, começando pela importação
+
+### Não prometer
+
+Funcionalidades que o sistema **não** tem e que geram churn no mês 2:
+offline, conciliação fiscal, emissor de NF-e. O `PDV.md` já delimita
+isso.
+
+---
+
+## 29. Mapa de documentos do projeto
+
+Para quem lê este arquivo e precisa ir à fonte.
+
+### Documentação técnica (`docs/`)
+
+| Documento | Conteúdo |
+|---|---|
+| `AKYLLA_GESTAO_DOCUMENTACAO_COMPLETA.md` | **este arquivo** — fonte única consolidada |
+| `AKYLLA_GESTAO_DIRETRIZES_OPENCODE.md` | diretrizes do agente de IA; §10 (plano 0-5) está **superado** |
+| `README.md` | índice da pasta `docs/` |
+| `architecture/API.md` | padrão de rotas, guards, erros e paginação |
+| `architecture/DATABASE.md` | modelo de dados, convencões, índices |
+| `architecture/ARCHITECTURE.md` | arquitetura de sistema |
+| `development/DEVELOPMENT.md` | guia de desenvolvimento |
+
+### Plano e operação (`docs/operations/`)
+
+| Documento | Conteúdo |
+|---|---|
+| `PROJECT_STATUS.md` | **fonte única de contagens correntes** e de pendências |
+| `IMPLEMENTATION_CHECKLIST.md` | etapas concluídas + seção "Fora do roteiro" |
+| `CHANGELOG.md` | histórico completo de alterações (preservar) |
+| `CHECKLIST_PRIMEIRO_CLIENTE.md` | roteiro comercial de 3 semanas (§28) |
+
+### Entregáveis por etapa (`docs/akylla/`)
+
+| Documento | Etapa |
+|---|---|
+| `DIAGNOSTICO_INICIAL.md` | 0 |
+| `PLANO_DE_ADAPTACAO.md` | 1 |
+| `AUDITORIA_MULTIEMPRESA.md` | 3 |
+| `MAPA_DE_MODULOS.md` | 4 |
+| `LIMITACOES_VENDAS.md` | 5 |
+| `MODELO_FINANCEIRO.md` | 7 |
+| `DICIONARIO_INDICADORES.md` | 8 |
+| `PDV.md` | 7 |
+| `PLANO_MODULARIZACAO.md` | 10 |
+| `PLANO_BILLING.md` | 11 |
+| `CHECKLIST_PRE_PRODUCAO.md` | 12 — **L1–L14**, a fonte das limitações |
+| `REDESIGN_PAINEL.md` | design — opção B (topbar única); §2-§11 = proposta histórica |
+
+### Catálogos de decisão (`upgrade/`)
+
+| Documento | Conteúdo |
+|---|---|
+| `MELHORIAS.md` | 29 ideias de backend/segurança/operação/produto (§26) |
+| `MELHORIAS_DESIGN.md` | design + 7 débitos medidos D-1..D-7 (§27) |
+
+### Procedimentos
+
+| Documento | Conteúdo |
+|---|---|
+| `backup/README.md` | procedimento de backup (a pasta não versiona dados) |
+| `AGENTS.md` (raiz) | regras permanentes para agentes — regras 1–12 |
+
+### Identificadores técnicos legados
+
+Compatibilidade — **não** são a marca do produto (regra de
+`AGENTS.md`): pacotes `@petflow/*`, cookie `petflow_session`, bancos
+`petflow`/`petflow_test`, `service: "petflow-api"`, prefixo de
+comprovante `PF-`. **Não renomear** sem etapa dedicada com plano de
+migração.
+
+### Regras permanentes que atravessam o documento
+
+Extraídas de `AGENTS.md` e `architecture/API.md`:
+
+1. `companyId` **sempre** do contexto autenticado — nunca do cliente.
+2. Saldo, valores, limites e horários críticos **sempre recalculados
+   no servidor**.
+3. Histórico de movimentações é **imutável** — correção é movimento
+   compensatório.
+4. Leitura individual via `findFirst({ id, companyId })` → 404.
+5. `@Inject()` explícito no construtor de providers (o `tsx` de dev não
+   emite `emitDecoratorMetadata`).
+6. Valores monetários: `Decimal` no Prisma, **nunca float**.
+7. Só instalar dependências justificadas (regra 5); sem segredos no
+   Git (regra 6); TypeScript estrito (regra 7); mudança de schema
+   exige migration + `DATABASE.md` (regra 8); `npm run validate` antes
+   de concluir (regra 9); atualizar os 3 arquivos de operação (regra
+   10); commit só quando solicitado (regra 11); `automação do
+   whatsapp/` intocável (regra 12).

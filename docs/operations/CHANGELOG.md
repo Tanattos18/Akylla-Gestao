@@ -6,6 +6,70 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-14 - Documentação técnica consolidada (29 seções)
+
+Quinta entrega única autorizada. `AKYLLA_GESTAO_DOCUMENTACAO_COMPLETA.md`
+passa de 841 para **1503 linhas** e de 23 para **29 seções**, virando
+a **fonte única consolidada do projeto** — pronta para leitura por
+outra IA.
+
+### Alterado
+
+- **Cabeçalho e §1**: estado atualizado (538/538 · 26 controllers ·
+  28 models · 32 enums · 39 páginas · 13 migrations · CI ativa ·
+  2 vulnerabilidades em produção). Novo **§1.1 Resumo executivo** para
+  quem lê pela primeira vez.
+- **§2 Stack**: árvore do monorepo atualizada (`config/`, `scripts/`,
+  `tests/`, `backup/`, `upgrade/`, `.github/`); todos os comandos
+  (`validate`, `db --`, `db:deploy`); tabela de **CI/CD** com o
+  placeholder do `cd.yml` apontado por linha.
+- **§17 Testes**: explícito o que os 538 testes **não** cobrem
+  (componentes React, rewrites do Next, navegador) e que a validação
+  E2E de interface é manual.
+- **§21 Pendências**: reorganizada em "bloqueiam produção" (L1, L4,
+  L7, L8, L9, L13) / "degradam a operação" (L2, L3, L5, L6, L10, L12,
+  L14) / "menores", cada uma com ponteiro para a solução.
+
+### Adicionado
+
+- **§24 Módulo importação de planilhas CSV** — rotas, 5 tipos,
+  fluxo completo de `upload` (detecção de delimitador, normalização
+  de cabeçalho, formato BR de decimal, deduplicação por empresa,
+  limite de plano só com assinatura `ACTIVE`, dry run, transação
+  única), relatório, segurança e tela.
+- **§25 Entregas fora do roteiro** — as 5 entregas de outubro com
+  commits, pastas `backup/` e `upgrade/`.
+- **§26 Catálogo de melhorias** (backend/segurança/operação/produto)
+  — 29 ideias P0–P3 em tabelas com "que lacuna fecha".
+- **§27 Catálogo de design** — 7 débitos medidos (D-1..D-7) com
+  **tabela de contraste WCAG** e os valores reais (2.15 / 2.49 / 3.19
+  reprovados, 5.02 aprovado), + 8 categorias de melhoria, regras de
+  ouro e sequência.
+- **§28 Plano do primeiro cliente** — veredito comercial, semanas
+  1–3, modelo de piloto e **critério go/no-go de 9 verificações**.
+- **§29 Mapa de documentos** — índice das fontes (ops, akylla,
+  upgrade, backup) e as regras permanentes do `AGENTS.md`.
+- **Índice de navegação** no topo separando o que é **Fato** (§1–§25)
+  do que é **Proposta** (§26–§28).
+
+### Preservado
+
+- Numeração das seções §1–§23 **inalterada** — são referenciadas por
+  `CHANGELOG.md`, `IMPLEMENTATION_CHECKLIST.md`,
+  `MELHORIAS.md`, `REDESIGN_PAINEL.md` e `DIRETRIZES_OPENCODE.md`.
+  As novas entraram como §24–§29.
+
+### Alterado (referências)
+
+- `docs/README.md` e `README.md`: contagem 23 → 29 seções.
+
+### Verificação
+
+- 34 arquivos `.md`, 64 links relativos — **0 quebrados**.
+- UTF-8 limpo (0 U+FFFD; único match de `Ã` é o `NÃO` legítimo).
+
+---
+
 ## [Akylla Gestão] - 2026-10-14 - Plano executável: primeiro cliente pagante
 
 Quarta entrega única autorizada. Transforma as ideias dos catálogos

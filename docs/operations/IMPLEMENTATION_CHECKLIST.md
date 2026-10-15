@@ -4,6 +4,26 @@
 > Este checklist cobre apenas a era do Akylla Gestão. O histórico
 > anterior à adaptação está preservado no Git.
 
+## Fora do roteiro — Documentação técnica consolidada (2026-10-14)
+
+Entregue. `docs/AKYLLA_GESTAO_DOCUMENTACAO_COMPLETA.md` atualizado de
+841 → **1503 linhas**, 23 → **29 seções**, como fonte única para
+leitura por IA.
+
+- [x] §1 e cabeçalho com estado corrente (538/538, 26/28/32/39/13)
+- [x] §1.1 resumo executivo para primeira leitura
+- [x] §2 árvore do monorepo + todos os comandos + tabela CI/CD
+- [x] §17 o que os testes **não** cobrem (frontend/navegador)
+- [x] §21 pendências reorganizadas por severidade, com ponteiro de
+      solução
+- [x] §24 importação de planilhas (rotas, fluxo, segurança, tela)
+- [x] §25 entregas fora do roteiro (5, com commits)
+- [x] §26 catálogo de melhorias P0–P3 (29 ideias)
+- [x] §27 catálogo de design (D-1..D-7 + contraste WCAG medido)
+- [x] §28 plano do primeiro cliente (semanas 1–3 + go/no-go)
+- [x] §29 mapa de documentos + regras permanentes
+- [x] numeração §1–§23 preservada (referenciada por 5 arquivos)
+
 ## Fora do roteiro — Plano: primeiro cliente pagante (2026-10-14)
 
 **Aguardando autorização** (regra 2 do `AGENTS.md`). Documento de

@@ -16,7 +16,7 @@ Para começar, leia nesta ordem:
 
 | Documento | Conteúdo |
 |---|---|
-| [Documento técnico completo](AKYLLA_GESTAO_DOCUMENTACAO_COMPLETA.md) | 23 seções: stack, módulos, DB, auth, frontend, testes, segurança, pendências |
+| [Documento técnico completo](AKYLLA_GESTAO_DOCUMENTACAO_COMPLETA.md) | fonte única consolidada — 29 seções: stack, módulos, DB, auth, frontend, testes, segurança, pendências, importação, entregas fora do roteiro, catálogos de melhoria (§26) e design (§27), plano do primeiro cliente (§28), mapa de documentos (§29) |
 | [Status do projeto](operations/PROJECT_STATUS.md) | etapa vigente, entregas, pendências (fonte única das contagens correntes) |
 | [Checklist de implementação](operations/IMPLEMENTATION_CHECKLIST.md) | progresso etapa a etapa |
 | [Changelog](operations/CHANGELOG.md) | histórico completo de alterações |

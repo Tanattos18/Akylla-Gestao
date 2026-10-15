@@ -366,7 +366,7 @@ documentos (estado, arquitetura, operação, histórico) está em
 | Documento | Conteúdo |
 |---|---|
 | [Índice da documentação](docs/README.md) | mapa completo, organizado por finalidade |
-| [Documento técnico completo](docs/AKYLLA_GESTAO_DOCUMENTACAO_COMPLETA.md) | mapa único do sistema (23 seções) |
+| [Documento técnico completo](docs/AKYLLA_GESTAO_DOCUMENTACAO_COMPLETA.md) | mapa único do sistema (29 seções) — fonte para leitura por IA |
 | [Status do projeto](docs/operations/PROJECT_STATUS.md) | etapa atual, entregas e pendências |
 | [Checklist de implementação](docs/operations/IMPLEMENTATION_CHECKLIST.md) | progresso etapa a etapa |
 | [Changelog](docs/operations/CHANGELOG.md) | histórico completo de alterações |
