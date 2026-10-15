@@ -17,6 +17,14 @@ const schema = z.object({
     .int()
     .nonnegative()
     .default(15 * 60 * 1000),
+  // Cadastro aberto (N4 · 1.6): limite dedicado por IP, mais restritivo.
+  // Padrão generoso em dev/teste; em produção, configure 3/hora no .env.
+  REGISTER_RATE_LIMIT_MAX: z.coerce.number().int().nonnegative().default(20),
+  REGISTER_RATE_LIMIT_WINDOW_MS: z.coerce
+    .number()
+    .int()
+    .nonnegative()
+    .default(60 * 60 * 1000),
   // Rate limit distribuído (N4 · 1.3): reservado para o store Redis em
   // produção multi-instância. Ausente = store em memória (comportamento atual).
   REDIS_URL: z.string().optional(),

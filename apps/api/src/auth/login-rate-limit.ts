@@ -27,3 +27,24 @@ export class LoginRateLimiter {
     this.store.reset(key);
   }
 }
+
+/** Limite dedicado do cadastro aberto (N4 · 1.6): janela de 1h por IP. */
+@Injectable()
+export class RegisterRateLimiter {
+  constructor(
+    @Inject(RATE_LIMIT_STORE)
+    private readonly store: RateLimitStore = new InMemoryRateLimitStore(),
+  ) {}
+
+  check(key: string): void {
+    this.store.hit(
+      key,
+      env.REGISTER_RATE_LIMIT_MAX,
+      env.REGISTER_RATE_LIMIT_WINDOW_MS,
+    );
+  }
+
+  reset(key: string): void {
+    this.store.reset(key);
+  }
+}

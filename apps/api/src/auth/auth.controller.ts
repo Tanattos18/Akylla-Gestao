@@ -35,13 +35,14 @@ import { Auth, type AuthContext } from "../common/decorators/auth.decorator";
 import { ZodValidationPipe } from "../common/pipes/zod-validation.pipe";
 import { env } from "../config/env";
 import { AuthService } from "./auth.service";
-import { LoginRateLimiter } from "./login-rate-limit";
+import { LoginRateLimiter, RegisterRateLimiter } from "./login-rate-limit";
 
 @Controller("auth")
 export class AuthController {
   constructor(
     @Inject(AuthService) private readonly authService: AuthService,
     @Inject(LoginRateLimiter) private readonly rateLimiter: LoginRateLimiter,
+    @Inject(RegisterRateLimiter) private readonly registerLimiter: RegisterRateLimiter,
   ) {}
 
   @Public()
@@ -83,10 +84,10 @@ export class AuthController {
     }
 
     const rateKey = `register|${ip}`;
-    this.rateLimiter.check(rateKey);
+    this.registerLimiter.check(rateKey);
 
     const result = await this.authService.register(body, request);
-    this.rateLimiter.reset(rateKey);
+    this.registerLimiter.reset(rateKey);
     this.authService.setSessionCookie(response, result.token);
 
     return { user: result.user, company: result.company } satisfies MeResponse;

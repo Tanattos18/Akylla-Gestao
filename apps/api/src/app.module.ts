@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common";
-import { APP_GUARD } from "@nestjs/core";
+import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { HealthController } from "./health/health.controller";
 import { PrismaModule } from "./prisma/prisma.module";
 import { MailModule } from "./mail/mail.module";
@@ -26,6 +26,7 @@ import { ImportsModule } from "./imports/imports.module";
 import { LgpdModule } from "./lgpd/lgpd.module";
 import { AuthGuard } from "./common/guards/auth.guard";
 import { ModuleGuard } from "./common/guards/module.guard";
+import { TenantContextInterceptor } from "./common/tenant/tenant-context.interceptor";
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { ModuleGuard } from "./common/guards/module.guard";
   providers: [
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_GUARD, useClass: ModuleGuard },
+    { provide: APP_INTERCEPTOR, useClass: TenantContextInterceptor },
   ],
 })
 export class AppModule {}

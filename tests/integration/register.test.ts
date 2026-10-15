@@ -136,9 +136,9 @@ describe("POST /api/auth/register", () => {
     }
   });
 
-  it("aplica rate limit de cadastro por IP", async () => {
-    const original = env.AUTH_RATE_LIMIT_MAX;
-    env.AUTH_RATE_LIMIT_MAX = 2;
+  it("aplica rate limit de cadastro por IP (limite dedicado)", async () => {
+    const original = env.REGISTER_RATE_LIMIT_MAX;
+    env.REGISTER_RATE_LIMIT_MAX = 2;
     try {
       const attempts = [];
       for (let i = 0; i < 4; i += 1) {
@@ -153,7 +153,7 @@ describe("POST /api/auth/register", () => {
       }
       expect(attempts.some((r) => r.status === 429)).toBe(true);
     } finally {
-      env.AUTH_RATE_LIMIT_MAX = original;
+      env.REGISTER_RATE_LIMIT_MAX = original;
     }
   });
 });
