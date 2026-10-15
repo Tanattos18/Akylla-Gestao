@@ -333,6 +333,8 @@ model User {
   importBatches ImportBatch[]
   legalConsents LegalConsent[]
   passwordResetTokens PasswordResetToken[]
+  twoFactorSecret String?
+  twoFactorEnabled Boolean @default(false)
 
   @@unique([companyId, email])
   @@index([companyId, status])

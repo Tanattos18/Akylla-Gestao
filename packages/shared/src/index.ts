@@ -72,6 +72,41 @@ export const confirmPasswordResetSchema = z.object({
 
 export type ConfirmPasswordResetInput = z.infer<typeof confirmPasswordResetSchema>;
 
+// ---------------------------------------------------------------------------
+// N4 — segundo fator TOTP para ADMIN (1.7)
+// ---------------------------------------------------------------------------
+
+export const totpTokenSchema = z
+  .string()
+  .trim()
+  .regex(/^\d{6}$/, "Código deve ter 6 dígitos");
+
+export const enableTwoFactorSchema = z.object({
+  token: totpTokenSchema,
+});
+
+export type EnableTwoFactorInput = z.infer<typeof enableTwoFactorSchema>;
+
+export const verifyTwoFactorSchema = z.object({
+  challengeId: z.string().trim().min(8, "Desafio inválido").max(64, "Desafio inválido"),
+  token: totpTokenSchema,
+});
+
+export type VerifyTwoFactorInput = z.infer<typeof verifyTwoFactorSchema>;
+
+export const disableTwoFactorSchema = z.object({
+  password: z.string().min(1, "Senha é obrigatória").max(200),
+});
+
+export type DisableTwoFactorInput = z.infer<typeof disableTwoFactorSchema>;
+
+export const twoFactorSetupSchema = z.object({
+  secret: z.string(),
+  otpauthUrl: z.string(),
+});
+
+export type TwoFactorSetupDto = z.infer<typeof twoFactorSetupSchema>;
+
 export const registerSchema = z.object({
   companyName: z
     .string()

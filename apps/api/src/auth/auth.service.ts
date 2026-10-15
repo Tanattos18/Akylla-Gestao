@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
@@ -9,20 +10,33 @@ import {
 import type { Request } from "express";
 import { createHash, randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
+import { generateSecret, generateURI, verify } from "otplib";
 import { PrismaService } from "../prisma/prisma.module";
 import { allowedOrigins, env } from "../config/env";
 import { MAIL_PROVIDER, type MailProvider } from "../mail/mail.module";
 import {
   PASSWORD_RESET_TOKEN_TTL_MS,
   type ConfirmPasswordResetInput,
+  type DisableTwoFactorInput,
+  type EnableTwoFactorInput,
   type LoginInput,
   type RegisterInput,
   type RequestPasswordResetInput,
   type ResetPasswordInput,
+  type TwoFactorSetupDto,
+  type VerifyTwoFactorInput,
 } from "@petflow/shared";
 import type { AuthContext } from "../common/decorators/auth.decorator";
 
 const BCRYPT_ROUNDS = 12;
+
+/** Desafio 2FA pendente: expira em 5 minutos; falhar = refazer o login. */
+const TWO_FACTOR_CHALLENGE_TTL_MS = 5 * 60 * 1000;
+
+interface TwoFactorChallenge {
+  userId: string;
+  expiresAt: number;
+}
 
 function slugify(value: string): string {
   return value
@@ -39,6 +53,19 @@ export class AuthService {
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(MAIL_PROVIDER) private readonly mail: MailProvider,
   ) {}
+
+  private readonly twoFactorChallenges = new Map<string, TwoFactorChallenge>();
+
+  private takeChallenge(challengeId: string): TwoFactorChallenge | null {
+    const challenge = this.twoFactorChallenges.get(challengeId);
+    if (challenge) {
+      this.twoFactorChallenges.delete(challengeId);
+    }
+    if (!challenge || challenge.expiresAt <= Date.now()) {
+      return null;
+    }
+    return challenge;
+  }
 
   async login(input: LoginInput, request: Request) {
     const email = input.email;
@@ -62,6 +89,15 @@ export class AuthService {
     const passwordOk = await bcrypt.compare(input.password, user.passwordHash);
     if (!passwordOk) {
       throw new UnauthorizedException("Credenciais inválidas");
+    }
+
+    if (user.twoFactorEnabled && user.twoFactorSecret) {
+      const challengeId = randomBytes(16).toString("base64url");
+      this.twoFactorChallenges.set(challengeId, {
+        userId: user.id,
+        expiresAt: Date.now() + TWO_FACTOR_CHALLENGE_TTL_MS,
+      });
+      return { requiresTwoFactor: true as const, challengeId };
     }
 
     const token = await this.createSession(user.id, request);
@@ -300,6 +336,107 @@ export class AuthService {
         data: { usedAt: new Date() },
       }),
     ]);
+  }
+
+  /**
+   * Segundo fator TOTP (N4 · 1.7): restrito a ADMIN. `setup` gera o segredo
+   * (exibido uma vez via QR); `enable` ativa após prova de posse; o login
+   * passa a exigir o desafio; `disable` exige a senha atual.
+   */
+  async setupTwoFactor(auth: AuthContext): Promise<TwoFactorSetupDto> {
+    if (auth.role !== "ADMIN") {
+      throw new ForbiddenException("Segundo fator disponível apenas para administradores");
+    }
+
+    const secret = generateSecret();
+    await this.prisma.user.update({
+      where: { id: auth.userId },
+      data: { twoFactorSecret: secret, twoFactorEnabled: false },
+    });
+
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: auth.userId },
+      select: { email: true },
+    });
+    return {
+      secret,
+      otpauthUrl: generateURI({ issuer: "Akylla Gestão", label: user.email, secret }),
+    };
+  }
+
+  async enableTwoFactor(auth: AuthContext, input: EnableTwoFactorInput): Promise<void> {
+    if (auth.role !== "ADMIN") {
+      throw new ForbiddenException("Segundo fator disponível apenas para administradores");
+    }
+
+    const user = await this.prisma.user.findFirst({
+      where: { id: auth.userId, companyId: auth.companyId },
+      select: { twoFactorSecret: true },
+    });
+    if (!user?.twoFactorSecret) {
+      throw new BadRequestException("Gere o segredo antes de ativar (setup)");
+    }
+    const checked = await verify({ secret: user.twoFactorSecret, token: input.token });
+    if (!checked.valid) {
+      throw new UnauthorizedException("Código inválido");
+    }
+
+    await this.prisma.user.update({
+      where: { id: auth.userId },
+      data: { twoFactorEnabled: true },
+    });
+  }
+
+  async disableTwoFactor(auth: AuthContext, input: DisableTwoFactorInput): Promise<void> {
+    const user = await this.prisma.user.findFirst({
+      where: { id: auth.userId, companyId: auth.companyId },
+      select: { passwordHash: true },
+    });
+    if (!user || !(await bcrypt.compare(input.password, user.passwordHash))) {
+      throw new UnauthorizedException("Senha inválida");
+    }
+
+    await this.prisma.user.update({
+      where: { id: auth.userId },
+      data: { twoFactorSecret: null, twoFactorEnabled: false },
+    });
+  }
+
+  async verifyTwoFactorChallenge(input: VerifyTwoFactorInput, request: Request) {
+    const challenge = this.takeChallenge(input.challengeId);
+    if (!challenge) {
+      throw new UnauthorizedException("Desafio expirado ou inválido — refaça o login");
+    }
+
+    const user = await this.prisma.user.findFirst({
+      where: { id: challenge.userId, status: "ACTIVE", company: { status: "ACTIVE" } },
+      include: { company: true },
+    });
+    if (!user || !user.twoFactorEnabled || !user.twoFactorSecret) {
+      throw new UnauthorizedException("Desafio expirado ou inválido — refaça o login");
+    }
+    const checked = await verify({ secret: user.twoFactorSecret, token: input.token });
+    if (!checked.valid) {
+      throw new UnauthorizedException("Código inválido");
+    }
+
+    const token = await this.createSession(user.id, request);
+
+    return {
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+      },
+      company: {
+        id: user.company.id,
+        name: user.company.name,
+        slug: user.company.slug,
+      },
+    };
   }
 
   setSessionCookie(

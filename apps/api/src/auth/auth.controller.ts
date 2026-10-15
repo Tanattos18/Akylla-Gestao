@@ -17,12 +17,18 @@ import {
   resetPasswordSchema,
   requestPasswordResetSchema,
   confirmPasswordResetSchema,
+  enableTwoFactorSchema,
+  verifyTwoFactorSchema,
+  disableTwoFactorSchema,
   type ConfirmPasswordResetInput,
+  type DisableTwoFactorInput,
+  type EnableTwoFactorInput,
   type LoginInput,
   type MeResponse,
   type RegisterInput,
   type RequestPasswordResetInput,
   type ResetPasswordInput,
+  type VerifyTwoFactorInput,
 } from "@petflow/shared";
 import { Public } from "../common/decorators/public.decorator";
 import { Auth, type AuthContext } from "../common/decorators/auth.decorator";
@@ -52,6 +58,12 @@ export class AuthController {
 
     const result = await this.authService.login(body, request);
     this.rateLimiter.reset(rateKey);
+
+    if ("requiresTwoFactor" in result) {
+      response.status(202);
+      return result;
+    }
+
     this.authService.setSessionCookie(response, result.token);
 
     return { user: result.user, company: result.company } satisfies MeResponse;
@@ -129,6 +141,50 @@ export class AuthController {
     this.rateLimiter.reset(rateKey);
 
     return { ok: true };
+  }
+
+  @Post("2fa/setup")
+  @HttpCode(200)
+  setupTwoFactor(@Auth() auth: AuthContext) {
+    return this.authService.setupTwoFactor(auth);
+  }
+
+  @Post("2fa/enable")
+  @HttpCode(200)
+  async enableTwoFactor(
+    @Auth() auth: AuthContext,
+    @Body(new ZodValidationPipe(enableTwoFactorSchema)) body: EnableTwoFactorInput,
+  ) {
+    await this.authService.enableTwoFactor(auth, body);
+    return { ok: true };
+  }
+
+  @Post("2fa/disable")
+  @HttpCode(200)
+  async disableTwoFactor(
+    @Auth() auth: AuthContext,
+    @Body(new ZodValidationPipe(disableTwoFactorSchema)) body: DisableTwoFactorInput,
+  ) {
+    await this.authService.disableTwoFactor(auth, body);
+    return { ok: true };
+  }
+
+  @Public()
+  @Post("2fa/verify")
+  @HttpCode(200)
+  async verifyTwoFactor(
+    @Body(new ZodValidationPipe(verifyTwoFactorSchema)) body: VerifyTwoFactorInput,
+    @Ip() ip: string,
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const rateKey = `2fa|${ip}|${body.challengeId}`;
+    this.rateLimiter.check(rateKey);
+
+    const result = await this.authService.verifyTwoFactorChallenge(body, request);
+    this.authService.setSessionCookie(response, result.token);
+
+    return { user: result.user, company: result.company } satisfies MeResponse;
   }
 
   @Post("logout")

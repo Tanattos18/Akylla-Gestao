@@ -479,6 +479,11 @@ describe("POST /api/imports — limites de plano", () => {
         where: { companyId: companyBId, sku: "NEW-B-1" },
       }),
     ).toBeNull();
+
+    // Limpeza: TenantPlan é catálogo global (resetDatabase não apaga) —
+    // sem isso, o plano vaza para billing.test.ts e quebra a ordenação.
+    await prisma.tenantSubscription.deleteMany({ where: { planId: plan.id } });
+    await prisma.tenantPlan.delete({ where: { id: plan.id } });
   });
 
   it("sem assinatura não há limite de plano", async () => {

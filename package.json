@@ -49,6 +49,7 @@
   },
   "dependencies": {
     "@sentry/node": "11.8.0",
-    "@sentry/profiling-node": "11.8.0"
+    "@sentry/profiling-node": "11.8.0",
+    "otplib": "13.5.0"
   }
 }

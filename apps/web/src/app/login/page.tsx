@@ -9,6 +9,8 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [challengeId, setChallengeId] = useState<string | null>(null);
+  const [totp, setTotp] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
@@ -28,11 +30,19 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      await api("/api/auth/login", {
-        method: "POST",
-        body: JSON.stringify({ email: email.trim(), password }),
-        redirectOnUnauthorized: false,
-      });
+      const data = (await api<{ requiresTwoFactor?: boolean; challengeId?: string }>(
+        "/api/auth/login",
+        {
+          method: "POST",
+          body: JSON.stringify({ email: email.trim(), password }),
+          redirectOnUnauthorized: false,
+        },
+      )) as { requiresTwoFactor?: boolean; challengeId?: string };
+      if (data?.requiresTwoFactor && data.challengeId) {
+        setChallengeId(data.challengeId);
+        setTotp("");
+        return;
+      }
       router.push("/");
     } catch (err) {
       if (err instanceof ApiError) {
@@ -50,8 +60,96 @@ export default function LoginPage() {
     }
   }
 
+  async function handleTotpSubmit(event: FormEvent) {
+    event.preventDefault();
+    setError(null);
+    setFieldErrors({});
+
+    if (!/^\d{6}$/.test(totp.trim())) {
+      setFieldErrors({ totp: "Informe o código de 6 dígitos" });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await api("/api/auth/2fa/verify", {
+        method: "POST",
+        body: JSON.stringify({ challengeId, token: totp.trim() }),
+        redirectOnUnauthorized: false,
+      });
+      router.push("/");
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError("Não foi possível conectar ao servidor");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="mx-auto max-w-md">
+      {challengeId ? (
+        <div className="rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
+          <h2 className="mb-1 text-xl font-semibold text-slate-900">Verificação em duas etapas</h2>
+          <p className="mb-6 text-sm text-slate-500">
+            Informe o código de 6 dígitos do seu aplicativo autenticador.
+          </p>
+
+          {error && (
+            <div
+              role="alert"
+              className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+            >
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleTotpSubmit} noValidate>
+            <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="totp">
+              Código de verificação
+            </label>
+            <input
+              id="totp"
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              value={totp}
+              onChange={(event) => setTotp(event.target.value)}
+              className="mb-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              aria-invalid={Boolean(fieldErrors.totp)}
+            />
+            {fieldErrors.totp && (
+              <p className="mb-3 text-xs text-red-600">{fieldErrors.totp}</p>
+            )}
+            {!fieldErrors.totp && <div className="mb-5" />}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {loading ? "Verificando..." : "Verificar"}
+            </button>
+          </form>
+
+          <p className="mt-4 text-center text-sm text-slate-500">
+            <button
+              type="button"
+              onClick={() => {
+                setChallengeId(null);
+                setTotp("");
+                setError(null);
+              }}
+              className="text-primary-700 hover:underline"
+            >
+              Voltar ao login
+            </button>
+          </p>
+        </div>
+      ) : (
       <div className="rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
         <h2 className="mb-1 text-xl font-semibold text-slate-900">Entrar no Akylla Gestão</h2>
         <p className="mb-6 text-sm text-slate-500">
@@ -124,6 +222,7 @@ export default function LoginPage() {
           </Link>
         </p>
       </div>
+      )}
     </div>
   );
 }
