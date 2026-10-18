@@ -13,6 +13,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 - **`docs/demo/`:** planilhas CSV fictícias (categorias, fornecedores, 25
   produtos, 30 clientes, serviços), validadas na simulação de importação,
   para demonstrar a importação ao vivo.
+- **Seed:** a empresa de demonstração fica isenta de cobrança (nunca vence).
 - **Seed em produção:** o membro de equipe da demonstração recebe senha
   aleatória (antes era sempre a mesma senha pública).
 - **Corrigido:** o role `akylla_app` não tinha `CREATEDB`, e o backup

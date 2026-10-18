@@ -416,6 +416,8 @@ async function main() {
     data: {
       segment: company.segment ?? DATA.segment,
       onboardingCompletedAt: company.onboardingCompletedAt ?? new Date(),
+      // Fase 8: empresa de demonstração nunca vence nem entra em somente leitura
+      billingExempt: true,
     },
   });
 
