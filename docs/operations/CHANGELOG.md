@@ -6,6 +6,27 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-18 - Aplicativo instalável (PWA) e deploy em VPS
+
+### Adicionado
+
+- **PWA:** no Windows, o Edge ou o Chrome oferecem "Instalar Akylla
+  Gestão", que cria o ícone no menu Iniciar e na área de trabalho e abre o
+  sistema em janela própria. A peça inclui:
+  - `app/manifest.ts`, com atalhos para PDV, Vendas, Caixa e Agenda;
+  - ícones em `public/icons`;
+  - `public/sw.js`, que **não guarda dados**: só mostra
+    `public/offline.html` quando a internet cai.
+  O app é registrado só em produção e o Chromium o confirmou como
+  instalável. Os dados continuam no servidor.
+- **Deploy em VPS** (`scripts/deploy/vps/`, `docs/operations/DEPLOY_VPS.md`):
+  - instalação com Node 22, PostgreSQL 17, Caddy (HTTPS), systemd,
+    firewall e backup diário;
+  - segredos gerados no próprio servidor;
+  - role `akylla_app` sem SUPERUSER/BYPASSRLS;
+  - `update.sh` com backup antes de atualizar e `create-admin.sh`, que
+    pede a senha sem gravá-la.
+
 ## [Akylla Gestão] - 2026-10-18 - Fase 7: Produto
 
 Última fase do roteiro do Prompt Mestre.

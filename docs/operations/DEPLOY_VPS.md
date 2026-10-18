@@ -63,3 +63,13 @@ Monitoramento externo: UptimeRobot em
 `https://app.akyllagestao.com.br/health/ready` com a palavra-chave
 `"database":"ok"` (o Caddy publica só `/health` e `/health/ready` da API;
 o resto passa pela web).
+
+## 5. Instalar como aplicativo no Windows (PWA)
+
+Com o sistema no ar em HTTPS, abra `https://app.akyllagestao.com.br` no
+**Edge** ou no **Chrome** e use o ícone **"Instalar aplicativo"** na barra
+de endereço (Edge: *… › Aplicativos › Instalar este site como
+aplicativo*). Ele cria o ícone no menu Iniciar e abre em janela própria.
+Clique com o botão direito no ícone para chegar aos atalhos (PDV, Vendas,
+Caixa, Agenda). Os dados continuam no servidor; sem internet aparece a
+tela "Sem conexão".

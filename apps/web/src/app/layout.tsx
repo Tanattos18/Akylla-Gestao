@@ -1,9 +1,10 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/shell";
 import { DialogProvider } from "@/components/ui/Dialog";
 import { ToastProvider } from "@/components/ui/Toast";
+import { ServiceWorker } from "@/components/shell/ServiceWorker";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -13,6 +14,16 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Akylla Gestão",
   description: "Sistema de gestão para pequenos negócios",
+  applicationName: "Akylla Gestão",
+  icons: {
+    icon: [{ url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" }],
+    apple: "/icons/apple-touch-icon.png",
+  },
+  appleWebApp: { capable: true, title: "Akylla", statusBarStyle: "black-translucent" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0f172a",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -25,6 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           Pular para o conteúdo
         </a>
+        <ServiceWorker />
         <ToastProvider>
           <DialogProvider>
             <AppShell>{children}</AppShell>
