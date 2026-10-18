@@ -175,5 +175,6 @@ Meta: **RTO ≤ 4 h**, **RPO ≤ 24 h**.
 
 | Data | Teste | Resultado | Responsável |
 |---|---|---|---|
-| — | Sentry (`npm run monitoring:test`) | pendente: falta DSN de produção | — |
+| 2026-10-18 | Sentry (`npm run monitoring:test`), org `fgr-43`, ambiente `development` | evento `983e81d671094effb9d49ca8a658db79` enviado; API e worker iniciaram com Sentry ligado. Aguarda confirmação no painel/e-mail | Joas |
+| — | Sentry em produção | pendente: DSN no servidor (item 1G) | — |
 | — | UptimeRobot (`/health/ready`) | pendente: falta URL pública | — |
