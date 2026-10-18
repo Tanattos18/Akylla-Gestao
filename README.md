@@ -64,7 +64,7 @@ o deploy): `https://app.akyllagestao.com.br`
 | Importação de clientes e produtos por CSV com prévia de erros | ✅ `/importacoes` |
 | Equipe vende e atende; o dono controla caixa, usuários e configurações | ✅ perfis ADMIN/MEMBER validados no servidor |
 | Cada empresa só acessa os próprios dados | ✅ no servidor **e** no banco (Row-Level Security do PostgreSQL) |
-| Planos Essencial / Profissional / Completo com limites | ✅ R$ 79,90 / 149,90 / 249,90 por mês (anual com 2 meses grátis), teste de 14 dias, somente leitura para inadimplente e painel do dono para ativar planos ([`COBRANCA.md`](docs/akylla/COBRANCA.md)) |
+| Kits Básico / Intermediário / Avançado + módulos avulsos | ✅ R$ 79,90 / 149,90 / 249,90 por mês (anual com 2 meses grátis), cada módulo com preço próprio para combos, "Monte seu plano" no Faturamento, o dono libera/bloqueia módulos por empresa no painel, teste de 14 dias com tudo liberado, somente leitura para inadimplente ([`COBRANCA.md`](docs/akylla/COBRANCA.md)) |
 | Perfis Comércio, Serviços e Híbrido | ✅ escolha guiada no cadastro (`/onboarding`), páginas `/para/comercio`, `/para/servicos`, `/para/hibrido` |
 | Comissões | ✅ `/comissoes`, `/profissionais`: regras por produto, categoria e profissional, cálculo no PDV e na OS, pagamento pelo caixa |
 | Crediário | ✅ `/crediario` + PDV: limite por cliente, parcelas calculadas no servidor, vencidas, recebimento pelo caixa |

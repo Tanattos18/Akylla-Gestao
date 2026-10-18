@@ -1,5 +1,18 @@
 # Banco de dados — diretrizes e modelo atual
 
+## Modelos implementados (Fase 8b — Kits de acesso)
+
+Migration: `20261019150000_module_kits` (aditiva; renomeia os planos para
+Básico/Intermediário/Avançado mantendo ids e preços; insere os preços dos
+módulos).
+
+| Modelo | Campos | Regras |
+|---|---|---|
+| `TenantPlan` (+) | `includedModules BusinessModule[]`, `sortOrder` | módulos do kit; ordem de exibição |
+| `TenantSubscription` (+) | `extraModules BusinessModule[]` | avulsos contratados; acesso = kit ∪ avulsos (teste/isenta = todos) |
+| `PlatformPayment` (+) | `extraModules BusinessModule[]` | avulsos cobrados naquele pagamento (imutável) |
+| `ModuleOffer` | `module` (PK, enum), `description`, `priceMonthly Decimal`, `active`, `sortOrder`, `updatedAt` | **global — sem `companyId`** (catálogo da plataforma, como `TenantPlan`); sem RLS |
+
 ## Modelos implementados (Fase 8 — Cobrança do SaaS)
 
 Migration: `20261019110000_platform_billing` (aditiva + RLS + preços dos planos).

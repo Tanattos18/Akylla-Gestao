@@ -821,6 +821,9 @@ export interface TenantPlanDto {
   clientLimit: number | null;
   productLimit: number | null;
   active: boolean;
+  /** Kits (Fase 8b): módulos incluídos no kit */
+  includedModules: BusinessModule[];
+  sortOrder: number;
 }
 
 export type TenantSubscriptionStatus = "ACTIVE" | "EXPIRED" | "CANCELLED";
@@ -837,6 +840,8 @@ export interface TenantSubscriptionDto {
   planId: string;
   status: TenantSubscriptionStatus;
   billingCycle: "MONTHLY" | "YEARLY";
+  /** Kits (Fase 8b): módulos avulsos além do kit */
+  extraModules: BusinessModule[];
   currentPeriodStart: string;
   currentPeriodEnd: string;
   cancelReason: string | null;
@@ -939,6 +944,8 @@ export interface CompanyModuleDto {
   module: BusinessModule;
   status: CompanyModuleStatus;
   label: string;
+  /** Kits (Fase 8b): contratado (no teste/isenta, todos) */
+  entitled: boolean;
 }
 
 export type ImportType = "CATEGORY" | "SUPPLIER" | "PRODUCT" | "CLIENT" | "SERVICE";

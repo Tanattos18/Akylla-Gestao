@@ -1,10 +1,17 @@
-import { Body, Controller, Get, HttpCode, Inject, Param, Post, Query, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, Inject, Param, Post, Put, Query, Req, UseGuards } from "@nestjs/common";
 import type { Request } from "express";
 import {
   platformActivateSchema,
   platformCompaniesQuerySchema,
   platformCreateCompanySchema,
   type PlatformCreateCompanyInput,
+  businessModuleSchema,
+  platformModulesSchema,
+  platformUpdateModuleOfferSchema,
+  platformUpdatePlanSchema,
+  type PlatformModulesInput,
+  type PlatformUpdateModuleOfferInput,
+  type PlatformUpdatePlanInput,
   platformExemptSchema,
   platformSuspendSchema,
   platformTrialSchema,
@@ -13,6 +20,7 @@ import {
   type PlatformExemptInput,
   type PlatformSuspendInput,
   type PlatformTrialInput,
+  type BusinessModule,
 } from "@petflow/shared";
 import { ZodValidationPipe } from "../common/pipes/zod-validation.pipe";
 import { PlatformGuard } from "./platform.guard";
@@ -89,6 +97,40 @@ export class PlatformController {
     @Req() request: PlatformRequest,
   ) {
     return this.platform.suspend(id, body, by(request));
+  }
+
+  /** Kits (Fase 8b): troca kit/avulsos sem pagamento */
+  @Post("companies/:id/modules")
+  @HttpCode(200)
+  setModules(
+    @Param("id") id: string,
+    @Body(new ZodValidationPipe(platformModulesSchema)) body: PlatformModulesInput,
+    @Req() request: PlatformRequest,
+  ) {
+    return this.platform.setModules(id, body, by(request));
+  }
+
+  @Get("catalog")
+  catalog() {
+    return this.platform.getCatalog();
+  }
+
+  @Put("plans/:id")
+  updatePlan(
+    @Param("id") id: string,
+    @Body(new ZodValidationPipe(platformUpdatePlanSchema)) body: PlatformUpdatePlanInput,
+    @Req() request: PlatformRequest,
+  ) {
+    return this.platform.updatePlan(id, body, by(request));
+  }
+
+  @Put("modules/:module")
+  updateModule(
+    @Param("module", new ZodValidationPipe(businessModuleSchema)) module: BusinessModule,
+    @Body(new ZodValidationPipe(platformUpdateModuleOfferSchema)) body: PlatformUpdateModuleOfferInput,
+    @Req() request: PlatformRequest,
+  ) {
+    return this.platform.updateModuleOffer(module, body, by(request));
   }
 
   @Post("companies/:id/reset-password")

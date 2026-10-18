@@ -51,7 +51,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         const mods = await api<CompanyModuleDto[]>("/api/company-modules");
         if (!cancelled) {
           const disabled = new Set(
-            mods.filter((m) => m.status === "DISABLED").map((m) => m.module),
+            // Kits (Fase 8b): não contratado também some do menu
+            mods.filter((m) => m.status === "DISABLED" || m.entitled === false).map((m) => m.module),
           );
           setDisabledModules(disabled);
         }

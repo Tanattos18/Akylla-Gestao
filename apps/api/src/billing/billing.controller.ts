@@ -32,6 +32,12 @@ export class BillingController {
     return this.billingService.listPlans();
   }
 
+  /** Kits (Fase 8b): preço de cada módulo avulso */
+  @Get("modules")
+  modules() {
+    return this.billingService.listModuleOffers();
+  }
+
   @Get("gateway")
   @UseGuards(AdminGuard)
   gateway() {

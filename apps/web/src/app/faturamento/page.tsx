@@ -13,7 +13,8 @@ import {
   type TenantSubscriptionDto,
 } from "../../lib/types";
 import { useDialog } from "../../components/ui/Dialog";
-import { accessStatusLabels, type AccessSummaryDto } from "@petflow/shared";
+import { accessStatusLabels, businessModuleLabels, type AccessSummaryDto, type ModuleOfferDto } from "@petflow/shared";
+import { ComboBuilder } from "../../components/billing/ComboBuilder";
 
 /** WhatsApp de vendas (Fase 8): contratação por proposta até o Mercado Pago entrar em produção */
 const SALES_WHATSAPP = process.env.NEXT_PUBLIC_SALES_WHATSAPP || "5562981517002";
@@ -24,6 +25,8 @@ function salesLink(companyName: string, plan?: TenantPlanDto, cycle?: "MONTHLY" 
     : `Olá! Quero regularizar a assinatura do Akylla Gestão da empresa ${companyName}.`;
   return `https://wa.me/${SALES_WHATSAPP}?text=${encodeURIComponent(text)}`;
 }
+
+const whatsappText = (text: string) => `https://wa.me/${SALES_WHATSAPP}?text=${encodeURIComponent(text)}`;
 
 const accessBadge: Record<AccessSummaryDto["status"], string> = {
   EXEMPT: "bg-slate-100 text-slate-700",
@@ -44,6 +47,7 @@ export default function FaturamentoPage() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [plans, setPlans] = useState<TenantPlanDto[]>([]);
+  const [offers, setOffers] = useState<ModuleOfferDto[]>([]);
   const [subscription, setSubscription] = useState<TenantSubscriptionDto | null>(null);
   const [planUsage, setPlanUsage] = useState<PlanUsageDto | null>(null);
   const [access, setAccess] = useState<AccessSummaryDto | null>(null);
@@ -57,6 +61,8 @@ export default function FaturamentoPage() {
     try {
       const plansData = await api<PlansResponse>("/api/billing/plans");
       setPlans(plansData.items);
+      // Kits (Fase 8b): preço de cada módulo avulso
+      setOffers((await api<{ items: ModuleOfferDto[] }>("/api/billing/modules")).items);
       // O uso já traz a assinatura (sem chamada extra que responde 404 quando não há plano)
       const usage = await api<PlanUsageDto>("/api/billing/usage");
       setPlanUsage(usage);
@@ -204,6 +210,20 @@ export default function FaturamentoPage() {
                 {tenantSubscriptionStatusLabels[subscription.status]}
               </span>
             </div>
+            <div className="sm:col-span-2">
+              <p className="text-xs uppercase text-slate-500">Módulos contratados</p>
+              <p className="text-sm text-slate-800">
+                {[...subscription.plan.includedModules, ...(subscription.extraModules ?? [])]
+                  .map((module) => businessModuleLabels[module])
+                  .join(", ") || "Só o núcleo"}
+                {subscription.extraModules?.length ? (
+                  <span className="text-slate-500"> (avulsos: {subscription.extraModules.map((m) => businessModuleLabels[m]).join(", ")})</span>
+                ) : null}
+              </p>
+              {access?.status === "TRIAL" && (
+                <p className="mt-1 text-xs text-sky-800">Durante o teste grátis, todos os módulos ficam liberados.</p>
+              )}
+            </div>
             <div>
               <p className="text-xs uppercase text-slate-500">Período atual</p>
               <p className="text-sm text-slate-800">
@@ -338,6 +358,21 @@ export default function FaturamentoPage() {
                 {plan.description && (
                   <p className="mt-2 text-sm text-slate-500">{plan.description}</p>
                 )}
+                <ul className="mt-3 space-y-1 text-sm text-slate-700">
+                  {plan.includedModules.map((module) => (
+                    <li key={module} className="flex gap-2">
+                      <span aria-hidden="true" className="text-emerald-600">✓</span>
+                      {businessModuleLabels[module]}
+                    </li>
+                  ))}
+                  <li className="text-xs text-slate-500">
+                    {[
+                      plan.userLimit === null ? "usuários ilimitados" : `até ${plan.userLimit} usuário(s)`,
+                      plan.clientLimit === null ? "clientes ilimitados" : `até ${plan.clientLimit} clientes`,
+                      plan.productLimit === null ? "produtos ilimitados" : `até ${plan.productLimit} produtos`,
+                    ].join(" · ")}
+                  </li>
+                </ul>
                 {isAdmin && (
                   <div className="mt-auto flex flex-wrap gap-2 pt-4">
                     <a
@@ -367,7 +402,20 @@ export default function FaturamentoPage() {
             <p className="text-sm text-slate-500">Nenhum plano disponível.</p>
           )}
         </div>
+        <p className="mt-3 text-xs text-slate-500">
+          Todo kit inclui o núcleo: vendas/PDV, estoque, caixa, clientes, financeiro e relatórios.
+        </p>
       </div>
+
+      {plans.length > 0 && offers.length > 0 && (
+        <ComboBuilder
+          plans={plans}
+          offers={offers}
+          initialPlanId={subscription?.planId}
+          initialExtras={subscription?.extraModules}
+          contactLink={(text) => whatsappText(`${text} Empresa: ${session.company.name}.`)}
+        />
+      )}
     </div>
   );
 }

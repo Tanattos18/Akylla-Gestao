@@ -1206,6 +1206,9 @@ model TenantPlan {
   priceMonthly Decimal  @db.Decimal(12, 2)
   /// Fase 8: preço anual (null = sem opção anual)
   priceYearly  Decimal? @db.Decimal(12, 2)
+  /// Kits (Fase 8b): módulos opcionais incluídos no kit (o núcleo é sempre incluído)
+  includedModules BusinessModule[] @default([])
+  sortOrder    Int      @default(0)
   durationDays Int      @default(30)
   userLimit   Int?
   clientLimit Int?
@@ -1226,6 +1229,8 @@ model TenantSubscription {
   plan      TenantPlan             @relation(fields: [planId], references: [id], onDelete: Restrict)
   status    TenantSubscriptionStatus @default(ACTIVE)
   billingCycle BillingCycle         @default(MONTHLY)
+  /// Kits (Fase 8b): módulos avulsos contratados além do kit (combo personalizado)
+  extraModules BusinessModule[]     @default([])
   currentPeriodStart DateTime
   currentPeriodEnd   DateTime
   cancelReason String?
@@ -1386,6 +1391,8 @@ model PlatformPayment {
   companyId   String
   company     Company               @relation(fields: [companyId], references: [id], onDelete: Restrict)
   planName    String
+  /// Kits (Fase 8b): módulos avulsos pagos neste pagamento (histórico)
+  extraModules BusinessModule[] @default([])
   cycle       BillingCycle
   amount      Decimal               @db.Decimal(12, 2)
   method      PlatformPaymentMethod
@@ -1396,4 +1403,15 @@ model PlatformPayment {
   createdAt   DateTime              @default(now())
 
   @@index([companyId, createdAt])
+}
+
+/// Kits (Fase 8b) — preço mensal de cada módulo opcional, para combos
+/// personalizados. Catálogo global (sem companyId), editado pelo dono.
+model ModuleOffer {
+  module       BusinessModule @id
+  description  String
+  priceMonthly Decimal        @db.Decimal(12, 2)
+  active       Boolean        @default(true)
+  sortOrder    Int            @default(0)
+  updatedAt    DateTime       @updatedAt
 }

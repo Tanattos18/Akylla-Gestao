@@ -296,7 +296,7 @@ export function Header({
 
 
   const searchInputClass =
-    "w-40 rounded-lg border border-white/10 bg-white/10 py-1.5 pl-9 pr-3 text-sm text-white placeholder:text-slate-400 focus:border-primary-400/60 focus:bg-white/15 focus:outline-none focus:ring-2 focus:ring-primary-500/30 2xl:w-64";
+    "w-28 xl:w-40 rounded-lg border border-white/10 bg-white/10 py-1.5 pl-9 pr-3 text-sm text-white placeholder:text-slate-400 focus:border-primary-400/60 focus:bg-white/15 focus:outline-none focus:ring-2 focus:ring-primary-500/30 2xl:w-64";
 
   return (
     <>

@@ -149,7 +149,7 @@ export default function HomePage() {
     () =>
       new Set(
         companyModules
-          .filter((entry) => entry.status === "DISABLED")
+          .filter((entry) => entry.status === "DISABLED" || entry.entitled === false)
           .map((entry) => entry.module),
       ),
     [companyModules],

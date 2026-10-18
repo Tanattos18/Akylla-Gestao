@@ -7,18 +7,47 @@
 > - contratação por WhatsApp e pagamento registrado pelo dono, até a
 >   conta Mercado Pago (CNPJ) ficar pronta.
 
-## Planos
+## Kits de acesso (Fase 8b)
 
-| Plano | Mensal | Anual (2 meses grátis) | Usuários | Clientes | Produtos |
-|---|---|---|---|---|---|
-| Essencial | R$ 79,90 | R$ 799,00 | 3 | 200 | 100 |
-| Profissional | R$ 149,90 | R$ 1.499,00 | 10 | 1.000 | 500 |
-| Completo | R$ 249,90 | R$ 2.499,00 | ilimitado | ilimitado | ilimitado |
+Todo kit inclui o **núcleo**: vendas/PDV, estoque, caixa, clientes,
+produtos, financeiro e relatórios. Os **módulos** variam por kit, e o
+cliente pode somar módulos avulsos (combo personalizado).
 
-Todos os planos têm todos os recursos; muda o tamanho da operação. Os
-limites só valem com assinatura paga; no teste, tudo é liberado. Taxa de
-implantação (opcional) é combinada à parte, registrada como pagamento com
-observação.
+| Kit | Mensal | Anual (2 meses grátis) | Módulos incluídos | Usuários | Clientes | Produtos |
+|---|---|---|---|---|---|---|
+| Básico | R$ 79,90 | R$ 799,00 | Automação WhatsApp, Crediário | 3 | 200 | 100 |
+| Intermediário | R$ 149,90 | R$ 1.499,00 | + Serviços, Agendamentos, Comissões | 10 | 1.000 | 500 |
+| Avançado | R$ 249,90 | R$ 2.499,00 | todos os 9 módulos | ilimitado | ilimitado | ilimitado |
+
+| Módulo avulso | Mensal |
+|---|---|
+| Automação WhatsApp | R$ 29,90 |
+| Crediário | R$ 19,90 |
+| Serviços | R$ 9,90 |
+| Agendamentos | R$ 19,90 |
+| Comissões | R$ 19,90 |
+| Ordens de serviço | R$ 29,90 |
+| Nota fiscal | R$ 39,90 |
+| Assinaturas de clientes | R$ 19,90 |
+| Pets | R$ 9,90 |
+
+- **Combo:** kit + avulsos. Mensal = kit + soma dos avulsos; anual = kit
+  anual + 10× cada avulso. Ex.: Básico + Nota fiscal = R$ 119,80/mês.
+  Avulso que o kit já inclui não é cobrado.
+- **Preços, módulos de cada kit e limites são editáveis** em
+  **Plataforma › Kits e módulos** (os valores acima são a sugestão
+  inicial da migration `20261019150000_module_kits`).
+- **Quem usa o quê:**
+  - teste grátis e empresa isenta → **todos** os módulos;
+  - assinatura (ativa, em tolerância ou somente leitura) → só o kit + avulsos;
+  - módulo não contratado some do menu, aparece como "Não contratado ·
+    contratar" em Configurações › Módulos, e a API responde **403**
+    `MODULE_NOT_CONTRACTED`. Os dados do módulo **não são apagados**.
+- O cliente vê os kits e monta o combo em **Faturamento › Monte seu plano**;
+  o botão leva o resumo (kit, avulsos, ciclo e total) para o WhatsApp.
+
+Os limites só valem com assinatura paga. Taxa de implantação (opcional) é
+combinada à parte, registrada como pagamento com observação.
 
 ## Ciclo de vida da empresa
 
@@ -50,7 +79,10 @@ dono: ISENTAR (sem cobrança) · SUSPENDER (bloqueia login) · REATIVAR
    troca a senha em **Minha conta** (clique no nome, no canto superior
    direito) e escolhe o perfil do negócio.
 3. **Contratou:** recebeu o Pix ou boleto, vá em **Registrar pagamento**
-   (plano, mensal/anual, forma e valor). Libera na hora.
+   (kit, avulsos, mensal/anual, forma e valor — o valor sugerido já soma o
+   combo). Libera na hora só o que foi contratado.
+   - Trocar kit ou avulsos sem cobrar agora (upgrade combinado, cortesia,
+     correção): botão **Módulos** da empresa. Vale na hora.
 4. **Renovação:** a cada pagamento, **Registrar pagamento** de novo. O
    período soma ao final do atual, sem perder dias pagos.
 5. **Não pagou:** o sistema avisa sozinho, dá 5 dias de tolerância e
@@ -79,8 +111,11 @@ dono: ISENTAR (sem cobrança) · SUSPENDER (bloqueia login) · REATIVAR
 - **Por empresa:**
   - admin, uso (usuários, clientes, produtos, vendas em 30 dias) e último
     acesso;
-  - ações: registrar pagamento, +teste, isentar, ver pagamentos,
-    suspender e reativar.
+  - kit e avulsos contratados;
+  - ações: registrar pagamento, módulos, +teste, isentar, ver pagamentos,
+    nova senha, suspender e reativar.
+- **Aba Kits e módulos:** edita preço mensal/anual, módulos incluídos e
+  limites de cada kit, e o preço/"à venda" de cada módulo avulso.
 - **Registro:** cada ação fica no log da API com o e-mail do dono, e os
   pagamentos ficam na tabela `PlatformPayment`, que não se altera.
 

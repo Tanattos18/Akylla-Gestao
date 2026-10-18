@@ -111,6 +111,11 @@ export default function ConfiguracoesPage() {
         <h3 className="text-lg font-semibold text-slate-900">Módulos</h3>
         <p className="mt-1 text-sm text-slate-600">
           Módulos desligados somem do menu e as rotas deles ficam bloqueadas. Os dados são mantidos.
+          Módulos fora do seu plano aparecem como “Não contratado” — veja os preços em{" "}
+          <Link href="/faturamento" className="font-medium text-primary-700 hover:underline">
+            Faturamento
+          </Link>
+          .
         </p>
         {error && (
           <p role="alert" className="mt-3 text-sm text-red-700">
@@ -120,6 +125,19 @@ export default function ConfiguracoesPage() {
         <ul className="mt-4 divide-y divide-slate-100">
           {modules.map((entry) => {
             const active = entry.status === "ACTIVE";
+            if (entry.entitled === false) {
+              return (
+                <li key={entry.module} className="flex items-center justify-between gap-3 py-3">
+                  <span className="text-sm text-slate-500">{entry.label}</span>
+                  <Link
+                    href="/faturamento#monte-seu-plano"
+                    className="rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-900 hover:bg-amber-100"
+                  >
+                    Não contratado · contratar
+                  </Link>
+                </li>
+              );
+            }
             return (
               <li key={entry.module} className="flex items-center justify-between gap-3 py-3">
                 <span className="text-sm text-slate-800">{entry.label}</span>

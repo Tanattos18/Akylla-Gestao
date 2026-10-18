@@ -450,6 +450,7 @@ Comportamentos importantes:
 | GET | `/api/billing/access` | sessão | **Fase 8:** situação de acesso `{status, trialEndsAt, paidUntil, graceEndsAt, daysLeft, readOnly, planName, cycle}` (`EXEMPT`, `TRIAL`, `ACTIVE`, `GRACE`, `READ_ONLY`, `SUSPENDED`) |
 | GET | `/api/billing/usage` | sessão | `{subscription, usage:{users, clients, products}}` para comparar com os limites do plano |
 | POST | `/api/billing/subscription/cancel` | ADMIN | Cancela (201): `reason?` ≤ 500; duplo → 409 |
+| GET | `/api/billing/modules` | sessão | Kits (Fase 8b): preço mensal de cada módulo avulso ativo `{items:[{module,label,description,priceMonthly,active,sortOrder}]}` |
 | GET | `/api/billing/gateway` | ADMIN | Describe do gateway: `{ env: "sandbox" \| "production", credentialsConfigured }` |
 | POST | `/api/billing/checkout` | ADMIN | Cria preapproval no Mercado Pago (sandbox por padrão): `{ planId, payerEmail }` → `{ checkoutUrl, gatewaySubscriptionId }`; sem token → 400 com mensagem explícita |
 
@@ -483,7 +484,7 @@ opção B: tabela `CompanyModule`).
 
 | Método e rota | Guard | Descrição |
 |---|---|---|
-| `GET /api/company-modules` | Sessão | Lista os 5 módulos desativáveis com `module`, `status` (`ACTIVE` = padrão quando não há linha) e `label` |
+| `GET /api/company-modules` | Sessão | Lista os 5 módulos desativáveis com `module`, `status` (`ACTIVE` = padrão quando não há linha) e `label`; Kits (Fase 8b): `entitled` = contratado (kit + avulsos; tudo no teste/isenta). Rota de módulo não contratado → **403** `{code:"MODULE_NOT_CONTRACTED"}` |
 | `PATCH /api/company-modules` | `AdminGuard` | Upsert `{ module, status }` da empresa autenticada (Zod `upsertCompanyModuleSchema`) |
 
 - **Bloqueio no servidor:** `ModuleGuard` (APP_GUARD, registrado após
@@ -703,11 +704,15 @@ papel ADMIN e, em produção, 2FA ativo; senão 403. Usa conexão de sistema
 | POST | `/api/platform/companies` | dono | `{companyName, adminName, adminEmail, trialDays=14}` (0–90): cadastra a empresa e o admin (e-mail já verificado) e devolve `{company, temporaryPassword}` (senha provisória mostrada uma vez). E-mail já usado → 409 |
 | GET | `/api/platform/companies/:id` | dono | uma empresa |
 | GET | `/api/platform/companies/:id/payments` | dono | pagamentos registrados (imutáveis) |
-| POST | `/api/platform/companies/:id/activate` | dono | `{planId, cycle: MONTHLY\|YEARLY, method: PIX\|BOLETO\|CARD\|MERCADO_PAGO\|OTHER, amount?, note?}`: registra o pagamento e ativa/renova. Novo período começa no fim do período vigente (ou agora); mensal = `durationDays`, anual = 365 dias; valor padrão = preço do plano no ciclo |
+| POST | `/api/platform/companies/:id/activate` | dono | `{planId, cycle: MONTHLY\|YEARLY, method: PIX\|BOLETO\|CARD\|MERCADO_PAGO\|OTHER, amount?, note?}`: registra o pagamento e ativa/renova. Novo período começa no fim do período vigente (ou agora); mensal = `durationDays`, anual = 365 dias; valor padrão = preço do plano no ciclo. Kits (Fase 8b): `extraModules[]` opcionais; valor padrão = kit + avulsos (`computeComboPrice`: anual = kit anual + 10× cada avulso) |
 | POST | `/api/platform/companies/:id/trial` | dono | `{days}` (1–90): estende o teste a partir de `max(agora, fim do teste)` |
 | POST | `/api/platform/companies/:id/exempt` | dono | `{exempt}`: isenta ou remove a isenção |
 | POST | `/api/platform/companies/:id/suspend` | dono | `{reason}`: suspende (login bloqueado, sessões revogadas) |
 | POST | `/api/platform/companies/:id/reactivate` | dono | reativa a empresa suspensa (senão 400) |
+| POST | `/api/platform/companies/:id/modules` | dono | Kits (Fase 8b): `{planId, extraModules[]}` troca o kit e os avulsos na hora, sem pagamento (sem assinatura: cria uma vencida, que vale após o pagamento). Avulsos já no kit são descartados |
+| GET | `/api/platform/catalog` | dono | `{plans, modules}`: kits (preços, `includedModules`, limites, ordem) e preço de cada módulo avulso |
+| PUT | `/api/platform/plans/:id` | dono | `{description?, priceMonthly, priceYearly\|null, includedModules[], userLimit, clientLimit, productLimit}` (limites `null` = ilimitado) |
+| PUT | `/api/platform/modules/:module` | dono | `{description?, priceMonthly?, active?}`: preço/oferta de um módulo avulso |
 | POST | `/api/platform/companies/:id/reset-password` | dono | senha provisória para o admin principal da empresa (`{email, temporaryPassword}`); derruba as sessões dele |
 
 ## Padrão para módulos futuros

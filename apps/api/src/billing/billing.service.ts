@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.module";
-import type { CancelTenantSubscriptionInput } from "@petflow/shared";
+import { businessModuleLabels, type CancelTenantSubscriptionInput } from "@petflow/shared";
 import type { AuthContext } from "../common/decorators/auth.decorator";
 
 const planSelect = {
@@ -16,6 +16,8 @@ const planSelect = {
   priceMonthly: true,
   priceYearly: true,
   durationDays: true,
+  includedModules: true,
+  sortOrder: true,
   userLimit: true,
   clientLimit: true,
   productLimit: true,
@@ -38,6 +40,7 @@ const subscriptionSelect = {
   planId: true,
   status: true,
   billingCycle: true,
+  extraModules: true,
   currentPeriodStart: true,
   currentPeriodEnd: true,
   cancelReason: true,
@@ -67,7 +70,7 @@ export class BillingService {
     const plans = await this.prisma.tenantPlan.findMany({
       where: { active: true },
       select: planSelect,
-      orderBy: { priceMonthly: "asc" },
+      orderBy: [{ sortOrder: "asc" }, { priceMonthly: "asc" }],
     });
     return { items: plans.map(formatPlan) };
   }
@@ -81,6 +84,24 @@ export class BillingService {
       },
       data: { status: "EXPIRED" },
     });
+  }
+
+  /** Kits (Fase 8b): preço de cada módulo avulso (para montar combos). */
+  async listModuleOffers() {
+    const offers = await this.prisma.moduleOffer.findMany({
+      where: { active: true },
+      orderBy: { sortOrder: "asc" },
+    });
+    return {
+      items: offers.map((offer) => ({
+        module: offer.module,
+        label: businessModuleLabels[offer.module],
+        description: offer.description,
+        priceMonthly: offer.priceMonthly.toFixed(2),
+        active: offer.active,
+        sortOrder: offer.sortOrder,
+      })),
+    };
   }
 
   async getSubscription(auth: AuthContext) {    await this.expireStale(auth.companyId);

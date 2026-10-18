@@ -99,7 +99,7 @@ export default function PdvPage() {
       .then((data) => setProfessionals(data.items))
       .catch(() => setProfessionals([]));
     api<CompanyModuleDto[]>("/api/company-modules", { redirectOnUnauthorized: false })
-      .then((mods) => setCreditEnabled(!mods.some((m) => m.module === "CREDIT" && m.status === "DISABLED")))
+      .then((mods) => setCreditEnabled(!mods.some((m) => m.module === "CREDIT" && (m.status === "DISABLED" || m.entitled === false))))
       .catch(() => setCreditEnabled(true));
   }, [session]);
 

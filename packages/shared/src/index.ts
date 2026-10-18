@@ -1514,6 +1514,8 @@ export interface AccessSummaryDto {
   readOnly: boolean;
   planName: string | null;
   cycle: BillingCycle | null;
+  /** Kits (Fase 8b): módulos opcionais liberados; null = todos (teste/isenta) */
+  modules: BusinessModule[] | null;
 }
 
 export const platformCompaniesQuerySchema = z.object({
@@ -1535,9 +1537,17 @@ export const changePasswordSchema = z.object({
 });
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 
+const moduleListSchema = z
+  .array(businessModuleSchema)
+  .max(20)
+  .default([])
+  .transform((list) => [...new Set(list)]);
+
 export const platformActivateSchema = z.object({
   planId: z.string().trim().min(1, "Plano é obrigatório").max(60),
   cycle: billingCycleSchema.default("MONTHLY"),
+  /** Kits (Fase 8b): módulos avulsos além do kit */
+  extraModules: moduleListSchema,
   method: platformPaymentMethodSchema,
   /** Valor recebido; padrão = preço do plano no ciclo */
   amount: z
@@ -1548,6 +1558,70 @@ export const platformActivateSchema = z.object({
   note: z.string().trim().max(500).optional(),
 });
 export type PlatformActivateInput = z.infer<typeof platformActivateSchema>;
+
+/** Kits (Fase 8b): trocar kit e módulos avulsos sem registrar pagamento. */
+export const platformModulesSchema = z.object({
+  planId: z.string().trim().min(1, "Kit é obrigatório").max(60),
+  extraModules: moduleListSchema,
+});
+export type PlatformModulesInput = z.infer<typeof platformModulesSchema>;
+
+const moneyString = z
+  .string()
+  .trim()
+  .regex(/^\d{1,9}(\.\d{1,2})?$/, "Valor inválido (use 99.90)");
+const limitField = z.number().int().min(1).max(1_000_000).nullable();
+
+/** Kits (Fase 8b): o dono edita preço, módulos e limites de cada kit. */
+export const platformUpdatePlanSchema = z.object({
+  description: z.string().trim().max(500).optional(),
+  priceMonthly: moneyString,
+  priceYearly: moneyString.nullable(),
+  includedModules: moduleListSchema,
+  userLimit: limitField,
+  clientLimit: limitField,
+  productLimit: limitField,
+});
+export type PlatformUpdatePlanInput = z.infer<typeof platformUpdatePlanSchema>;
+
+export const platformUpdateModuleOfferSchema = z.object({
+  description: z.string().trim().min(3).max(300).optional(),
+  priceMonthly: moneyString.optional(),
+  active: z.boolean().optional(),
+});
+export type PlatformUpdateModuleOfferInput = z.infer<typeof platformUpdateModuleOfferSchema>;
+
+export interface ModuleOfferDto {
+  module: BusinessModule;
+  label: string;
+  description: string;
+  priceMonthly: string;
+  active: boolean;
+  sortOrder: number;
+}
+
+/**
+ * Preço de um combo (Fase 8b), em centavos para não errar arredondamento:
+ * mensal = kit + avulsos; anual = kit anual (ou 12× o mensal) + 10× cada
+ * avulso (2 meses grátis). Módulos já incluídos no kit não são cobrados.
+ */
+export function computeComboPrice(params: {
+  kit: { priceMonthly: string; priceYearly: string | null; includedModules: readonly BusinessModule[] };
+  extraModules: readonly BusinessModule[];
+  offers: ReadonlyArray<{ module: BusinessModule; priceMonthly: string }>;
+  cycle: BillingCycle;
+}): string {
+  const cents = (value: string) => Math.round(Number(value) * 100);
+  const included = new Set(params.kit.includedModules);
+  const extrasMonthly = [...new Set(params.extraModules)]
+    .filter((module) => !included.has(module))
+    .reduce((sum, module) => sum + cents(params.offers.find((o) => o.module === module)?.priceMonthly ?? "0"), 0);
+  const total =
+    params.cycle === "YEARLY"
+      ? (params.kit.priceYearly ? cents(params.kit.priceYearly) : cents(params.kit.priceMonthly) * 12) + extrasMonthly * 10
+      : cents(params.kit.priceMonthly) + extrasMonthly;
+  return (total / 100).toFixed(2);
+}
 
 export const platformTrialSchema = z.object({
   days: z.coerce.number().int().min(1, "Mínimo 1 dia").max(90, "Máximo 90 dias"),
@@ -1576,6 +1650,8 @@ export interface PlatformCompanyDto {
   billingExempt: boolean;
   suspendedReason: string | null;
   access: AccessSummaryDto;
+  /** Kits (Fase 8b): kit e avulsos contratados (null = sem assinatura) */
+  contract: { planId: string; planName: string; extraModules: BusinessModule[] } | null;
 }
 
 /** Nova empresa cliente criada pelo dono (Fase 8): admin com senha provisória. */
@@ -1597,6 +1673,7 @@ export interface PlatformCreateCompanyResult {
 export interface PlatformPaymentDto {
   id: string;
   planName: string;
+  extraModules: BusinessModule[];
   cycle: BillingCycle;
   amount: string;
   method: PlatformPaymentMethod;

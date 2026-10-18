@@ -10,6 +10,15 @@ import {
 import { Prisma, PrismaClient } from "@prisma/client";
 import { randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
+import {
+  businessModuleLabels,
+  computeComboPrice,
+  type BusinessModule,
+  type ModuleOfferDto,
+  type PlatformModulesInput,
+  type PlatformUpdateModuleOfferInput,
+  type PlatformUpdatePlanInput,
+} from "@petflow/shared";
 import type {
   PlatformActivateInput,
   PlatformCompaniesQuery,
@@ -52,7 +61,9 @@ const companySelect = {
       status: true,
       currentPeriodEnd: true,
       billingCycle: true,
-      plan: { select: { name: true } },
+      planId: true,
+      extraModules: true,
+      plan: { select: { name: true, includedModules: true } },
     },
   },
   users: {
@@ -125,11 +136,14 @@ export class PlatformService implements OnModuleDestroy {
                 currentPeriodEnd: sub.currentPeriodEnd,
                 billingCycle: sub.billingCycle,
                 planName: sub.plan.name,
+                includedModules: sub.plan.includedModules,
+                extraModules: sub.extraModules,
               }
             : null,
         },
         now,
       ),
+      contract: sub ? { planId: sub.planId, planName: sub.plan.name, extraModules: sub.extraModules } : null,
     };
   }
 
@@ -175,6 +189,7 @@ export class PlatformService implements OnModuleDestroy {
       items: rows.map((row) => ({
         id: row.id,
         planName: row.planName,
+        extraModules: row.extraModules,
         cycle: row.cycle,
         amount: row.amount.toFixed(2),
         method: row.method,
@@ -199,7 +214,21 @@ export class PlatformService implements OnModuleDestroy {
       throw new BadRequestException("Este plano não tem opção anual");
     }
     const days = input.cycle === "YEARLY" ? YEAR_DAYS : plan.durationDays;
-    const amount = input.amount ?? (input.cycle === "YEARLY" ? plan.priceYearly!.toFixed(2) : plan.priceMonthly.toFixed(2));
+    // Kits (Fase 8b): avulsos que o kit já inclui não entram nem são cobrados
+    const extraModules = input.extraModules.filter((module) => !plan.includedModules.includes(module));
+    const offers = await this.db.moduleOffer.findMany({ select: { module: true, priceMonthly: true } });
+    const amount =
+      input.amount ??
+      computeComboPrice({
+        kit: {
+          priceMonthly: plan.priceMonthly.toFixed(2),
+          priceYearly: plan.priceYearly?.toFixed(2) ?? null,
+          includedModules: plan.includedModules,
+        },
+        extraModules,
+        offers: offers.map((o) => ({ module: o.module, priceMonthly: o.priceMonthly.toFixed(2) })),
+        cycle: input.cycle,
+      });
 
     await this.db.$transaction(async (tx) => {
       const company = await tx.company.findUnique({ where: { id: companyId }, select: { id: true } });
@@ -218,6 +247,7 @@ export class PlatformService implements OnModuleDestroy {
           planId: plan.id,
           status: "ACTIVE",
           billingCycle: input.cycle,
+          extraModules,
           currentPeriodStart: start,
           currentPeriodEnd: end,
           gateway: input.method === "MERCADO_PAGO" ? "MERCADO_PAGO" : "MANUAL",
@@ -226,6 +256,7 @@ export class PlatformService implements OnModuleDestroy {
           planId: plan.id,
           status: "ACTIVE",
           billingCycle: input.cycle,
+          extraModules,
           currentPeriodStart: start,
           currentPeriodEnd: end,
           cancelReason: null,
@@ -236,6 +267,7 @@ export class PlatformService implements OnModuleDestroy {
         data: {
           companyId,
           planName: plan.name,
+          extraModules,
           cycle: input.cycle,
           amount: new Prisma.Decimal(amount),
           method: input.method,
@@ -289,6 +321,103 @@ export class PlatformService implements OnModuleDestroy {
     });
     this.logger.log(`Empresa ${company.id} (${slug}) cadastrada por ${by}, teste de ${input.trialDays} dia(s)`);
     return { company: await this.getCompany(company.id), temporaryPassword };
+  }
+
+  /**
+   * Kits (Fase 8b): troca o kit e os módulos avulsos na hora, sem registrar
+   * pagamento (upgrade/downgrade combinado com o cliente). Sem assinatura,
+   * cria uma ainda não paga (vale depois do teste/registro de pagamento).
+   */
+  async setModules(companyId: string, input: PlatformModulesInput, by: string): Promise<PlatformCompanyDto> {
+    await this.getCompany(companyId);
+    const plan = await this.db.tenantPlan.findFirst({ where: { id: input.planId, active: true } });
+    if (!plan) throw new NotFoundException("Kit não encontrado ou inativo");
+    const extraModules = input.extraModules.filter((module) => !plan.includedModules.includes(module));
+    const now = new Date();
+    await this.db.tenantSubscription.upsert({
+      where: { companyId },
+      update: { planId: plan.id, extraModules },
+      create: {
+        companyId,
+        planId: plan.id,
+        extraModules,
+        status: "EXPIRED",
+        currentPeriodStart: now,
+        currentPeriodEnd: now,
+        gateway: "MANUAL",
+      },
+    });
+    this.access.invalidate(companyId);
+    this.logger.log(`Módulos da empresa ${companyId} definidos por ${by}: ${plan.name} + [${extraModules.join(", ")}]`);
+    return this.getCompany(companyId);
+  }
+
+  // ---- Catálogo (kits e módulos avulsos) ------------------------------
+
+  async getCatalog() {
+    const [plans, offers] = await Promise.all([
+      this.db.tenantPlan.findMany({ orderBy: [{ sortOrder: "asc" }, { priceMonthly: "asc" }] }),
+      this.db.moduleOffer.findMany({ orderBy: { sortOrder: "asc" } }),
+    ]);
+    return {
+      plans: plans.map((plan) => ({
+        id: plan.id,
+        name: plan.name,
+        description: plan.description,
+        priceMonthly: plan.priceMonthly.toFixed(2),
+        priceYearly: plan.priceYearly?.toFixed(2) ?? null,
+        includedModules: plan.includedModules,
+        userLimit: plan.userLimit,
+        clientLimit: plan.clientLimit,
+        productLimit: plan.productLimit,
+        active: plan.active,
+        sortOrder: plan.sortOrder,
+        durationDays: plan.durationDays,
+      })),
+      modules: offers.map((offer): ModuleOfferDto => ({
+        module: offer.module,
+        label: businessModuleLabels[offer.module],
+        description: offer.description,
+        priceMonthly: offer.priceMonthly.toFixed(2),
+        active: offer.active,
+        sortOrder: offer.sortOrder,
+      })),
+    };
+  }
+
+  async updatePlan(id: string, input: PlatformUpdatePlanInput, by: string) {
+    const plan = await this.db.tenantPlan.findUnique({ where: { id }, select: { id: true } });
+    if (!plan) throw new NotFoundException("Kit não encontrado");
+    await this.db.tenantPlan.update({
+      where: { id },
+      data: {
+        ...(input.description !== undefined ? { description: input.description } : {}),
+        priceMonthly: new Prisma.Decimal(input.priceMonthly),
+        priceYearly: input.priceYearly === null ? null : new Prisma.Decimal(input.priceYearly),
+        includedModules: input.includedModules,
+        userLimit: input.userLimit,
+        clientLimit: input.clientLimit,
+        productLimit: input.productLimit,
+      },
+    });
+    this.access.invalidate();
+    this.logger.log(`Kit ${id} alterado por ${by}`);
+    return this.getCatalog();
+  }
+
+  async updateModuleOffer(module: BusinessModule, input: PlatformUpdateModuleOfferInput, by: string) {
+    const offer = await this.db.moduleOffer.findUnique({ where: { module } });
+    if (!offer) throw new NotFoundException("Módulo não encontrado");
+    await this.db.moduleOffer.update({
+      where: { module },
+      data: {
+        ...(input.description !== undefined ? { description: input.description } : {}),
+        ...(input.priceMonthly !== undefined ? { priceMonthly: new Prisma.Decimal(input.priceMonthly) } : {}),
+        ...(input.active !== undefined ? { active: input.active } : {}),
+      },
+    });
+    this.logger.log(`Preço do módulo ${module} alterado por ${by}`);
+    return this.getCatalog();
   }
 
   /** Senha provisória para o administrador da empresa (cliente esqueceu a senha). */

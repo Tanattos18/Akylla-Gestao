@@ -8,28 +8,38 @@ import {
 } from "@petflow/shared";
 import type { AuthContext } from "../common/decorators/auth.decorator";
 import { PrismaService } from "../prisma/prisma.module";
+import { AccessService } from "../billing/access";
 
 export interface CompanyModuleDto {
   module: BusinessModule;
   status: CompanyModuleStatus;
   label: string;
+  /** Kits (Fase 8b): contratado no plano (ou tudo liberado no teste/isenta) */
+  entitled: boolean;
 }
 
 @Injectable()
 export class CompanyModulesService {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(AccessService) private readonly access: AccessService,
+  ) {}
 
   async list(auth: AuthContext): Promise<CompanyModuleDto[]> {
-    const rows = await this.prisma.companyModule.findMany({
-      where: { companyId: auth.companyId },
-      select: { module: true, status: true },
-    });
+    const [rows, summary] = await Promise.all([
+      this.prisma.companyModule.findMany({
+        where: { companyId: auth.companyId },
+        select: { module: true, status: true },
+      }),
+      this.access.getAccess(auth.companyId),
+    ]);
     const byModule = new Map(rows.map((row) => [row.module, row.status]));
 
     return BUSINESS_MODULES.map((module) => ({
       module,
       status: byModule.get(module) ?? "ACTIVE",
       label: businessModuleLabels[module],
+      entitled: summary.modules === null || summary.modules.includes(module),
     }));
   }
 
@@ -50,10 +60,12 @@ export class CompanyModulesService {
       select: { module: true, status: true },
     });
 
+    const summary = await this.access.getAccess(auth.companyId);
     return {
       module: row.module,
       status: row.status,
       label: businessModuleLabels[row.module],
+      entitled: summary.modules === null || summary.modules.includes(row.module),
     };
   }
 }

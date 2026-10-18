@@ -21,6 +21,13 @@ que o site akyllagestao.com.br promete. Fases em ordem rígida (1 → 7).
 instalado com `scripts/deploy/vps/install.sh`. Pendências do proprietário:
 2FA do dono, SMTP (cadastro aberto), UptimeRobot, Mercado Pago com CNPJ.
 
+**Fase 8b (Kits de acesso)**: concluída em 2026-10-18. Kits Básico,
+Intermediário e Avançado com módulos incluídos, preço por módulo avulso
+(combos), acesso restrito ao contratado (403 `MODULE_NOT_CONTRACTED`;
+teste/isenta usam tudo), "Monte seu plano" no Faturamento e, no painel do
+dono, catálogo editável e botão Módulos por empresa
+(`docs/akylla/COBRANCA.md`). Produção: rodar `update.sh` na VPS.
+
 **Fase 8 (Cobrança do SaaS)**: concluída em 2026-10-18. Inclui o teste
 grátis de 14 dias, a tolerância de 5 dias, o modo somente leitura e o
 painel do dono (`/plataforma`) com registro de pagamentos. Também removeu

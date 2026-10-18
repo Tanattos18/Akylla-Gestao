@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import type { AccessStatus, AccessSummaryDto, BillingCycle } from "@petflow/shared";
+import type { AccessStatus, AccessSummaryDto, BillingCycle, BusinessModule } from "@petflow/shared";
 import { PrismaService } from "../prisma/prisma.module";
 
 const DAY_MS = 86_400_000;
@@ -17,6 +17,9 @@ export interface AccessInput {
     currentPeriodEnd: Date;
     billingCycle: BillingCycle;
     planName: string;
+    /** Kits (Fase 8b): módulos do kit e avulsos contratados */
+    includedModules?: BusinessModule[];
+    extraModules?: BusinessModule[];
   } | null;
 }
 
@@ -35,11 +38,17 @@ export function computeAccess(input: AccessInput, now: Date = new Date()): Acces
   // como período pago (só a expiração natural mantém a data).
   const pendingCheckout = sub?.status === "EXPIRED" && sub.currentPeriodEnd.getTime() > now.getTime();
   const paidUntil = sub && !pendingCheckout ? sub.currentPeriodEnd : null;
-  const base = {
+  const base: Omit<AccessSummaryDto, "status" | "graceEndsAt" | "daysLeft" | "readOnly"> = {
     trialEndsAt: input.trialEndsAt?.toISOString() ?? null,
     paidUntil: paidUntil?.toISOString() ?? null,
     planName: sub?.planName ?? null,
     cycle: sub?.billingCycle ?? null,
+    // Kits (Fase 8b): só o que foi contratado; sem assinatura válida, tudo
+    // (teste grátis e isentas). Ajustado abaixo para TRIAL.
+    modules:
+      sub && !pendingCheckout
+        ? [...new Set([...(sub.includedModules ?? []), ...(sub.extraModules ?? [])])]
+        : null,
   };
 
   if (input.companyStatus === "INACTIVE") {
@@ -61,6 +70,8 @@ export function computeAccess(input: AccessInput, now: Date = new Date()): Acces
   if (nowMs < accessEndMs) {
     status = paidMs > nowMs ? "ACTIVE" : "TRIAL";
     daysLeft = daysUntil(accessEndMs);
+    // Em teste, tudo liberado (mesmo que já exista um kit contratado futuro)
+    if (status === "TRIAL") base.modules = null;
   } else if (nowMs < graceEndMs) {
     status = "GRACE";
     daysLeft = daysUntil(graceEndMs);
@@ -99,7 +110,8 @@ export class AccessService {
             status: true,
             currentPeriodEnd: true,
             billingCycle: true,
-            plan: { select: { name: true } },
+            extraModules: true,
+            plan: { select: { name: true, includedModules: true } },
           },
         },
       },
@@ -114,6 +126,8 @@ export class AccessService {
             currentPeriodEnd: company.tenantSubscription.currentPeriodEnd,
             billingCycle: company.tenantSubscription.billingCycle,
             planName: company.tenantSubscription.plan.name,
+            includedModules: company.tenantSubscription.plan.includedModules,
+            extraModules: company.tenantSubscription.extraModules,
           }
         : null,
     });

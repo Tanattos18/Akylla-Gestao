@@ -4,6 +4,16 @@
 > Este checklist cobre apenas a era do Akylla Gestão. O histórico
 > anterior à adaptação está preservado no Git.
 
+## Fase 8b — Kits de acesso (2026-10-18)
+
+- [x] Schema: `TenantPlan.includedModules/sortOrder`, `TenantSubscription.extraModules`, `PlatformPayment.extraModules`, `ModuleOffer` (migration `20261019150000_module_kits`)
+- [x] Acesso = kit ∪ avulsos (`computeAccess.modules`); teste/isenta = todos; `ModuleGuard` → 403 `MODULE_NOT_CONTRACTED`
+- [x] `computeComboPrice` (shared, em centavos) usado na API e na web
+- [x] Rotas: `GET /api/billing/modules`, `GET /api/platform/catalog`, `PUT /api/platform/plans/:id`, `PUT /api/platform/modules/:module`, `POST /api/platform/companies/:id/modules`; `activate` com `extraModules`
+- [x] Web: menu/início escondem não contratados; Configurações › Módulos "Não contratado"; Faturamento com kits e "Monte seu plano"; Plataforma com aba Kits e módulos, botão Módulos e avulsos no Registrar pagamento
+- [x] `tests/integration/kits.test.ts` (8) e contrato do `API.md`
+- [ ] Aplicar na VPS (`update.sh`) e ajustar os textos de planos do site
+
 ## Fase 8 — Cobrança do SaaS (2026-10-18)
 
 - [x] Preços aprovados (mensal e anual) e descrições alinhadas ao site

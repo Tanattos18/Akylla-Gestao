@@ -12,6 +12,8 @@ import { REQUIRE_MODULE_KEY } from "../decorators/require-module.decorator";
 import { IS_PUBLIC_KEY } from "../decorators/public.decorator";
 import type { AuthContext } from "../decorators/auth.decorator";
 import { PrismaService } from "../../prisma/prisma.module";
+import { AccessService } from "../../billing/access";
+import { businessModuleLabels } from "@petflow/shared";
 
 interface RequestWithAuth extends Request {
   auth?: AuthContext;
@@ -30,6 +32,7 @@ export class ModuleGuard implements CanActivate {
   constructor(
     @Inject(Reflector) private readonly reflector: Reflector,
     @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(AccessService) private readonly access: AccessService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -66,6 +69,16 @@ export class ModuleGuard implements CanActivate {
       throw new ForbiddenException(
         "Módulo desativado para esta empresa. Um administrador pode reativá-lo em Configurações.",
       );
+    }
+
+    // Kits (Fase 8b): módulo fora do kit/avulsos contratados → 403
+    const summary = await this.access.getAccess(request.auth.companyId);
+    if (summary.modules && !summary.modules.includes(module)) {
+      throw new ForbiddenException({
+        statusCode: 403,
+        code: "MODULE_NOT_CONTRACTED",
+        message: `O módulo ${businessModuleLabels[module]} não está no seu plano. Fale com a Akylla para contratar.`,
+      });
     }
 
     return true;

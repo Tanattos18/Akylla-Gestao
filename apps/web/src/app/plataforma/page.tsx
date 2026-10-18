@@ -3,7 +3,11 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   accessStatusLabels,
+  businessModuleLabels,
+  computeComboPrice,
   platformPaymentMethodLabels,
+  type BusinessModule,
+  type ModuleOfferDto,
   type AccessStatus,
   type BillingCycle,
   type PlatformCompanyDto,
@@ -19,6 +23,9 @@ import { DataTable } from "../../components/ui/DataTable";
 import { Dialog, useDialog } from "../../components/ui/Dialog";
 import { useToast } from "../../components/ui/Toast";
 import { TemporaryPasswordDialog } from "../../components/ui/TemporaryPasswordDialog";
+import { Tabs } from "../../components/ui/Tabs";
+import { CatalogEditor, type PlatformCatalog } from "../../components/platform/CatalogEditor";
+import { ModulePicker } from "../../components/platform/ModulePicker";
 
 const STATUS_ORDER: AccessStatus[] = ["TRIAL", "ACTIVE", "GRACE", "READ_ONLY", "SUSPENDED", "EXEMPT"];
 
@@ -43,6 +50,13 @@ function accessDetail(company: PlatformCompanyDto): string {
   return company.billingExempt ? "isenta pelo dono" : "isenta (sem cobrança)";
 }
 
+/** Kits (Fase 8b): "Básico + Nota fiscal, Pets" */
+function contractLabel(company: PlatformCompanyDto): string | null {
+  const c = company.contract;
+  if (!c) return null;
+  return c.extraModules.length ? `${c.planName} + ${c.extraModules.map((m) => businessModuleLabels[m]).join(", ")}` : c.planName;
+}
+
 /** Painel do dono da plataforma (Fase 8): empresas, cobrança e acesso. */
 export default function PlataformaPage() {
   const toast = useToast();
@@ -50,11 +64,22 @@ export default function PlataformaPage() {
   const [allowed, setAllowed] = useState<boolean | null>(null);
   const [companies, setCompanies] = useState<PlatformCompanyDto[]>([]);
   const [plans, setPlans] = useState<TenantPlanDto[]>([]);
+  const [offers, setOffers] = useState<ModuleOfferDto[]>([]);
+  const [tab, setTab] = useState<"empresas" | "catalogo">("empresas");
+  const [editingModules, setEditingModules] = useState<PlatformCompanyDto | null>(null);
+  const [modulesForm, setModulesForm] = useState<{ planId: string; extraModules: BusinessModule[] }>({ planId: "", extraModules: [] });
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<"" | AccessStatus>("");
   const [busy, setBusy] = useState(false);
   const [paying, setPaying] = useState<PlatformCompanyDto | null>(null);
-  const [payForm, setPayForm] = useState({ planId: "", cycle: "MONTHLY" as BillingCycle, method: "PIX" as PlatformPaymentMethod, amount: "", note: "" });
+  const [payForm, setPayForm] = useState({
+    planId: "",
+    cycle: "MONTHLY" as BillingCycle,
+    method: "PIX" as PlatformPaymentMethod,
+    amount: "",
+    note: "",
+    extraModules: [] as BusinessModule[],
+  });
   const [history, setHistory] = useState<{ id: string; items: PlatformPaymentDto[] } | null>(null);
   const [creating, setCreating] = useState(false);
   const [createForm, setCreateForm] = useState({ companyName: "", adminName: "", adminEmail: "", trialDays: "14" });
@@ -121,8 +146,18 @@ export default function PlataformaPage() {
 
   useEffect(() => {
     fetchSession().then((session) => setAllowed(session?.user.isPlatformAdmin === true));
-    api<{ items: TenantPlanDto[] }>("/api/billing/plans").then((d) => setPlans(d.items)).catch(() => setPlans([]));
   }, []);
+
+  const applyCatalog = useCallback((catalog: PlatformCatalog) => {
+    setPlans(catalog.plans);
+    setOffers(catalog.modules);
+  }, []);
+
+  useEffect(() => {
+    if (!allowed) return;
+    // Kits (Fase 8b): kits e preços de módulos vêm do catálogo do dono
+    api<PlatformCatalog>("/api/platform/catalog").then(applyCatalog).catch(() => setPlans([]));
+  }, [allowed, applyCatalog]);
 
   useEffect(() => {
     if (allowed) void load();
@@ -150,14 +185,60 @@ export default function PlataformaPage() {
     }
   }
 
+  const activePlans = plans.filter((p) => p.active);
+
   function openPay(company: PlatformCompanyDto) {
-    const planId = plans.find((p) => p.name === company.access.planName)?.id ?? plans[0]?.id ?? "";
-    setPayForm({ planId, cycle: company.access.cycle ?? "MONTHLY", method: "PIX", amount: "", note: "" });
+    const planId = company.contract?.planId ?? activePlans[0]?.id ?? "";
+    setPayForm({
+      planId,
+      cycle: company.access.cycle ?? "MONTHLY",
+      method: "PIX",
+      amount: "",
+      note: "",
+      extraModules: company.contract?.extraModules ?? [],
+    });
     setPaying(company);
   }
 
+  function openModules(company: PlatformCompanyDto) {
+    setModulesForm({
+      planId: company.contract?.planId ?? activePlans[0]?.id ?? "",
+      extraModules: company.contract?.extraModules ?? [],
+    });
+    setEditingModules(company);
+  }
+
+  async function submitModules(event: FormEvent) {
+    event.preventDefault();
+    if (!editingModules) return;
+    const company = editingModules;
+    const kit = plans.find((p) => p.id === modulesForm.planId);
+    await act(`Módulos de ${company.name} atualizados`, () =>
+      api<PlatformCompanyDto>(`/api/platform/companies/${company.id}/modules`, {
+        method: "POST",
+        body: JSON.stringify({
+          planId: modulesForm.planId,
+          extraModules: modulesForm.extraModules.filter((m) => !kit?.includedModules.includes(m)),
+        }),
+      }),
+    );
+    setEditingModules(null);
+  }
+
   const selectedPlan = plans.find((p) => p.id === payForm.planId);
-  const defaultAmount = selectedPlan ? (payForm.cycle === "YEARLY" ? selectedPlan.priceYearly : selectedPlan.priceMonthly) : null;
+  const comboAmount = (planId: string, extraModules: BusinessModule[], cycle: BillingCycle) => {
+    const kit = plans.find((p) => p.id === planId);
+    return kit
+      ? computeComboPrice({
+          kit: { priceMonthly: kit.priceMonthly, priceYearly: kit.priceYearly, includedModules: kit.includedModules },
+          extraModules,
+          offers,
+          cycle,
+        })
+      : null;
+  };
+  const defaultAmount = comboAmount(payForm.planId, payForm.extraModules, payForm.cycle);
+  const modulesKit = plans.find((p) => p.id === modulesForm.planId);
 
   async function submitPay(event: FormEvent) {
     event.preventDefault();
@@ -170,6 +251,7 @@ export default function PlataformaPage() {
           planId: payForm.planId,
           cycle: payForm.cycle,
           method: payForm.method,
+          extraModules: payForm.extraModules.filter((m) => !selectedPlan?.includedModules.includes(m)),
           ...(payForm.amount.trim() ? { amount: payForm.amount.trim().replace(",", ".") } : {}),
           ...(payForm.note.trim() ? { note: payForm.note.trim() } : {}),
         }),
@@ -252,6 +334,18 @@ export default function PlataformaPage() {
         </button>
       </div>
 
+      <Tabs
+        label="Plataforma"
+        items={[
+          { key: "empresas", label: "Empresas" },
+          { key: "catalogo", label: "Kits e módulos" },
+        ]}
+        value={tab}
+        onChange={setTab}
+      >
+      {tab === "catalogo" && <CatalogEditor catalog={{ plans, modules: offers }} onChange={applyCatalog} />}
+      {tab === "empresas" && (
+      <div className="space-y-6">
       <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6" aria-label="Empresas por situação">
         {STATUS_ORDER.map((s) => (
           <li key={s}>
@@ -307,7 +401,12 @@ export default function PlataformaPage() {
               empty="Nenhum pagamento registrado."
               columns={[
                 { key: "date", header: "Registrado em", cell: (p) => formatDateTime(p.createdAt) },
-                { key: "plan", header: "Plano", cell: (p) => `${p.planName} ${p.cycle === "YEARLY" ? "anual" : "mensal"}` },
+                {
+                  key: "plan",
+                  header: "Plano",
+                  cell: (p) =>
+                    `${p.planName}${p.extraModules?.length ? ` + ${p.extraModules.map((m) => businessModuleLabels[m]).join(", ")}` : ""} ${p.cycle === "YEARLY" ? "anual" : "mensal"}`,
+                },
                 { key: "period", header: "Período", cell: (p) => `${formatDate(p.periodStart)} a ${formatDate(p.periodEnd)}` },
                 { key: "method", header: "Forma", cell: (p) => platformPaymentMethodLabels[p.method] },
                 { key: "amount", header: "Valor", cell: (p) => formatBrl(p.amount), numeric: true },
@@ -339,6 +438,7 @@ export default function PlataformaPage() {
                   {accessStatusLabels[c.access.status]}
                 </span>
                 <span className="mt-1 block text-xs text-slate-600">{accessDetail(c)}</span>
+                {contractLabel(c) && <span className="mt-0.5 block text-xs text-slate-700">Kit: {contractLabel(c)}</span>}
               </span>
             ),
           },
@@ -360,6 +460,9 @@ export default function PlataformaPage() {
               <span className="flex flex-wrap justify-end gap-x-3 gap-y-1 text-xs font-medium md:justify-start">
                 <button type="button" disabled={busy} onClick={() => openPay(c)} className="text-primary-700 hover:underline">
                   Registrar pagamento
+                </button>
+                <button type="button" disabled={busy} onClick={() => openModules(c)} className="text-primary-700 hover:underline">
+                  Módulos
                 </button>
                 <button type="button" disabled={busy} onClick={() => void extendTrial(c)} className="text-slate-700 hover:underline">
                   + Teste
@@ -387,6 +490,49 @@ export default function PlataformaPage() {
           },
         ]}
       />
+      </div>
+      )}
+      </Tabs>
+
+      <Dialog
+        open={editingModules !== null}
+        title={editingModules ? `Módulos: ${editingModules.name}` : ""}
+        description="Libera o que o cliente contratou e bloqueia o resto, na hora. Não registra pagamento (use Registrar pagamento para cobrar). Durante o teste grátis tudo continua liberado."
+        onClose={() => setEditingModules(null)}
+      >
+        <form onSubmit={(event) => void submitModules(event)} className="grid gap-4">
+          <div>
+            <label htmlFor="mod-plan" className="mb-1 block text-sm text-slate-700">Kit</label>
+            <select id="mod-plan" value={modulesForm.planId} onChange={(e) => setModulesForm((f) => ({ ...f, planId: e.target.value }))} className={inputClass}>
+              {activePlans.map((p) => (
+                <option key={p.id} value={p.id}>{p.name} · {formatBrl(p.priceMonthly)}/mês</option>
+              ))}
+            </select>
+          </div>
+          <ModulePicker
+            idPrefix="mod-extra"
+            legend="Módulos avulsos liberados"
+            offers={offers}
+            value={modulesForm.extraModules}
+            locked={modulesKit?.includedModules ?? []}
+            onChange={(extraModules) => setModulesForm((f) => ({ ...f, extraModules }))}
+          />
+          <p className="text-sm text-slate-700">
+            Valor do combo:{" "}
+            <strong className="font-medium">{formatBrl(comboAmount(modulesForm.planId, modulesForm.extraModules, "MONTHLY"))}/mês</strong>
+            {" · "}
+            {formatBrl(comboAmount(modulesForm.planId, modulesForm.extraModules, "YEARLY"))}/ano
+          </p>
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={() => setEditingModules(null)} className="rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+              Voltar
+            </button>
+            <button type="submit" disabled={busy || !modulesForm.planId} className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60">
+              Salvar módulos
+            </button>
+          </div>
+        </form>
+      </Dialog>
 
       <Dialog
         open={paying !== null}
@@ -396,9 +542,9 @@ export default function PlataformaPage() {
       >
         <form onSubmit={(event) => void submitPay(event)} className="grid gap-3 sm:grid-cols-2">
           <div>
-            <label htmlFor="pay-plan" className="mb-1 block text-sm text-slate-700">Plano</label>
+            <label htmlFor="pay-plan" className="mb-1 block text-sm text-slate-700">Kit</label>
             <select id="pay-plan" value={payForm.planId} onChange={(e) => setPayForm((f) => ({ ...f, planId: e.target.value }))} className={inputClass}>
-              {plans.map((p) => (
+              {activePlans.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
@@ -424,9 +570,19 @@ export default function PlataformaPage() {
               id="pay-amount"
               inputMode="decimal"
               value={payForm.amount}
-              placeholder={defaultAmount ? `${defaultAmount} (preço do plano)` : ""}
+              placeholder={defaultAmount ? `${defaultAmount} (kit + avulsos)` : ""}
               onChange={(e) => setPayForm((f) => ({ ...f, amount: e.target.value }))}
               className={inputClass}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <ModulePicker
+              idPrefix="pay-extra"
+              legend="Módulos avulsos (além do kit)"
+              offers={offers}
+              value={payForm.extraModules}
+              locked={selectedPlan?.includedModules ?? []}
+              onChange={(extraModules) => setPayForm((f) => ({ ...f, extraModules }))}
             />
           </div>
           <div className="sm:col-span-2">

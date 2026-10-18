@@ -91,11 +91,11 @@ describe("Billing — catálogo de planos do SaaS", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.items.length).toBeGreaterThanOrEqual(3);
-    expect(response.body.items[0].name).toBe("Essencial");
+    expect(response.body.items[0].name).toBe("Básico");
     expect(response.body.items[0].priceMonthly).toBe("79.90");
     expect(
       response.body.items[response.body.items.length - 1].name,
-    ).toBe("Completo");
+    ).toBe("Avançado");
     expect(
       response.body.items.every((p: { active: boolean }) => p.active),
     ).toBe(true);
@@ -159,7 +159,7 @@ describe("Billing — assinatura da empresa", () => {
       .set("Cookie", memberACookie);
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({ status: "ACTIVE", billingCycle: "MONTHLY" });
-    expect(response.body.plan).toMatchObject({ name: "Profissional", priceMonthly: "149.90", priceYearly: "1499.00" });
+    expect(response.body.plan).toMatchObject({ name: "Intermediário", priceMonthly: "149.90", priceYearly: "1499.00" });
   });
 
   it("isola a assinatura por empresa (404 para outra empresa)", async () => {

@@ -6,6 +6,37 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-18 - Fase 8b: kits de acesso e módulos avulsos
+
+### Adicionado
+
+- **Kits:** Básico (WhatsApp + Crediário), Intermediário (+ Serviços,
+  Agendamentos, Comissões) e Avançado (todos os módulos). Mesmos ids e
+  preços dos antigos Essencial/Profissional/Completo.
+- **Preço por módulo avulso** (`ModuleOffer`) para combos personalizados:
+  mensal = kit + avulsos; anual = kit anual + 10× cada avulso
+  (`computeComboPrice` no pacote compartilhado).
+- **Faturamento:** kits com os módulos incluídos e limites, "Módulos
+  contratados" e a calculadora **Monte seu plano**, que envia o resumo
+  pelo WhatsApp.
+- **Plataforma (dono):**
+  - aba **Kits e módulos** para editar preços, módulos de cada kit e
+    limites, e o preço/"à venda" de cada módulo;
+  - botão **Módulos** por empresa (troca kit/avulsos na hora, sem
+    pagamento);
+  - **Registrar pagamento** com avulsos e valor sugerido do combo;
+  - a lista mostra o kit + avulsos de cada empresa.
+- Rotas novas documentadas em `API.md`; `tests/integration/kits.test.ts`.
+
+### Alterado
+
+- O acesso aos módulos passa a seguir o contratado: com assinatura, só o
+  kit + avulsos; teste grátis e isentas continuam com tudo. Módulo não
+  contratado some do menu e a API responde 403 `MODULE_NOT_CONTRACTED`
+  (dados preservados).
+- `GET /api/company-modules` traz `entitled`; `GET /api/billing/access`
+  traz `modules` (`null` = todos).
+
 ## [Akylla Gestão] - 2026-10-18 - Auditoria completa (site + app)
 
 Auditoria em produção (de fora) e local, varrendo 41 telas em desktop e

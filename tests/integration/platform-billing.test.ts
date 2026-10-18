@@ -183,7 +183,7 @@ describe("painel do dono da plataforma", () => {
       .set("Cookie", ownerCookie)
       .send({ planId: "tenantplan_essencial", cycle: "MONTHLY", method: "PIX", note: "Pix 18/10" });
     expect(res.status).toBe(200);
-    expect(res.body.access).toMatchObject({ status: "ACTIVE", planName: "Essencial", cycle: "MONTHLY" });
+    expect(res.body.access).toMatchObject({ status: "ACTIVE", planName: "Básico", cycle: "MONTHLY" });
 
     const cookie = await login("admin@vencida.test");
     expect((await createClient(cookie, "Agora pode")).status).toBe(201);

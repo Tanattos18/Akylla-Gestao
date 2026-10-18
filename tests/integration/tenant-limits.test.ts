@@ -120,7 +120,7 @@ describe("TenantLimits — regra D3: enforcement só com assinatura ACTIVE", () 
       .set("Cookie", adminCookie)
       .send({ name: "Quarto", email: "quarto@limits.test", password: PASSWORD, role: "MEMBER" });
     expect(fourth.status).toBe(403);
-    expect(fourth.body.message).toContain("Limite do plano Essencial");
+    expect(fourth.body.message).toContain("Limite do plano Básico");
   });
 
   it("assinatura ACTIVE no Essencial: cliente limite 200 — não testa 200, mas valida presença do limite", async () => {
@@ -137,7 +137,7 @@ describe("TenantLimits — regra D3: enforcement só com assinatura ACTIVE", () 
       .set("Cookie", adminCookie)
       .send({ name: "Cliente Bloqueado" });
     expect(client.status).toBe(403);
-    expect(client.body.message).toContain("Limite do plano Essencial");
+    expect(client.body.message).toContain("Limite do plano Básico");
 
     // Restaura o limite para não afetar outros testes no mesmo arquivo
     await prisma.tenantPlan.update({
