@@ -3,7 +3,8 @@ import { z } from "zod";
 
 const schema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-  API_PORT: z.coerce.number().int().default(3001),
+  // Provedores (Render, Railway…) informam a porta em PORT (Fase 1 · 1G)
+  API_PORT: z.coerce.number().int().default(Number(process.env.PORT) || 3001),
   DATABASE_URL: z.string().min(1, "DATABASE_URL é obrigatória"),
   AUTH_COOKIE_NAME: z.string().default("petflow_session"),
   AUTH_SESSION_TTL_HOURS: z.coerce.number().int().positive().default(12),

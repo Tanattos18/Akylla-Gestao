@@ -79,9 +79,16 @@
 - [x] `npm audit --omit=dev` = **0**
 - [x] Risco aceito registrado: `sprintf-js` (moderada, só teste, via `ioredis-mock`, sem correção)
 
+### 1G · Deploy (2026-10-18)
+
+- [x] CI corrigida (vermelha desde N1): `postinstall` gera o Prisma Client; `check:migrations` com shadow DB e `--exit-code`; `db:deploy` no lugar de `db:migrate`; role `akylla_app` sem SUPERUSER/BYPASSRLS (RLS ativa nos testes); Node 22
+- [x] `cd.yml`: depois do CI verde → migrations → deploy hooks (API/worker/web) → health check (`/health/ready` + `/login`); environment `production` com aprovação; travado por `DEPLOY_ENABLED`
+- [x] Proxy do web configurável (`API_INTERNAL_URL` no build); API aceita `PORT` do provedor; `engines.node >=20.9`
+- [x] `docs/operations/DEPLOY.md` (peças, role do banco, comandos, variáveis, GitHub, checklist pós-deploy); rollback no RUNBOOK §5
+- [ ] Escolher provedor, criar serviços, configurar secrets e fazer o primeiro deploy (proprietário)
+
 ### Pendentes da Fase 1
 
-- [ ] 1G · CD real com health check e rollback documentado
 
 ## Fora do roteiro — Débitos de design D-1 a D-7 (2026-10-15)
 

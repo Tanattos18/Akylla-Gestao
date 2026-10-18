@@ -5,7 +5,8 @@
 > (`upgrade/Prompt_Mestre.md` §1.2/§1.3) em 2026-10-18.
 >
 > Partes que dependem da hospedagem (ainda não escolhida) estão marcadas
-> com **[hospedagem]**. Complete-as quando o CD real (item 1G) existir.
+> com **[hospedagem]**. Configuração do deploy: [`DEPLOY.md`](DEPLOY.md)
+> (workflow `cd.yml`, ligado por `DEPLOY_ENABLED`).
 
 ## 1. Serviços e URLs de saúde
 

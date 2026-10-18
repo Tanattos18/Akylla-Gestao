@@ -7,8 +7,12 @@ on:
     branches: [main]
 
 env:
-  NODE_VERSION: "20"
-  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/petflow_test?schema=public
+  NODE_VERSION: "22"
+  # Role da aplicação nos testes: SEM superusuário e SEM BYPASSRLS — senão a
+  # RLS (Fase 1 · 1E) ficaria inerte e os testes de isolamento não provariam
+  # nada. O superusuário `postgres` do serviço só cria esse role.
+  DATABASE_URL: postgresql://akylla_app:akylla_app@localhost:5432/petflow_test?schema=public
+  ADMIN_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/petflow_test
 
 jobs:
   lint-and-typecheck:
@@ -24,6 +28,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
 
+      # `postinstall` gera o Prisma Client (sem ele o typecheck falha)
       - name: Install dependencies
         run: npm ci
 
@@ -37,7 +42,7 @@ jobs:
         run: npm run typecheck
 
   test:
-    name: Tests (PostgreSQL)
+    name: Tests (PostgreSQL + RLS)
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -65,11 +70,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate Prisma Client
-        run: npm run db:generate
+      - name: Create application role (no SUPERUSER / no BYPASSRLS)
+        run: |
+          npx prisma db execute --url "$ADMIN_DATABASE_URL" --stdin <<'SQL'
+          CREATE ROLE akylla_app LOGIN PASSWORD 'akylla_app' CREATEDB NOSUPERUSER NOBYPASSRLS;
+          ALTER DATABASE petflow_test OWNER TO akylla_app;
+          ALTER SCHEMA public OWNER TO akylla_app;
+          SQL
 
-      - name: Run migrations
-        run: npm run db:migrate
+      - name: Apply migrations
+        run: npm run db:deploy
 
       - name: Check migration consistency
         run: npm run check:migrations
@@ -101,19 +111,6 @@ jobs:
     name: Validate DB Schema
     runs-on: ubuntu-latest
     needs: [lint-and-typecheck]
-    services:
-      postgres:
-        image: postgres:17-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: petflow_test
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4

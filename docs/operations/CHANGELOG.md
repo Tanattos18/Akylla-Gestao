@@ -6,6 +6,55 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-18 - Fase 1 · 1G: CI corrigida + pipeline de deploy pronto
+
+### Corrigido: a CI estava vermelha desde N1
+
+Nenhuma das últimas 100 execuções no GitHub tinha passado. Reproduzi num
+clone limpo e encontrei três causas:
+
+1. **Typecheck sem Prisma Client:** o job de typecheck não rodava
+   `prisma generate`. Agora o `postinstall` da raiz gera o client em todo
+   `npm ci`, o que vale também para os provedores de hospedagem.
+2. **`check:migrations` sempre falhava:** usava `migrate diff
+   --from-migrations` sem banco shadow e `--script`, cuja saída nunca vem
+   vazia. Reescrito: cria `<banco>_shadow`, compara com `--exit-code` e
+   remove o shadow. Testei que detecta drift (coluna temporária → exit 1)
+   e passa sem drift.
+3. **Postgres superusuário anularia a RLS:** a CI cria o role
+   `akylla_app` (sem SUPERUSER/BYPASSRLS) e roda migrations e testes com
+   ele. Também trocou `db:migrate` (dev, pode gerar migration) por
+   `db:deploy` e passou a usar Node 22.
+
+### Adicionado
+
+- **`cd.yml` real:**
+  - roda depois do CI verde na `main` ou manualmente;
+  - usa o environment `production` (com aprovação);
+  - sequência: migrations (`PRODUCTION_DATABASE_URL`) → deploy hooks de
+    API, worker e web → health check (`/health/ready` com
+    `"database":"ok"` e `/login`, até 10 min);
+  - fica parado enquanto a variável `DEPLOY_ENABLED` não for `true`.
+- **`docs/operations/DEPLOY.md`:** peças, role do banco sem bypass (RLS),
+  comandos de build/start por serviço, variáveis de produção, configuração
+  do GitHub e checklist pós-deploy.
+
+### Alterado
+
+- `apps/web/next.config.ts`: destino do proxy `/api/*` vem de
+  `API_INTERNAL_URL` no build (padrão `localhost:3001`). Antes era fixo, o
+  que impedia web e API em serviços separados. Conferido no
+  `routes-manifest.json`.
+- API: `API_PORT` usa `PORT` do provedor quando ausente.
+- `package.json`: `postinstall` (Prisma generate) e `engines.node >=20.9`
+  (exigência do Next 16).
+- `RUNBOOK.md` e `CHECKLIST_PRE_PRODUCAO` (L7) atualizados.
+
+### Pendente (proprietário)
+
+- Escolher o provedor, criar os serviços (API, worker, web, Postgres e
+  Redis), configurar os secrets e fazer o primeiro deploy.
+
 ## [Akylla Gestão] - 2026-10-18 - Fase 1 · 1F: `npm audit --omit=dev` = 0
 
 Três upgrades, um por commit, com `npm run validate` verde depois de

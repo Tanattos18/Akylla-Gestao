@@ -1,36 +1,49 @@
-# Continuous Deployment for Akylla Gestão
-
-# Nível: N2 — Operação e observabilidade
-# Objetivo: automatizar o deploy a partir do main branch com gates e aprovação.
-# Provedores compatíveis: Railway, Render, Fly.io, VPS próprio.
-# Este arquivo deve ser revisado e ter os secrets definidos no ambiente do provedor antes de qualquer deploy em produção.
+# Deploy contínuo — Akylla Gestão (Fase 1 · 1G)
+#
+# Roda DEPOIS de o CI passar na `main` (ou manualmente). Não faz nada até o
+# proprietário ligar o deploy:
+#   1. GitHub › Settings › Environments › `production` (com "Required
+#      reviewers" para aprovar cada deploy).
+#   2. Settings › Secrets and variables › Actions:
+#      - variável  DEPLOY_ENABLED = true
+#      - secret    PRODUCTION_DATABASE_URL (role SEM superusuário/BYPASSRLS)
+#      - secrets   DEPLOY_HOOK_API, DEPLOY_HOOK_WEB, DEPLOY_HOOK_WORKER
+#                  (URLs de deploy hook do provedor: Render "Deploy Hook",
+#                  Railway/Koyeb/Fly equivalentes)
+#      - variável  PRODUCTION_API_URL (ex.: https://api.akyllagestao.com.br)
+#      - variável  PRODUCTION_WEB_URL (ex.: https://app.akyllagestao.com.br)
+# Guia completo: docs/operations/DEPLOY.md · rollback: docs/operations/RUNBOOK.md §5
 
 name: Deploy
 
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
     branches: [main]
+  workflow_dispatch:
 
-env:
-  # Variáveis de ambiente definidas no provedor
-  NODE_VERSION: "22"
-  # DATABASE_URL: definida no provedor (postgresql://...)
-  # SENTRY_DSN: definido no provedor (opcional, para monitoring)
-  # WHATSAPP_PROVIDER: meta (producao) ou mock (staging)
-  # MERCADOPAGO_ENV: sandbox ou production
-  # MERCADOPAGO_ACCESS_TOKEN, MERCADOPAGO_WEBHOOK_SECRET: produção
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
 
 jobs:
   deploy:
+    name: Deploy produção
+    if: >-
+      vars.DEPLOY_ENABLED == 'true' &&
+      (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
+    environment: production
     permissions:
       contents: read
-      packages: write
-      id-token: write  # necessário para OAuth do provedor
-
+    env:
+      NODE_VERSION: "22"
     steps:
-      - name: Checkout
+      - name: Checkout (commit aprovado pelo CI)
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -41,53 +54,35 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run lint
-        run: npm run lint
+      # Migrations ANTES do código novo: o padrão do projeto é migration
+      # aditiva, compatível com a versão anterior (rollback só da aplicação).
+      - name: Apply migrations
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+        run: npm run db:deploy
 
-      - name: Run typecheck
-        run: npm run typecheck
-
-      - name: Run tests
-        run: npm test
-
-      - name: Build all workspaces
-        run: npm run build
-
-      - name: Health check
-        # Executar após o deploy. Substituir URL pelo domínio do provedor.
-        # Exemplo: curl -f https://<seu-dominio>/health
+      - name: Trigger deploy (API, worker, web)
+        env:
+          HOOK_API: ${{ secrets.DEPLOY_HOOK_API }}
+          HOOK_WORKER: ${{ secrets.DEPLOY_HOOK_WORKER }}
+          HOOK_WEB: ${{ secrets.DEPLOY_HOOK_WEB }}
         run: |
-          echo "✅ Build e testes passaram. Verificar saúde manualmente antes de promover para produção."
-          # Exemplo de deploy (comentar/adapter conforme provedor):
-          # railway up --service akylla-api
-          # railway up --service akylla-web
-          # railway up --service akylla-worker
-          # ou no Render: usar Render Deploy Hook ou os comandos nativos.
+          for name in API WORKER WEB; do
+            var="HOOK_$name"; url="${!var}"
+            if [ -z "$url" ]; then echo "::error::secret DEPLOY_HOOK_$name ausente"; exit 1; fi
+            echo "Disparando deploy: $name"
+            curl -fsS -X POST "$url" > /dev/null
+          done
 
-      - name: Run migrations (apenas em ambiente de staging/producao)
-        # Aplicar migrações versionadas. Nunca aplicar migrations diretamente
-        # em produção sem ensaio em staging e plano de reversão.
-        # Comando exemplo: npm run db:deploy
+      - name: Health check (até 10 min)
+        env:
+          API_URL: ${{ vars.PRODUCTION_API_URL }}
+          WEB_URL: ${{ vars.PRODUCTION_WEB_URL }}
         run: |
-          echo "🔄 Verificar migrações pendentes antes de promover para produção."
-          echo "Comando: npm run db:deploy --confirm (apenas após análise)"
-          # O deploy de migrations deve ser feito com cuidado:
-          # - Testar em ambiente de staging primeiro
-          # - Ter plano de rollback/recuperação
-          # - Nunca aplicar migrations destrutivas em produção sem ensaio
-
-      - name: Post-deploy verification
-        # Verificar se a aplicação está respondendo após o deploy
-        run: |
-          echo "📋 Passos pós-deploy:"
-          echo "1. Verificar se o health check retorna 200"
-          echo "2. Verificar se os alerts de erro (Sentry) estão capturando"
-          echo "3. Verificar se o monitoramento de uptime está ativo"
-          echo "4. Conferir logs dos últimos 15min"
-
-# Boas práticas de CD (2025):
-# - Usar GitHub Environments com required reviewers para produção
-# - Deploy em staging primeiro e promover para produção
-# - Rollback automático se o health check falhar
-# - Manter secrets fora do Git (usar secret store do provedor)
-# - Documentar rollback procedure
+          deadline=$((SECONDS + 600))
+          until curl -fsS "$API_URL/health/ready" | grep -q '"database":"ok"'; do
+            if [ $SECONDS -ge $deadline ]; then echo "::error::API não ficou pronta em 10 min — ver RUNBOOK §5 (rollback)"; exit 1; fi
+            sleep 15
+          done
+          curl -fsS -o /dev/null "$WEB_URL/login"
+          echo "✅ API (/health/ready) e web (/login) respondendo"
