@@ -86,6 +86,13 @@ const plannedModules: Array<{
     module: "COMMISSIONS",
   },
   {
+    name: "Ordens de serviço",
+    description: "Orçamento, aprovação, execução e conclusão com fotos e anexos",
+    href: "/os",
+    available: true,
+    module: "SERVICE_ORDERS",
+  },
+  {
     name: "Crediário",
     description: "Venda a prazo com parcelas, limite por cliente e controle de vencidas",
     href: "/crediario",

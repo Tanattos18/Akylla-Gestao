@@ -58,3 +58,22 @@ export async function releasePendingCommissionsForSale(tx: Tx, auth: AuthContext
   }
   return pending.length;
 }
+
+/**
+ * OS concluída e recebida (Fase 2 · 2.3): libera as comissões que aguardavam
+ * o pagamento.
+ */
+export async function releasePendingCommissionsForServiceOrder(
+  tx: Tx,
+  auth: AuthContext,
+  serviceOrderId: string,
+): Promise<number> {
+  const pending = await tx.commission.findMany({
+    where: { serviceOrderId, companyId: auth.companyId, status: "PENDING" },
+    select: { id: true, professional: { select: { name: true } }, serviceOrder: { select: { number: true } } },
+  });
+  for (const c of pending) {
+    await releaseCommissionInTx(tx, auth, c.id, `${c.professional.name} — OS ${c.serviceOrder?.number ?? ""}`.trim());
+  }
+  return pending.length;
+}

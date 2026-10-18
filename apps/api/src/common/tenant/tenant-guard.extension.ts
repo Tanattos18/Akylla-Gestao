@@ -39,6 +39,10 @@ export const TENANT_MODELS: ReadonlySet<string> = new Set([
   // Fase 2 · 2.2
   "CreditAccount",
   "CreditInstallment",
+  // Fase 2 · 2.3
+  "ServiceOrder",
+  "ServiceOrderItem",
+  "ServiceOrderAttachment",
 ]);
 
 /** Operações cujo `where` aceita filtros (permite injeção via AND). */

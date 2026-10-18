@@ -1,5 +1,26 @@
 # Banco de dados — diretrizes e modelo atual
 
+## Modelos implementados (Fase 2 · 2.3 — Ordem de serviço)
+
+Migration: `20261018190000_service_orders` (aditiva + RLS nas 3 tabelas novas).
+
+| Modelo | Campos principais | Restrições/índices |
+|---|---|---|
+| `ServiceOrder` | `companyId`, `number` (sequencial por empresa), `clientId`, `professionalId?`, `status`, `title`, `notes?`, `subtotal`/`discount`/`total`, datas de cada etapa, `cancelReason?`, `financialEntryId?` (único), `createdByUserId` | único `[companyId, number]`; índices `[companyId, status, openedAt]`, `[companyId, clientId]` |
+| `ServiceOrderItem` | `companyId`, `serviceOrderId` (Cascade), `serviceId?`/`productId?` (Restrict), `description`, `quantity Decimal(12,3)`, `unitPrice`, `subtotal` | índice `[companyId, serviceOrderId]` |
+| `ServiceOrderAttachment` | `companyId`, `serviceOrderId` (Cascade), `filename` (saneado), `mimeType` (detectado), `size`, `storagePath` (relativo a `UPLOADS_DIR`), `uploadedByUserId?` | índice `[companyId, serviceOrderId]` |
+
+Alterações aditivas:
+
+- `Commission.serviceOrderId?` (FK `Restrict`), com único
+  `[serviceOrderId, professionalId]`.
+- `WhatsAppMessage.originId?`, com índice `[companyId, origin, originId]`.
+- Enums: `FinancialOrigin` ganha `SERVICE_ORDER`, `WhatsAppMessageOrigin`
+  ganha `SERVICE_ORDER`, `BusinessModule` ganha `SERVICE_ORDERS`; novo enum
+  `ServiceOrderStatus`.
+- A OS nunca é apagada. O `Cascade` dos itens/anexos só existe para
+  integridade; na prática não ocorre.
+
 ## Modelos implementados (Fase 2 · 2.2 — Crediário)
 
 Migration: `20261018170000_credit` (aditiva + RLS nas 2 tabelas novas).

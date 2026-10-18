@@ -910,7 +910,8 @@ export type BusinessModule =
   | "WHATSAPP"
   | "SUBSCRIPTIONS"
   | "COMMISSIONS"
-  | "CREDIT";
+  | "CREDIT"
+  | "SERVICE_ORDERS";
 
 export type CompanyModuleStatus = "ACTIVE" | "DISABLED";
 
@@ -1063,4 +1064,64 @@ export interface CreditAccountListDto extends Paginated<CreditAccountDto> {
 
 export interface CreditAccountDetailDto extends CreditAccountDto {
   installments: CreditInstallmentDto[];
+}
+
+// Fase 2 · 2.3 — Ordem de serviço
+
+export type ServiceOrderStatus = "DRAFT" | "QUOTE" | "APPROVED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+
+export const serviceOrderStatusLabels: Record<ServiceOrderStatus, string> = {
+  DRAFT: "Rascunho",
+  QUOTE: "Orçamento",
+  APPROVED: "Aprovada",
+  IN_PROGRESS: "Em execução",
+  COMPLETED: "Concluída",
+  CANCELLED: "Cancelada",
+};
+
+export interface ServiceOrderItemDto {
+  id: string;
+  serviceId: string | null;
+  productId: string | null;
+  description: string;
+  quantity: string;
+  unitPrice: string;
+  subtotal: string;
+}
+
+export interface ServiceOrderAttachmentDto {
+  id: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+  uploadedAt: string;
+}
+
+export interface ServiceOrderDto {
+  id: string;
+  number: number;
+  code: string;
+  status: ServiceOrderStatus;
+  title: string;
+  notes: string | null;
+  subtotal: string;
+  discount: string;
+  total: string;
+  openedAt: string;
+  quotedAt: string | null;
+  approvedAt: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  cancelledAt: string | null;
+  cancelReason: string | null;
+  financialEntryId: string | null;
+  client: { id: string; name: string; phone: string | null; mobile: string | null };
+  professional: { id: string; name: string } | null;
+  createdBy: { id: string; name: string };
+  items: ServiceOrderItemDto[];
+  attachments: ServiceOrderAttachmentDto[];
+}
+
+export interface ServiceOrderListDto extends Paginated<ServiceOrderDto> {
+  countsByStatus: Partial<Record<ServiceOrderStatus, number>>;
 }

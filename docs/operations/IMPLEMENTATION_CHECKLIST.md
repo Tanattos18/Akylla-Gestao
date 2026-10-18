@@ -6,6 +6,19 @@
 
 ## Fase 2 — Retenção (`upgrade/Prompt_Mestre.md` §4) — em andamento
 
+### 2.3 · Ordem de serviço (2026-10-18)
+
+- [x] Regras escritas antes (`docs/akylla/ORDEM_DE_SERVICO.md`); OCA/repair e ERPNext só estudados
+- [x] `ServiceOrder`/`ServiceOrderItem`/`ServiceOrderAttachment` + `Commission.serviceOrderId` + `WhatsAppMessage.originId`; migration aditiva com RLS
+- [x] Estados estritos (pular → 400; concorrência → 409); número sequencial por empresa
+- [x] Itens com preço de catálogo (livre com valor informado); totais no servidor; travados após a aprovação
+- [x] Conclusão: baixa de estoque (locks em ordem), conta a receber, comissão (ON_PAYMENT libera ao receber)
+- [x] Anexos JPG/PNG/PDF até 5 MB com tipo pelos bytes, nome saneado, caminho só com ids; download seguro
+- [x] Histórico de WhatsApp vinculado (`serviceOrderId` no envio)
+- [x] Telas `/os`, `/os/nova`, `/os/[id]` (etapas, itens, anexos, mensagens, impressão)
+- [x] Backup/RUNBOOK/DEPLOY: anexos fora do dump, volume persistente
+- [x] `tests/integration/service-orders.test.ts` (18)
+
 ### 2.2 · Crediário (2026-10-18)
 
 - [x] Regras escritas antes (`docs/akylla/CREDIARIO.md`); OCA/ERPNext só estudados

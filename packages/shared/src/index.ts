@@ -983,7 +983,7 @@ export const whatsappMessageStatusLabels: Record<WhatsAppMessageStatus, string> 
   CANCELLED: "Cancelada",
 };
 
-export const whatsappMessageOriginSchema = z.enum(["MANUAL", "SERVICE_REMINDER"]);
+export const whatsappMessageOriginSchema = z.enum(["MANUAL", "SERVICE_REMINDER", "SERVICE_ORDER"]);
 export type WhatsAppMessageOrigin = z.infer<typeof whatsappMessageOriginSchema>;
 
 export const createWhatsAppMessageSchema = z.object({
@@ -994,6 +994,8 @@ export const createWhatsAppMessageSchema = z.object({
     .max(10, "Máximo de 10 variáveis")
     .default([]),
   idempotencyKey: z.string().trim().min(6).max(64).optional(),
+  // Fase 2 · 2.3: vincula a mensagem a uma OS do mesmo cliente (histórico)
+  serviceOrderId: z.string().trim().min(1).max(60).optional(),
 });
 export type CreateWhatsAppMessageInput = z.infer<typeof createWhatsAppMessageSchema>;
 
@@ -1347,6 +1349,7 @@ export const businessModuleSchema = z.enum([
   "SUBSCRIPTIONS",
   "COMMISSIONS",
   "CREDIT",
+  "SERVICE_ORDERS",
 ]);
 export type BusinessModule = z.infer<typeof businessModuleSchema>;
 
@@ -1358,6 +1361,7 @@ export const BUSINESS_MODULES: readonly BusinessModule[] = [
   "SUBSCRIPTIONS",
   "COMMISSIONS",
   "CREDIT",
+  "SERVICE_ORDERS",
 ];
 
 /** Valores literais para uso como identificadores (ex.: decorators). */
@@ -1369,6 +1373,7 @@ export const BusinessModules = {
   SUBSCRIPTIONS: "SUBSCRIPTIONS",
   COMMISSIONS: "COMMISSIONS",
   CREDIT: "CREDIT",
+  SERVICE_ORDERS: "SERVICE_ORDERS",
 } as const satisfies Record<BusinessModule, BusinessModule>;
 
 export const businessModuleLabels: Record<BusinessModule, string> = {
@@ -1379,6 +1384,7 @@ export const businessModuleLabels: Record<BusinessModule, string> = {
   SUBSCRIPTIONS: "Assinaturas de clientes",
   COMMISSIONS: "Comissões",
   CREDIT: "Crediário",
+  SERVICE_ORDERS: "Ordens de serviço",
 };
 
 export const companyModuleStatusSchema = z.enum(["ACTIVE", "DISABLED"]);
@@ -1691,3 +1697,116 @@ export const listCreditInstallmentsQuerySchema = paginationQuerySchema.extend({
   to: isoDateField.optional(),
 });
 export type ListCreditInstallmentsQuery = z.infer<typeof listCreditInstallmentsQuerySchema>;
+
+// ---------------------------------------------------------------------------
+// Fase 2 · 2.3 — Ordem de serviço
+// ---------------------------------------------------------------------------
+
+export const serviceOrderStatusSchema = z.enum([
+  "DRAFT",
+  "QUOTE",
+  "APPROVED",
+  "IN_PROGRESS",
+  "COMPLETED",
+  "CANCELLED",
+]);
+export type ServiceOrderStatus = z.infer<typeof serviceOrderStatusSchema>;
+
+export const serviceOrderStatusLabels: Record<ServiceOrderStatus, string> = {
+  DRAFT: "Rascunho",
+  QUOTE: "Orçamento",
+  APPROVED: "Aprovada",
+  IN_PROGRESS: "Em execução",
+  COMPLETED: "Concluída",
+  CANCELLED: "Cancelada",
+};
+
+/** Próximo estado válido (pular etapa → 400). Cancelamento é rota própria. */
+export const SERVICE_ORDER_NEXT_STATUS: Partial<Record<ServiceOrderStatus, ServiceOrderStatus>> = {
+  DRAFT: "QUOTE",
+  QUOTE: "APPROVED",
+  APPROVED: "IN_PROGRESS",
+  IN_PROGRESS: "COMPLETED",
+};
+
+export const SERVICE_ORDER_MAX_ITEMS = 100;
+
+/**
+ * Item da OS. Serviço ou produto do catálogo → o PREÇO vem do catálogo
+ * (unitPrice ignorado). Item livre (sem serviço/produto) → descrição e
+ * unitPrice obrigatórios (ex.: mão de obra, peça avulsa).
+ */
+export const serviceOrderItemInputSchema = z
+  .object({
+    serviceId: z.string().trim().min(1).max(60).optional().nullable(),
+    productId: z.string().trim().min(1).max(60).optional().nullable(),
+    description: z.string().trim().max(300).optional().nullable(),
+    quantity: positiveQuantityFieldSchema,
+    unitPrice: priceFieldSchema.optional().nullable(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.serviceId && value.productId) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["productId"], message: "Informe serviço OU produto" });
+    }
+    if (!value.serviceId && !value.productId) {
+      if (!value.description || value.description.length < 2) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["description"], message: "Item livre exige descrição" });
+      }
+      if (value.unitPrice == null) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["unitPrice"], message: "Item livre exige valor unitário" });
+      }
+    }
+  });
+export type ServiceOrderItemInput = z.infer<typeof serviceOrderItemInputSchema>;
+
+const serviceOrderItemsField = z
+  .array(serviceOrderItemInputSchema)
+  .max(SERVICE_ORDER_MAX_ITEMS, `Máximo de ${SERVICE_ORDER_MAX_ITEMS} itens`);
+
+export const createServiceOrderSchema = z.object({
+  clientId: z.string().trim().min(1, "Cliente é obrigatório").max(60),
+  professionalId: z.string().trim().min(1).max(60).optional().nullable(),
+  title: z.string().trim().min(3, "Descreva o serviço/equipamento (mín. 3 caracteres)").max(200),
+  notes: optionalText(2000),
+  discount: priceFieldSchema.default("0"),
+  items: serviceOrderItemsField.default([]),
+});
+export type CreateServiceOrderInput = z.infer<typeof createServiceOrderSchema>;
+
+export const updateServiceOrderSchema = z.object({
+  title: z.string().trim().min(3).max(200).optional(),
+  notes: optionalText(2000),
+  professionalId: z.string().trim().min(1).max(60).optional().nullable(),
+  discount: priceFieldSchema.optional(),
+});
+export type UpdateServiceOrderInput = z.infer<typeof updateServiceOrderSchema>;
+
+export const replaceServiceOrderItemsSchema = z.object({ items: serviceOrderItemsField });
+export type ReplaceServiceOrderItemsInput = z.infer<typeof replaceServiceOrderItemsSchema>;
+
+export const transitionServiceOrderSchema = z.object({
+  status: z.enum(["QUOTE", "APPROVED", "IN_PROGRESS", "COMPLETED"]),
+});
+export type TransitionServiceOrderInput = z.infer<typeof transitionServiceOrderSchema>;
+
+export const cancelServiceOrderSchema = z.object({
+  reason: z
+    .string()
+    .trim()
+    .min(3, "Motivo é obrigatório para cancelamento")
+    .max(500, "Motivo deve ter no máximo 500 caracteres"),
+});
+export type CancelServiceOrderInput = z.infer<typeof cancelServiceOrderSchema>;
+
+export const listServiceOrdersQuerySchema = paginationQuerySchema.extend({
+  status: serviceOrderStatusSchema.optional(),
+  clientId: z.string().trim().max(60).optional(),
+  search: z.string().trim().max(120).optional(),
+  from: isoDateField.optional(),
+  to: isoDateField.optional(),
+});
+export type ListServiceOrdersQuery = z.infer<typeof listServiceOrdersQuerySchema>;
+
+/** Anexos da OS (Fase 2 · 2.3). */
+export const SERVICE_ORDER_ATTACHMENT_MAX_BYTES = 5 * 1024 * 1024;
+export const SERVICE_ORDER_MAX_ATTACHMENTS = 20;

@@ -584,6 +584,30 @@ Todas as leituras marcam parcelas vencidas (`OVERDUE`).
 paga; estornar → em aberto) e não pode ser editado nem cancelado avulso
 (409).
 
+## Ordens de serviço (Fase 2 · 2.3)
+
+Módulo opcional `SERVICE_ORDERS`; qualquer usuário da empresa opera. Regras:
+[`docs/akylla/ORDEM_DE_SERVICO.md`](../akylla/ORDEM_DE_SERVICO.md).
+
+| Método | Rota | Descrição |
+|---|---|---|
+| GET | `/api/service-orders` | lista (`status`, `clientId`, `search` por nº/cliente/título, `from`/`to`) + `countsByStatus` |
+| GET | `/api/service-orders/:id` | detalhe com itens e anexos; `code` = `OS-00001` |
+| POST | `/api/service-orders` | `{clientId, professionalId?, title, notes?, discount?, items[]}`; item = `{serviceId?\|productId?, description?, quantity, unitPrice?}` (catálogo → preço do catálogo; livre → `description` + `unitPrice`) |
+| PATCH | `/api/service-orders/:id` | `title`/`discount`/`professionalId` só em rascunho/orçamento (senão 409); `notes` até cancelar |
+| PUT | `/api/service-orders/:id/items` | substitui os itens (rascunho/orçamento) e recalcula |
+| PATCH | `/api/service-orders/:id/status` | `{status}` = **próximo** estado (pular → 400). `COMPLETED` → estoque, conta a receber e comissão |
+| POST | `/api/service-orders/:id/cancel` | `{reason}` (3–500); concluída/cancelada → 409 |
+| POST | `/api/service-orders/:id/attachments` | multipart `file`: JPG/PNG/PDF (tipo pelos bytes) até 5 MB (413), máx. 20 |
+| GET | `/api/service-orders/:id/attachments/:attachmentId` | download (`nosniff`, `no-store`) |
+| DELETE | `/api/service-orders/:id/attachments/:attachmentId` | só antes de concluir/cancelar (senão 409) |
+| GET | `/api/service-orders/:id/messages` | mensagens de WhatsApp vinculadas (`origin: SERVICE_ORDER`) |
+
+**WhatsApp:** `POST /api/whatsapp/messages` aceita `serviceOrderId?` (OS
+do mesmo cliente; outra → 404/400) para vincular a mensagem.
+**Financeiro:** `origin: SERVICE_ORDER` não pode ser editado (409); ao
+receber, libera comissões `ON_PAYMENT` da OS.
+
 ## Padrão para módulos futuros
 
 1. Modelo sempre com `companyId` + FK `Restrict` e índices por empresa.

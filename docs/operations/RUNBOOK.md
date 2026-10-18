@@ -157,6 +157,9 @@ Regra: **voltar primeiro, investigar depois.**
 
 ## 6. Backup
 
+**Atenção:** os anexos das OS (`UPLOADS_DIR`) não estão no banco. Faça o
+backup da pasta junto com o dump (ver `backup/README.md` › Anexos).
+
 Diário às 02:00 com restauração testada automaticamente:
 `npm run db:backup`. Detalhes (agendamento, retenção, cópia externa, RPO
 ≤ 24 h, RTO ≤ 4 h) em [`../../backup/README.md`](../../backup/README.md).

@@ -15,6 +15,7 @@
 | **Worker** | processo sem porta | fila do WhatsApp; log `heartbeat` a cada 60 s |
 | **Redis** (opcional) | rate limit compartilhado | obrigatório se a API rodar com mais de 1 instância |
 | **SMTP** | e-mail transacional | obrigatório com `REGISTRATION_ENABLED=true` |
+| **Volume de arquivos** | anexos das OS (`UPLOADS_DIR`) | disco **persistente** montado na API; sem ele os anexos somem a cada deploy. Backup à parte (ver `backup/README.md`) |
 
 ## 2. Banco: role da aplicação (obrigatório — RLS)
 

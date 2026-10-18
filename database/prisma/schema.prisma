@@ -139,6 +139,18 @@ enum FinancialOrigin {
   COMMISSION_REVERSAL
   // Fase 2 · 2.2: parcela de venda no crediário (a receber do cliente)
   CREDIT_SALE
+  // Fase 2 · 2.3: ordem de serviço concluída (a receber do cliente)
+  SERVICE_ORDER
+}
+
+/// Fase 2 · 2.3 — ciclo da ordem de serviço (transições estritas)
+enum ServiceOrderStatus {
+  DRAFT
+  QUOTE
+  APPROVED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
 }
 
 /// Fase 2 · 2.2 — situação do crediário do cliente
@@ -230,6 +242,8 @@ enum WhatsAppMessageStatus {
 enum WhatsAppMessageOrigin {
   MANUAL
   SERVICE_REMINDER
+  // Fase 2 · 2.3: mensagem vinculada a uma ordem de serviço (originId)
+  SERVICE_ORDER
 }
 
 enum WhatsAppAttemptOutcome {
@@ -300,6 +314,9 @@ model Company {
   commissions     Commission[]
   creditAccounts     CreditAccount[]
   creditInstallments CreditInstallment[]
+  serviceOrders           ServiceOrder[]
+  serviceOrderItems       ServiceOrderItem[]
+  serviceOrderAttachments ServiceOrderAttachment[]
 }
 
 enum BusinessModule {
@@ -310,6 +327,7 @@ enum BusinessModule {
   SUBSCRIPTIONS
   COMMISSIONS
   CREDIT
+  SERVICE_ORDERS
 }
 
 enum ImportType {
@@ -397,6 +415,7 @@ model User {
   legalConsents LegalConsent[]
   passwordResetTokens PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
+  serviceOrdersCreated ServiceOrder[] @relation("ServiceOrderCreatedBy")
   twoFactorSecret String?
   twoFactorEnabled Boolean @default(false)
 
@@ -487,6 +506,7 @@ model Client {
   financialEntries FinancialEntry[]
   legalConsents LegalConsent[]
   creditAccount CreditAccount?
+  serviceOrders ServiceOrder[]
 
   @@index([companyId, nameKey])
   @@index([companyId, status])
@@ -554,6 +574,7 @@ model Service {
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
   appointments    Appointment[]
+  serviceOrderItems ServiceOrderItem[]
 
   @@unique([companyId, nameKey])
   @@index([companyId, status])
@@ -614,6 +635,7 @@ model Product {
   movements     StockMovement[]
   saleItems     SaleItem[]
   commissionRules CommissionRule[]
+  serviceOrderItems ServiceOrderItem[]
 
   @@unique([companyId, sku])
   @@unique([companyId, barcode])
@@ -695,6 +717,7 @@ model Professional {
   rules             CommissionRule[]
   commissions       Commission[]
   sales             Sale[]
+  serviceOrders     ServiceOrder[]
 
   @@unique([companyId, nameKey])
   @@index([companyId, status])
@@ -732,6 +755,9 @@ model Commission {
   company          Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
   saleId           String?
   sale             Sale?            @relation(fields: [saleId], references: [id], onDelete: Restrict)
+  /// Fase 2 · 2.3: comissão de ordem de serviço concluída
+  serviceOrderId   String?
+  serviceOrder     ServiceOrder?    @relation(fields: [serviceOrderId], references: [id], onDelete: Restrict)
   professionalId   String
   professional     Professional     @relation(fields: [professionalId], references: [id], onDelete: Restrict)
   baseAmount       Decimal          @db.Decimal(12, 2)
@@ -752,6 +778,7 @@ model Commission {
   updatedAt        DateTime         @updatedAt
 
   @@unique([saleId, professionalId])
+  @@unique([serviceOrderId, professionalId])
   @@index([companyId, status, createdAt])
   @@index([companyId, professionalId, createdAt])
 }
@@ -800,6 +827,83 @@ model CreditInstallment {
   @@unique([saleId, number])
   @@index([companyId, status, dueDate])
   @@index([creditAccountId, status])
+}
+
+/// Fase 2 · 2.3 — ordem de serviço. Número sequencial por empresa; totais
+/// calculados no servidor; itens travados após a aprovação; nunca apagada.
+model ServiceOrder {
+  id               String             @id @default(cuid())
+  companyId        String
+  company          Company            @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  number           Int
+  clientId         String
+  client           Client             @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  professionalId   String?
+  professional     Professional?      @relation(fields: [professionalId], references: [id], onDelete: Restrict)
+  status           ServiceOrderStatus @default(DRAFT)
+  /// Resumo: equipamento/serviço e problema relatado
+  title            String
+  notes            String?
+  subtotal         Decimal            @default(0) @db.Decimal(12, 2)
+  discount         Decimal            @default(0) @db.Decimal(12, 2)
+  total            Decimal            @default(0) @db.Decimal(12, 2)
+  openedAt         DateTime           @default(now())
+  quotedAt         DateTime?
+  approvedAt       DateTime?
+  startedAt        DateTime?
+  completedAt      DateTime?
+  cancelledAt      DateTime?
+  cancelReason     String?
+  financialEntryId String?            @unique
+  createdByUserId  String
+  createdBy        User               @relation("ServiceOrderCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  items            ServiceOrderItem[]
+  attachments      ServiceOrderAttachment[]
+  commissions      Commission[]
+
+  @@unique([companyId, number])
+  @@index([companyId, status, openedAt])
+  @@index([companyId, clientId])
+}
+
+/// Fase 2 · 2.3 — item da OS: serviço ou produto do catálogo (preço do
+/// catálogo) ou item livre (ex.: mão de obra, preço informado).
+model ServiceOrderItem {
+  id             String       @id @default(cuid())
+  companyId      String
+  company        Company      @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  serviceOrderId String
+  serviceOrder   ServiceOrder @relation(fields: [serviceOrderId], references: [id], onDelete: Cascade)
+  serviceId      String?
+  service        Service?     @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  productId      String?
+  product        Product?     @relation(fields: [productId], references: [id], onDelete: Restrict)
+  description    String
+  quantity       Decimal      @db.Decimal(12, 3)
+  unitPrice      Decimal      @db.Decimal(12, 2)
+  subtotal       Decimal      @db.Decimal(12, 2)
+
+  @@index([companyId, serviceOrderId])
+}
+
+/// Fase 2 · 2.3 — anexo (jpg/png/pdf até 5 MB) guardado em disco
+/// (`UPLOADS_DIR/service-orders/<companyId>/<osId>/`), nome aleatório.
+model ServiceOrderAttachment {
+  id               String       @id @default(cuid())
+  companyId        String
+  company          Company      @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  serviceOrderId   String
+  serviceOrder     ServiceOrder @relation(fields: [serviceOrderId], references: [id], onDelete: Cascade)
+  filename         String
+  mimeType         String
+  size             Int
+  storagePath      String
+  uploadedByUserId String?
+  uploadedAt       DateTime     @default(now())
+
+  @@index([companyId, serviceOrderId])
 }
 
 model SaleItem {
@@ -1080,6 +1184,8 @@ model WhatsAppMessage {
   templateBodySnapshot       String
   status         WhatsAppMessageStatus  @default(PENDING)
   origin         WhatsAppMessageOrigin  @default(MANUAL)
+  /// Fase 2 · 2.3: id da origem (ex.: ServiceOrder) quando aplicável
+  originId       String?
   attempts       Int                    @default(0)
   maxAttempts    Int                    @default(3)
   nextAttemptAt  DateTime?
@@ -1101,6 +1207,7 @@ model WhatsAppMessage {
   @@index([companyId, createdAt])
   @@index([companyId, status, nextAttemptAt])
   @@index([clientId])
+  @@index([companyId, origin, originId])
 }
 
 model WhatsAppMessageAttempt {

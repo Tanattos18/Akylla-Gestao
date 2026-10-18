@@ -24,7 +24,7 @@ dependem só de contas e hospedagem.
 |---|---|
 | 2.1 · Comissões (profissionais, regras, cálculo no PDV, pagamento, estorno) | ✅ 2026-10-18 |
 | 2.2 · Crediário (limite por cliente, parcelas no servidor, vencidas, recebimento, cancelamento) | ✅ 2026-10-18 |
-| 2.3 · Ordem de serviço | ⬜ |
+| 2.3 · Ordem de serviço (estados estritos, itens no servidor, conclusão com estoque/financeiro/comissão, anexos, WhatsApp) | ✅ 2026-10-18 |
 
 Já existentes antes da Fase 1 (N1–N4c, 2026-10-15): LGPD
 (consentimento/exportação/anonimização), reset de senha por token, 2FA

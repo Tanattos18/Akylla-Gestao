@@ -15,3 +15,6 @@ coverage/
 
 # Arquivo local de itens fora de uso (nunca versionar)
 /Arquivos Sem USO/
+
+# Anexos enviados (Fase 2 · 2.3) — dados de clientes, nunca no Git
+/uploads/

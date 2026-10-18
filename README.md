@@ -53,7 +53,7 @@ Site: [akyllagestao.com.br](https://akyllagestao.com.br/)
 | Perfis Comércio, Serviços e Híbrido | 🟡 hoje por ativação manual de módulos; escolha guiada no cadastro na **Fase 4** |
 | **Em breve:** comissões | ✅ **disponível** (`/comissoes`, `/profissionais`): regras por produto/categoria/profissional, cálculo automático no PDV, pagamento pelo caixa |
 | **Em breve:** crediário | ✅ **disponível** (`/crediario` + PDV): limite por cliente, parcelas mensais calculadas no servidor, vencidas, recebimento pelo caixa |
-| **Em breve:** ordem de serviço com fotos | 🔜 **Fase 2** |
+| **Em breve:** ordem de serviço com fotos | ✅ **disponível** (`/os`): orçamento → aprovação → execução → conclusão, fotos/PDF, baixa de peças, conta a receber e comissão do técnico |
 | **Em breve:** nota fiscal (NFC-e, NF-e, NFS-e) por integração | 🔜 **Fase 3**, via emissor autorizado, sem emissor próprio |
 
 ---
@@ -153,7 +153,7 @@ anterior estão verdes. A especificação completa está em
 | Fase | Tema | Conteúdo | Status |
 |---|---|---|---|
 | **1** | Confiabilidade | backup ✅, Sentry + runbook ✅, rate limit Redis ✅, verificação de e-mail ✅, RLS ✅, `npm audit` = 0 ✅, CD pronto 🟡 (falta escolher a hospedagem) | ✅ código concluído |
-| **2** | Retenção | comissões ✅, crediário ✅, ordem de serviço com anexos | 🚧 em andamento |
+| **2** | Retenção | comissões ✅, crediário ✅, ordem de serviço com anexos ✅ | ✅ concluída |
 | **3** | Fiscal | NFC-e / NF-e / NFS-e via integração (provedor abstraído, credenciais criptografadas) | ⬜ |
 | **4** | Perfis | onboarding Comércio / Serviços / Híbrido, landing pages por segmento | ⬜ |
 | **5** | Design e UX | componentes compartilhados, impressão de cupom, acessibilidade | ⬜ |

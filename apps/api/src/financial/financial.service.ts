@@ -8,7 +8,10 @@ import {
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.module";
 import { lockOpenCashSession } from "../cash/cash-session.helpers";
-import { releasePendingCommissionsForSale } from "../commissions/commission-release";
+import {
+  releasePendingCommissionsForSale,
+  releasePendingCommissionsForServiceOrder,
+} from "../commissions/commission-release";
 import type {
   CreateFinancialEntryInput,
   FinancialReasonInput,
@@ -171,6 +174,9 @@ export class FinancialService {
     if (entry.origin === "CREDIT_SALE") {
       throw new ConflictException("Parcela do crediário: valor e vencimento são definidos na venda");
     }
+    if (entry.origin === "SERVICE_ORDER") {
+      throw new ConflictException("Título de OS: o valor vem da ordem de serviço concluída");
+    }
 
     await this.validateRelations(auth, {
       clientId: input.clientId !== undefined ? input.clientId || null : entry.clientId,
@@ -230,6 +236,11 @@ export class FinancialService {
           where: { id: entry.originId, companyId: auth.companyId, status: "RELEASED" },
           data: { status: "PAID", paidAt },
         });
+      }
+
+      // Fase 2 · 2.3: OS recebida → libera comissões que aguardavam o pagamento
+      if (entry.origin === "SERVICE_ORDER" && entry.originId) {
+        await releasePendingCommissionsForServiceOrder(tx, auth, entry.originId);
       }
 
       // Fase 2 · 2.2: parcela do crediário paga → sai do saldo do cliente;

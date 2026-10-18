@@ -26,6 +26,7 @@ import { ImportsModule } from "./imports/imports.module";
 import { LgpdModule } from "./lgpd/lgpd.module";
 import { CommissionsModule } from "./commissions/commissions.module";
 import { CreditModule } from "./credit/credit.module";
+import { ServiceOrdersModule } from "./service-orders/service-orders.module";
 import { AuthGuard } from "./common/guards/auth.guard";
 import { ModuleGuard } from "./common/guards/module.guard";
 import { TenantContextInterceptor } from "./common/tenant/tenant-context.interceptor";
@@ -43,6 +44,7 @@ import { TenantContextInterceptor } from "./common/tenant/tenant-context.interce
     SalesModule,
     CommissionsModule,
     CreditModule,
+    ServiceOrdersModule,
     CashModule,
     FinancialModule,
     ClientsModule,

@@ -93,6 +93,7 @@ const commissionSelect = {
   createdAt: true,
   professional: { select: { id: true, name: true } },
   sale: { select: { id: true, receiptCode: true, total: true, createdAt: true } },
+  serviceOrder: { select: { id: true, number: true, total: true, completedAt: true } },
 } as const;
 
 type CommissionRecord = Prisma.CommissionGetPayload<{ select: typeof commissionSelect }>;
@@ -104,6 +105,7 @@ function formatCommission(c: CommissionRecord) {
     percentage: c.percentage.toFixed(2),
     amount: c.amount.toFixed(2),
     sale: c.sale ? { ...c.sale, total: c.sale.total.toFixed(2) } : null,
+    serviceOrder: c.serviceOrder ? { ...c.serviceOrder, total: c.serviceOrder.total.toFixed(2) } : null,
   };
 }
 
@@ -324,6 +326,59 @@ export class CommissionsService {
       paidNow: boolean;
     },
   ) {
+    return this.createForDocument(tx, auth, {
+      link: { saleId: sale.id },
+      label: `venda ${sale.receiptCode}`,
+      subtotal: sale.subtotal,
+      total: sale.total,
+      professionalId: sale.professionalId,
+      lines: sale.lines,
+      paidNow: sale.paidNow,
+    });
+  }
+
+  /**
+   * Fase 2 · 2.3: comissão da OS concluída. A OS vira conta a receber, então
+   * ON_SALE libera na conclusão e ON_PAYMENT/SPLIT aguardam o recebimento.
+   */
+  async createForServiceOrder(
+    tx: Tx,
+    auth: AuthContext,
+    order: {
+      id: string;
+      label: string;
+      subtotal: Prisma.Decimal;
+      total: Prisma.Decimal;
+      professionalId: string;
+      lines: CalculatorLine[];
+    },
+  ) {
+    if (!(await this.isModuleEnabled(tx, auth.companyId))) return null;
+    return this.createForDocument(tx, auth, {
+      link: { serviceOrderId: order.id },
+      label: order.label,
+      subtotal: order.subtotal,
+      total: order.total,
+      professionalId: order.professionalId,
+      lines: order.lines,
+      paidNow: false,
+    });
+  }
+
+  private async createForDocument(
+    tx: Tx,
+    auth: AuthContext,
+    doc: {
+      link: { saleId: string } | { serviceOrderId: string };
+      label: string;
+      subtotal: Prisma.Decimal;
+      total: Prisma.Decimal;
+      professionalId: string;
+      lines: CalculatorLine[];
+      paidNow: boolean;
+    },
+  ) {
+    const sale = doc;
     const professional = await tx.professional.findFirstOrThrow({
       where: { id: sale.professionalId, companyId: auth.companyId },
       select: { id: true, name: true, commissionDefault: true },
@@ -350,7 +405,7 @@ export class CommissionsService {
     const commission = await tx.commission.create({
       data: {
         companyId: auth.companyId,
-        saleId: sale.id,
+        ...doc.link,
         professionalId: professional.id,
         baseAmount: result.baseAmount,
         percentage: result.percentage,
@@ -362,7 +417,7 @@ export class CommissionsService {
       select: { id: true },
     });
     if (release) {
-      await this.releaseInTx(tx, auth, commission.id, `${professional.name} — venda ${sale.receiptCode}`);
+      await this.releaseInTx(tx, auth, commission.id, `${professional.name} — ${doc.label}`);
     }
     return commission.id;
   }

@@ -63,6 +63,14 @@ agendador deve alertar nesse caso).
 No Windows (Agendador de Tarefas): ação `npm run db:backup` com
 "Iniciar em" na raiz do repositório, gatilho diário às 02:00.
 
+### Anexos (Fase 2 · 2.3)
+
+Fotos e laudos das ordens de serviço ficam **no disco**, em `UPLOADS_DIR`
+(padrão `./uploads`), e **não** estão no dump do banco. Copie essa pasta
+junto com o dump, no mesmo horário, para o mesmo destino externo (ex.:
+`rclone copy uploads/ b2:akylla-backups/uploads`). Na restauração, volte
+os dois do mesmo dia: o banco guarda só o caminho relativo de cada anexo.
+
 ### Política
 
 | Item | Valor |

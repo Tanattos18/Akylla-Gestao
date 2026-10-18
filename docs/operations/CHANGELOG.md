@@ -6,6 +6,70 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-18 - Fase 2 · 2.3: Ordem de serviço — **Fase 2 concluída**
+
+Terceiro e último item "em breve" da Fase 2. As regras foram escritas
+antes do código em `docs/akylla/ORDEM_DE_SERVICO.md`, com OCA/repair e
+ERPNext estudados só como referência.
+
+### Adicionado
+
+- **Modelos:** `ServiceOrder` (número sequencial por empresa),
+  `ServiceOrderItem`, `ServiceOrderAttachment`;
+  `Commission.serviceOrderId`; `WhatsAppMessage.originId`; enums
+  `ServiceOrderStatus`, `SERVICE_ORDER` (financeiro/WhatsApp) e
+  `SERVICE_ORDERS` (módulo). Migration aditiva
+  `20261018190000_service_orders`, com RLS.
+- **Estados estritos:** rascunho → orçamento → aprovada → em execução →
+  concluída, com cancelamento por motivo. Pular etapa → 400; concorrência
+  → 409 (`updateMany` condicional); orçamento exige itens.
+- **Itens:** preço do catálogo para serviço e produto; item livre com
+  valor informado; totais no servidor. Ficam travados após a aprovação,
+  e as observações continuam editáveis.
+- **Conclusão** (uma transação):
+  - baixa de estoque dos produtos (locks em ordem; estoque insuficiente →
+    nada gravado);
+  - conta a receber do cliente;
+  - comissão do técnico (ON_SALE libera agora; ON_PAYMENT ao receber,
+    pela sincronia do financeiro).
+- **Anexos:**
+  - JPG/PNG/PDF até 5 MB, com o tipo detectado pelos bytes;
+  - nome saneado e caminho montado só com ids (`attachment-storage.ts`);
+  - download com `nosniff`/`no-store`;
+  - remoção só antes de concluir ou cancelar.
+- **WhatsApp:** `serviceOrderId` no envio vincula a mensagem à OS;
+  histórico em `GET /:id/messages`.
+- **Telas:**
+  - `/os`: lista com filtro por situação (contagens) e busca por
+    nº/cliente/equipamento;
+  - `/os/nova`: editor de itens com prévia;
+  - `/os/[id]`: próxima etapa, cancelar, imprimir, itens (editáveis até
+    aprovar), observações, anexos com miniatura, mensagens;
+  - menu e card da home.
+- **Testes:** `tests/integration/service-orders.test.ts` (18).
+
+### Alterado
+
+- `CommissionsService`: `createForDocument` (venda ou OS); a liberação
+  pendente por OS fica em `commission-release.ts`.
+- `FinancialService`: título `SERVICE_ORDER` não pode ser editado; ao
+  receber, libera comissões pendentes da OS.
+- **Operação:** os anexos ficam fora do dump do banco. `backup/README.md`,
+  `RUNBOOK.md` e `DEPLOY.md` (volume persistente, `UPLOADS_DIR`) foram
+  atualizados, e `/uploads/` está no `.gitignore`.
+- `rls.test` cobre 33 tabelas; `company-modules.test` espera 8 módulos.
+
+### Verificação
+
+- `npm run validate` verde: lint · typecheck · **681/681** (37 arquivos)
+  · build · db:validate. `check:migrations` sem drift.
+- **Navegador (servidores reais):** OS aberta pela tela `/os/nova`
+  (produto R$ 80 + item livre R$ 45,50, desconto R$ 5) → **OS-00001,
+  total R$ 120,50**. Pela API: anexo PNG enviado e etapas até concluir.
+  Comissão de **R$ 27,41**, conferida à mão: 30% de 76,81 + 10% de 43,69,
+  com o desconto rateado. A tela da OS concluída mostra o aviso da conta a
+  receber, os itens travados e a miniatura do anexo carregada pelo proxy.
+
 ## [Akylla Gestão] - 2026-10-18 - Fase 2 · 2.2: Crediário
 
 Segundo item "em breve" do site entregue. As regras foram escritas antes

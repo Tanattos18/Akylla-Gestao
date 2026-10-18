@@ -207,6 +207,18 @@ export class WhatsAppMessagesService {
       );
     }
 
+    // Fase 2 · 2.3: vínculo com OS (mesma empresa e mesmo cliente)
+    if (input.serviceOrderId) {
+      const order = await this.prisma.serviceOrder.findFirst({
+        where: { id: input.serviceOrderId, companyId: auth.companyId },
+        select: { clientId: true },
+      });
+      if (!order) throw new NotFoundException("Ordem de serviço não encontrada");
+      if (order.clientId !== client.id) {
+        throw new BadRequestException("A ordem de serviço é de outro cliente");
+      }
+    }
+
     const expectedVariables = templateVariableCount(template.body);
     if (input.variables.length !== expectedVariables) {
       throw new BadRequestException(
@@ -229,6 +241,7 @@ export class WhatsAppMessagesService {
           templateLanguageSnapshot: template.language,
           templateBodySnapshot: template.body,
           idempotencyKey: input.idempotencyKey || null,
+          ...(input.serviceOrderId ? { origin: "SERVICE_ORDER" as const, originId: input.serviceOrderId } : {}),
           nextAttemptAt: new Date(),
           createdByUserId: auth.userId,
         },
