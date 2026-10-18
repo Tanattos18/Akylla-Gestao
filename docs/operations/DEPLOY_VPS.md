@@ -4,6 +4,18 @@
 > continua no plano Premium (`akyllagestao.com.br`); o sistema vai para a
 > VPS num subdomínio (ex.: `app.akyllagestao.com.br`).
 
+## 0. Situação atual (2026-10-18)
+
+| Item | Valor |
+|---|---|
+| Provedor / plano | Hostinger **VPS KVM 1** (1 vCPU, 4 GB RAM, 50 GB NVMe). Upgrade para KVM 2 pelo painel, sem reinstalar, quando passar de ~20–30 empresas ativas ou ficar lento no pico |
+| Sistema | **Ubuntu 24.04 LTS** puro ("Apenas SO": sem painel, sem aplicativos, sem Docker) |
+| Extras | scanner Monarx (grátis); backup diário da Hostinger recomendado (cópia fora da VPS) |
+| IP | no painel da Hostinger (VPS › Visão geral). **Não versionado**: o repositório é público |
+| DNS | nameservers da Hostinger (`*.dns-parking.com`); registro **A** `app` → IP da VPS |
+| Endereço do sistema | `https://app.akyllagestao.com.br` (site de divulgação continua no plano Premium) |
+| Status | VPS criada; próximos passos: registro DNS `app`, `install.sh`, `create-admin.sh` |
+
 ## 1. Contratar e preparar
 
 1. Hostinger → VPS **KVM 2** (ou KVM 1 para começar), sistema **Ubuntu 24.04**.

@@ -205,7 +205,8 @@ Especificação completa em [`upgrade/Prompt_Mestre.md`](upgrade/Prompt_Mestre.m
 | **Extra** | Distribuição | instalação automatizada em VPS; aplicativo instalável no Windows (PWA) | ✅ |
 
 **Pendências do proprietário:**
-- contratar a VPS e apontar o subdomínio `app`;
+- VPS Hostinger KVM 1 (Ubuntu 24.04) **contratada**: falta apontar o
+  subdomínio `app` e rodar a instalação;
 - SMTP para os e-mails de confirmação;
 - Redis e Turnstile (opcionais);
 - integradora fiscal, cadastro fiscal dos produtos e certificado A1;

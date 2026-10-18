@@ -6,6 +6,16 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-18 - Infraestrutura de produção contratada
+
+- **VPS Hostinger KVM 1, com Ubuntu 24.04 LTS puro** (sem painel, sem
+  Docker), contratada pelo proprietário.
+- **DNS:** o domínio usa os nameservers da Hostinger. O sistema vai para
+  `app.akyllagestao.com.br` e o site de divulgação continua no plano
+  Premium.
+- **Situação e próximos passos** em `docs/operations/DEPLOY_VPS.md` §0.
+  O IP da VPS **não** é versionado, porque o repositório é público.
+
 ## [Akylla Gestão] - 2026-10-18 - Aplicativo instalável (PWA) e deploy em VPS
 
 ### Adicionado

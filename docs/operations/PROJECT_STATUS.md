@@ -18,8 +18,9 @@ que o site akyllagestao.com.br promete. Fases em ordem rígida (1 → 7).
 
 **Distribuição (2026-10-18)**: instalação automatizada em VPS
 (`docs/operations/DEPLOY_VPS.md`; o proprietário escolheu a VPS da
-Hostinger) e aplicativo instalável no Windows (PWA). Aguardando a
-contratação da VPS.
+Hostinger) e aplicativo instalável no Windows (PWA). **VPS KVM 1
+(Ubuntu 24.04) contratada em 2026-10-18**; falta criar o registro DNS
+`app` e rodar a instalação (`docs/operations/DEPLOY_VPS.md` §0).
 
 **Fase 7 (Produto)**: concluída em 2026-10-18. Inclui os dados da
 empresa no comprovante, a busca global, a agenda por semana e mês, os
