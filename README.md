@@ -277,6 +277,7 @@ Arquivos Sem USO/        arquivo local de itens fora de uso (ignorado pelo Git)
 |---|---|
 | [Índice da documentação](docs/README.md) | mapa completo por finalidade |
 | [Roteiro de evolução](upgrade/Prompt_Mestre.md) | as 7 fases, regras e critérios de aceite |
+| [Referências no GitHub](upgrade/REFERENCIAS_GIT.md) | repositórios de apoio para cada módulo, com regra de licença |
 | [Status do projeto](docs/operations/PROJECT_STATUS.md) | fase atual, entregas e pendências |
 | [Checklist de implementação](docs/operations/IMPLEMENTATION_CHECKLIST.md) | progresso item a item |
 | [Changelog](docs/operations/CHANGELOG.md) | histórico de alterações |

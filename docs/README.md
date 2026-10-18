@@ -79,6 +79,7 @@ Para consultar um deles pelo Git:
 
 | Pasta | Conteúdo |
 |---|---|
+| [`../upgrade/REFERENCIAS_GIT.md`](../upgrade/REFERENCIAS_GIT.md) | repositórios do GitHub para consultar em cada módulo do roteiro, com licença e o que pode ou não ser copiado |
 | [`../upgrade/MELHORIAS.md`](../upgrade/MELHORIAS.md) | melhorias de backend, operação, segurança e produto (P0–P3), cada uma com função, impacto e ponto de partida |
 | [`../upgrade/MELHORIAS_DESIGN.md`](../upgrade/MELHORIAS_DESIGN.md) | melhorias de design de interface — tokens, componentes, movimento, a11y, estados e impressão; inclui 7 débitos já medidos no código |
 | [`../backup/`](../backup/README.md) | cópias de segurança locais (conteúdo ignorado pelo Git; só o README é versionado) |

@@ -6,6 +6,21 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-18 - Referências no GitHub por módulo
+
+### Adicionado
+
+- **`upgrade/REFERENCIAS_GIT.md`**: repositórios de apoio para cada fase
+  e módulo do roteiro (Fase 1: Sentry, rate limit Redis, e-mail,
+  Turnstile, RLS com Prisma; Fase 2: comissões, crediário e OS; Fase 3:
+  fiscal, com FinOpenPOS/MIT como referência de código e integradoras;
+  Fases 4–7: CRM, UI, testes e comparação de produto). Para cada um:
+  licença, estrelas, onde olhar e o que pode ser copiado
+  (MIT/Apache/ISC) ou só estudado (GPL/AGPL). Estrelas, licença e
+  atividade conferidas pela API do GitHub em 2026-10-18; todos os links
+  respondem 200.
+- Links em `README.md` e `docs/README.md`.
+
 ## [Akylla Gestão] - 2026-10-18 - Organização: itens fora de uso movidos para `Arquivos Sem USO/`
 
 Pedido do proprietário: deixar no projeto só o que será usado, **sem
