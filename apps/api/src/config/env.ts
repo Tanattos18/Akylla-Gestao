@@ -88,6 +88,13 @@ const schema = z.object({
   FISCAL_WEBHOOK_SECRET: z.string().optional().transform((v) => v || undefined),
   // Fase 6 · 6.3 — documentação OpenAPI em /api/docs. Padrão: ligada fora de
   // produção; em produção só com API_DOCS_ENABLED=true.
+  // Fase 8 — cobrança: dias de teste grátis no cadastro e e-mails dos donos
+  // da plataforma (acesso ao painel /plataforma), separados por vírgula
+  TRIAL_DAYS: z.coerce.number().int().min(0).max(90).default(14),
+  PLATFORM_ADMIN_EMAILS: z
+    .string()
+    .optional()
+    .transform((v) => (v ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean)),
   API_DOCS_ENABLED: z
     .enum(["true", "false"])
     .optional()

@@ -1,5 +1,16 @@
 # Banco de dados — diretrizes e modelo atual
 
+## Modelos implementados (Fase 8 — Cobrança do SaaS)
+
+Migration: `20261019110000_platform_billing` (aditiva + RLS + preços dos planos).
+
+| Modelo | Campos | Regras |
+|---|---|---|
+| `Company` (+) | `trialEndsAt?`, `billingExempt`, `suspendedAt?`, `suspendedReason?` | sem assinatura e sem `trialEndsAt` = isenta (empresas antigas e a do dono) |
+| `TenantPlan` (+) | `priceYearly?` | anual = 10 mensalidades |
+| `TenantSubscription` (+) | `billingCycle` (`MONTHLY`/`YEARLY`) | período anual = 365 dias |
+| `PlatformPayment` | `companyId`, `planName`, `cycle`, `amount`, `method`, `periodStart/End`, `note?`, `recordedBy` | imutável; RLS; escrito só pelo painel do dono (conexão de sistema) |
+
 ## Modelos implementados (Fase 7 — Dados da empresa)
 
 Migration: `20261019090000_company_profile` (aditiva; `Company` já tem RLS).

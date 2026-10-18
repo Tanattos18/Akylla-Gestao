@@ -107,6 +107,30 @@ describe("Billing — catálogo de planos do SaaS", () => {
   });
 });
 
+/** Fase 8: a assinatura só nasce pelo dono da plataforma ou pelo gateway. */
+async function activate(slug: string, planId: string, days = 30) {
+  const company = await prisma.company.findFirstOrThrow({ where: { slug } });
+  const now = Date.now();
+  return prisma.tenantSubscription.upsert({
+    where: { companyId: company.id },
+    create: {
+      companyId: company.id,
+      planId,
+      status: "ACTIVE",
+      currentPeriodStart: new Date(now),
+      currentPeriodEnd: new Date(now + days * DAY_MS),
+    },
+    update: {
+      planId,
+      status: "ACTIVE",
+      currentPeriodStart: new Date(now),
+      currentPeriodEnd: new Date(now + days * DAY_MS),
+      cancelReason: null,
+      cancelledAt: null,
+    },
+  });
+}
+
 describe("Billing — assinatura da empresa", () => {
   it("404 antes de existir assinatura", async () => {
     const response = await request(app.getHttpServer())
@@ -115,72 +139,27 @@ describe("Billing — assinatura da empresa", () => {
     expect(response.status).toBe(404);
   });
 
-  it("membro não gerencia assinatura (403)", async () => {
-    const response = await request(app.getHttpServer())
-      .put("/api/billing/subscription")
-      .set("Cookie", memberACookie)
-      .send({ planId: "tenantplan_essencial" });
-    expect(response.status).toBe(403);
-  });
-
-  it("admin escolhe o plano e a assinatura nasce ativa com período de 30 dias", async () => {
-    const response = await request(app.getHttpServer())
-      .put("/api/billing/subscription")
-      .set("Cookie", adminACookie)
-      .send({ planId: "tenantplan_profissional" });
-
-    expect(response.status).toBe(200);
-    expect(response.body.status).toBe("ACTIVE");
-    expect(response.body.plan.name).toBe("Profissional");
-    expect(response.body.plan.priceMonthly).toBe("149.90");
-    expect(response.body.changedByUserId).toBeTruthy();
-
-    const start = new Date(response.body.currentPeriodStart).getTime();
-    const end = new Date(response.body.currentPeriodEnd).getTime();
-    expect(end - start).toBe(30 * DAY_MS);
-  });
-
-  it("trocar de plano reinicia o período e reativa assinatura cancelada", async () => {
-    const cancel = await request(app.getHttpServer())
-      .post("/api/billing/subscription/cancel")
-      .set("Cookie", adminACookie)
-      .send({ reason: "Avaliar outro plano" });
-    expect(cancel.status).toBe(201);
-    expect(cancel.body.status).toBe("CANCELLED");
-    expect(cancel.body.cancelReason).toBe("Avaliar outro plano");
-
-    const change = await request(app.getHttpServer())
-      .put("/api/billing/subscription")
-      .set("Cookie", adminACookie)
-      .send({ planId: "tenantplan_essencial" });
-    expect(change.status).toBe(200);
-    expect(change.body.status).toBe("ACTIVE");
-    expect(change.body.plan.name).toBe("Essencial");
-    expect(change.body.cancelReason).toBeNull();
-  });
-
-  it("rejeita plano inexistente (404) e plano inativo (400)", async () => {
-    const unknown = await request(app.getHttpServer())
-      .put("/api/billing/subscription")
-      .set("Cookie", adminACookie)
-      .send({ planId: "plano-inexistente" });
-    expect(unknown.status).toBe(404);
-
-    await prisma.tenantPlan.update({
-      where: { id: "tenantplan_completo" },
-      data: { active: false },
-    });
-
-    const inactive = await request(app.getHttpServer())
+  it("Fase 8: a empresa NÃO ativa nem renova o próprio plano (rotas removidas)", async () => {
+    const put = await request(app.getHttpServer())
       .put("/api/billing/subscription")
       .set("Cookie", adminACookie)
       .send({ planId: "tenantplan_completo" });
-    expect(inactive.status).toBe(400);
+    expect(put.status).toBe(404);
+    const renew = await request(app.getHttpServer())
+      .post("/api/billing/subscription/renew")
+      .set("Cookie", adminACookie);
+    expect(renew.status).toBe(404);
+    expect(await prisma.tenantSubscription.count()).toBe(0);
+  });
 
-    await prisma.tenantPlan.update({
-      where: { id: "tenantplan_completo" },
-      data: { active: true },
-    });
+  it("mostra a assinatura ativada pelo dono, com ciclo e preços", async () => {
+    await activate("billing-a", "tenantplan_profissional");
+    const response = await request(app.getHttpServer())
+      .get("/api/billing/subscription")
+      .set("Cookie", memberACookie);
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ status: "ACTIVE", billingCycle: "MONTHLY" });
+    expect(response.body.plan).toMatchObject({ name: "Profissional", priceMonthly: "149.90", priceYearly: "1499.00" });
   });
 
   it("isola a assinatura por empresa (404 para outra empresa)", async () => {
@@ -191,28 +170,9 @@ describe("Billing — assinatura da empresa", () => {
   });
 });
 
-describe("Billing — renovação e expiração", () => {
-  it("renovação antecipada estende a partir do fim do período atual", async () => {
-    const before = await request(app.getHttpServer())
-      .get("/api/billing/subscription")
-      .set("Cookie", adminACookie);
-    const oldEnd = new Date(before.body.currentPeriodEnd).getTime();
-
-    const renew = await request(app.getHttpServer())
-      .post("/api/billing/subscription/renew")
-      .set("Cookie", adminACookie);
-
-    expect(renew.status).toBe(201);
-    expect(renew.body.status).toBe("ACTIVE");
-    expect(new Date(renew.body.currentPeriodEnd).getTime()).toBe(
-      oldEnd + 30 * DAY_MS,
-    );
-  });
-
-  it("expiração lazy marca período vencido e renovação reativa", async () => {
-    const company = await prisma.company.findFirstOrThrow({
-      where: { slug: "billing-a" },
-    });
+describe("Billing — expiração e cancelamento", () => {
+  it("expiração lazy marca período vencido", async () => {
+    const company = await prisma.company.findFirstOrThrow({ where: { slug: "billing-a" } });
     await prisma.tenantSubscription.update({
       where: { companyId: company.id },
       data: {
@@ -226,45 +186,30 @@ describe("Billing — renovação e expiração", () => {
       .set("Cookie", adminACookie);
     expect(expired.status).toBe(200);
     expect(expired.body.status).toBe("EXPIRED");
-
-    const renew = await request(app.getHttpServer())
-      .post("/api/billing/subscription/renew")
-      .set("Cookie", adminACookie);
-    expect(renew.status).toBe(201);
-    expect(renew.body.status).toBe("ACTIVE");
-    expect(
-      new Date(renew.body.currentPeriodEnd).getTime(),
-    ).toBeGreaterThan(Date.now());
   });
 
-  it("cancela a assinatura e impede renovação (409)", async () => {
+  it("admin cancela (201) e cancelar de novo dá 409; membro não cancela (403)", async () => {
+    await activate("billing-a", "tenantplan_essencial");
+    const member = await request(app.getHttpServer())
+      .post("/api/billing/subscription/cancel")
+      .set("Cookie", memberACookie)
+      .send({});
+    expect(member.status).toBe(403);
+
     const cancel = await request(app.getHttpServer())
       .post("/api/billing/subscription/cancel")
       .set("Cookie", adminACookie)
-      .send({});
+      .send({ reason: "Avaliar outro plano" });
     expect(cancel.status).toBe(201);
-    expect(cancel.body.status).toBe("CANCELLED");
-
-    const renew = await request(app.getHttpServer())
-      .post("/api/billing/subscription/renew")
-      .set("Cookie", adminACookie);
-    expect(renew.status).toBe(409);
+    expect(cancel.body).toMatchObject({ status: "CANCELLED", cancelReason: "Avaliar outro plano" });
 
     const again = await request(app.getHttpServer())
       .post("/api/billing/subscription/cancel")
       .set("Cookie", adminACookie)
       .send({ reason: "De novo" });
     expect(again.status).toBe(409);
-  });
 
-  it("membro não renova nem cancela (403) e exige sessão", async () => {
-    const memberRenew = await request(app.getHttpServer())
-      .post("/api/billing/subscription/renew")
-      .set("Cookie", memberACookie);
-    expect(memberRenew.status).toBe(403);
-
-    const anon = await request(app.getHttpServer())
-      .get("/api/billing/subscription");
+    const anon = await request(app.getHttpServer()).get("/api/billing/subscription");
     expect(anon.status).toBe(401);
   });
 });
@@ -292,11 +237,7 @@ describe("Billing — uso do plano (N3)", () => {
 
     const cookie = await login("admin@billing-uso.test");
 
-    const put = await request(app.getHttpServer())
-      .put("/api/billing/subscription")
-      .set("Cookie", cookie)
-      .send({ planId: "tenantplan_essencial" });
-    expect(put.status).toBe(200);
+    await activate("billing-uso", "tenantplan_essencial");
 
     const response = await request(app.getHttpServer())
       .get("/api/billing/usage")

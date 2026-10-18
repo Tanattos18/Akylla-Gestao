@@ -30,8 +30,11 @@ import { ServiceOrdersModule } from "./service-orders/service-orders.module";
 import { FiscalModule } from "./fiscal/fiscal.module";
 import { OnboardingModule } from "./onboarding/onboarding.module";
 import { SearchModule } from "./search/search.module";
+import { AccessModule } from "./billing/access.module";
+import { PlatformModule } from "./platform/platform.module";
 import { AuthGuard } from "./common/guards/auth.guard";
 import { ModuleGuard } from "./common/guards/module.guard";
+import { AccessGuard } from "./common/guards/access.guard";
 import { TenantContextInterceptor } from "./common/tenant/tenant-context.interceptor";
 
 @Module({
@@ -51,6 +54,8 @@ import { TenantContextInterceptor } from "./common/tenant/tenant-context.interce
     FiscalModule,
     OnboardingModule,
     SearchModule,
+    AccessModule,
+    PlatformModule,
     CashModule,
     FinancialModule,
     ClientsModule,
@@ -70,6 +75,8 @@ import { TenantContextInterceptor } from "./common/tenant/tenant-context.interce
   providers: [
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_GUARD, useClass: ModuleGuard },
+    // Fase 8: somente leitura quando a assinatura venceu (depois da tolerância)
+    { provide: APP_GUARD, useClass: AccessGuard },
     { provide: APP_INTERCEPTOR, useClass: TenantContextInterceptor },
   ],
 })

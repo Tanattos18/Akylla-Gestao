@@ -4,28 +4,27 @@ import {
   Get,
   Inject,
   Post,
-  Put,
   UseGuards,
 } from "@nestjs/common";
 import {
   cancelTenantSubscriptionSchema,
   createCheckoutSchema,
-  updateTenantSubscriptionSchema,
   type CancelTenantSubscriptionInput,
   type CreateCheckoutInput,
-  type UpdateTenantSubscriptionInput,
 } from "@petflow/shared";
 import { AdminGuard } from "../common/guards/admin.guard";
 import { Auth, type AuthContext } from "../common/decorators/auth.decorator";
 import { ZodValidationPipe } from "../common/pipes/zod-validation.pipe";
 import { BillingService } from "./billing.service";
 import { MercadoPagoService } from "./mercadopago.service";
+import { AccessService } from "./access";
 
 @Controller("billing")
 export class BillingController {
   constructor(
     @Inject(BillingService) private readonly billingService: BillingService,
     @Inject(MercadoPagoService) private readonly mpService: MercadoPagoService,
+    @Inject(AccessService) private readonly accessService: AccessService,
   ) {}
 
   @Get("plans")
@@ -54,25 +53,15 @@ export class BillingController {
     return this.billingService.getSubscription(auth);
   }
 
+  /** Fase 8: situação de acesso (teste, ativa, tolerância, somente leitura) */
+  @Get("access")
+  access(@Auth() auth: AuthContext) {
+    return this.accessService.getAccess(auth.companyId, { fresh: true });
+  }
+
   @Get("usage")
   getUsage(@Auth() auth: AuthContext) {
     return this.billingService.getUsage(auth);
-  }
-
-  @Put("subscription")
-  @UseGuards(AdminGuard)
-  upsertSubscription(
-    @Auth() auth: AuthContext,
-    @Body(new ZodValidationPipe(updateTenantSubscriptionSchema))
-    body: UpdateTenantSubscriptionInput,
-  ) {
-    return this.billingService.upsertSubscription(auth, body);
-  }
-
-  @Post("subscription/renew")
-  @UseGuards(AdminGuard)
-  renew(@Auth() auth: AuthContext) {
-    return this.billingService.renew(auth);
   }
 
   @Post("subscription/cancel")

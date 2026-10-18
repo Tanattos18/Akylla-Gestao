@@ -4,6 +4,17 @@
 > Este checklist cobre apenas a era do Akylla Gestão. O histórico
 > anterior à adaptação está preservado no Git.
 
+## Fase 8 — Cobrança do SaaS (2026-10-18)
+
+- [x] Preços aprovados (mensal e anual) e descrições alinhadas ao site
+- [x] Teste grátis no cadastro (`TRIAL_DAYS`), tolerância de 5 dias, somente leitura (402) via `AccessGuard`
+- [x] Painel do dono `/plataforma`: empresas, registrar pagamento, +teste, isentar, suspender/reativar, histórico
+- [x] `PlatformGuard` (e-mail + ADMIN + 2FA em produção) e tela de 2FA em Configurações › Segurança
+- [x] Removida a autoativação/renovação de plano pela empresa (falha de cobrança)
+- [x] Faturamento com situação, preço anual e contratação pelo WhatsApp; aviso no topo
+- [x] `tests/integration/platform-billing.test.ts` (12) e contrato do `API.md`
+- [ ] Mercado Pago em produção (aguarda a conta de vendedor com CNPJ)
+
 ## Fase 7 — Produto (2026-10-18)
 
 - [x] 7.1 Dados da empresa (`/api/company`, slug único → 409) + aba Empresa + CNPJ/endereço/telefone no comprovante

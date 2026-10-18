@@ -7,6 +7,7 @@ import type { CompanyModuleDto, OnboardingStatusDto } from "../../lib/types";
 import { Tabs } from "../../components/ui/Tabs";
 import { useToast } from "../../components/ui/Toast";
 import { CompanyForm } from "../../components/settings/CompanyForm";
+import { SecurityForm } from "../../components/settings/SecurityForm";
 
 const segmentLabels: Record<string, string> = {
   COMERCIO: "Comércio",
@@ -22,7 +23,7 @@ export default function ConfiguracoesPage() {
   const [saving, setSaving] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [changed, setChanged] = useState(false);
-  const [tab, setTab] = useState<"empresa" | "modulos" | "perfil">("empresa");
+  const [tab, setTab] = useState<"empresa" | "modulos" | "perfil" | "seguranca">("empresa");
   const toast = useToast();
 
   useEffect(() => {
@@ -60,11 +61,13 @@ export default function ConfiguracoesPage() {
           { key: "empresa", label: "Empresa" },
           { key: "modulos", label: "Módulos" },
           { key: "perfil", label: "Perfil do negócio" },
+          { key: "seguranca", label: "Segurança" },
         ]}
         value={tab}
         onChange={setTab}
       >
       {tab === "empresa" && <CompanyForm />}
+      {tab === "seguranca" && <SecurityForm />}
 
       {tab === "perfil" && (
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">

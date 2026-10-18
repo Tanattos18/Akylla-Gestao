@@ -6,6 +6,57 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-18 - Fase 8: Cobrança do SaaS e painel do dono
+
+Decisões do proprietário:
+- preços aprovados: R$ 79,90 / 149,90 / 249,90 por mês, e o anual com 2
+  meses grátis;
+- teste de 14 dias;
+- inadimplente fica em somente leitura;
+- Mercado Pago em produção fica para quando a conta com CNPJ estiver
+  pronta.
+
+Regras em `docs/akylla/COBRANCA.md`.
+
+### Adicionado
+
+- **Situação de acesso** por empresa:
+  - os estados são isenta, teste, ativa, tolerância (5 dias), somente
+    leitura e suspensa (`billing/access.ts`, regra pura e testada);
+  - `GET /api/billing/access` informa a situação;
+  - `AccessGuard` global: em somente leitura, alterações respondem **402**
+    `SUBSCRIPTION_READ_ONLY`; consulta, exportação, faturamento e saída
+    continuam liberados.
+- **Teste grátis no cadastro:** `TRIAL_DAYS`, padrão 14.
+- **Painel do dono** (`/plataforma`, `/api/platform/*`), protegido por
+  `PLATFORM_ADMIN_EMAILS`, papel ADMIN e 2FA obrigatório em produção:
+  - lista todas as empresas, com situação, uso e último acesso;
+  - registra pagamentos (Pix, boleto, cartão, Mercado Pago, outro), que
+    ativam ou renovam o plano;
+  - estende o teste, isenta, suspende (derruba as sessões) e reativa;
+  - mostra o histórico de pagamentos (`PlatformPayment`, com RLS).
+- **Faturamento:** situação de acesso, preço anual, botões "Contratar
+  mensal/anual" pelo WhatsApp de vendas (`NEXT_PUBLIC_SALES_WHATSAPP`) e
+  aviso no topo do sistema (fim do teste, vencida, somente leitura).
+- **Configurações › Segurança:** ativar e desativar a verificação em duas
+  etapas, com QR code (`qrcode-generator`, MIT, sem dependências).
+- **Migration** `20261019110000_platform_billing`, que inclui:
+  - os campos `Company.trialEndsAt`, `billingExempt`, `suspendedAt` e
+    `suspendedReason`;
+  - `TenantPlan.priceYearly` e `TenantSubscription.billingCycle`;
+  - `PlatformPayment`, com RLS;
+  - os preços e as descrições dos planos alinhados ao site.
+- **VPS:** o `create-admin.sh` torna a primeira conta dona da plataforma
+  (empresa isenta) e o `install.sh` grava as variáveis novas.
+- **Testes:** `platform-billing.test.ts` (12).
+
+### Corrigido (segurança)
+
+- **A empresa conseguia ativar e renovar o próprio plano sem pagar**
+  (`PUT /api/billing/subscription` e `POST /api/billing/subscription/renew`).
+  As rotas foram removidas: a assinatura agora só nasce pelo dono da
+  plataforma ou pelo gateway.
+
 ## [Akylla Gestão] - 2026-10-18 - Infraestrutura de produção contratada
 
 - **VPS Hostinger KVM 1, com Ubuntu 24.04 LTS puro** (sem painel, sem

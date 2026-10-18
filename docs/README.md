@@ -32,6 +32,7 @@ Para começar, leia nesta ordem:
 | [Crediário](akylla/CREDIARIO.md) | venda a prazo: limite, parcelas, vencidas, recebimento e cancelamento |
 | [Ordem de serviço](akylla/ORDEM_DE_SERVICO.md) | estados, itens, conclusão (estoque/financeiro/comissão), anexos e WhatsApp |
 | [Componentes e acessibilidade](akylla/DESIGN_SYSTEM.md) | tabela, diálogo, aviso, abas, cores e auditoria `test:a11y` |
+| [Cobrança do SaaS](akylla/COBRANCA.md) | planos, teste grátis, somente leitura, painel do dono e como cobrar |
 | [Onboarding por perfil](akylla/ONBOARDING.md) | perfis Comércio/Serviços/Híbrido, módulos ligados, configurações e páginas públicas |
 | [Nota fiscal](akylla/FISCAL.md) | emissão por integradora, segredos cifrados, webhook, cancelamento e o que falta para emitir de verdade |
 

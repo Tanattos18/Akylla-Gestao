@@ -444,9 +444,8 @@ Comportamentos importantes:
 |---|---|---|---|
 | GET | `/api/billing/plans` | sessão | Catálogo global ativo (`{ items }`), ordenado por preço; inclui `userLimit`/`clientLimit`/`productLimit` (`null` = ilimitado) |
 | GET | `/api/billing/subscription` | sessão | Assinatura da empresa (404 se ausente; expiração lazy) |
+| GET | `/api/billing/access` | sessão | **Fase 8:** situação de acesso `{status, trialEndsAt, paidUntil, graceEndsAt, daysLeft, readOnly, planName, cycle}` (`EXEMPT`, `TRIAL`, `ACTIVE`, `GRACE`, `READ_ONLY`, `SUSPENDED`) |
 | GET | `/api/billing/usage` | sessão | `{subscription, usage:{users, clients, products}}` para comparar com os limites do plano |
-| PUT | `/api/billing/subscription` | ADMIN | Upsert (troca de plano reinicia o período e reativa; plano inexistente → 404, inativo → 400) |
-| POST | `/api/billing/subscription/renew` | ADMIN | Renova (201): novo período a partir de `max(now, end)`; cancelada → 409 |
 | POST | `/api/billing/subscription/cancel` | ADMIN | Cancela (201): `reason?` ≤ 500; duplo → 409 |
 | GET | `/api/billing/gateway` | ADMIN | Describe do gateway: `{ env: "sandbox" \| "production", credentialsConfigured }` |
 | POST | `/api/billing/checkout` | ADMIN | Cria preapproval no Mercado Pago (sandbox por padrão): `{ planId, payerEmail }` → `{ checkoutUrl, gatewaySubscriptionId }`; sem token → 400 com mensagem explícita |
@@ -672,6 +671,39 @@ sessão/ADMIN/módulo pelos decorators. Ligada fora de produção; em
 produção só com `API_DOCS_ENABLED=true`. O teste
 `tests/integration/contract.test.ts` falha se uma rota existir no código
 e não nesta página (ou o contrário).
+
+## Cobrança do SaaS e painel do dono (Fase 8)
+
+**Regra de acesso** (`apps/api/src/billing/access.ts`):
+
+| Situação | Quando | Efeito |
+|---|---|---|
+| `EXEMPT` | `Company.billingExempt`, ou sem assinatura e sem `trialEndsAt` (empresas criadas pelo bootstrap/CLI ou anteriores à Fase 8) | tudo liberado |
+| `TRIAL` | antes de `trialEndsAt` (cadastro: `TRIAL_DAYS`, padrão 14) | tudo liberado, sem limites de plano |
+| `ACTIVE` | período pago vigente (cancelada vale até o fim do período) | liberado, com os limites do plano |
+| `GRACE` | até 5 dias depois do fim do teste/período | liberado, com aviso |
+| `READ_ONLY` | depois da tolerância | `AccessGuard` (global): métodos de escrita → **402** `{code:"SUBSCRIPTION_READ_ONLY"}`; leitura liberada. Sempre liberados: `/api/auth/*`, `/api/billing/*`, `/api/platform/*`, `/api/company/export`, `/api/lgpd/*` e webhooks |
+| `SUSPENDED` | suspensa pelo dono (`Company.status = INACTIVE`) | login bloqueado e sessões revogadas |
+
+A empresa **não ativa nem renova o próprio plano** (as rotas
+`PUT /api/billing/subscription` e `POST /api/billing/subscription/renew`
+foram removidas): a assinatura nasce pelo dono da plataforma ou pelo
+gateway (Mercado Pago). Nenhum dado é apagado em nenhuma situação.
+
+**Painel do dono** (`PlatformGuard`): e-mail em `PLATFORM_ADMIN_EMAILS`,
+papel ADMIN e, em produção, 2FA ativo; senão 403. Usa conexão de sistema
+(atravessa a RLS de propósito) e registra quem fez cada ação.
+
+| Método | Rota | Acesso | Descrição |
+|---|---|---|---|
+| GET | `/api/platform/companies` | dono | `?search=&status=`: empresas (até 200) com admin, último login, uso (usuários, clientes, produtos, vendas 30 dias), isenção, suspensão e `access` |
+| GET | `/api/platform/companies/:id` | dono | uma empresa |
+| GET | `/api/platform/companies/:id/payments` | dono | pagamentos registrados (imutáveis) |
+| POST | `/api/platform/companies/:id/activate` | dono | `{planId, cycle: MONTHLY\|YEARLY, method: PIX\|BOLETO\|CARD\|MERCADO_PAGO\|OTHER, amount?, note?}`: registra o pagamento e ativa/renova. Novo período começa no fim do período vigente (ou agora); mensal = `durationDays`, anual = 365 dias; valor padrão = preço do plano no ciclo |
+| POST | `/api/platform/companies/:id/trial` | dono | `{days}` (1–90): estende o teste a partir de `max(agora, fim do teste)` |
+| POST | `/api/platform/companies/:id/exempt` | dono | `{exempt}`: isenta ou remove a isenção |
+| POST | `/api/platform/companies/:id/suspend` | dono | `{reason}`: suspende (login bloqueado, sessões revogadas) |
+| POST | `/api/platform/companies/:id/reactivate` | dono | reativa a empresa suspensa (senão 400) |
 
 ## Padrão para módulos futuros
 

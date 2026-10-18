@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   ConflictException,
   Inject,
   Injectable,
@@ -7,19 +6,15 @@ import {
 } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.module";
-import type {
-  CancelTenantSubscriptionInput,
-  UpdateTenantSubscriptionInput,
-} from "@petflow/shared";
+import type { CancelTenantSubscriptionInput } from "@petflow/shared";
 import type { AuthContext } from "../common/decorators/auth.decorator";
-
-const DAY_MS = 86_400_000;
 
 const planSelect = {
   id: true,
   name: true,
   description: true,
   priceMonthly: true,
+  priceYearly: true,
   durationDays: true,
   userLimit: true,
   clientLimit: true,
@@ -33,6 +28,7 @@ function formatPlan(plan: TenantPlanRecord) {
   return {
     ...plan,
     priceMonthly: plan.priceMonthly.toFixed(2),
+    priceYearly: plan.priceYearly?.toFixed(2) ?? null,
   };
 }
 
@@ -41,6 +37,7 @@ const subscriptionSelect = {
   companyId: true,
   planId: true,
   status: true,
+  billingCycle: true,
   currentPeriodStart: true,
   currentPeriodEnd: true,
   cancelReason: true,
@@ -122,83 +119,6 @@ export class BillingService {
       subscription: subscription ? formatSubscription(subscription) : null,
       usage: { users, clients, products },
     };
-  }
-
-  async upsertSubscription(auth: AuthContext, input: UpdateTenantSubscriptionInput) {
-    const plan = await this.prisma.tenantPlan.findFirst({
-      where: { id: input.planId },
-      select: planSelect,
-    });
-    if (!plan) {
-      throw new NotFoundException("Plano não encontrado");
-    }
-    if (!plan.active) {
-      throw new BadRequestException("Plano indisponível");
-    }
-
-    const now = new Date();
-    const currentPeriodEnd = new Date(now.getTime() + plan.durationDays * DAY_MS);
-
-    const subscription = await this.prisma.tenantSubscription.upsert({
-      where: { companyId: auth.companyId },
-      create: {
-        companyId: auth.companyId,
-        planId: plan.id,
-        status: "ACTIVE",
-        currentPeriodStart: now,
-        currentPeriodEnd,
-        changedByUserId: auth.userId,
-      },
-      update: {
-        planId: plan.id,
-        status: "ACTIVE",
-        currentPeriodStart: now,
-        currentPeriodEnd,
-        cancelReason: null,
-        cancelledAt: null,
-        changedByUserId: auth.userId,
-      },
-      select: subscriptionSelect,
-    });
-
-    return formatSubscription(subscription);
-  }
-
-  async renew(auth: AuthContext) {
-    await this.expireStale(auth.companyId);
-
-    const subscription = await this.prisma.tenantSubscription.findUnique({
-      where: { companyId: auth.companyId },
-      select: { ...subscriptionSelect, plan: { select: { durationDays: true } } },
-    });
-    if (!subscription) {
-      throw new NotFoundException("Assinatura não encontrada");
-    }
-    if (subscription.status === "CANCELLED") {
-      throw new ConflictException("Assinatura cancelada não pode ser renovada");
-    }
-
-    const now = new Date();
-    const currentPeriodStart =
-      subscription.currentPeriodEnd.getTime() > now.getTime()
-        ? subscription.currentPeriodEnd
-        : now;
-    const currentPeriodEnd = new Date(
-      currentPeriodStart.getTime() + subscription.plan.durationDays * DAY_MS,
-    );
-
-    const renewed = await this.prisma.tenantSubscription.update({
-      where: { id: subscription.id },
-      data: {
-        currentPeriodStart,
-        currentPeriodEnd,
-        status: "ACTIVE",
-        changedByUserId: auth.userId,
-      },
-      select: subscriptionSelect,
-    });
-
-    return formatSubscription(renewed);
   }
 
   async cancel(auth: AuthContext, input: CancelTenantSubscriptionInput) {

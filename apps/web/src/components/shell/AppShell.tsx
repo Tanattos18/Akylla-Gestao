@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Header } from "./Header";
+import { AccessBanner } from "./AccessBanner";
 import { fetchSession, type Session } from "@/lib/session";
 import { api } from "@/lib/api";
 import type { CompanyModuleDto } from "@/lib/types";
@@ -89,9 +90,11 @@ export function AppShell({ children }: { children: ReactNode }) {
       <Header
         userName={session.user.name}
         userRole={session.user.role}
+        isPlatformAdmin={session.user.isPlatformAdmin === true}
         disabledModules={disabledModules}
         onLogout={handleLogout}
       />
+      <AccessBanner pathname={pathname} />
       <main id="conteudo" className="mx-auto w-full max-w-[1440px] px-4 py-6 md:px-6 md:py-8 xl:px-10">
         {children}
       </main>

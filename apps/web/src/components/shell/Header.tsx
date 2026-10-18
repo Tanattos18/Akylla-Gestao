@@ -37,6 +37,7 @@ import {
   ClipboardList,
   FileSpreadsheet,
   Settings,
+  Building2,
   type LucideIcon,
 } from "lucide-react";
 import { api } from "@/lib/api";
@@ -53,6 +54,8 @@ interface NavItem {
   icon: LucideIcon;
   module?: BusinessModule;
   adminOnly?: boolean;
+  /** Fase 8: só o dono da plataforma */
+  platformOnly?: boolean;
 }
 
 interface NavGroup {
@@ -111,6 +114,7 @@ const navGroups: NavGroup[] = [
       { label: "Planos", href: "/planos", icon: ClipboardList, adminOnly: true },
       { label: "Importações", href: "/importacoes", icon: FileSpreadsheet, adminOnly: true },
       { label: "Configurações", href: "/configuracoes", icon: Settings, adminOnly: true },
+      { label: "Plataforma", href: "/plataforma", icon: Building2, platformOnly: true },
     ],
   },
 ];
@@ -144,6 +148,7 @@ const routeLabels: Record<string, string> = {
   relatorios: "Relatórios",
   importacoes: "Importações",
   configuracoes: "Configurações",
+  plataforma: "Plataforma",
   onboarding: "Primeiros passos",
   novo: "Novo",
   editar: "Editar",
@@ -187,9 +192,10 @@ function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(href + "/");
 }
 
-function filterItems(items: NavItem[], disabledModules: Set<string>, isAdmin: boolean) {
+function filterItems(items: NavItem[], disabledModules: Set<string>, isAdmin: boolean, isPlatformAdmin = false) {
   return items.filter((item) => {
     if (item.adminOnly && !isAdmin) return false;
+    if (item.platformOnly && !isPlatformAdmin) return false;
     if (item.module && disabledModules.has(item.module)) return false;
     return true;
   });
@@ -198,11 +204,13 @@ function filterItems(items: NavItem[], disabledModules: Set<string>, isAdmin: bo
 export function Header({
   userName,
   userRole,
+  isPlatformAdmin = false,
   disabledModules,
   onLogout,
 }: {
   userName: string;
   userRole: string;
+  isPlatformAdmin?: boolean;
   disabledModules: Set<string>;
   onLogout: () => void;
 }) {
@@ -335,7 +343,7 @@ export function Header({
             })}
 
             {navGroups.map((group) => {
-              const items = filterItems(group.items, disabledModules, isAdmin);
+              const items = filterItems(group.items, disabledModules, isAdmin, isPlatformAdmin);
               if (items.length === 0) return null;
               const groupActive = items.some((i) => isActive(pathname, i.href));
               const open = openGroup === group.label;
@@ -596,7 +604,7 @@ export function Header({
             })}
 
             {navGroups.map((group) => {
-              const items = filterItems(group.items, disabledModules, isAdmin);
+              const items = filterItems(group.items, disabledModules, isAdmin, isPlatformAdmin);
               if (items.length === 0) return null;
               const groupActive = items.some((i) => isActive(pathname, i.href));
               const open = mobileGroup === group.label;

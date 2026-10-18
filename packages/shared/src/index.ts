@@ -173,6 +173,10 @@ export interface SessionUserDto {
   email: string;
   role: z.infer<typeof userRoleSchema>;
   status: z.infer<typeof userStatusSchema>;
+  /** Fase 8: dono da plataforma (acesso a /plataforma) */
+  isPlatformAdmin?: boolean;
+  /** 2FA ativo (admins) */
+  twoFactorEnabled?: boolean;
 }
 
 export interface SessionCompanyDto {
@@ -1455,6 +1459,122 @@ export interface CompanyProfileDto {
   phone: string | null;
   address: string | null;
   segment: string | null;
+  createdAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Cobrança do SaaS e painel do dono (Fase 8)
+// ---------------------------------------------------------------------------
+
+/**
+ * Situação de acesso da empresa:
+ * - EXEMPT: isenta (empresa do dono, parceiros ou anterior à Fase 8)
+ * - TRIAL: teste grátis
+ * - ACTIVE: assinatura paga em dia
+ * - GRACE: venceu há até 5 dias (aviso, tudo liberado)
+ * - READ_ONLY: venceu há mais de 5 dias (consulta liberada, alterações bloqueadas)
+ * - SUSPENDED: suspensa pelo dono (login bloqueado)
+ */
+export const accessStatusSchema = z.enum(["EXEMPT", "TRIAL", "ACTIVE", "GRACE", "READ_ONLY", "SUSPENDED"]);
+export type AccessStatus = z.infer<typeof accessStatusSchema>;
+
+export const accessStatusLabels: Record<AccessStatus, string> = {
+  EXEMPT: "Isenta",
+  TRIAL: "Em teste",
+  ACTIVE: "Ativa",
+  GRACE: "Vencida (tolerância)",
+  READ_ONLY: "Somente leitura",
+  SUSPENDED: "Suspensa",
+};
+
+export const billingCycleSchema = z.enum(["MONTHLY", "YEARLY"]);
+export type BillingCycle = z.infer<typeof billingCycleSchema>;
+
+export const platformPaymentMethodSchema = z.enum(["PIX", "BOLETO", "CARD", "MERCADO_PAGO", "OTHER"]);
+export type PlatformPaymentMethod = z.infer<typeof platformPaymentMethodSchema>;
+
+export const platformPaymentMethodLabels: Record<PlatformPaymentMethod, string> = {
+  PIX: "Pix",
+  BOLETO: "Boleto",
+  CARD: "Cartão",
+  MERCADO_PAGO: "Mercado Pago",
+  OTHER: "Outro",
+};
+
+export interface AccessSummaryDto {
+  status: AccessStatus;
+  /** Fim do teste grátis (ISO) */
+  trialEndsAt: string | null;
+  /** Até quando está pago (ISO) */
+  paidUntil: string | null;
+  /** Fim da tolerância: depois disso vira somente leitura (ISO) */
+  graceEndsAt: string | null;
+  /** Dias até o fim do acesso atual (teste, pagamento ou tolerância); null se isenta */
+  daysLeft: number | null;
+  readOnly: boolean;
+  planName: string | null;
+  cycle: BillingCycle | null;
+}
+
+export const platformCompaniesQuerySchema = z.object({
+  search: z.string().trim().max(120).optional(),
+  status: accessStatusSchema.optional(),
+});
+export type PlatformCompaniesQuery = z.infer<typeof platformCompaniesQuerySchema>;
+
+export const platformActivateSchema = z.object({
+  planId: z.string().trim().min(1, "Plano é obrigatório").max(60),
+  cycle: billingCycleSchema.default("MONTHLY"),
+  method: platformPaymentMethodSchema,
+  /** Valor recebido; padrão = preço do plano no ciclo */
+  amount: z
+    .string()
+    .trim()
+    .regex(/^\d{1,9}(\.\d{1,2})?$/, "Valor inválido")
+    .optional(),
+  note: z.string().trim().max(500).optional(),
+});
+export type PlatformActivateInput = z.infer<typeof platformActivateSchema>;
+
+export const platformTrialSchema = z.object({
+  days: z.coerce.number().int().min(1, "Mínimo 1 dia").max(90, "Máximo 90 dias"),
+});
+export type PlatformTrialInput = z.infer<typeof platformTrialSchema>;
+
+export const platformExemptSchema = z.object({ exempt: z.boolean() });
+export type PlatformExemptInput = z.infer<typeof platformExemptSchema>;
+
+export const platformSuspendSchema = z.object({
+  reason: z.string().trim().min(3, "Informe o motivo").max(500),
+});
+export type PlatformSuspendInput = z.infer<typeof platformSuspendSchema>;
+
+export interface PlatformCompanyDto {
+  id: string;
+  name: string;
+  slug: string;
+  document: string | null;
+  segment: string | null;
+  createdAt: string;
+  adminName: string | null;
+  adminEmail: string | null;
+  lastLoginAt: string | null;
+  usage: { users: number; clients: number; products: number; sales30d: number };
+  billingExempt: boolean;
+  suspendedReason: string | null;
+  access: AccessSummaryDto;
+}
+
+export interface PlatformPaymentDto {
+  id: string;
+  planName: string;
+  cycle: BillingCycle;
+  amount: string;
+  method: PlatformPaymentMethod;
+  periodStart: string;
+  periodEnd: string;
+  note: string | null;
+  recordedBy: string;
   createdAt: string;
 }
 

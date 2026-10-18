@@ -36,6 +36,8 @@ const TENANT_TABLES = [
   "ServiceOrder", "ServiceOrderItem", "ServiceOrderAttachment",
   // Fase 3
   "FiscalConfig", "FiscalDocument",
+  // Fase 8
+  "PlatformPayment",
 ];
 
 /**

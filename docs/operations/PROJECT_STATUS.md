@@ -16,6 +16,12 @@ que o site akyllagestao.com.br promete. Fases em ordem rígida (1 → 7).
 | 1F · `npm audit --omit=dev` = 0 (next 16, vitest major) (§1.5.1) | ✅ 2026-10-18 (0 em produção) |
 | 1G · CD real com health check (§1.3) | 🟡 2026-10-18: pipeline e guia prontos, CI corrigida. **Ligar** depende de escolher o provedor e configurar os secrets (`docs/operations/DEPLOY.md`) |
 
+**Fase 8 (Cobrança do SaaS)**: concluída em 2026-10-18. Inclui o teste
+grátis de 14 dias, a tolerância de 5 dias, o modo somente leitura e o
+painel do dono (`/plataforma`) com registro de pagamentos. Também removeu
+a autoativação gratuita de plano pela empresa (`docs/akylla/COBRANCA.md`).
+Pendente: Mercado Pago em produção (conta com CNPJ).
+
 **Distribuição (2026-10-18)**: instalação automatizada em VPS
 (`docs/operations/DEPLOY_VPS.md`; o proprietário escolheu a VPS da
 Hostinger) e aplicativo instalável no Windows (PWA). **VPS KVM 1

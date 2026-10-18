@@ -814,6 +814,8 @@ export interface TenantPlanDto {
   name: string;
   description: string | null;
   priceMonthly: string;
+  /** Fase 8: preço anual (2 meses grátis) */
+  priceYearly: string | null;
   durationDays: number;
   userLimit: number | null;
   clientLimit: number | null;
@@ -834,6 +836,7 @@ export interface TenantSubscriptionDto {
   companyId: string;
   planId: string;
   status: TenantSubscriptionStatus;
+  billingCycle: "MONTHLY" | "YEARLY";
   currentPeriodStart: string;
   currentPeriodEnd: string;
   cancelReason: string | null;

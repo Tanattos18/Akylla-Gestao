@@ -24,3 +24,13 @@ sudo -u "$APP_USER" \
   BOOTSTRAP_ADMIN_EMAIL="$EMAIL" BOOTSTRAP_ADMIN_PASSWORD="$PASS" \
   bash -c "cd '$APP_DIR' && set -a && source '$ENV_FILE' && set +a && npm run bootstrap:admin"
 unset PASS PASS2
+
+# Fase 8: a primeira conta criada vira a dona da plataforma (painel /plataforma).
+# A empresa criada aqui fica isenta de cobrança.
+grep -q '^PLATFORM_ADMIN_EMAILS=' "$ENV_FILE" || echo 'PLATFORM_ADMIN_EMAILS=' >> "$ENV_FILE"
+if grep -q '^PLATFORM_ADMIN_EMAILS=$' "$ENV_FILE"; then
+  sed -i "s|^PLATFORM_ADMIN_EMAILS=$|PLATFORM_ADMIN_EMAILS=${EMAIL,,}|" "$ENV_FILE"
+  systemctl restart akylla-api
+  echo "Você é o dono da plataforma: menu Administração › Plataforma."
+  echo "Ative a verificação em duas etapas em Configurações › Segurança (obrigatória para o painel)."
+fi

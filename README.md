@@ -64,7 +64,7 @@ o deploy): `https://app.akyllagestao.com.br`
 | Importação de clientes e produtos por CSV com prévia de erros | ✅ `/importacoes` |
 | Equipe vende e atende; o dono controla caixa, usuários e configurações | ✅ perfis ADMIN/MEMBER validados no servidor |
 | Cada empresa só acessa os próprios dados | ✅ no servidor **e** no banco (Row-Level Security do PostgreSQL) |
-| Planos Essencial / Profissional / Completo com limites | ✅ `/faturamento`: uso × limite, alerta em 80%, checkout Mercado Pago (sandbox) |
+| Planos Essencial / Profissional / Completo com limites | ✅ R$ 79,90 / 149,90 / 249,90 por mês (anual com 2 meses grátis), teste de 14 dias, somente leitura para inadimplente e painel do dono para ativar planos ([`COBRANCA.md`](docs/akylla/COBRANCA.md)) |
 | Perfis Comércio, Serviços e Híbrido | ✅ escolha guiada no cadastro (`/onboarding`), páginas `/para/comercio`, `/para/servicos`, `/para/hibrido` |
 | Comissões | ✅ `/comissoes`, `/profissionais`: regras por produto, categoria e profissional, cálculo no PDV e na OS, pagamento pelo caixa |
 | Crediário | ✅ `/crediario` + PDV: limite por cliente, parcelas calculadas no servidor, vencidas, recebimento pelo caixa |
@@ -149,6 +149,7 @@ PDV, estoque, caixa, financeiro, clientes e relatórios. Regras em
 | `/importacoes` | importar planilhas |
 | `/dashboard`, `/relatorios` | indicadores, exportação e impressão |
 | `/usuarios`, `/faturamento` | equipe e plano da empresa (admin) |
+| `/plataforma` | painel do dono: todas as empresas, pagamentos, teste, isenção e suspensão |
 
 Documentação da API: `/api/docs` (Swagger, gerada do código).
 
@@ -178,7 +179,7 @@ Documentação da API: `/api/docs` (Swagger, gerada do código).
 | Verificação | Resultado (2026-10-18) |
 |---|---|
 | `npm run validate` (lint, typecheck, testes, build, schema) | ✅ verde |
-| Testes de integração em PostgreSQL real | **719/719** (41 arquivos), incluindo isolamento por RLS |
+| Testes de integração em PostgreSQL real | **727/727** (42 arquivos), incluindo isolamento por RLS |
 | Cobertura de services/controllers da API | **93,7%** das linhas (CI falha se cair) |
 | E2E no navegador (Playwright) | **7 fluxos**: login; cliente; caixa → venda → NFC-e → fechamento; importação CSV; rota protegida; CNPJ no comprovante + busca global; agenda semana/mês |
 | Acessibilidade (axe, WCAG 2.1 AA) | **0 violações** em 36 telas |
@@ -203,6 +204,7 @@ Especificação completa em [`upgrade/Prompt_Mestre.md`](upgrade/Prompt_Mestre.m
 | **6** | Qualidade | cobertura na CI, E2E Playwright, OpenAPI em `/api/docs`, teste de contrato | ✅ |
 | **7** | Produto | dados da empresa no comprovante, uso do plano, busca global, agenda semana/mês, seeds por segmento, impressão de relatórios | ✅ |
 | **Extra** | Distribuição | instalação automatizada em VPS; aplicativo instalável no Windows (PWA) | ✅ |
+| **8** | Cobrança do SaaS | teste grátis de 14 dias, tolerância, somente leitura, painel do dono (`/plataforma`), 2FA em Configurações | ✅ (Mercado Pago em produção 🟡) |
 
 **Pendências do proprietário:**
 - VPS Hostinger KVM 1 (Ubuntu 24.04) **contratada**: falta apontar o
@@ -379,7 +381,7 @@ Arquivos Sem USO/  arquivo local de itens fora de uso (ignorado pelo Git)
 | [Checklist de implementação](docs/operations/IMPLEMENTATION_CHECKLIST.md) | progresso item a item |
 | [Deploy em VPS](docs/operations/DEPLOY_VPS.md) · [Deploy (outros provedores)](docs/operations/DEPLOY.md) · [Runbook](docs/operations/RUNBOOK.md) | colocar no ar e operar |
 | [API](docs/architecture/API.md) · [Banco](docs/architecture/DATABASE.md) · [Arquitetura](docs/architecture/ARCHITECTURE.md) | referência técnica |
-| [Comissões](docs/akylla/COMISSOES.md) · [Crediário](docs/akylla/CREDIARIO.md) · [OS](docs/akylla/ORDEM_DE_SERVICO.md) · [Fiscal](docs/akylla/FISCAL.md) · [Onboarding](docs/akylla/ONBOARDING.md) | regras de negócio dos módulos |
+| [Cobrança do SaaS](docs/akylla/COBRANCA.md) · [Comissões](docs/akylla/COMISSOES.md) · [Crediário](docs/akylla/CREDIARIO.md) · [OS](docs/akylla/ORDEM_DE_SERVICO.md) · [Fiscal](docs/akylla/FISCAL.md) · [Onboarding](docs/akylla/ONBOARDING.md) | regras de negócio dos módulos |
 | [Componentes e acessibilidade](docs/akylla/DESIGN_SYSTEM.md) | padrão visual e auditoria |
 | [Go/No-go para venda](docs/akylla/GO_NO_GO.md) · [Checklist pré-produção](docs/akylla/CHECKLIST_PRE_PRODUCAO.md) | critérios para o primeiro cliente pagante |
 | [Roteiro de evolução](upgrade/Prompt_Mestre.md) · [Referências no GitHub](upgrade/REFERENCIAS_GIT.md) | as 7 fases e repositórios de apoio |

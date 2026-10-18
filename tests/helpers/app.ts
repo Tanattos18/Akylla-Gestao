@@ -68,6 +68,8 @@ export async function resetDatabase(prisma: PrismaService): Promise<void> {
   await prisma.legalConsent.deleteMany();
   await prisma.passwordResetToken.deleteMany();
   await prisma.user.deleteMany();
+  // Fase 8: pagamentos da plataforma referenciam a empresa
+  await prisma.platformPayment.deleteMany();
   await prisma.companyModule.deleteMany();
   // venda referencia profissional (Restrict) — vendas já foram apagadas acima
   await prisma.professional.deleteMany();

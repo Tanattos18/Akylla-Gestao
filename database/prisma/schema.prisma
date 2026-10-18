@@ -272,6 +272,21 @@ enum SubscriptionStatus {
   CANCELLED
 }
 
+/// Fase 8 — ciclo de cobrança da assinatura do SaaS
+enum BillingCycle {
+  MONTHLY
+  YEARLY
+}
+
+/// Fase 8 — forma de pagamento registrada pelo dono da plataforma
+enum PlatformPaymentMethod {
+  PIX
+  BOLETO
+  CARD
+  MERCADO_PAGO
+  OTHER
+}
+
 enum TenantSubscriptionStatus {
   ACTIVE
   EXPIRED
@@ -292,6 +307,13 @@ model Company {
   /// Fase 7: telefone e endereço de uma linha para o comprovante
   phone     String?
   address   String?
+  /// Fase 8: fim do teste grátis (null + sem assinatura = isenta, ex.: empresa do dono)
+  trialEndsAt   DateTime?
+  /// Fase 8: isenta de cobrança (definido pelo dono da plataforma)
+  billingExempt Boolean   @default(false)
+  /// Fase 8: suspensão manual pelo dono (status INACTIVE)
+  suspendedAt     DateTime?
+  suspendedReason String?
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
   users     User[]
@@ -315,6 +337,7 @@ model Company {
   subscriptionPlans    SubscriptionPlan[]
   subscriptions        Subscription[]
   tenantSubscription   TenantSubscription?
+  platformPayments     PlatformPayment[]
   modules     CompanyModule[]
   importBatches ImportBatch[]
   legalConsents LegalConsent[]
@@ -1181,6 +1204,8 @@ model TenantPlan {
   nameKey     String   @unique
   description String?
   priceMonthly Decimal  @db.Decimal(12, 2)
+  /// Fase 8: preço anual (null = sem opção anual)
+  priceYearly  Decimal? @db.Decimal(12, 2)
   durationDays Int      @default(30)
   userLimit   Int?
   clientLimit Int?
@@ -1200,6 +1225,7 @@ model TenantSubscription {
   planId    String
   plan      TenantPlan             @relation(fields: [planId], references: [id], onDelete: Restrict)
   status    TenantSubscriptionStatus @default(ACTIVE)
+  billingCycle BillingCycle         @default(MONTHLY)
   currentPeriodStart DateTime
   currentPeriodEnd   DateTime
   cancelReason String?
@@ -1351,4 +1377,23 @@ model WhatsAppWebhookEvent {
 
   @@index([companyId, receivedAt])
   @@index([providerMessageId])
+}
+
+/// Fase 8 — pagamentos da assinatura do SaaS registrados pelo dono da
+/// plataforma (Pix, boleto, acordo) ou confirmados pelo gateway. Imutável.
+model PlatformPayment {
+  id          String                @id @default(cuid())
+  companyId   String
+  company     Company               @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  planName    String
+  cycle       BillingCycle
+  amount      Decimal               @db.Decimal(12, 2)
+  method      PlatformPaymentMethod
+  periodStart DateTime
+  periodEnd   DateTime
+  note        String?
+  recordedBy  String
+  createdAt   DateTime              @default(now())
+
+  @@index([companyId, createdAt])
 }

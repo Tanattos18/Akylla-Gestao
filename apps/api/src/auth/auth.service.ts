@@ -41,6 +41,11 @@ interface TwoFactorChallenge {
   expiresAt: number;
 }
 
+/** Fase 8: dono da plataforma (e-mail em PLATFORM_ADMIN_EMAILS). */
+export function isPlatformAdmin(email: string): boolean {
+  return env.PLATFORM_ADMIN_EMAILS.includes(email.trim().toLowerCase());
+}
+
 function slugify(value: string): string {
   return value
     .normalize("NFD")
@@ -114,6 +119,8 @@ export class AuthService {
         email: user.email,
         role: user.role,
         status: user.status,
+        isPlatformAdmin: isPlatformAdmin(user.email),
+        twoFactorEnabled: user.twoFactorEnabled,
       },
       company: {
         id: user.company.id,
@@ -144,7 +151,13 @@ export class AuthService {
 
       const slug = await this.generateUniqueSlug(tx, input.companyName);
       const company = await tx.company.create({
-        data: { name: input.companyName, slug, status: "PENDING_VERIFICATION" },
+        data: {
+          name: input.companyName,
+          slug,
+          status: "PENDING_VERIFICATION",
+          // Fase 8: teste grátis a partir do cadastro (0 = sem teste)
+          trialEndsAt: new Date(Date.now() + env.TRIAL_DAYS * 86_400_000),
+        },
       });
 
       const passwordHash = await bcrypt.hash(input.password, BCRYPT_ROUNDS);
@@ -251,7 +264,15 @@ export class AuthService {
     const token = await this.createSession(user.id, request);
     return {
       token,
-      user: { id: user.id, name: user.name, email: user.email, role: user.role, status: user.status },
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+        isPlatformAdmin: isPlatformAdmin(user.email),
+        twoFactorEnabled: user.twoFactorEnabled,
+      },
       company: {
         id: user.company.id,
         name: user.company.name,
@@ -540,6 +561,8 @@ export class AuthService {
         email: user.email,
         role: user.role,
         status: user.status,
+        isPlatformAdmin: isPlatformAdmin(user.email),
+        twoFactorEnabled: user.twoFactorEnabled,
       },
       company: {
         id: user.company.id,
@@ -601,6 +624,8 @@ export class AuthService {
         email: user.email,
         role: user.role,
         status: user.status,
+        isPlatformAdmin: isPlatformAdmin(user.email),
+        twoFactorEnabled: user.twoFactorEnabled,
       },
       company: {
         id: user.company.id,

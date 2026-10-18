@@ -13,6 +13,26 @@ import {
   type TenantSubscriptionDto,
 } from "../../lib/types";
 import { useDialog } from "../../components/ui/Dialog";
+import { accessStatusLabels, type AccessSummaryDto } from "@petflow/shared";
+
+/** WhatsApp de vendas (Fase 8): contratação por proposta até o Mercado Pago entrar em produção */
+const SALES_WHATSAPP = process.env.NEXT_PUBLIC_SALES_WHATSAPP || "5562981517002";
+
+function salesLink(companyName: string, plan?: TenantPlanDto, cycle?: "MONTHLY" | "YEARLY"): string {
+  const text = plan
+    ? `Olá! Quero contratar o plano ${plan.name} (${cycle === "YEARLY" ? "anual" : "mensal"}) do Akylla Gestão para a empresa ${companyName}.`
+    : `Olá! Quero regularizar a assinatura do Akylla Gestão da empresa ${companyName}.`;
+  return `https://wa.me/${SALES_WHATSAPP}?text=${encodeURIComponent(text)}`;
+}
+
+const accessBadge: Record<AccessSummaryDto["status"], string> = {
+  EXEMPT: "bg-slate-100 text-slate-700",
+  TRIAL: "bg-sky-50 text-sky-800",
+  ACTIVE: "bg-emerald-50 text-emerald-800",
+  GRACE: "bg-amber-50 text-amber-800",
+  READ_ONLY: "bg-red-50 text-red-800",
+  SUSPENDED: "bg-red-50 text-red-800",
+};
 
 interface PlansResponse {
   items: TenantPlanDto[];
@@ -26,6 +46,7 @@ export default function FaturamentoPage() {
   const [plans, setPlans] = useState<TenantPlanDto[]>([]);
   const [subscription, setSubscription] = useState<TenantSubscriptionDto | null>(null);
   const [planUsage, setPlanUsage] = useState<PlanUsageDto | null>(null);
+  const [access, setAccess] = useState<AccessSummaryDto | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -48,6 +69,7 @@ export default function FaturamentoPage() {
       }
       const usage = await api<PlanUsageDto>("/api/billing/usage");
       setPlanUsage(usage);
+      setAccess(await api<AccessSummaryDto>("/api/billing/access"));
       setError(null);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Falha ao carregar o faturamento.");
@@ -68,43 +90,6 @@ export default function FaturamentoPage() {
   useEffect(() => {
     if (session) void load();
   }, [session, load]);
-
-  async function handleChoose(plan: TenantPlanDto) {
-    if (!await dialog.confirm(`Assinar o plano "${plan.name}" por ${formatBrl(plan.priceMonthly)}?`)) {
-      return;
-    }
-    setBusy(true);
-    setNotice(null);
-    setError(null);
-    try {
-      await api("/api/billing/subscription", {
-        method: "PUT",
-        body: JSON.stringify({ planId: plan.id }),
-      });
-      setNotice(subscription ? "Plano atualizado." : "Assinatura criada.");
-      await load();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Falha ao assinar o plano.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function handleRenew() {
-    if (!await dialog.confirm("Renovar a assinatura no Akylla Gestão (inicia novo período)?")) return;
-    setBusy(true);
-    setNotice(null);
-    setError(null);
-    try {
-      await api("/api/billing/subscription/renew", { method: "POST" });
-      setNotice("Assinatura renovada.");
-      await load();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Falha ao renovar.");
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function handleCancel() {
     const reason = await dialog.prompt({ title: "Cancelar assinatura do Akylla", label: "Motivo do cancelamento (opcional)", optional: true, maxLength: 500, danger: true, confirmLabel: "Cancelar assinatura" });
@@ -170,12 +155,41 @@ export default function FaturamentoPage() {
         <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">
           Situação atual
         </h3>
+        {access && (
+          <div className="mb-4 flex flex-wrap items-center gap-3 rounded-md border border-slate-100 bg-slate-50 p-3 text-sm">
+            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${accessBadge[access.status]}`}>
+              {accessStatusLabels[access.status]}
+            </span>
+            <span className="text-slate-700">
+              {access.status === "TRIAL" && `Teste grátis até ${formatDate(access.trialEndsAt!)} (${access.daysLeft} dia(s)).`}
+              {access.status === "ACTIVE" && `Pago até ${formatDate(access.paidUntil!)}.`}
+              {access.status === "GRACE" &&
+                `Venceu. Você ainda pode usar tudo por ${access.daysLeft} dia(s); depois o sistema fica somente para consulta.`}
+              {access.status === "READ_ONLY" &&
+                "Somente leitura: você consulta tudo, mas não registra vendas nem cadastros até regularizar. Nenhum dado foi apagado."}
+              {access.status === "EXEMPT" && "Empresa isenta de cobrança."}
+            </span>
+            {(access.status === "TRIAL" || access.status === "GRACE" || access.status === "READ_ONLY") && (
+              <a
+                href={salesLink(session.company.name)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-auto rounded-md bg-primary-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-800"
+              >
+                Contratar / regularizar
+              </a>
+            )}
+          </div>
+        )}
         {subscription ? (
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <p className="text-xs uppercase text-slate-500">Plano</p>
               <p className="text-sm font-medium text-slate-800">
-                {subscription.plan.name} · {formatBrl(subscription.plan.priceMonthly)}/mês
+                {subscription.plan.name} ·{" "}
+                {subscription.billingCycle === "YEARLY"
+                  ? `${formatBrl(subscription.plan.priceYearly)}/ano`
+                  : `${formatBrl(subscription.plan.priceMonthly)}/mês`}
               </p>
             </div>
             <div>
@@ -205,14 +219,14 @@ export default function FaturamentoPage() {
             )}
             {isAdmin && (
               <div className="flex flex-wrap gap-3 sm:col-span-2">
-                <button
-                  type="button"
-                  onClick={() => void handleRenew()}
-                  disabled={busy}
-                  className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60"
+                <a
+                  href={salesLink(session.company.name, subscription.plan, subscription.billingCycle)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800"
                 >
-                  {busy ? "Processando..." : "Renovar"}
-                </button>
+                  Renovar pelo WhatsApp
+                </a>
                 {subscription.status !== "CANCELLED" && (
                   <button
                     type="button"
@@ -228,7 +242,7 @@ export default function FaturamentoPage() {
           </div>
         ) : (
           <p className="text-sm text-slate-500">
-            Nenhuma assinatura ativa para esta empresa. Escolha um plano abaixo.
+            Nenhuma assinatura contratada. Escolha um plano abaixo e fale com a Akylla para contratar.
           </p>
         )}
       </div>
@@ -316,19 +330,35 @@ export default function FaturamentoPage() {
                   {formatBrl(plan.priceMonthly)}
                   <span className="text-sm font-normal text-slate-500">/mês</span>
                 </p>
-                <p className="mt-1 text-xs text-slate-500">Período de {plan.durationDays} dias</p>
+                {plan.priceYearly && (
+                  <p className="mt-1 text-xs text-slate-600">
+                    ou {formatBrl(plan.priceYearly)}/ano <span className="font-medium text-emerald-700">(2 meses grátis)</span>
+                  </p>
+                )}
                 {plan.description && (
                   <p className="mt-2 text-sm text-slate-500">{plan.description}</p>
                 )}
-                {isAdmin && !isCurrent && (
-                  <button
-                    type="button"
-                    onClick={() => void handleChoose(plan)}
-                    disabled={busy}
-                    className="mt-4 rounded-md bg-primary-700 px-3 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60"
-                  >
-                    {busy ? "Salvando..." : subscription ? "Trocar plano" : "Assinar"}
-                  </button>
+                {isAdmin && (
+                  <div className="mt-auto flex flex-wrap gap-2 pt-4">
+                    <a
+                      href={salesLink(session.company.name, plan, "MONTHLY")}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-md bg-primary-700 px-3 py-2 text-sm font-medium text-white hover:bg-primary-800"
+                    >
+                      {isCurrent ? "Renovar mensal" : "Contratar mensal"}
+                    </a>
+                    {plan.priceYearly && (
+                      <a
+                        href={salesLink(session.company.name, plan, "YEARLY")}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-md border border-primary-600 px-3 py-2 text-sm font-medium text-primary-800 hover:bg-primary-50"
+                      >
+                        Anual
+                      </a>
+                    )}
+                  </div>
                 )}
               </div>
             );

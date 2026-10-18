@@ -30,3 +30,6 @@ process.env.WHATSAPP_COUNTRY_CODE = "55";
 // Fiscal (Fase 3): chave de cifra e segredo de webhook só de TESTE
 process.env.FISCAL_ENCRYPTION_KEY = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
 process.env.FISCAL_WEBHOOK_SECRET = "fiscal-test-webhook-secret";
+// Fase 8: dono da plataforma nos testes (painel /api/platform)
+process.env.PLATFORM_ADMIN_EMAILS = "dono@akylla.test";
+process.env.TRIAL_DAYS = "14";
