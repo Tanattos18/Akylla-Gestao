@@ -15,6 +15,7 @@ import type {
 } from "@petflow/shared";
 import type { AuthContext } from "../common/decorators/auth.decorator";
 import { lockOpenCashSession } from "../cash/cash-session.helpers";
+import { CommissionsService } from "../commissions/commissions.service";
 
 const saleSelect = {
   id: true,
@@ -29,6 +30,7 @@ const saleSelect = {
   createdAt: true,
   cancelledAt: true,
   cancelReason: true,
+  professional: { select: { id: true, name: true } },
   createdBy: { select: { id: true, name: true } },
   cancelledBy: { select: { id: true, name: true } },
   client: { select: { id: true, name: true } },
@@ -79,13 +81,17 @@ interface LockedProduct {
   sku: string | null;
   unit: ProductUnit;
   status: string;
+  categoryId: string | null;
   salePrice: Prisma.Decimal;
   stockQuantity: Prisma.Decimal;
 }
 
 @Injectable()
 export class SalesService {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(CommissionsService) private readonly commissions: CommissionsService,
+  ) {}
 
   async create(auth: AuthContext, input: CreateSaleInput) {
     const quantities = new Map<string, Prisma.Decimal>();
@@ -121,11 +127,16 @@ export class SalesService {
           }
         }
 
+        // Fase 2 · 2.1: profissional da venda (leitura simples, antes dos locks)
+        if (input.professionalId) {
+          await this.commissions.assertSaleProfessional(tx, auth, input.professionalId);
+        }
+
         const products = new Map<string, LockedProduct>();
 
         for (const productId of sortedProductIds) {
           const rows = await tx.$queryRaw<LockedProduct[]>`
-            SELECT id, name, sku, unit, status, "salePrice", "stockQuantity"
+            SELECT id, name, sku, unit, status, "categoryId", "salePrice", "stockQuantity"
             FROM "Product"
             WHERE id = ${productId} AND "companyId" = ${auth.companyId}
             FOR UPDATE`;
@@ -179,6 +190,7 @@ export class SalesService {
             companyId: auth.companyId,
             receiptCode,
             clientId: input.clientId ?? null,
+            professionalId: input.professionalId ?? null,
             clientRequestId: input.clientRequestId ?? null,
             subtotal,
             discount,
@@ -235,6 +247,29 @@ export class SalesService {
             createdByUserId: auth.userId,
           },
         });
+
+        // Fase 2 · 2.1: comissão calculada no servidor, na mesma transação.
+        // Todas as formas de pagamento atuais liquidam na hora (paidNow).
+        if (input.professionalId) {
+          await this.commissions.createForSale(tx, auth, {
+            id: sale.id,
+            receiptCode,
+            subtotal,
+            total,
+            professionalId: input.professionalId,
+            paidNow: true,
+            lines: sale.items.map((item) => {
+              const product = products.get(item.productId);
+              return {
+                saleItemId: item.id,
+                productId: item.productId,
+                categoryId: product?.categoryId ?? null,
+                productName: item.productName,
+                lineSubtotal: item.subtotal,
+              };
+            }),
+          });
+        }
 
         return formatSale(sale);
       });
@@ -386,6 +421,9 @@ export class SalesService {
           createdByUserId: auth.userId,
         },
       });
+
+      // Fase 2 · 2.1: comissões da venda canceladas/estornadas (auditado)
+      await this.commissions.cancelForSale(tx, auth, sale.id, sale.receiptCode, input.reason);
 
       const cancelled = await tx.sale.findFirstOrThrow({
         where: { id: sale.id },

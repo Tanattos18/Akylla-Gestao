@@ -32,6 +32,10 @@ export const TENANT_MODELS: ReadonlySet<string> = new Set([
   "WhatsAppTemplate",
   "WhatsAppConsent",
   "WhatsAppMessage",
+  // Fase 2 · 2.1
+  "Professional",
+  "CommissionRule",
+  "Commission",
 ]);
 
 /** Operações cujo `where` aceita filtros (permite injeção via AND). */

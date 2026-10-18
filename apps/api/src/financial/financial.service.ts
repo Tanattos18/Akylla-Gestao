@@ -164,6 +164,9 @@ export class FinancialService {
     if (entry.status !== "OPEN") {
       throw new ConflictException("Apenas títulos em aberto podem ser editados");
     }
+    if (entry.origin === "COMMISSION" || entry.origin === "COMMISSION_REVERSAL") {
+      throw new ConflictException("Título de comissão: o valor é calculado pelo sistema e não pode ser editado");
+    }
 
     await this.validateRelations(auth, {
       clientId: input.clientId !== undefined ? input.clientId || null : entry.clientId,
@@ -208,12 +211,21 @@ export class FinancialService {
         "liquidar títulos",
       );
 
+      const paidAt = new Date();
       const updated = await tx.financialEntry.updateMany({
         where: { id: entry.id, status: "OPEN" },
-        data: { status: "PAID", paidAt: new Date() },
+        data: { status: "PAID", paidAt },
       });
       if (updated.count === 0) {
         throw new ConflictException("Título já liquidado ou cancelado");
+      }
+
+      // Fase 2 · 2.1: título de comissão liquidado → comissão paga
+      if (entry.origin === "COMMISSION" && entry.originId) {
+        await tx.commission.updateMany({
+          where: { id: entry.originId, companyId: auth.companyId, status: "RELEASED" },
+          data: { status: "PAID", paidAt },
+        });
       }
 
       const movement = await tx.cashMovement.create({
@@ -287,6 +299,14 @@ export class FinancialService {
         throw new ConflictException("Título já estornado ou cancelado");
       }
 
+      // Fase 2 · 2.1: estorno do pagamento da comissão → volta a liberada
+      if (entry.origin === "COMMISSION" && entry.originId) {
+        await tx.commission.updateMany({
+          where: { id: entry.originId, companyId: auth.companyId, status: "PAID" },
+          data: { status: "RELEASED", paidAt: null },
+        });
+      }
+
       const reversed = await tx.cashMovement.updateMany({
         where: { id: movement.id, reversedAt: null },
         data: {
@@ -333,6 +353,9 @@ export class FinancialService {
     }
     if (entry.status !== "OPEN") {
       throw new ConflictException("Apenas títulos em aberto podem ser cancelados");
+    }
+    if (entry.origin === "COMMISSION") {
+      throw new ConflictException("Título de comissão: cancele a venda de origem (a comissão é cancelada junto)");
     }
 
     const updated = await this.prisma.financialEntry.updateMany({

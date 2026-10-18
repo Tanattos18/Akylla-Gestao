@@ -28,6 +28,8 @@ const TENANT_TABLES = [
   "StockMovement", "Subscription", "SubscriptionPlan", "Supplier", "TenantSubscription", "User",
   "WhatsAppConfig", "WhatsAppConsent", "WhatsAppMessage", "WhatsAppTemplate", "WhatsAppWebhookEvent",
   "Company",
+  // Fase 2 · 2.1
+  "Professional", "CommissionRule", "Commission",
 ];
 
 /**
@@ -66,7 +68,7 @@ afterAll(async () => {
 });
 
 describe("Políticas no banco", () => {
-  it("RLS habilitada e FORÇADA nas 25 tabelas (inclusive para o dono)", async () => {
+  it("RLS habilitada e FORÇADA em todas as tabelas com tenant (inclusive para o dono)", async () => {
     const rows = await system.$queryRaw<{ relname: string; relrowsecurity: boolean; relforcerowsecurity: boolean }[]>`
       SELECT relname, relrowsecurity, relforcerowsecurity FROM pg_class
       WHERE relnamespace = 'public'::regnamespace AND relkind = 'r'`;

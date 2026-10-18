@@ -154,6 +154,8 @@ export interface SaleDto {
   createdBy: { id: string; name: string };
   cancelledBy: { id: string; name: string } | null;
   client: { id: string; name: string } | null;
+  /** Fase 2 · 2.1: profissional/vendedor (comissão) */
+  professional?: { id: string; name: string } | null;
   items: SaleItemDto[];
 }
 
@@ -905,7 +907,8 @@ export type BusinessModule =
   | "APPOINTMENTS"
   | "SERVICES"
   | "WHATSAPP"
-  | "SUBSCRIPTIONS";
+  | "SUBSCRIPTIONS"
+  | "COMMISSIONS";
 
 export type CompanyModuleStatus = "ACTIVE" | "DISABLED";
 
@@ -952,4 +955,75 @@ export interface ImportBatchDto {
   errorCount: number;
   createdByName: string;
   createdAt: string;
+}
+
+// Fase 2 · 2.1 — Comissões
+
+export interface ProfessionalDto {
+  id: string;
+  name: string;
+  document: string | null;
+  commissionDefault: string | null;
+  status: "ACTIVE" | "INACTIVE";
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ReleasePolicy = "ON_SALE" | "ON_PAYMENT" | "SPLIT_50_50";
+export type CommissionStatus = "PENDING" | "RELEASED" | "PAID" | "CANCELLED";
+
+export interface CommissionRuleDto {
+  id: string;
+  percentage: string;
+  releasePolicy: ReleasePolicy;
+  active: boolean;
+  createdAt: string;
+  professional: { id: string; name: string } | null;
+  product: { id: string; name: string } | null;
+  category: { id: string; name: string } | null;
+}
+
+export interface CommissionLineDto {
+  saleItemId: string;
+  productName: string;
+  base: string;
+  percentage: string;
+  amount: string;
+  ruleId: string | null;
+  source: string;
+}
+
+export interface CommissionDto {
+  id: string;
+  baseAmount: string;
+  percentage: string;
+  amount: string;
+  releasePolicy: ReleasePolicy;
+  status: CommissionStatus;
+  lines: CommissionLineDto[];
+  releasedAt: string | null;
+  paidAt: string | null;
+  cancelledAt: string | null;
+  cancelReason: string | null;
+  createdAt: string;
+  professional: { id: string; name: string };
+  sale: { id: string; receiptCode: string; total: string; createdAt: string } | null;
+}
+
+export interface CommissionListDto extends Paginated<CommissionDto> {
+  totals: { amount: string; baseAmount: string };
+}
+
+export interface CommissionSummaryDto {
+  items: Array<{
+    professionalId: string;
+    name: string;
+    pending: string;
+    released: string;
+    paid: string;
+    cancelled: string;
+    toPay: string;
+    count: number;
+  }>;
+  totals: { pending: string; released: string; paid: string; cancelled: string };
 }

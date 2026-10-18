@@ -6,6 +6,69 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-18 - Fase 2 · 2.1: Comissões
+
+Primeiro módulo "em breve" do site entregue. As regras foram escritas antes
+do código em `docs/akylla/COMISSOES.md`, com OCA/commission e ERPNext
+estudados só como referência (AGPL/GPL, sem copiar código).
+
+### Adicionado
+
+- **Modelos:** `Professional`, `CommissionRule`, `Commission` e
+  `Sale.professionalId`; enums `ReleasePolicy`, `CommissionStatus`;
+  `FinancialOrigin` ganhou `COMMISSION` e `COMMISSION_REVERSAL`;
+  `BusinessModule` ganhou `COMMISSIONS`. Migration aditiva
+  `20261018150000_commissions`, já com RLS nas 3 tabelas novas, conforme
+  a regra do AGENTS.
+- **Cálculo no servidor** (`commission-calculator.ts`, função pura):
+  - o desconto da venda é rateado proporcionalmente;
+  - precedência: produto (do profissional > geral) → categoria → regra do
+    profissional → padrão do profissional → regra geral;
+  - o total é arredondado uma vez e as linhas fecham exatamente nele.
+- **Venda:** `professionalId` opcional no PDV. A comissão é calculada e
+  liberada na mesma transação, gerando uma conta a pagar.
+- **Pagamento:** usa o fluxo do financeiro (exige caixa aberto e gera
+  saída no caixa), com sincronia nos dois sentidos (liquidar e estornar).
+  Títulos de comissão não podem ser editados nem cancelados avulsos.
+- **Cancelamento da venda:** comissão não paga → cancelada junto com a
+  conta a pagar; já paga → cancelada e é gerada uma conta a receber do
+  profissional (estorno auditado).
+- **API:** `/api/professionals`, `/api/commission-rules` e
+  `/api/commissions` (lista com totais, `summary` por profissional,
+  `release`, `pay`).
+- **Telas:**
+  - `/profissionais`;
+  - `/comissoes` (fechamento do período por profissional, lista com itens,
+    liberar e pagar);
+  - `/comissoes/regras`;
+  - seletor de profissional no PDV, profissional no detalhe da venda,
+    menu e card da home.
+- **Testes:** `tests/integration/commissions.test.ts` (19).
+
+### Alterado
+
+- `tests/helpers/app.ts` (`resetDatabase`) apaga as tabelas novas na ordem
+  das FKs; `company-modules.test.ts` agora espera 6 módulos;
+  `rls.test.ts` cobre as 28 tabelas.
+- `FinancialService`: sincronia com comissões e bloqueio de edição e
+  cancelamento de títulos de comissão.
+- Guard ORM de tenant inclui os 3 modelos novos.
+
+### Bug evitado durante a implementação
+
+- Arredondar linha a linha gerava um centavo a mais (3 × R$ 6,67 a 10% =
+  R$ 2,01). O total passou a ser arredondado uma vez só, com o resto de
+  centavos lançado no último item; há teste para isso.
+
+### Verificação
+
+- `npm run validate` verde: lint · typecheck · **649/649** (35 arquivos)
+  · build · db:validate. `check:migrations` sem drift.
+- Teste no navegador com servidores reais (banco de dev): venda de
+  R$ 160 com desconto de R$ 10 e regra de categoria de 30% → comissão de
+  **R$ 45,00** em `/comissoes`, com itens detalhados; pagamento → "Paga" e
+  fechamento atualizado; seletor de profissional presente no PDV.
+
 ## [Akylla Gestão] - 2026-10-18 - Fase 1 · 1G: CI corrigida + pipeline de deploy pronto
 
 ### Corrigido: a CI estava vermelha desde N1

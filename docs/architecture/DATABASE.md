@@ -1,5 +1,27 @@
 # Banco de dados — diretrizes e modelo atual
 
+## Modelos implementados (Fase 2 · 2.1 — Comissões)
+
+Migration: `20261018150000_commissions` (aditiva + RLS nas 3 tabelas novas).
+
+| Modelo | Campos principais | Restrições/índices |
+|---|---|---|
+| `Professional` | `companyId`, `name`, `nameKey`, `document?`, `commissionDefault Decimal(5,2)?`, `status RecordStatus` | único `[companyId, nameKey]`; índice `[companyId, status]` |
+| `CommissionRule` | `companyId`, `professionalId?`, `productId?`, `categoryId?`, `percentage Decimal(5,2)`, `releasePolicy`, `active` | índices `[companyId, active]`, `[companyId, professionalId]` |
+| `Commission` | `companyId`, `saleId?`, `professionalId`, `baseAmount`, `percentage Decimal(5,2)` (efetivo), `amount`, `releasePolicy`, `status`, `lines Json`, `releasedAt?`, `paidAt?`, `cancelledAt?`, `cancelReason?`, `financialEntryId?` (único), `reversalEntryId?` (único) | único `[saleId, professionalId]`; índices `[companyId, status, createdAt]`, `[companyId, professionalId, createdAt]` |
+
+Todas as FKs são `Restrict`. Profissional, regra e comissão nunca são
+apagados (status/`active`/cancelamento).
+
+Alterações aditivas:
+
+| Modelo/enum | Alteração |
+|---|---|
+| `Sale` | `professionalId?` (FK `Restrict`) + índice `[companyId, professionalId]` |
+| `FinancialOrigin` | `COMMISSION`, `COMMISSION_REVERSAL` |
+| `BusinessModule` | `COMMISSIONS` |
+| enums novos | `ReleasePolicy` (`ON_SALE`, `ON_PAYMENT`, `SPLIT_50_50`), `CommissionStatus` (`PENDING`, `RELEASED`, `PAID`, `CANCELLED`) |
+
 ## Row-Level Security (Fase 1 · 1E)
 
 Migration: `20261018120000_row_level_security`. Detalhes e limites em

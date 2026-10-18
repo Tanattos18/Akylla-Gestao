@@ -131,6 +131,25 @@ enum FinancialOrigin {
   MANUAL
   SALE
   SUBSCRIPTION
+  // Fase 2 · 2.1: comissão a pagar ao profissional
+  COMMISSION
+  // Fase 2 · 2.1: estorno de comissão já paga (a receber do profissional)
+  COMMISSION_REVERSAL
+}
+
+/// Fase 2 · 2.1 — quando a comissão fica devida
+enum ReleasePolicy {
+  ON_SALE
+  ON_PAYMENT
+  SPLIT_50_50
+}
+
+/// Fase 2 · 2.1 — ciclo de vida da comissão
+enum CommissionStatus {
+  PENDING
+  RELEASED
+  PAID
+  CANCELLED
 }
 
 enum PetSpecies {
@@ -258,6 +277,9 @@ model Company {
   modules     CompanyModule[]
   importBatches ImportBatch[]
   legalConsents LegalConsent[]
+  professionals   Professional[]
+  commissionRules CommissionRule[]
+  commissions     Commission[]
 }
 
 enum BusinessModule {
@@ -266,6 +288,7 @@ enum BusinessModule {
   SERVICES
   WHATSAPP
   SUBSCRIPTIONS
+  COMMISSIONS
 }
 
 enum ImportType {
@@ -388,6 +411,7 @@ model Category {
   updatedAt   DateTime     @updatedAt
   products    Product[]
   financialEntries FinancialEntry[]
+  commissionRules CommissionRule[]
 
   @@unique([companyId, nameKey])
   @@index([companyId, status])
@@ -567,6 +591,7 @@ model Product {
   updatedAt     DateTime      @updatedAt
   movements     StockMovement[]
   saleItems     SaleItem[]
+  commissionRules CommissionRule[]
 
   @@unique([companyId, sku])
   @@unique([companyId, barcode])
@@ -614,15 +639,98 @@ model Sale {
   cancelReason      String?
   cashSessionId     String?
   cashSession       CashSession?     @relation(fields: [cashSessionId], references: [id], onDelete: SetNull)
+  // Fase 2 · 2.1: profissional/vendedor responsável (base da comissão)
+  professionalId    String?
+  professional      Professional?    @relation(fields: [professionalId], references: [id], onDelete: Restrict)
   createdAt         DateTime         @default(now())
   items             SaleItem[]
   cashMovements     CashMovement[]
+  commissions       Commission[]
 
   @@unique([companyId, receiptCode])
   @@unique([companyId, clientRequestId])
   @@index([companyId, createdAt])
   @@index([companyId, status])
   @@index([companyId, clientId])
+  @@index([companyId, professionalId])
+}
+
+/// Fase 2 · 2.1 — profissional que recebe comissão (vendedor, tosador,
+/// cabeleireiro…). Não é usuário do sistema; nunca é apagado (status).
+model Professional {
+  id                String       @id @default(cuid())
+  companyId         String
+  company           Company      @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  name              String
+  nameKey           String
+  document          String?
+  /// Percentual padrão quando nenhuma regra se aplica (0–100)
+  commissionDefault Decimal?     @db.Decimal(5, 2)
+  status            RecordStatus @default(ACTIVE)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  rules             CommissionRule[]
+  commissions       Commission[]
+  sales             Sale[]
+
+  @@unique([companyId, nameKey])
+  @@index([companyId, status])
+}
+
+/// Fase 2 · 2.1 — regra de comissão. Alvo opcional: profissional e/ou
+/// produto ou categoria. Precedência (mais específica vence): produto >
+/// categoria > regra só do profissional > `commissionDefault` > regra geral.
+model CommissionRule {
+  id             String        @id @default(cuid())
+  companyId      String
+  company        Company       @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  professionalId String?
+  professional   Professional? @relation(fields: [professionalId], references: [id], onDelete: Restrict)
+  productId      String?
+  product        Product?      @relation(fields: [productId], references: [id], onDelete: Restrict)
+  categoryId     String?
+  category       Category?     @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  percentage     Decimal       @db.Decimal(5, 2)
+  releasePolicy  ReleasePolicy @default(ON_SALE)
+  active         Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([companyId, active])
+  @@index([companyId, professionalId])
+}
+
+/// Fase 2 · 2.1 — comissão de UM profissional em UMA venda (soma das
+/// linhas; o detalhamento por item fica em `lines`). Valores calculados
+/// no servidor; histórico imutável (cancelamento/estorno auditados).
+model Commission {
+  id               String           @id @default(cuid())
+  companyId        String
+  company          Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  saleId           String?
+  sale             Sale?            @relation(fields: [saleId], references: [id], onDelete: Restrict)
+  professionalId   String
+  professional     Professional     @relation(fields: [professionalId], references: [id], onDelete: Restrict)
+  baseAmount       Decimal          @db.Decimal(12, 2)
+  /// Percentual efetivo (amount / base), para exibição
+  percentage       Decimal          @db.Decimal(5, 2)
+  amount           Decimal          @db.Decimal(12, 2)
+  releasePolicy    ReleasePolicy    @default(ON_SALE)
+  status           CommissionStatus @default(PENDING)
+  /// [{ saleItemId, productName, base, percentage, amount, ruleId, source }]
+  lines            Json
+  releasedAt       DateTime?
+  paidAt           DateTime?
+  cancelledAt      DateTime?
+  cancelReason     String?
+  financialEntryId String?          @unique
+  reversalEntryId  String?          @unique
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@unique([saleId, professionalId])
+  @@index([companyId, status, createdAt])
+  @@index([companyId, professionalId, createdAt])
 }
 
 model SaleItem {

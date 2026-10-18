@@ -23,6 +23,9 @@ export async function createTestApp(): Promise<{
 }
 
 export async function resetDatabase(prisma: PrismaService): Promise<void> {
+  // Fase 2 · 2.1: comissão referencia venda/profissional (Restrict)
+  await prisma.commission.deleteMany();
+  await prisma.commissionRule.deleteMany();
   await prisma.whatsAppWebhookEvent.deleteMany();
   await prisma.whatsAppMessageAttempt.deleteMany();
   await prisma.whatsAppMessage.deleteMany();
@@ -55,6 +58,8 @@ export async function resetDatabase(prisma: PrismaService): Promise<void> {
   await prisma.passwordResetToken.deleteMany();
   await prisma.user.deleteMany();
   await prisma.companyModule.deleteMany();
+  // venda referencia profissional (Restrict) — vendas já foram apagadas acima
+  await prisma.professional.deleteMany();
   await prisma.company.deleteMany();
 }
 

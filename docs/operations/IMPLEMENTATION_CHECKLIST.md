@@ -4,6 +4,19 @@
 > Este checklist cobre apenas a era do Akylla Gestão. O histórico
 > anterior à adaptação está preservado no Git.
 
+## Fase 2 — Retenção (`upgrade/Prompt_Mestre.md` §4) — em andamento
+
+### 2.1 · Comissões (2026-10-18)
+
+- [x] Regras escritas antes do código (`docs/akylla/COMISSOES.md`), referências OCA/ERPNext só estudadas
+- [x] Modelos `Professional`, `CommissionRule`, `Commission` + `Sale.professionalId`; migration aditiva com RLS
+- [x] Cálculo no servidor: rateio do desconto, precedência produto > categoria > profissional > padrão > geral, arredondamento único
+- [x] Liberação gera conta a pagar (`COMMISSION`); pagamento via financeiro (caixa aberto); sincronia nos dois sentidos
+- [x] Cancelamento da venda: comissão cancelada; se já paga, conta a receber (`COMMISSION_REVERSAL`)
+- [x] Módulo opcional `COMMISSIONS` (403 desativado); ADMIN para escrita; isolamento A×B
+- [x] Telas `/profissionais`, `/comissoes` (fechamento por profissional, itens, liberar/pagar), `/comissoes/regras`; profissional no PDV e no detalhe da venda
+- [x] `tests/integration/commissions.test.ts` (19)
+
 ## Fase 1 — Confiabilidade (`upgrade/Prompt_Mestre.md` §4) — em andamento
 
 ### 1A · Backup com restore testado (2026-10-18)

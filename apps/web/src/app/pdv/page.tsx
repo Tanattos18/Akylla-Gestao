@@ -14,6 +14,7 @@ import {
   type Paginated,
   type PaymentMethod,
   type ProductDto,
+  type ProfessionalDto,
   type SaleDto,
 } from "../../lib/types";
 import { Receipt } from "../../components/Receipt";
@@ -50,6 +51,9 @@ export default function PdvPage() {
   const [paymentNote, setPaymentNote] = useState("");
   const [clients, setClients] = useState<ClientDto[]>([]);
   const [clientId, setClientId] = useState("");
+  // Fase 2 · 2.1: profissional da venda (lista vazia = módulo desativado ou sem cadastro)
+  const [professionals, setProfessionals] = useState<ProfessionalDto[]>([]);
+  const [professionalId, setProfessionalId] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [completedSale, setCompletedSale] = useState<SaleDto | null>(null);
@@ -79,6 +83,11 @@ export default function PdvPage() {
     })
       .then((data) => setClients(data.items))
       .catch(() => setClients([]));
+    api<Paginated<ProfessionalDto>>("/api/professionals?status=ACTIVE&pageSize=100", {
+      redirectOnUnauthorized: false,
+    })
+      .then((data) => setProfessionals(data.items))
+      .catch(() => setProfessionals([]));
   }, [session]);
 
   const searchProducts = useCallback(async (term: string) => {
@@ -212,6 +221,7 @@ export default function PdvPage() {
           paymentMethod,
           paymentNote: paymentMethod === "OTHER" ? paymentNote.trim() : null,
           clientId: clientId || null,
+          professionalId: professionalId || null,
           clientRequestId: clientRequestId.current,
         }),
       });
@@ -458,6 +468,26 @@ export default function PdvPage() {
                 ))}
               </select>
             </div>
+            {professionals.length > 0 && (
+              <div className="sm:col-span-2">
+                <label htmlFor="pdv-professional" className="mb-1 block text-sm text-slate-700">
+                  Profissional / vendedor (comissão)
+                </label>
+                <select
+                  id="pdv-professional"
+                  value={professionalId}
+                  onChange={(event) => setProfessionalId(event.target.value)}
+                  className={inputClass}
+                >
+                  <option value="">Sem comissão</option>
+                  {professionals.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div>
               <label htmlFor="pdv-discount" className="mb-1 block text-sm text-slate-700">
                 Desconto (R$)

@@ -79,6 +79,13 @@ const plannedModules: Array<{
     module: "SUBSCRIPTIONS",
   },
   {
+    name: "Comissões",
+    description: "Profissionais, regras por produto/categoria e pagamento de comissões",
+    href: "/comissoes",
+    available: true,
+    module: "COMMISSIONS",
+  },
+  {
     name: "Faturamento",
     description: "Assinatura da empresa no Akylla Gestão (billing do SaaS)",
     href: "/faturamento",

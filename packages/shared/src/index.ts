@@ -396,6 +396,8 @@ export const createSaleSchema = z.object({
   paymentMethod: paymentMethodSchema,
   paymentNote: optionalText(300),
   clientId: z.string().trim().min(1, "Cliente inválido").max(60).optional().nullable(),
+  // Fase 2 · 2.1: profissional/vendedor da venda (base da comissão)
+  professionalId: z.string().trim().min(1, "Profissional inválido").max(60).optional().nullable(),
   clientRequestId: z
     .string()
     .trim()
@@ -1306,6 +1308,7 @@ export const businessModuleSchema = z.enum([
   "SERVICES",
   "WHATSAPP",
   "SUBSCRIPTIONS",
+  "COMMISSIONS",
 ]);
 export type BusinessModule = z.infer<typeof businessModuleSchema>;
 
@@ -1315,6 +1318,7 @@ export const BUSINESS_MODULES: readonly BusinessModule[] = [
   "SERVICES",
   "WHATSAPP",
   "SUBSCRIPTIONS",
+  "COMMISSIONS",
 ];
 
 /** Valores literais para uso como identificadores (ex.: decorators). */
@@ -1324,6 +1328,7 @@ export const BusinessModules = {
   SERVICES: "SERVICES",
   WHATSAPP: "WHATSAPP",
   SUBSCRIPTIONS: "SUBSCRIPTIONS",
+  COMMISSIONS: "COMMISSIONS",
 } as const satisfies Record<BusinessModule, BusinessModule>;
 
 export const businessModuleLabels: Record<BusinessModule, string> = {
@@ -1332,6 +1337,7 @@ export const businessModuleLabels: Record<BusinessModule, string> = {
   SERVICES: "Serviços",
   WHATSAPP: "Automação WhatsApp",
   SUBSCRIPTIONS: "Assinaturas de clientes",
+  COMMISSIONS: "Comissões",
 };
 
 export const companyModuleStatusSchema = z.enum(["ACTIVE", "DISABLED"]);
@@ -1509,3 +1515,96 @@ export const lgpdAnonymizeSchema = z.object({
   }),
 });
 export type LgpdAnonymizeDto = z.infer<typeof lgpdAnonymizeSchema>;
+
+// ---------------------------------------------------------------------------
+// Fase 2 · 2.1 — Comissões
+// ---------------------------------------------------------------------------
+
+/** Percentual 0–100 com até 2 decimais (string no wire, como dinheiro). */
+export const percentageFieldSchema = decimalField(2, 0).refine(
+  (value) => Number(value) <= 100,
+  "Percentual deve estar entre 0 e 100",
+);
+
+export const createProfessionalSchema = z.object({
+  name: nameField,
+  document: optionalText(30),
+  commissionDefault: percentageFieldSchema.optional().nullable(),
+});
+export type CreateProfessionalInput = z.infer<typeof createProfessionalSchema>;
+
+export const updateProfessionalSchema = createProfessionalSchema.partial();
+export type UpdateProfessionalInput = z.infer<typeof updateProfessionalSchema>;
+
+export const listProfessionalsQuerySchema = paginationQuerySchema.extend({
+  search: z.string().trim().max(120).optional(),
+  status: recordStatusSchema.optional(),
+});
+export type ListProfessionalsQuery = z.infer<typeof listProfessionalsQuerySchema>;
+
+export const releasePolicySchema = z.enum(["ON_SALE", "ON_PAYMENT", "SPLIT_50_50"]);
+export type ReleasePolicy = z.infer<typeof releasePolicySchema>;
+
+export const releasePolicyLabels: Record<ReleasePolicy, string> = {
+  ON_SALE: "Na venda",
+  ON_PAYMENT: "No pagamento",
+  SPLIT_50_50: "50% na venda / 50% no pagamento",
+};
+
+const optionalId = z.string().trim().min(1).max(60).optional().nullable();
+
+const commissionRuleFields = z.object({
+  professionalId: optionalId,
+  productId: optionalId,
+  categoryId: optionalId,
+  percentage: percentageFieldSchema,
+  releasePolicy: releasePolicySchema.default("ON_SALE"),
+  active: z.boolean().default(true),
+});
+
+export const createCommissionRuleSchema = commissionRuleFields.refine(
+  (value) => !(value.productId && value.categoryId),
+  { message: "Informe produto OU categoria, não os dois", path: ["categoryId"] },
+);
+export type CreateCommissionRuleInput = z.infer<typeof createCommissionRuleSchema>;
+
+export const updateCommissionRuleSchema = commissionRuleFields
+  .partial()
+  .refine((value) => !(value.productId && value.categoryId), {
+    message: "Informe produto OU categoria, não os dois",
+    path: ["categoryId"],
+  });
+export type UpdateCommissionRuleInput = z.infer<typeof updateCommissionRuleSchema>;
+
+export const listCommissionRulesQuerySchema = paginationQuerySchema.extend({
+  professionalId: z.string().trim().max(60).optional(),
+  active: z
+    .enum(["true", "false"])
+    .transform((value) => value === "true")
+    .optional(),
+});
+export type ListCommissionRulesQuery = z.infer<typeof listCommissionRulesQuerySchema>;
+
+export const commissionStatusSchema = z.enum(["PENDING", "RELEASED", "PAID", "CANCELLED"]);
+export type CommissionStatus = z.infer<typeof commissionStatusSchema>;
+
+export const commissionStatusLabels: Record<CommissionStatus, string> = {
+  PENDING: "Pendente",
+  RELEASED: "Liberada",
+  PAID: "Paga",
+  CANCELLED: "Cancelada",
+};
+
+export const listCommissionsQuerySchema = paginationQuerySchema.extend({
+  professionalId: z.string().trim().max(60).optional(),
+  status: commissionStatusSchema.optional(),
+  from: dateField.optional(),
+  to: dateField.optional(),
+});
+export type ListCommissionsQuery = z.infer<typeof listCommissionsQuerySchema>;
+
+export const commissionSummaryQuerySchema = z.object({
+  from: dateField.optional(),
+  to: dateField.optional(),
+});
+export type CommissionSummaryQuery = z.infer<typeof commissionSummaryQuerySchema>;

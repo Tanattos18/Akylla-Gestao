@@ -530,6 +530,38 @@ para ADMIN.
 - Nenhuma rota marcada `@Public()`; todas exigem sessão +
   `AdminGuard` (MEMBER → 403).
 
+## Comissões (Fase 2 · 2.1)
+
+Módulo opcional `COMMISSIONS` (`@RequireModule`; desativado → 403). Regras
+de negócio: [`docs/akylla/COMISSOES.md`](../akylla/COMISSOES.md).
+
+| Método | Rota | Acesso | Descrição |
+|---|---|---|---|
+| GET | `/api/professionals` | sessão | lista (`search`, `status`, paginação) |
+| GET | `/api/professionals/:id` | sessão | detalhe (outra empresa → 404) |
+| POST | `/api/professionals` | ADMIN | `{name, document?, commissionDefault?}` (0–100, string); nome duplicado (normalizado) → 409 |
+| PATCH | `/api/professionals/:id` | ADMIN | edição parcial |
+| PATCH | `/api/professionals/:id/status` | ADMIN | `{status: ACTIVE\|INACTIVE}` |
+| GET | `/api/commission-rules` | ADMIN | lista (`professionalId`, `active`) |
+| POST | `/api/commission-rules` | ADMIN | `{professionalId?, productId?, categoryId?, percentage, releasePolicy?, active?}`; produto **e** categoria → 400; alvo de outra empresa → 400 |
+| PATCH | `/api/commission-rules/:id` | ADMIN | edição parcial (inclusive `active`) |
+| GET | `/api/commissions` | sessão | lista (`from`, `to`, `professionalId`, `status`, paginação) + `totals {amount, baseAmount}` |
+| GET | `/api/commissions/summary` | sessão | fechamento por profissional no período: `pending`, `released` (`toPay`), `paid`, `cancelled` |
+| GET | `/api/commissions/:id` | sessão | detalhe com `lines` (base/%/valor/regra por item) |
+| POST | `/api/commissions/:id/release` | ADMIN | `PENDING → RELEASED` + conta a pagar; outro status → 409 |
+| POST | `/api/commissions/:id/pay` | ADMIN | liquida a conta a pagar (exige **caixa aberto**, senão 409) → `PAID` |
+
+**Integração com vendas:** `POST /api/sales` aceita `professionalId?`
+(ativo, da empresa, senão 400; módulo desativado → 403). A comissão é
+calculada no servidor, na mesma transação da venda, e
+`POST /api/sales/:id/cancel` cancela ou estorna a comissão na mesma
+transação. O detalhe da venda traz `professional {id, name}`.
+
+**Financeiro:** títulos `origin: COMMISSION` sincronizam com a comissão
+(liquidar → `PAID`; estornar → `RELEASED`) e não podem ser editados nem
+cancelados avulsos (409). `COMMISSION_REVERSAL` (a receber) não pode ser
+editado.
+
 ## Padrão para módulos futuros
 
 1. Modelo sempre com `companyId` + FK `Restrict` e índices por empresa.
