@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { api, ApiError } from "../../lib/api";
 import { fetchSession, type Session } from "../../lib/session";
 import type { Paginated, ServiceDto } from "../../lib/types";
+import { useDialog } from "../../components/ui/Dialog";
+import { DataTable } from "../../components/ui/DataTable";
 
 const emptyForm = {
   name: "",
@@ -15,6 +17,7 @@ const emptyForm = {
 };
 
 export default function ServicosPage() {
+  const dialog = useDialog();
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -131,7 +134,7 @@ export default function ServicosPage() {
 
   async function handleStatus(service: ServiceDto, status: "ACTIVE" | "INACTIVE") {
     const label = status === "INACTIVE" ? "inativar" : "reativar";
-    if (!window.confirm(`Deseja ${label} o serviço "${service.name}"?`)) return;
+    if (!await dialog.confirm(`Deseja ${label} o serviço "${service.name}"?`)) return;
     setNotice(null);
     try {
       await api(`/api/services/${service.id}/status`, {
@@ -161,7 +164,7 @@ export default function ServicosPage() {
             Empresa {session.company.name} · catálogo gerenciado por administradores
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link
             href="/clientes"
             className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
@@ -205,7 +208,7 @@ export default function ServicosPage() {
                 className={inputClass}
               />
               {fieldErrors.name && (
-                <p className="mt-1 text-xs text-red-600">{fieldErrors.name}</p>
+                <p className="mt-1 text-xs text-red-700">{fieldErrors.name}</p>
               )}
             </div>
             <div>
@@ -221,7 +224,7 @@ export default function ServicosPage() {
                 className={inputClass}
               />
               {fieldErrors.price && (
-                <p className="mt-1 text-xs text-red-600">{fieldErrors.price}</p>
+                <p className="mt-1 text-xs text-red-700">{fieldErrors.price}</p>
               )}
             </div>
             <div>
@@ -241,7 +244,7 @@ export default function ServicosPage() {
                 className={inputClass}
               />
               {fieldErrors.durationMinutes && (
-                <p className="mt-1 text-xs text-red-600">{fieldErrors.durationMinutes}</p>
+                <p className="mt-1 text-xs text-red-700">{fieldErrors.durationMinutes}</p>
               )}
             </div>
             <div className="sm:col-span-2">
@@ -265,7 +268,7 @@ export default function ServicosPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
+                className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60"
               >
                 {saving ? "Salvando..." : editingId ? "Salvar" : "Criar"}
               </button>
@@ -296,46 +299,27 @@ export default function ServicosPage() {
         />
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-              <th className="px-4 py-3">Serviço</th>
-              <th className="px-4 py-3">Duração</th>
-              <th className="px-4 py-3">Preço</th>
-              <th className="px-4 py-3">Status</th>
-              {isAdmin && <th className="px-4 py-3">Ações</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {services.map((service) => (
-              <tr key={service.id} className="border-b border-slate-100">
-                <td className="px-4 py-3">
-                  <p className="font-medium text-slate-800">{service.name}</p>
+      <DataTable
+        rows={services}
+        rowKey={(service) => service.id}
+        empty={<>Nenhum serviço cadastrado.</>}
+        columns={[
+          { key: "c0", header: "Serviço", cell: (service) => <><p className="font-medium text-slate-800">{service.name}</p>
                   {service.description && (
                     <p className="text-xs text-slate-500">{service.description}</p>
-                  )}
-                </td>
-                <td className="px-4 py-3 text-slate-600">
-                  {service.durationMinutes ? `${service.durationMinutes} min` : "—"}
-                </td>
-                <td className="px-4 py-3 font-medium text-slate-800">
-                  R$ {Number(service.price).toFixed(2)}
-                </td>
-                <td className="px-4 py-3">
-                  <span
+                  )}</> },
+          { key: "c1", header: "Duração", cell: (service) => <>{service.durationMinutes ? `${service.durationMinutes} min` : "—"}</> },
+          { key: "c2", header: "Preço", cell: (service) => <>R$ {Number(service.price).toFixed(2)}</>, className: "font-medium" },
+          { key: "c3", header: "Status", cell: (service) => <><span
                     className={
                       service.status === "ACTIVE"
                         ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700"
-                        : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500"
+                        : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"
                     }
                   >
                     {service.status === "ACTIVE" ? "Ativo" : "Inativo"}
-                  </span>
-                </td>
-                {isAdmin && (
-                  <td className="px-4 py-3">
-                    <div className="flex gap-3 text-xs font-medium">
+                  </span></> },
+          { key: "c4", header: "Ações", cell: (service) => <><div className="flex gap-3 text-xs font-medium">
                       <button
                         type="button"
                         onClick={() => startEdit(service)}
@@ -347,7 +331,7 @@ export default function ServicosPage() {
                         <button
                           type="button"
                           onClick={() => void handleStatus(service, "INACTIVE")}
-                          className="text-red-600 hover:underline"
+                          className="text-red-700 hover:underline"
                         >
                           Inativar
                         </button>
@@ -360,21 +344,9 @@ export default function ServicosPage() {
                           Reativar
                         </button>
                       )}
-                    </div>
-                  </td>
-                )}
-              </tr>
-            ))}
-            {services.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
-                  Nenhum serviço cadastrado.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                    </div></>, hidden: !(isAdmin) },
+        ]}
+      />
     </div>
   );
 }

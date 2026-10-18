@@ -14,6 +14,7 @@ import {
   type WhatsAppTemplateCategory,
   type WhatsAppTemplateDto,
 } from "../../../lib/types";
+import { useDialog } from "../../../components/ui/Dialog";
 
 const emptyForm = {
   name: "",
@@ -29,6 +30,7 @@ const approvalBadgeClass: Record<WhatsAppTemplateApproval, string> = {
 };
 
 export default function WhatsAppTemplatesPage() {
+  const dialog = useDialog();
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -109,7 +111,7 @@ export default function WhatsAppTemplatesPage() {
     approval: WhatsAppTemplateApproval,
   ) {
     const label = approval === "APPROVED" ? "aprovar" : "reprovar";
-    if (!window.confirm(`Deseja ${label} o template "${template.name}"?`)) return;
+    if (!await dialog.confirm(`Deseja ${label} o template "${template.name}"?`)) return;
     setNotice(null);
     setListError(null);
     try {
@@ -126,7 +128,7 @@ export default function WhatsAppTemplatesPage() {
 
   async function handleStatus(template: WhatsAppTemplateDto, status: "ACTIVE" | "INACTIVE") {
     const label = status === "INACTIVE" ? "inativar" : "reativar";
-    if (!window.confirm(`Deseja ${label} o template "${template.name}"?`)) return;
+    if (!await dialog.confirm(`Deseja ${label} o template "${template.name}"?`)) return;
     setNotice(null);
     setListError(null);
     try {
@@ -158,7 +160,7 @@ export default function WhatsAppTemplatesPage() {
             24h
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link
             href="/whatsapp"
             className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
@@ -209,7 +211,7 @@ export default function WhatsAppTemplatesPage() {
                 className={inputClass}
               />
               {fieldErrors.name && (
-                <p className="mt-1 text-xs text-red-600">{fieldErrors.name}</p>
+                <p className="mt-1 text-xs text-red-700">{fieldErrors.name}</p>
               )}
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -225,7 +227,7 @@ export default function WhatsAppTemplatesPage() {
                   className={inputClass}
                 />
                 {fieldErrors.language && (
-                  <p className="mt-1 text-xs text-red-600">{fieldErrors.language}</p>
+                  <p className="mt-1 text-xs text-red-700">{fieldErrors.language}</p>
                 )}
               </div>
               <div>
@@ -263,7 +265,7 @@ export default function WhatsAppTemplatesPage() {
                 className={inputClass}
               />
               {fieldErrors.body && (
-                <p className="mt-1 text-xs text-red-600">{fieldErrors.body}</p>
+                <p className="mt-1 text-xs text-red-700">{fieldErrors.body}</p>
               )}
             </div>
             {formError && (
@@ -275,7 +277,7 @@ export default function WhatsAppTemplatesPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
+                className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60"
               >
                 {saving ? "Criando..." : "Criar template"}
               </button>
@@ -299,8 +301,8 @@ export default function WhatsAppTemplatesPage() {
                 <span
                   className={
                     template.status === "ACTIVE"
-                      ? "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600"
-                      : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-400 line-through"
+                      ? "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"
+                      : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700 line-through"
                   }
                 >
                   {template.status === "ACTIVE" ? "Ativo" : "Inativo"}
@@ -321,7 +323,7 @@ export default function WhatsAppTemplatesPage() {
                     <button
                       type="button"
                       onClick={() => void handleApproval(template, "REJECTED")}
-                      className="text-red-600 hover:underline"
+                      className="text-red-700 hover:underline"
                     >
                       Marcar reprovado
                     </button>
@@ -330,7 +332,7 @@ export default function WhatsAppTemplatesPage() {
                     <button
                       type="button"
                       onClick={() => void handleStatus(template, "INACTIVE")}
-                      className="text-red-600 hover:underline"
+                      className="text-red-700 hover:underline"
                     >
                       Inativar
                     </button>
@@ -349,14 +351,14 @@ export default function WhatsAppTemplatesPage() {
             <p className="whitespace-pre-wrap rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-600">
               {template.body}
             </p>
-            <p className="mt-2 text-xs text-slate-400">
+            <p className="mt-2 text-xs text-slate-500">
               Variáveis: {templateVariableCount(template.body)} · criado em{" "}
               {new Date(template.createdAt).toLocaleString("pt-BR")}
             </p>
           </div>
         ))}
         {templates.length === 0 && (
-          <p className="rounded-lg border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-400">
+          <p className="rounded-lg border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500">
             Nenhum template cadastrado.
           </p>
         )}

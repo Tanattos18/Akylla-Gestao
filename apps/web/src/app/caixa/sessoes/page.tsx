@@ -10,6 +10,7 @@ import {
   type CashSessionDto,
   type Paginated,
 } from "../../../lib/types";
+import { DataTable } from "../../../components/ui/DataTable";
 
 export default function SessoesCaixaPage() {
   const router = useRouter();
@@ -61,7 +62,7 @@ export default function SessoesCaixaPage() {
             {total} sessão{total === 1 ? "" : "ões"} registrada{total === 1 ? "" : "s"}.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link
             href="/caixa"
             className="rounded-md border border-primary-600 px-3 py-2 text-sm font-medium text-primary-800 hover:bg-primary-100"
@@ -83,55 +84,28 @@ export default function SessoesCaixaPage() {
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-              <th className="px-4 py-3">Abertura</th>
-              <th className="px-4 py-3">Fechamento</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Aberto por</th>
-              <th className="px-4 py-3">Fechado por</th>
-              <th className="px-4 py-3">Inicial</th>
-              <th className="px-4 py-3">Saldo esperado</th>
-              <th className="px-4 py-3">Contado</th>
-              <th className="px-4 py-3">Diferença</th>
-              <th className="px-4 py-3 text-right">Ação</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sessions.map((item) => (
-              <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50">
-                <td className="px-4 py-3 text-slate-600">
-                  {new Date(item.openedAt).toLocaleString("pt-BR")}
-                </td>
-                <td className="px-4 py-3 text-slate-600">
-                  {item.closedAt ? new Date(item.closedAt).toLocaleString("pt-BR") : "—"}
-                </td>
-                <td className="px-4 py-3">
-                  <span
+      <DataTable
+        rows={sessions}
+        rowKey={(item) => item.id}
+        empty={<>Nenhuma sessão de caixa registrada.</>}
+        columns={[
+          { key: "c0", header: "Abertura", cell: (item) => new Date(item.openedAt).toLocaleString("pt-BR") },
+          { key: "c1", header: "Fechamento", cell: (item) => item.closedAt ? new Date(item.closedAt).toLocaleString("pt-BR") : "—" },
+          { key: "c2", header: "Status", cell: (item) => <><span
                     className={
                       item.status === "OPEN"
                         ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700"
-                        : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600"
+                        : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"
                     }
                   >
                     {cashSessionStatusLabels[item.status]}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-slate-600">{item.openedBy.name}</td>
-                <td className="px-4 py-3 text-slate-600">{item.closedBy?.name ?? "—"}</td>
-                <td className="px-4 py-3 text-slate-700">
-                  R$ {Number(item.initialAmount).toFixed(2)}
-                </td>
-                <td className="px-4 py-3 font-medium text-slate-900">
-                  R$ {Number(item.expectedBalance).toFixed(2)}
-                </td>
-                <td className="px-4 py-3 text-slate-700">
-                  {item.countedAmount ? `R$ ${Number(item.countedAmount).toFixed(2)}` : "—"}
-                </td>
-                <td className="px-4 py-3">
-                  {item.difference ? (
+                  </span></> },
+          { key: "c3", header: "Aberto por", cell: (item) => item.openedBy.name },
+          { key: "c4", header: "Fechado por", cell: (item) => item.closedBy?.name ?? "—" },
+          { key: "c5", header: "Inicial", cell: (item) => <>R$ {Number(item.initialAmount).toFixed(2)}</> },
+          { key: "c6", header: "Saldo esperado", cell: (item) => <>R$ {Number(item.expectedBalance).toFixed(2)}</>, className: "font-medium" },
+          { key: "c7", header: "Contado", cell: (item) => <>{item.countedAmount ? `R$ ${Number(item.countedAmount).toFixed(2)}` : "—"}</> },
+          { key: "c8", header: "Diferença", cell: (item) => <>{item.difference ? (
                     <span
                       className={
                         Number(item.difference) === 0
@@ -143,28 +117,15 @@ export default function SessoesCaixaPage() {
                     </span>
                   ) : (
                     "—"
-                  )}
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <Link
+                  )}</> },
+          { key: "c9", header: "Ação", cell: (item) => <><Link
                     href={`/caixa/movimentos?sessionId=${item.id}`}
                     className="text-sm text-primary-700 hover:underline"
                   >
                     Movimentações
-                  </Link>
-                </td>
-              </tr>
-            ))}
-            {!sessions.length && (
-              <tr>
-                <td colSpan={10} className="px-4 py-8 text-center text-slate-400">
-                  Nenhuma sessão de caixa registrada.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                  </Link></>, numeric: true },
+        ]}
+      />
     </div>
   );
 }

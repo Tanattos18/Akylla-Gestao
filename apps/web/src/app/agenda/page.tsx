@@ -17,13 +17,14 @@ import {
   type AppointmentStatus,
   type Paginated,
 } from "../../lib/types";
+import { DataTable } from "../../components/ui/DataTable";
 
 const pageSize = 20;
 
 const statusBadgeClass: Record<AppointmentStatus, string> = {
   SCHEDULED: "rounded-full bg-sky-50 px-2 py-0.5 text-xs text-sky-700",
   CONFIRMED: "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700",
-  COMPLETED: "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600",
+  COMPLETED: "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700",
   CANCELLED: "rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-700",
   NO_SHOW: "rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700",
 };
@@ -109,10 +110,10 @@ export default function AgendaPage() {
             {formatDayTitle(day)} · {total} agendamento{total === 1 ? "" : "s"}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link
             href="/agenda/novo"
-            className="rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            className="rounded-md bg-primary-700 px-3 py-2 text-sm font-medium text-white hover:bg-primary-800"
           >
             Novo agendamento
           </Link>
@@ -202,69 +203,43 @@ export default function AgendaPage() {
           </div>
           <button
             type="submit"
-            className="rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            className="rounded-md bg-primary-700 px-3 py-2 text-sm font-medium text-white hover:bg-primary-800"
           >
             Filtrar
           </button>
         </form>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-              <th className="px-4 py-3">Hora</th>
-              <th className="px-4 py-3">Cliente</th>
-              <th className="px-4 py-3">Pet</th>
-              <th className="px-4 py-3">Serviço</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3 text-right">Ação</th>
-            </tr>
-          </thead>
-          <tbody>
-            {appointments.map((appointment) => (
-              <tr key={appointment.id} className="border-b border-slate-100 hover:bg-slate-50">
-                <td className="px-4 py-3 font-medium text-slate-900">
-                  {formatLocalTime(appointment.startLocal)}
+      <DataTable
+        rows={appointments}
+        rowKey={(appointment) => appointment.id}
+        empty={<>Nenhum agendamento para este dia.</>}
+        columns={[
+          { key: "c0", header: "Hora", cell: (appointment) => <>{formatLocalTime(appointment.startLocal)}
                   <span className="ml-1 text-xs font-normal text-slate-500">
                     {appointment.durationMinutes} min
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-slate-600">{appointment.client.name}</td>
-                <td className="px-4 py-3 text-slate-600">{appointment.pet?.name ?? "—"}</td>
-                <td className="px-4 py-3 text-slate-600">{appointment.service.name}</td>
-                <td className="px-4 py-3">
-                  <span className={statusBadgeClass[appointment.status]}>
+                  </span></>, className: "font-medium" },
+          { key: "c1", header: "Cliente", cell: (appointment) => appointment.client.name },
+          { key: "c2", header: "Pet", cell: (appointment) => appointment.pet?.name ?? "—" },
+          { key: "c3", header: "Serviço", cell: (appointment) => appointment.service.name },
+          { key: "c4", header: "Status", cell: (appointment) => <><span className={statusBadgeClass[appointment.status]}>
                     {appointmentStatusLabels[appointment.status]}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <Link
+                  </span></> },
+          { key: "c5", header: "Ação", cell: (appointment) => <><Link
                     href={`/agenda/${appointment.id}`}
                     className="text-sm text-primary-700 hover:underline"
                   >
                     Ver detalhe
-                  </Link>
-                </td>
-              </tr>
-            ))}
-            {!appointments.length && (
-              <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
-                  Nenhum agendamento para este dia.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                  </Link></>, numeric: true },
+        ]}
+      />
 
       {pages > 1 && (
         <div className="flex items-center justify-between text-sm text-slate-600">
           <span>
             Página {page} de {pages}
           </span>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
               disabled={page <= 1}

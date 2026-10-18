@@ -10,9 +10,11 @@ import {
   whatsappMessageStatusLabels,
   type WhatsAppMessageDto,
 } from "../../../../lib/types";
+import { useDialog } from "../../../../components/ui/Dialog";
+import { DataTable } from "../../../../components/ui/DataTable";
 
 const statusBadgeClass: Record<string, string> = {
-  PENDING: "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600",
+  PENDING: "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700",
   PROCESSING: "rounded-full bg-sky-50 px-2 py-0.5 text-xs text-sky-700",
   ACCEPTED: "rounded-full bg-sky-50 px-2 py-0.5 text-xs text-sky-700",
   SENT: "rounded-full bg-indigo-50 px-2 py-0.5 text-xs text-indigo-700",
@@ -33,6 +35,7 @@ function formatDate(value: string | null): string {
 }
 
 export default function WhatsAppMensagemDetalhePage() {
+  const dialog = useDialog();
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const messageId = params.id;
@@ -78,7 +81,7 @@ export default function WhatsAppMensagemDetalhePage() {
 
   async function handleCancel() {
     if (!message) return;
-    const reason = window.prompt("Motivo do cancelamento:");
+    const reason = await dialog.prompt({ title: "Cancelar mensagem", label: "Motivo do cancelamento", minLength: 3, maxLength: 500, danger: true, confirmLabel: "Cancelar mensagem" });
     if (!reason || reason.trim().length < 3) return;
     setError(null);
     try {
@@ -120,7 +123,7 @@ export default function WhatsAppMensagemDetalhePage() {
             {message.client?.name ?? "—"} · {message.toPhone}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {isAdmin && message.status === "PENDING" && (
             <button
               type="button"
@@ -161,43 +164,43 @@ export default function WhatsAppMensagemDetalhePage() {
         </div>
         <dl className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
           <div>
-            <dt className="text-xs uppercase text-slate-400">Template</dt>
+            <dt className="text-xs uppercase text-slate-500">Template</dt>
             <dd className="text-slate-700">{message.templateNameSnapshot}</dd>
           </div>
           <div>
-            <dt className="text-xs uppercase text-slate-400">Idioma</dt>
+            <dt className="text-xs uppercase text-slate-500">Idioma</dt>
             <dd className="text-slate-700">{message.templateLanguageSnapshot}</dd>
           </div>
           <div>
-            <dt className="text-xs uppercase text-slate-400">Origem</dt>
+            <dt className="text-xs uppercase text-slate-500">Origem</dt>
             <dd className="text-slate-700">
               {whatsappMessageOriginLabels[message.origin]}
             </dd>
           </div>
           <div>
-            <dt className="text-xs uppercase text-slate-400">Tentativas</dt>
+            <dt className="text-xs uppercase text-slate-500">Tentativas</dt>
             <dd className="text-slate-700">
               {message.attempts}/{message.maxAttempts}
             </dd>
           </div>
           <div>
-            <dt className="text-xs uppercase text-slate-400">ID do provedor</dt>
+            <dt className="text-xs uppercase text-slate-500">ID do provedor</dt>
             <dd className="break-all text-slate-700">{message.providerMessageId || "—"}</dd>
           </div>
           <div>
-            <dt className="text-xs uppercase text-slate-400">Próxima tentativa</dt>
+            <dt className="text-xs uppercase text-slate-500">Próxima tentativa</dt>
             <dd className="text-slate-700">{formatDate(message.nextAttemptAt)}</dd>
           </div>
           <div>
-            <dt className="text-xs uppercase text-slate-400">Criada em</dt>
+            <dt className="text-xs uppercase text-slate-500">Criada em</dt>
             <dd className="text-slate-700">{formatDate(message.createdAt)}</dd>
           </div>
           <div>
-            <dt className="text-xs uppercase text-slate-400">Criada por</dt>
+            <dt className="text-xs uppercase text-slate-500">Criada por</dt>
             <dd className="text-slate-700">{message.createdBy?.name ?? "—"}</dd>
           </div>
           <div>
-            <dt className="text-xs uppercase text-slate-400">Chave de idempotência</dt>
+            <dt className="text-xs uppercase text-slate-500">Chave de idempotência</dt>
             <dd className="break-all text-slate-700">{message.idempotencyKey || "—"}</dd>
           </div>
           {message.failureReason && (
@@ -217,50 +220,26 @@ export default function WhatsAppMensagemDetalhePage() {
           )}
         </dl>
         <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
-          <p className="mb-1 text-xs uppercase text-slate-400">Corpo do template no envio</p>
+          <p className="mb-1 text-xs uppercase text-slate-500">Corpo do template no envio</p>
           {message.templateBodySnapshot}
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-              <th className="px-4 py-3">#</th>
-              <th className="px-4 py-3">Resultado</th>
-              <th className="px-4 py-3">Erro</th>
-              <th className="px-4 py-3">HTTP</th>
-              <th className="px-4 py-3">Início</th>
-              <th className="px-4 py-3">Fim</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(message.attemptsLog ?? []).map((attempt) => (
-              <tr key={attempt.id} className="border-b border-slate-100">
-                <td className="px-4 py-3 text-slate-600">{attempt.attemptNumber}</td>
-                <td className="px-4 py-3 font-medium text-slate-800">
-                  {outcomeLabels[attempt.outcome] ?? attempt.outcome}
-                </td>
-                <td className="px-4 py-3 text-slate-600">
-                  {attempt.errorCode
+      <DataTable
+        rows={(message.attemptsLog ?? [])}
+        rowKey={(attempt) => attempt.id}
+        empty={<>Nenhuma tentativa registrada ainda — a mensagem aguarda o worker.</>}
+        columns={[
+          { key: "c0", header: "#", cell: (attempt) => attempt.attemptNumber },
+          { key: "c1", header: "Resultado", cell: (attempt) => outcomeLabels[attempt.outcome] ?? attempt.outcome, className: "font-medium" },
+          { key: "c2", header: "Erro", cell: (attempt) => <>{attempt.errorCode
                     ? `${attempt.errorCode}${attempt.errorMessage ? ` — ${attempt.errorMessage}` : ""}`
-                    : "—"}
-                </td>
-                <td className="px-4 py-3 text-slate-600">{attempt.httpStatus ?? "—"}</td>
-                <td className="px-4 py-3 text-slate-600">{formatDate(attempt.startedAt)}</td>
-                <td className="px-4 py-3 text-slate-600">{formatDate(attempt.finishedAt)}</td>
-              </tr>
-            ))}
-            {(message.attemptsLog ?? []).length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-slate-400">
-                  Nenhuma tentativa registrada ainda — a mensagem aguarda o worker.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                    : "—"}</> },
+          { key: "c3", header: "HTTP", cell: (attempt) => attempt.httpStatus ?? "—" },
+          { key: "c4", header: "Início", cell: (attempt) => formatDate(attempt.startedAt) },
+          { key: "c5", header: "Fim", cell: (attempt) => formatDate(attempt.finishedAt) },
+        ]}
+      />
     </div>
   );
 }

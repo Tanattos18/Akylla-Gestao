@@ -205,10 +205,10 @@ export default function HomePage() {
               {session.user.role === "ADMIN" ? "administrador" : "membro"}.
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Link
               href="/pdv"
-              className="rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
+              className="rounded-md bg-primary-700 px-3 py-2 text-sm font-medium text-white hover:bg-primary-800"
             >
               Abrir PDV
             </Link>
@@ -248,7 +248,7 @@ export default function HomePage() {
               type="button"
               onClick={handleLogout}
               disabled={loggingOut}
-              className="rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
+              className="rounded-md bg-primary-700 px-3 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60"
             >
               {loggingOut ? "Saindo..." : "Sair"}
             </button>

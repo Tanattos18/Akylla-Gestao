@@ -23,6 +23,8 @@ import {
   type StockMovementsReportDto,
   type WhatsAppReportDto,
 } from "../../lib/types";
+import { DataTable } from "../../components/ui/DataTable";
+import { Tabs } from "../../components/ui/Tabs";
 
 type Tab = "vendas" | "estoque" | "caixa" | "clientes" | "whatsapp";
 
@@ -48,16 +50,6 @@ function ErrorBanner({ error }: { error: string | null }) {
   );
 }
 
-function EmptyRow({ colSpan, message }: { colSpan: number; message: string }) {
-  return (
-    <tr>
-      <td colSpan={colSpan} className="px-4 py-8 text-center text-slate-400">
-        {message}
-      </td>
-    </tr>
-  );
-}
-
 function Pagination({
   page,
   pageSize,
@@ -76,7 +68,7 @@ function Pagination({
       <span>
         Página {page} de {pages} ({total} registro(s))
       </span>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <button
           type="button"
           disabled={page <= 1}
@@ -215,7 +207,7 @@ function VendasTab({ from, to, reloadKey }: PeriodProps) {
             {exporting ? "Exportando..." : "Exportar CSV"}
           </button>
         </div>
-        <div className="flex items-end text-xs text-slate-400">
+        <div className="flex items-end text-xs text-slate-500">
           {data ? `Gerado em ${formatDateTime(data.generatedAt)}` : ""}
         </div>
       </div>
@@ -225,7 +217,7 @@ function VendasTab({ from, to, reloadKey }: PeriodProps) {
       {data && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase text-slate-400">
+            <p className="text-xs uppercase text-slate-500">
               Concluídas — {periodLabel}
             </p>
             <p className="text-xl font-semibold text-slate-900">
@@ -238,8 +230,8 @@ function VendasTab({ from, to, reloadKey }: PeriodProps) {
             </p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase text-slate-400">Cancelamentos</p>
-            <p className="text-xl font-semibold text-red-600">
+            <p className="text-xs uppercase text-slate-500">Cancelamentos</p>
+            <p className="text-xl font-semibold text-red-700">
               {formatBrl(data.totals.cancelled.total)}
             </p>
             <p className="text-sm text-slate-600">
@@ -247,7 +239,7 @@ function VendasTab({ from, to, reloadKey }: PeriodProps) {
             </p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase text-slate-400">Ticket médio</p>
+            <p className="text-xs uppercase text-slate-500">Ticket médio</p>
             <p className="text-xl font-semibold text-slate-900">
               {data.totals.completed.count > 0
                 ? formatBrl(
@@ -258,7 +250,7 @@ function VendasTab({ from, to, reloadKey }: PeriodProps) {
             <p className="text-sm text-slate-600">líquido ÷ vendas concluídas</p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase text-slate-400">Status</p>
+            <p className="text-xs uppercase text-slate-500">Status</p>
             <p className="text-sm text-slate-600">
               Filtro atual: <strong>{status ? saleStatusLabels[status] : "Todos"}</strong>
             </p>
@@ -270,32 +262,14 @@ function VendasTab({ from, to, reloadKey }: PeriodProps) {
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-              <th className="px-4 py-3">Data (UTC)</th>
-              <th className="px-4 py-3">Código</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Pagamento</th>
-              <th className="px-4 py-3">Subtotal</th>
-              <th className="px-4 py-3">Desconto</th>
-              <th className="px-4 py-3">Total</th>
-              <th className="px-4 py-3">Cliente</th>
-              <th className="px-4 py-3">Responsável</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data?.items.map((sale) => (
-              <tr key={sale.id} className="border-b border-slate-100 hover:bg-slate-50">
-                <td className="px-4 py-3 text-slate-600">
-                  {formatDateTime(sale.createdAt)}
-                </td>
-                <td className="px-4 py-3 font-mono text-xs font-semibold text-slate-800">
-                  {sale.receiptCode}
-                </td>
-                <td className="px-4 py-3">
-                  <span
+      <DataTable
+        rows={data?.items ?? []}
+        rowKey={(sale) => sale.id}
+        empty={<>{data && data.items.length === 0 ? "Nenhuma venda no período/filtros selecionados." : !data && !error ? loading ? "Carregando..." : "Sem dados." : null}</>}
+        columns={[
+          { key: "c0", header: "Data (UTC)", cell: (sale) => formatDateTime(sale.createdAt) },
+          { key: "c1", header: "Código", cell: (sale) => sale.receiptCode, className: "font-mono text-xs font-semibold" },
+          { key: "c2", header: "Status", cell: (sale) => <><span
                     className={
                       sale.status === "COMPLETED"
                         ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700"
@@ -303,29 +277,15 @@ function VendasTab({ from, to, reloadKey }: PeriodProps) {
                     }
                   >
                     {saleStatusLabels[sale.status]}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-slate-600">
-                  {paymentMethodLabels[sale.paymentMethod]}
-                </td>
-                <td className="px-4 py-3 text-slate-600">{formatBrl(sale.subtotal)}</td>
-                <td className="px-4 py-3 text-slate-600">{formatBrl(sale.discount)}</td>
-                <td className="px-4 py-3 font-medium text-slate-900">
-                  {formatBrl(sale.total)}
-                </td>
-                <td className="px-4 py-3 text-slate-600">{sale.client ?? "—"}</td>
-                <td className="px-4 py-3 text-slate-600">{sale.createdBy}</td>
-              </tr>
-            ))}
-            {data && data.items.length === 0 && (
-              <EmptyRow colSpan={9} message="Nenhuma venda no período/filtros selecionados." />
-            )}
-            {!data && !error && (
-              <EmptyRow colSpan={9} message={loading ? "Carregando..." : "Sem dados."} />
-            )}
-          </tbody>
-        </table>
-      </div>
+                  </span></> },
+          { key: "c3", header: "Pagamento", cell: (sale) => paymentMethodLabels[sale.paymentMethod] },
+          { key: "c4", header: "Subtotal", cell: (sale) => formatBrl(sale.subtotal), numeric: true },
+          { key: "c5", header: "Desconto", cell: (sale) => formatBrl(sale.discount), numeric: true },
+          { key: "c6", header: "Total", cell: (sale) => formatBrl(sale.total), numeric: true, className: "font-medium" },
+          { key: "c7", header: "Cliente", cell: (sale) => sale.client ?? "—" },
+          { key: "c8", header: "Responsável", cell: (sale) => sale.createdBy },
+        ]}
+      />
 
       {data && (
         <Pagination
@@ -416,7 +376,7 @@ function EstoqueTab({ from, to, reloadKey }: PeriodProps) {
           onClick={() => setView("alertas")}
           className={
             view === "alertas"
-              ? "rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white"
+              ? "rounded-md bg-primary-700 px-3 py-2 text-sm font-medium text-white"
               : secondaryButton
           }
         >
@@ -427,7 +387,7 @@ function EstoqueTab({ from, to, reloadKey }: PeriodProps) {
           onClick={() => setView("movimentos")}
           className={
             view === "movimentos"
-              ? "rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white"
+              ? "rounded-md bg-primary-700 px-3 py-2 text-sm font-medium text-white"
               : secondaryButton
           }
         >
@@ -458,7 +418,7 @@ function EstoqueTab({ from, to, reloadKey }: PeriodProps) {
             <option value="ADJUST_NEGATIVE">Ajuste negativo</option>
           </select>
         )}
-        <span className="ml-auto text-xs text-slate-400">
+        <span className="ml-auto text-xs text-slate-500">
           {alerts && view === "alertas"
             ? `Gerado em ${formatDateTime(alerts.generatedAt)}`
             : movements && view === "movimentos"
@@ -472,19 +432,19 @@ function EstoqueTab({ from, to, reloadKey }: PeriodProps) {
       {view === "alertas" && alerts && (
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase text-slate-400">Total em alerta</p>
+            <p className="text-xs uppercase text-slate-500">Total em alerta</p>
             <p className="text-xl font-semibold text-slate-900">{alerts.alerts.total}</p>
             <p className="text-sm text-slate-600">produtos ativos</p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase text-slate-400">Sem estoque</p>
-            <p className="text-xl font-semibold text-red-600">
+            <p className="text-xs uppercase text-slate-500">Sem estoque</p>
+            <p className="text-xl font-semibold text-red-700">
               {alerts.alerts.outOfStockCount}
             </p>
             <p className="text-sm text-slate-600">saldo zerado</p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase text-slate-400">Estoque baixo</p>
+            <p className="text-xs uppercase text-slate-500">Estoque baixo</p>
             <p className="text-xl font-semibold text-amber-700">
               {alerts.alerts.lowStockCount}
             </p>
@@ -497,7 +457,7 @@ function EstoqueTab({ from, to, reloadKey }: PeriodProps) {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {movements.totals.byType.map((item) => (
             <div key={item.type} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-xs uppercase text-slate-400">{item.label}</p>
+              <p className="text-xs uppercase text-slate-500">{item.label}</p>
               <p className="text-xl font-semibold text-slate-900">{item.count}</p>
               <p className="text-sm text-slate-600">unidades: {item.quantity}</p>
             </div>
@@ -505,92 +465,59 @@ function EstoqueTab({ from, to, reloadKey }: PeriodProps) {
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-        <table className="w-full text-left text-sm">
-          {view === "alertas" ? (
-            <>
-              <thead>
-                <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-                  <th className="px-4 py-3">Produto</th>
-                  <th className="px-4 py-3">SKU</th>
-                  <th className="px-4 py-3">Estoque</th>
-                  <th className="px-4 py-3">Mínimo</th>
-                  <th className="px-4 py-3">Situação</th>
-                </tr>
-              </thead>
-              <tbody>
-                {alerts?.items.map((item) => (
-                  <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="px-4 py-3 text-slate-800">{item.name}</td>
-                    <td className="px-4 py-3 font-mono text-xs text-slate-600">
-                      {item.sku ?? "—"}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {item.stockQuantity} {item.unitLabel}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">{item.minimumStock}</td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={
-                          item.alert === "OUT_OF_STOCK"
-                            ? "rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-700"
-                            : "rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700"
-                        }
-                      >
-                        {item.alert === "OUT_OF_STOCK" ? "Sem estoque" : "Estoque baixo"}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-                {alerts && alerts.items.length === 0 && (
-                  <EmptyRow colSpan={5} message="Nenhum produto em alerta." />
-                )}
-                {!alerts && !error && <EmptyRow colSpan={5} message={loading ? "Carregando..." : "Sem dados."} />}
-              </tbody>
-            </>
-          ) : (
-            <>
-              <thead>
-                <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-                  <th className="px-4 py-3">Data (UTC)</th>
-                  <th className="px-4 py-3">Produto</th>
-                  <th className="px-4 py-3">Tipo</th>
-                  <th className="px-4 py-3">Quantidade</th>
-                  <th className="px-4 py-3">Referência</th>
-                  <th className="px-4 py-3">Responsável</th>
-                </tr>
-              </thead>
-              <tbody>
-                {movements?.items.map((item) => (
-                  <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="px-4 py-3 text-slate-600">
-                      {formatDateTime(item.createdAt)}
-                    </td>
-                    <td className="px-4 py-3 text-slate-800">
-                      {item.product.name}
-                      {item.product.sku ? (
-                        <span className="ml-2 font-mono text-xs text-slate-400">
-                          {item.product.sku}
-                        </span>
-                      ) : null}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">{item.typeLabel}</td>
-                    <td className="px-4 py-3 text-slate-600">{item.quantity}</td>
-                    <td className="px-4 py-3 text-slate-600">{item.reference ?? "—"}</td>
-                    <td className="px-4 py-3 text-slate-600">{item.createdBy}</td>
-                  </tr>
-                ))}
-                {movements && movements.items.length === 0 && (
-                  <EmptyRow colSpan={6} message="Nenhuma movimentação no período/filtros." />
-                )}
-                {!movements && !error && (
-                  <EmptyRow colSpan={6} message={loading ? "Carregando..." : "Sem dados."} />
-                )}
-              </tbody>
-            </>
-          )}
-        </table>
-      </div>
+      {view === "alertas" ? (
+        <DataTable
+          caption="Produtos em alerta de estoque"
+          rows={alerts?.items ?? []}
+          rowKey={(item) => item.id}
+          empty={alerts ? "Nenhum produto em alerta." : !error && loading ? "Carregando..." : "Sem dados."}
+          columns={[
+            { key: "name", header: "Produto", cell: (item) => item.name },
+            { key: "sku", header: "SKU", cell: (item) => item.sku ?? "—", className: "font-mono text-xs" },
+            { key: "stock", header: "Estoque", cell: (item) => `${item.stockQuantity} ${item.unitLabel}`, numeric: true },
+            { key: "min", header: "Mínimo", cell: (item) => item.minimumStock, numeric: true },
+            {
+              key: "alert",
+              header: "Situação",
+              cell: (item) => (
+                <span
+                  className={
+                    item.alert === "OUT_OF_STOCK"
+                      ? "rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-700"
+                      : "rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-800"
+                  }
+                >
+                  {item.alert === "OUT_OF_STOCK" ? "Sem estoque" : "Estoque baixo"}
+                </span>
+              ),
+            },
+          ]}
+        />
+      ) : (
+        <DataTable
+          caption="Movimentações de estoque"
+          rows={movements?.items ?? []}
+          rowKey={(item) => item.id}
+          empty={movements ? "Nenhuma movimentação no período/filtros." : !error && loading ? "Carregando..." : "Sem dados."}
+          columns={[
+            { key: "date", header: "Data (UTC)", cell: (item) => formatDateTime(item.createdAt) },
+            {
+              key: "product",
+              header: "Produto",
+              cell: (item) => (
+                <>
+                  {item.product.name}
+                  {item.product.sku ? <span className="ml-2 font-mono text-xs text-slate-600">{item.product.sku}</span> : null}
+                </>
+              ),
+            },
+            { key: "type", header: "Tipo", cell: (item) => item.typeLabel },
+            { key: "qty", header: "Quantidade", cell: (item) => item.quantity, numeric: true },
+            { key: "ref", header: "Referência", cell: (item) => item.reference ?? "—" },
+            { key: "by", header: "Responsável", cell: (item) => item.createdBy },
+          ]}
+        />
+      )}
 
       {view === "alertas" && alerts && (
         <Pagination
@@ -649,7 +576,7 @@ function CaixaTab({ from, to, reloadKey }: PeriodProps) {
   return (
     <div className="space-y-4">
       <ErrorBanner error={error} />
-      <div className="flex items-center justify-between text-xs text-slate-400">
+      <div className="flex items-center justify-between text-xs text-slate-500">
         <span>Período: {periodLabel}</span>
         <span>{data ? `Gerado em ${formatDateTime(data.generatedAt)}` : ""}</span>
       </div>
@@ -657,7 +584,7 @@ function CaixaTab({ from, to, reloadKey }: PeriodProps) {
       {data && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase text-slate-400">Dinheiro no período</p>
+            <p className="text-xs uppercase text-slate-500">Dinheiro no período</p>
             <p className="text-xl font-semibold text-slate-900">
               {formatBrl(data.movements.inCash.net)}
             </p>
@@ -667,15 +594,15 @@ function CaixaTab({ from, to, reloadKey }: PeriodProps) {
             </p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase text-slate-400">Todas as movimentações</p>
+            <p className="text-xs uppercase text-slate-500">Todas as movimentações</p>
             <p className="text-sm text-slate-600">
               entradas {formatBrl(data.movements.all.entries)} · saídas{" "}
               {formatBrl(data.movements.all.exits)}
             </p>
-            <p className="text-xs text-slate-400">inclui cartão/pix e estornos</p>
+            <p className="text-xs text-slate-500">inclui cartão/pix e estornos</p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase text-slate-400">Estornos</p>
+            <p className="text-xs uppercase text-slate-500">Estornos</p>
             <p className="text-xl font-semibold text-slate-900">
               {data.movements.reversals.count}
             </p>
@@ -684,7 +611,7 @@ function CaixaTab({ from, to, reloadKey }: PeriodProps) {
             </p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase text-slate-400">Sessões fechadas</p>
+            <p className="text-xs uppercase text-slate-500">Sessões fechadas</p>
             <p className="text-xl font-semibold text-slate-900">
               {data.sessions.closedCount}
             </p>
@@ -698,36 +625,17 @@ function CaixaTab({ from, to, reloadKey }: PeriodProps) {
       )}
 
       {data && (
-        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-                <th className="px-4 py-3">Origem</th>
-                <th className="px-4 py-3">Tipo</th>
-                <th className="px-4 py-3">Lançamentos</th>
-                <th className="px-4 py-3">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.movements.byOrigin.map((row) => (
-                <tr
-                  key={`${row.origin}-${row.type}`}
-                  className="border-b border-slate-100 hover:bg-slate-50"
-                >
-                  <td className="px-4 py-3 text-slate-700">{row.originLabel}</td>
-                  <td className="px-4 py-3 text-slate-600">{row.typeLabel}</td>
-                  <td className="px-4 py-3 text-slate-600">{row.count}</td>
-                  <td className="px-4 py-3 font-medium text-slate-900">
-                    {formatBrl(row.total)}
-                  </td>
-                </tr>
-              ))}
-              {data.movements.byOrigin.length === 0 && (
-                <EmptyRow colSpan={4} message="Nenhuma movimentação no período." />
-              )}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          rows={data.movements.byOrigin}
+          rowKey={(row) => `${row.origin}-${row.type}`}
+          empty={<>{data.movements.byOrigin.length === 0 ? "Nenhuma movimentação no período." : null}</>}
+          columns={[
+            { key: "c0", header: "Origem", cell: (row) => row.originLabel },
+            { key: "c1", header: "Tipo", cell: (row) => row.typeLabel },
+            { key: "c2", header: "Lançamentos", cell: (row) => row.count },
+            { key: "c3", header: "Total", cell: (row) => formatBrl(row.total), numeric: true, className: "font-medium" },
+          ]}
+        />
       )}
 
       {data && data.sessions.items.length > 0 && (
@@ -735,38 +643,18 @@ function CaixaTab({ from, to, reloadKey }: PeriodProps) {
           <div className="border-b border-slate-100 px-4 py-3 text-xs font-semibold uppercase text-slate-500">
             Sessões de caixa fechadas no período (máx. 100)
           </div>
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-                <th className="px-4 py-3">Abertura (UTC)</th>
-                <th className="px-4 py-3">Fechamento (UTC)</th>
-                <th className="px-4 py-3">Esperado</th>
-                <th className="px-4 py-3">Contado</th>
-                <th className="px-4 py-3">Diferença</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.sessions.items.map((session) => (
-                <tr key={session.id} className="border-b border-slate-100 hover:bg-slate-50">
-                  <td className="px-4 py-3 text-slate-600">
-                    {formatDateTime(session.openedAt)}
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">
-                    {session.closedAt ? formatDateTime(session.closedAt) : "—"}
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">
-                    {formatBrl(session.expectedAmount)}
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">
-                    {formatBrl(session.countedAmount)}
-                  </td>
-                  <td className="px-4 py-3 font-medium text-slate-900">
-                    {formatBrl(session.difference)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <DataTable
+            bare
+            rows={data.sessions.items}
+            rowKey={(session) => session.id}
+            columns={[
+              { key: "c0", header: "Abertura (UTC)", cell: (session) => formatDateTime(session.openedAt) },
+              { key: "c1", header: "Fechamento (UTC)", cell: (session) => session.closedAt ? formatDateTime(session.closedAt) : "—" },
+              { key: "c2", header: "Esperado", cell: (session) => formatBrl(session.expectedAmount), numeric: true },
+              { key: "c3", header: "Contado", cell: (session) => formatBrl(session.countedAmount), numeric: true },
+              { key: "c4", header: "Diferença", cell: (session) => formatBrl(session.difference), numeric: true, className: "font-medium" },
+            ]}
+          />
         </div>
       )}
 
@@ -779,42 +667,18 @@ function CaixaTab({ from, to, reloadKey }: PeriodProps) {
             Ver histórico completo
           </Link>
         </div>
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-              <th className="px-4 py-3">Data (UTC)</th>
-              <th className="px-4 py-3">Tipo</th>
-              <th className="px-4 py-3">Origem</th>
-              <th className="px-4 py-3">Descrição</th>
-              <th className="px-4 py-3">Valor</th>
-            </tr>
-          </thead>
-          <tbody>
-            {movements?.items.map((movement) => (
-              <tr key={movement.id} className="border-b border-slate-100 hover:bg-slate-50">
-                <td className="px-4 py-3 text-slate-600">
-                  {formatDateTime(movement.createdAt)}
-                </td>
-                <td className="px-4 py-3 text-slate-600">
-                  {cashMovementTypeLabels[movement.type]}
-                </td>
-                <td className="px-4 py-3 text-slate-600">
-                  {cashMovementOriginLabels[movement.origin]}
-                </td>
-                <td className="px-4 py-3 text-slate-700">{movement.description}</td>
-                <td className="px-4 py-3 font-medium text-slate-900">
-                  {formatBrl(movement.amount)}
-                </td>
-              </tr>
-            ))}
-            {movements && movements.items.length === 0 && (
-              <EmptyRow colSpan={5} message="Nenhuma movimentação no período." />
-            )}
-            {!movements && !error && (
-              <EmptyRow colSpan={5} message={loading ? "Carregando..." : "Sem dados."} />
-            )}
-          </tbody>
-        </table>
+        <DataTable
+          rows={movements?.items ?? []}
+          rowKey={(movement) => movement.id}
+          empty={<>{movements && movements.items.length === 0 ? "Nenhuma movimentação no período." : !movements && !error ? loading ? "Carregando..." : "Sem dados." : null}</>}
+          columns={[
+            { key: "c0", header: "Data (UTC)", cell: (movement) => formatDateTime(movement.createdAt) },
+            { key: "c1", header: "Tipo", cell: (movement) => cashMovementTypeLabels[movement.type] },
+            { key: "c2", header: "Origem", cell: (movement) => cashMovementOriginLabels[movement.origin] },
+            { key: "c3", header: "Descrição", cell: (movement) => movement.description },
+            { key: "c4", header: "Valor", cell: (movement) => formatBrl(movement.amount), numeric: true, className: "font-medium" },
+          ]}
+        />
       </div>
 
       {movements && (
@@ -856,7 +720,7 @@ function ClientesTab({ from, to, reloadKey }: PeriodProps) {
   return (
     <div className="space-y-4">
       <ErrorBanner error={error} />
-      <div className="flex items-center justify-between text-xs text-slate-400">
+      <div className="flex items-center justify-between text-xs text-slate-500">
         <span>Período: {periodLabel}</span>
         <span>{data ? `Gerado em ${formatDateTime(data.generatedAt)}` : ""}</span>
       </div>
@@ -864,12 +728,12 @@ function ClientesTab({ from, to, reloadKey }: PeriodProps) {
       {data && (
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase text-slate-400">Novos clientes</p>
+            <p className="text-xs uppercase text-slate-500">Novos clientes</p>
             <p className="text-2xl font-semibold text-slate-900">{data.newClients}</p>
             <p className="text-sm text-slate-600">pela data de cadastro (UTC)</p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase text-slate-400">Agendamentos no período</p>
+            <p className="text-xs uppercase text-slate-500">Agendamentos no período</p>
             <p className="text-2xl font-semibold text-slate-900">{data.services.completed}</p>
             <p className="text-sm text-slate-600">concluído(s) pela data/hora de início</p>
             <p className="mt-1 text-xs text-slate-500">
@@ -881,7 +745,7 @@ function ClientesTab({ from, to, reloadKey }: PeriodProps) {
       )}
 
       {!data && !error && (
-        <p className="py-6 text-center text-sm text-slate-400">
+        <p className="py-6 text-center text-sm text-slate-500">
           {loading ? "Carregando..." : "Sem dados."}
         </p>
       )}
@@ -916,7 +780,7 @@ function WhatsAppTab({ from, to, reloadKey }: PeriodProps) {
   return (
     <div className="space-y-4">
       <ErrorBanner error={error} />
-      <div className="flex items-center justify-between text-xs text-slate-400">
+      <div className="flex items-center justify-between text-xs text-slate-500">
         <span>Período: {periodLabel}</span>
         <span>{data ? `Gerado em ${formatDateTime(data.generatedAt)}` : ""}</span>
       </div>
@@ -924,12 +788,12 @@ function WhatsAppTab({ from, to, reloadKey }: PeriodProps) {
       {data && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase text-slate-400">Mensagens no período</p>
+            <p className="text-xs uppercase text-slate-500">Mensagens no período</p>
             <p className="text-2xl font-semibold text-slate-900">{data.total}</p>
             <p className="text-sm text-slate-600">pela data de criação (UTC)</p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase text-slate-400">Entregues / lidas</p>
+            <p className="text-xs uppercase text-slate-500">Entregues / lidas</p>
             <p className="text-2xl font-semibold text-primary-700">
               {data.states.delivered} / {data.states.read}
             </p>
@@ -938,12 +802,12 @@ function WhatsAppTab({ from, to, reloadKey }: PeriodProps) {
             </p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase text-slate-400">Falhas</p>
-            <p className="text-2xl font-semibold text-red-600">{data.failed.count}</p>
+            <p className="text-xs uppercase text-slate-500">Falhas</p>
+            <p className="text-2xl font-semibold text-red-700">{data.failed.count}</p>
             <p className="text-sm text-slate-600">status final FAILED no período</p>
           </div>
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase text-slate-400">Pendentes / canceladas</p>
+            <p className="text-xs uppercase text-slate-500">Pendentes / canceladas</p>
             <p className="text-2xl font-semibold text-slate-900">
               {data.states.pending} / {data.states.cancelled}
             </p>
@@ -958,24 +822,15 @@ function WhatsAppTab({ from, to, reloadKey }: PeriodProps) {
             <div className="border-b border-slate-100 px-4 py-3 text-xs font-semibold uppercase text-slate-500">
               Mensagens por status atual
             </div>
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Quantidade</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.byStatus.map((row) => (
-                  <tr key={row.status} className="border-b border-slate-100">
-                    <td className="px-4 py-3 text-slate-700">
-                      {whatsappMessageStatusLabels[row.status]}
-                    </td>
-                    <td className="px-4 py-3 text-slate-900">{row.count}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <DataTable
+              bare
+              rows={data.byStatus}
+              rowKey={(row) => row.status}
+              columns={[
+                { key: "c0", header: "Status", cell: (row) => whatsappMessageStatusLabels[row.status] },
+                { key: "c1", header: "Quantidade", cell: (row) => row.count },
+              ]}
+            />
           </div>
         )}
 
@@ -984,31 +839,21 @@ function WhatsAppTab({ from, to, reloadKey }: PeriodProps) {
             <div className="border-b border-slate-100 px-4 py-3 text-xs font-semibold uppercase text-slate-500">
               Motivos de falha
             </div>
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-                  <th className="px-4 py-3">Motivo</th>
-                  <th className="px-4 py-3">Quantidade</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.failed.byReason.map((row) => (
-                  <tr key={row.reason} className="border-b border-slate-100">
-                    <td className="px-4 py-3 text-slate-700">{row.reason}</td>
-                    <td className="px-4 py-3 text-slate-900">{row.count}</td>
-                  </tr>
-                ))}
-                {data.failed.byReason.length === 0 && (
-                  <EmptyRow colSpan={2} message="Nenhuma falha no período." />
-                )}
-              </tbody>
-            </table>
+            <DataTable
+              rows={data.failed.byReason}
+              rowKey={(row) => row.reason}
+              empty={<>{data.failed.byReason.length === 0 ? "Nenhuma falha no período." : null}</>}
+              columns={[
+                { key: "c0", header: "Motivo", cell: (row) => row.reason },
+                { key: "c1", header: "Quantidade", cell: (row) => row.count },
+              ]}
+            />
           </div>
         )}
       </div>
 
       {!data && !error && (
-        <p className="py-6 text-center text-sm text-slate-400">
+        <p className="py-6 text-center text-sm text-slate-500">
           {loading ? "Carregando..." : "Sem dados."}
         </p>
       )}
@@ -1061,10 +906,10 @@ export default function RelatoriosPage() {
             inclusivas).
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link
             href="/dashboard"
-            className="rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            className="rounded-md bg-primary-700 px-3 py-2 text-sm font-medium text-white hover:bg-primary-800"
           >
             Dashboard
           </Link>
@@ -1108,7 +953,7 @@ export default function RelatoriosPage() {
         <div className="flex items-end gap-2">
           <button
             type="submit"
-            className="rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            className="rounded-md bg-primary-700 px-3 py-2 text-sm font-medium text-white hover:bg-primary-800"
           >
             Aplicar período
           </button>
@@ -1124,7 +969,7 @@ export default function RelatoriosPage() {
             Padrão 30 dias
           </button>
         </div>
-        <div className="flex items-end text-xs text-slate-400">
+        <div className="flex items-end text-xs text-slate-500">
           Período aplicado:{" "}
           {applied.from || applied.to
             ? `${applied.from || "(padrão)"} a ${applied.to || "(hoje)"}`
@@ -1132,28 +977,13 @@ export default function RelatoriosPage() {
         </div>
       </form>
 
-      <div className="flex flex-wrap gap-2">
-        {tabs.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => setTab(item.id)}
-            className={
-              tab === item.id
-                ? "rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white"
-                : secondaryButton
-            }
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
-
-      {tab === "vendas" && <VendasTab {...periodProps} />}
-      {tab === "estoque" && <EstoqueTab {...periodProps} />}
-      {tab === "caixa" && <CaixaTab {...periodProps} />}
-      {tab === "clientes" && <ClientesTab {...periodProps} />}
-      {tab === "whatsapp" && <WhatsAppTab {...periodProps} />}
+      <Tabs label="Relatórios" items={tabs.map((item) => ({ key: item.id, label: item.label }))} value={tab} onChange={setTab}>
+        {tab === "vendas" && <VendasTab {...periodProps} />}
+        {tab === "estoque" && <EstoqueTab {...periodProps} />}
+        {tab === "caixa" && <CaixaTab {...periodProps} />}
+        {tab === "clientes" && <ClientesTab {...periodProps} />}
+        {tab === "whatsapp" && <WhatsAppTab {...periodProps} />}
+      </Tabs>
     </div>
   );
 }

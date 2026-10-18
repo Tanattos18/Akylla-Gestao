@@ -231,7 +231,7 @@ export default function DashboardPage() {
       {/* Saudação + período */}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-[11px] font-medium uppercase tracking-widest text-slate-400">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-slate-500">
             Seu negócio em um olhar
           </p>
           <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-900">
@@ -292,7 +292,7 @@ export default function DashboardPage() {
               Padrão 30 dias
             </Button>
             {loadedAt && (
-              <span className="ml-auto text-xs text-slate-400">
+              <span className="ml-auto text-xs text-slate-500">
                 Atualizado {formatDateTime(loadedAt)}
               </span>
             )}
@@ -382,12 +382,12 @@ export default function DashboardPage() {
                 <dl className="flex flex-wrap items-center gap-x-8 gap-y-3">
                   {miniStats.map((stat) => (
                     <div key={stat.label} className="min-w-[100px]">
-                      <dt className="text-[11px] font-medium uppercase tracking-wider text-slate-400">
+                      <dt className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
                         {stat.label}
                       </dt>
                       <dd
                         className={`mt-0.5 text-sm font-semibold ${
-                          stat.accent ? "text-red-600" : "text-slate-900"
+                          stat.accent ? "text-red-700" : "text-slate-900"
                         }`}
                       >
                         {stat.value}
@@ -432,7 +432,7 @@ export default function DashboardPage() {
                 <Card className="border-red-200 bg-red-50/60">
                   <CardBody>
                     <div className="flex items-start gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-700">
                         <CalendarClock className="h-5 w-5" />
                       </div>
                       <div className="min-w-0">
@@ -481,7 +481,7 @@ export default function DashboardPage() {
                   />
                 )}
               </CardBody>
-              <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3 text-xs text-slate-400">
+              <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3 text-xs text-slate-500">
                 <span>Valores baseados nos registros da sua empresa</span>
                 {periodLabel && <span>{periodLabel}</span>}
               </div>
@@ -539,7 +539,7 @@ export default function DashboardPage() {
                           <div
                             className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
                               sale.status === "CANCELLED"
-                                ? "bg-red-50 text-red-500"
+                                ? "bg-red-50 text-red-700"
                                 : "bg-primary-50 text-primary-700"
                             }`}
                           >
@@ -550,7 +550,7 @@ export default function DashboardPage() {
                               {sale.receiptCode}
                               {sale.client ? ` · ${sale.client.name}` : ""}
                             </p>
-                            <p className="text-xs text-slate-400">
+                            <p className="text-xs text-slate-500">
                               {paymentMethodLabels[sale.paymentMethod]} ·{" "}
                               {formatDateTime(sale.createdAt)}
                             </p>
@@ -558,7 +558,7 @@ export default function DashboardPage() {
                           <span
                             className={`shrink-0 text-sm font-semibold ${
                               sale.status === "CANCELLED"
-                                ? "text-red-500 line-through"
+                                ? "text-red-700 line-through"
                                 : "text-slate-900"
                             }`}
                           >
@@ -615,7 +615,7 @@ export default function DashboardPage() {
                               {appt.client.name}
                               {appt.pet ? ` · ${appt.pet.name}` : ""}
                             </p>
-                            <p className="truncate text-xs text-slate-400">
+                            <p className="truncate text-xs text-slate-500">
                               {appt.service.name} ·{" "}
                               {formatLocalTime(appt.startLocal)}
                             </p>
@@ -677,7 +677,7 @@ export default function DashboardPage() {
               <CardBody className="space-y-4">
                 <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
                   <div className="rounded-lg bg-teal-50 p-3">
-                    <p className="text-[11px] font-medium uppercase tracking-wider text-teal-600">
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-teal-700">
                       Em dinheiro
                     </p>
                     <p className="mt-0.5 text-lg font-semibold text-teal-700">
@@ -685,15 +685,15 @@ export default function DashboardPage() {
                     </p>
                   </div>
                   <div className="rounded-lg bg-red-50 p-3">
-                    <p className="text-[11px] font-medium uppercase tracking-wider text-red-500">
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-red-700">
                       Saídas
                     </p>
-                    <p className="mt-0.5 text-lg font-semibold text-red-600">
+                    <p className="mt-0.5 text-lg font-semibold text-red-700">
                       {formatBrl(exits)}
                     </p>
                   </div>
                   <div className="rounded-lg bg-sky-50 p-3">
-                    <p className="text-[11px] font-medium uppercase tracking-wider text-sky-600">
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-sky-700">
                       Recebido
                     </p>
                     <p className="mt-0.5 text-lg font-semibold text-sky-700">
@@ -722,7 +722,7 @@ export default function DashboardPage() {
                     {formatBrl(cashBalance)}
                   </span>
                   {summary.cash.openSession && (
-                    <span className="text-xs text-slate-400">
+                    <span className="text-xs text-slate-500">
                       Caixa aberto · esperado{" "}
                       {formatBrl(summary.cash.openSession.expectedBalance)}
                     </span>
@@ -734,11 +734,11 @@ export default function DashboardPage() {
             <Card>
               <CardBody>
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-700">
                     <MessageCircle className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-[11px] font-medium uppercase tracking-wider text-slate-400">
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
                       WhatsApp
                     </p>
                     <p className="text-lg font-semibold text-slate-900">
@@ -750,7 +750,7 @@ export default function DashboardPage() {
                     </p>
                     <Link
                       href="/whatsapp"
-                      className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-emerald-600 hover:text-emerald-700"
+                      className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-emerald-700 hover:text-emerald-700"
                     >
                       Ver mensagens →
                     </Link>

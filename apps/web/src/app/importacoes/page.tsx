@@ -11,6 +11,7 @@ import {
   type ImportReport,
   type ImportType,
 } from "../../lib/types";
+import { DataTable } from "../../components/ui/DataTable";
 
 const IMPORT_TYPES: ImportType[] = [
   "CATEGORY",
@@ -228,6 +229,7 @@ export default function ImportacoesPage() {
           <div>
             <input
               id="import-file"
+              aria-label="Arquivo CSV para importar"
               type="file"
               accept=".csv,text/csv"
               onChange={(event) => setFile(event.target.files?.[0] ?? null)}
@@ -246,7 +248,7 @@ export default function ImportacoesPage() {
           <button
             type="submit"
             disabled={uploading}
-            className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
+            className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60"
           >
             {uploading ? "Processando..." : dryRun ? "Simular importação" : "Importar"}
           </button>
@@ -267,24 +269,14 @@ export default function ImportacoesPage() {
           </p>
           {report.errorDetails.length > 0 && (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-                    <th className="py-2 pr-4">Linha</th>
-                    <th className="py-2">Erro</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {report.errorDetails.map((detail) => (
-                    <tr key={detail.row} className="border-b border-slate-100">
-                      <td className="py-2 pr-4 font-mono text-xs text-slate-600">
-                        {detail.row}
-                      </td>
-                      <td className="py-2 text-slate-700">{detail.message}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <DataTable
+                rows={report.errorDetails}
+                rowKey={(detail) => `${detail.row}-${detail.message}`}
+                columns={[
+                  { key: "c0", header: "Linha", cell: (detail) => detail.row, className: "font-mono text-xs" },
+                  { key: "c1", header: "Erro", cell: (detail) => detail.message },
+                ]}
+              />
               {report.errors > report.errorDetails.length && (
                 <p className="mt-2 text-xs text-slate-500">
                   Mostrando as primeiras {report.errorDetails.length} de{" "}
@@ -305,32 +297,15 @@ export default function ImportacoesPage() {
             {historyError}
           </div>
         )}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-                <th className="py-2 pr-4">Data</th>
-                <th className="py-2 pr-4">Tipo</th>
-                <th className="py-2 pr-4">Arquivo</th>
-                <th className="py-2 pr-4">Status</th>
-                <th className="py-2 pr-4">Criados</th>
-                <th className="py-2 pr-4">Ignorados</th>
-                <th className="py-2 pr-4">Erros</th>
-                <th className="py-2">Por</th>
-              </tr>
-            </thead>
-            <tbody>
-              {history.map((batch) => (
-                <tr key={batch.id} className="border-b border-slate-100">
-                  <td className="py-2 pr-4 text-slate-600">
-                    {new Date(batch.createdAt).toLocaleString("pt-BR")}
-                  </td>
-                  <td className="py-2 pr-4 text-slate-800">
-                    {importTypeLabels[batch.type]}
-                  </td>
-                  <td className="py-2 pr-4 text-slate-600">{batch.filename}</td>
-                  <td className="py-2 pr-4">
-                    <span
+        <DataTable
+          rows={history}
+          rowKey={(batch) => batch.id}
+          empty={<>Nenhuma importação realizada ainda.</>}
+          columns={[
+            { key: "c0", header: "Data", cell: (batch) => new Date(batch.createdAt).toLocaleString("pt-BR") },
+            { key: "c1", header: "Tipo", cell: (batch) => importTypeLabels[batch.type] },
+            { key: "c2", header: "Arquivo", cell: (batch) => batch.filename },
+            { key: "c3", header: "Status", cell: (batch) => <><span
                       className={
                         batch.status === "COMPLETED"
                           ? "rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700"
@@ -338,30 +313,19 @@ export default function ImportacoesPage() {
                       }
                     >
                       {batch.status === "COMPLETED" ? "Concluída" : "Falhou"}
-                    </span>
-                  </td>
-                  <td className="py-2 pr-4">{batch.createdCount}</td>
-                  <td className="py-2 pr-4">{batch.skippedCount}</td>
-                  <td className="py-2 pr-4">{batch.errorCount}</td>
-                  <td className="py-2 text-slate-600">{batch.createdByName}</td>
-                </tr>
-              ))}
-              {history.length === 0 && !historyError && (
-                <tr>
-                  <td colSpan={8} className="py-4 text-center text-slate-400">
-                    Nenhuma importação realizada ainda.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                    </span></> },
+            { key: "c4", header: "Criados", cell: (batch) => batch.createdCount },
+            { key: "c5", header: "Ignorados", cell: (batch) => batch.skippedCount },
+            { key: "c6", header: "Erros", cell: (batch) => batch.errorCount },
+            { key: "c7", header: "Por", cell: (batch) => batch.createdByName },
+          ]}
+        />
         {historyTotal > HISTORY_PAGE_SIZE && (
           <div className="mt-4 flex items-center justify-between text-sm">
             <span className="text-slate-500">
               Página {historyPage} de {historyPages}
             </span>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 disabled={historyPage <= 1}

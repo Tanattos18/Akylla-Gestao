@@ -92,10 +92,10 @@ export default function FinanceiroPage() {
             Caixa realizado e títulos a pagar/receber do negócio.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link
             href="/caixa"
-            className="rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            className="rounded-md bg-primary-700 px-3 py-2 text-sm font-medium text-white hover:bg-primary-800"
           >
             Caixa
           </Link>
@@ -181,7 +181,7 @@ export default function FinanceiroPage() {
             <div className="flex items-end gap-2">
               <button
                 type="submit"
-                className="flex-1 rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
+                className="flex-1 rounded-md bg-primary-700 px-3 py-2 text-sm font-medium text-white hover:bg-primary-800"
               >
                 Aplicar período
               </button>

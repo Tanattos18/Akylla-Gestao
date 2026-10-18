@@ -7,14 +7,14 @@ function Label({ children, required }: { children: React.ReactNode; required?: b
   return (
     <span className="mb-1.5 block text-sm font-medium text-slate-700">
       {children}
-      {required && <span className="ml-0.5 text-red-500">*</span>}
+      {required && <span className="ml-0.5 text-red-700">*</span>}
     </span>
   );
 }
 
 function ErrorText({ message }: { message?: string }) {
   if (!message) return null;
-  return <p className="mt-1.5 text-xs text-red-600">{message}</p>;
+  return <p className="mt-1.5 text-xs text-red-700">{message}</p>;
 }
 
 export const Input = forwardRef<

@@ -92,7 +92,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         disabledModules={disabledModules}
         onLogout={handleLogout}
       />
-      <main className="mx-auto w-full max-w-[1440px] px-4 py-6 md:px-6 md:py-8 xl:px-10">
+      <main id="conteudo" className="mx-auto w-full max-w-[1440px] px-4 py-6 md:px-6 md:py-8 xl:px-10">
         {children}
       </main>
     </div>

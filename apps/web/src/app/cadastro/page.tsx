@@ -128,7 +128,7 @@ export default function CadastroPage() {
             aria-invalid={Boolean(fieldErrors.companyName)}
           />
           {fieldErrors.companyName && (
-            <p className="mb-3 text-xs text-red-600">{fieldErrors.companyName}</p>
+            <p className="mb-3 text-xs text-red-700">{fieldErrors.companyName}</p>
           )}
           {!fieldErrors.companyName && <div className="mb-3" />}
 
@@ -145,7 +145,7 @@ export default function CadastroPage() {
             aria-invalid={Boolean(fieldErrors.name)}
           />
           {fieldErrors.name && (
-            <p className="mb-3 text-xs text-red-600">{fieldErrors.name}</p>
+            <p className="mb-3 text-xs text-red-700">{fieldErrors.name}</p>
           )}
           {!fieldErrors.name && <div className="mb-3" />}
 
@@ -162,7 +162,7 @@ export default function CadastroPage() {
             aria-invalid={Boolean(fieldErrors.email)}
           />
           {fieldErrors.email && (
-            <p className="mb-3 text-xs text-red-600">{fieldErrors.email}</p>
+            <p className="mb-3 text-xs text-red-700">{fieldErrors.email}</p>
           )}
           {!fieldErrors.email && <div className="mb-3" />}
 
@@ -179,7 +179,7 @@ export default function CadastroPage() {
             aria-invalid={Boolean(fieldErrors.password)}
           />
           {fieldErrors.password && (
-            <p className="mb-3 text-xs text-red-600">{fieldErrors.password}</p>
+            <p className="mb-3 text-xs text-red-700">{fieldErrors.password}</p>
           )}
           {!fieldErrors.password && <div className="mb-3" />}
 
@@ -196,7 +196,7 @@ export default function CadastroPage() {
             aria-invalid={Boolean(fieldErrors.confirm)}
           />
           {fieldErrors.confirm && (
-            <p className="mb-3 text-xs text-red-600">{fieldErrors.confirm}</p>
+            <p className="mb-3 text-xs text-red-700">{fieldErrors.confirm}</p>
           )}
           {!fieldErrors.confirm && <div className="mb-5" />}
 
@@ -223,17 +223,17 @@ export default function CadastroPage() {
               </span>
             </label>
             {fieldErrors.acceptTerms && (
-              <p className="mt-1 text-xs text-red-600">{fieldErrors.acceptTerms}</p>
+              <p className="mt-1 text-xs text-red-700">{fieldErrors.acceptTerms}</p>
             )}
           </div>
 
           <Turnstile onToken={onCaptchaToken} />
-          {fieldErrors.captcha && <p className="-mt-2 mb-3 text-xs text-red-600">{fieldErrors.captcha}</p>}
+          {fieldErrors.captcha && <p className="-mt-2 mb-3 text-xs text-red-700">{fieldErrors.captcha}</p>}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Criando conta..." : "Criar conta"}
           </button>

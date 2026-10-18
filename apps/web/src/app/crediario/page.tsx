@@ -15,6 +15,8 @@ import type {
   CreditInstallmentStatus,
   Paginated,
 } from "../../lib/types";
+import { useDialog } from "../../components/ui/Dialog";
+import { DataTable } from "../../components/ui/DataTable";
 
 /** Fase 2 · 2.2 — crediário: carteira, aprovação de limite e recebimento de parcelas. */
 
@@ -29,10 +31,11 @@ const statusClass: Record<CreditInstallmentStatus, string> = {
   OPEN: "bg-sky-50 text-sky-800",
   PAID: "bg-emerald-50 text-emerald-800",
   OVERDUE: "bg-red-50 text-red-800",
-  CANCELLED: "bg-slate-100 text-slate-600",
+  CANCELLED: "bg-slate-100 text-slate-700",
 };
 
 function CrediarioContent() {
+  const dialog = useDialog();
   const router = useRouter();
   const params = useSearchParams();
   const [session, setSession] = useState<Session | null>(null);
@@ -119,7 +122,7 @@ function CrediarioContent() {
   }
 
   async function receive(installment: CreditInstallmentDto) {
-    const ok = window.confirm(
+    const ok = await dialog.confirm(
       `Receber a parcela ${installment.number}/${installment.totalInstallments} de ${installment.client.name} (${formatBrl(installment.amount)})? Entra no caixa aberto agora.`,
     );
     if (!ok) return;
@@ -201,7 +204,7 @@ function CrediarioContent() {
                   <label htmlFor="cred-limit" className="mb-1 block text-xs text-slate-600">Limite de crédito (R$)</label>
                   <input id="cred-limit" inputMode="decimal" value={limit} onChange={(e) => setLimit(e.target.value)} placeholder="500.00" className={inputClass} />
                 </div>
-                <button type="submit" disabled={busy || !limit.trim()} className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60">
+                <button type="submit" disabled={busy || !limit.trim()} className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60">
                   {detail ? "Salvar limite" : "Aprovar crediário"}
                 </button>
                 {detail && (
@@ -218,74 +221,42 @@ function CrediarioContent() {
             )}
 
             {detail && (
-              <div className="overflow-x-auto rounded-lg border border-slate-200">
-                <table className="w-full text-left text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-                      <th className="px-4 py-3">Venda</th>
-                      <th className="px-4 py-3">Parcela</th>
-                      <th className="px-4 py-3">Vencimento</th>
-                      <th className="px-4 py-3 text-right">Valor</th>
-                      <th className="px-4 py-3">Status</th>
-                      {isAdmin && <th className="px-4 py-3">Ações</th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {detail.installments.map((i) => (
-                      <tr key={i.id} className="border-b border-slate-100">
-                        <td className="px-4 py-3"><Link href={`/vendas/${i.sale.id}`} className="font-mono text-xs text-primary-700 hover:underline">{i.sale.receiptCode}</Link></td>
-                        <td className="px-4 py-3 text-slate-700">{i.number}/{i.totalInstallments}</td>
-                        <td className="px-4 py-3 text-slate-700">{formatDate(i.dueDate)}</td>
-                        <td className="px-4 py-3 text-right font-medium text-slate-900">{formatBrl(i.amount)}</td>
-                        <td className="px-4 py-3"><span className={`rounded-full px-2 py-0.5 text-xs ${statusClass[i.status]}`}>{statusLabels[i.status]}</span></td>
-                        {isAdmin && (
-                          <td className="px-4 py-3">
-                            {(i.status === "OPEN" || i.status === "OVERDUE") && (
+              <DataTable
+                rows={detail.installments}
+                rowKey={(i) => i.id}
+                empty={<>Sem compras no crediário.</>}
+                columns={[
+                  { key: "c0", header: "Venda", cell: (i) => <><Link href={`/vendas/${i.sale.id}`} className="font-mono text-xs text-primary-700 hover:underline">{i.sale.receiptCode}</Link></> },
+                  { key: "c1", header: "Parcela", cell: (i) => <>{i.number}/{i.totalInstallments}</> },
+                  { key: "c2", header: "Vencimento", cell: (i) => formatDate(i.dueDate) },
+                  { key: "c3", header: "Valor", cell: (i) => formatBrl(i.amount), numeric: true, className: "font-medium" },
+                  { key: "c4", header: "Status", cell: (i) => <><span className={`rounded-full px-2 py-0.5 text-xs ${statusClass[i.status]}`}>{statusLabels[i.status]}</span></> },
+                  { key: "c5", header: "Ações", cell: (i) => <>{(i.status === "OPEN" || i.status === "OVERDUE") && (
                               <button type="button" disabled={busy} onClick={() => void receive(i)} className="text-xs font-medium text-emerald-700 hover:underline disabled:opacity-60">
                                 Receber
                               </button>
-                            )}
-                          </td>
-                        )}
-                      </tr>
-                    ))}
-                    {detail.installments.length === 0 && (
-                      <tr><td colSpan={6} className="px-4 py-6 text-center text-slate-500">Sem compras no crediário.</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                            )}</>, hidden: !(isAdmin) },
+                ]}
+              />
             )}
           </div>
         )}
       </div>
 
       {list && list.items.length > 0 && (
-        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-          <table className="w-full text-left text-sm">
-            <caption className="px-4 pt-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Carteira</caption>
-            <thead>
-              <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-                <th className="px-4 py-3">Cliente</th>
-                <th className="px-4 py-3 text-right">Limite</th>
-                <th className="px-4 py-3 text-right">Em aberto</th>
-                <th className="px-4 py-3 text-right">Vencido</th>
-                <th className="px-4 py-3">Situação</th>
-              </tr>
-            </thead>
-            <tbody>
-              {list.items.map((a) => (
-                <tr key={a.id} className="cursor-pointer border-b border-slate-100 hover:bg-slate-50" onClick={() => setSelected(a.client.id)}>
-                  <td className="px-4 py-3 font-medium text-slate-800">{a.client.name}</td>
-                  <td className="px-4 py-3 text-right text-slate-700">{formatBrl(a.creditLimit)}</td>
-                  <td className="px-4 py-3 text-right text-slate-900">{formatBrl(a.balance)}</td>
-                  <td className={Number(a.overdue) > 0 ? "px-4 py-3 text-right font-semibold text-red-700" : "px-4 py-3 text-right text-slate-500"}>{formatBrl(a.overdue)}</td>
-                  <td className="px-4 py-3">{a.status === "ACTIVE" ? "Liberado" : "Bloqueado"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          rows={list.items}
+          rowKey={(a) => a.id}
+          onRowClick={(a) => setSelected(a.client.id)}
+          rowLabel={(a) => `Ver crediário de ${a.client.name}`}
+          columns={[
+            { key: "c0", header: "Cliente", cell: (a) => a.client.name, className: "font-medium" },
+            { key: "c1", header: "Limite", cell: (a) => formatBrl(a.creditLimit), numeric: true },
+            { key: "c2", header: "Em aberto", cell: (a) => formatBrl(a.balance), numeric: true },
+            { key: "c3", header: "Vencido", cell: (a) => <span className={Number(a.overdue) > 0 ? "font-semibold text-red-700" : "text-slate-600"}>{formatBrl(a.overdue)}</span>, numeric: true },
+            { key: "c4", header: "Situação", cell: (a) => a.status === "ACTIVE" ? "Liberado" : "Bloqueado" },
+          ]}
+        />
       )}
     </div>
   );

@@ -4,6 +4,14 @@
 > Este checklist cobre apenas a era do Akylla Gestão. O histórico
 > anterior à adaptação está preservado no Git.
 
+## Fase 5 — Design e UX (2026-10-18)
+
+- [x] `DataTable` (31 tabelas; carrinho do PDV em lista), `Dialog`/`useDialog` (33 confirm/prompt), `Toast`, `Tabs`
+- [x] Tokens semânticos, foco visível, "Pular para o conteúdo", CSS de impressão
+- [x] Contraste AA (botões `primary-700`, texto 700+, links sublinhados); barra do topo sem estourar em 1280 px
+- [x] `npm run test:a11y` (axe, 36 telas, 0 violações) + job na CI
+- [ ] CNPJ no comprovante (depende do cadastro da empresa, Fase 7)
+
 ## Fase 4 — Perfis no cadastro (2026-10-18)
 
 - [x] `OnboardingPreset` global + `Company.segment`/`onboardingCompletedAt`; migration aditiva com os 4 perfis e empresas existentes marcadas como concluídas

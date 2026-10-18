@@ -40,10 +40,60 @@
      antes havia a string literal "Inter" e a variável era desperdiçada. */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
     sans-serif;
+
+  /* Tokens semânticos (Fase 5 · 5.2). Regra: texto só nos tons 700+;
+     500/600 servem para fundo, borda e ícone grande. */
+  --color-accent: #b45309;
+  --color-danger: #dc2626;
+  --color-warning: #d97706;
+  --color-info: #0284c7;
+  --color-muted: #64748b;
+  --color-border-subtle: #e2e8f0;
 }
 
 body {
   background: var(--color-background);
   color: var(--color-foreground);
   font-family: var(--font-sans);
+}
+
+/* Foco visível consistente (Fase 5 · 5.4) */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-primary-700);
+  outline-offset: 2px;
+}
+
+/* Links dentro de texto corrido precisam de sublinhado (WCAG 1.4.1) */
+p a:not([class*="rounded"]) {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Diálogos nativos (Fase 5 · 5.1) */
+dialog::backdrop {
+  background: rgb(15 23 42 / 0.5);
+}
+
+/* Impressão (Fase 5 · 5.3): só o conteúdo; menus e botões somem. */
+@media print {
+  @page {
+    margin: 10mm;
+  }
+  body {
+    background: #fff;
+  }
+  header,
+  nav,
+  button,
+  .no-print {
+    display: none !important;
+  }
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 }

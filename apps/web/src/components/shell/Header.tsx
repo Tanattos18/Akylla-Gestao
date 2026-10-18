@@ -376,7 +376,7 @@ export function Header({
       searchResults.sales.length > 0);
 
   const searchInputClass =
-    "w-52 rounded-lg border border-white/10 bg-white/10 py-1.5 pl-9 pr-3 text-sm text-white placeholder:text-slate-400 focus:border-primary-400/60 focus:bg-white/15 focus:outline-none focus:ring-2 focus:ring-primary-500/30 xl:w-64";
+    "w-40 rounded-lg border border-white/10 bg-white/10 py-1.5 pl-9 pr-3 text-sm text-white placeholder:text-slate-400 focus:border-primary-400/60 focus:bg-white/15 focus:outline-none focus:ring-2 focus:ring-primary-500/30 2xl:w-64";
 
   return (
     <>
@@ -398,7 +398,7 @@ export function Header({
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-500 text-sm font-bold text-white">
               a
             </span>
-            <span className="hidden text-sm font-semibold tracking-tight text-white sm:block">
+            <span className="hidden text-sm font-semibold tracking-tight text-white sm:block lg:hidden xl:block">
               Akylla Gestão
             </span>
           </Link>
@@ -412,7 +412,7 @@ export function Header({
                   key={item.href}
                   href={item.href}
                   aria-current={active ? "page" : undefined}
-                  className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  className={`rounded-lg px-2 py-2 text-sm font-medium transition-colors 2xl:px-3 ${
                     active
                       ? "bg-white/10 text-white"
                       : "text-slate-300 hover:bg-white/5 hover:text-white"
@@ -435,7 +435,7 @@ export function Header({
                     onClick={() => setOpenGroup(open ? null : group.label)}
                     aria-expanded={open}
                     aria-haspopup="menu"
-                    className={`flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    className={`flex items-center gap-1 rounded-lg px-2 py-2 text-sm font-medium transition-colors 2xl:px-3 ${
                       open || groupActive
                         ? "bg-white/10 text-white"
                         : "text-slate-300 hover:bg-white/5 hover:text-white"
@@ -726,17 +726,18 @@ export function Header({
               <button
                 type="button"
                 onClick={() => setProfileOpen((o) => !o)}
-                aria-label="Menu do usuário"
+
                 aria-expanded={profileOpen}
                 className="flex items-center gap-2 rounded-lg py-1 pl-1 pr-1.5 hover:bg-white/10"
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-500/20 text-xs font-semibold text-primary-400">
+                <span className="sr-only">Menu do usuário</span>
+                <span aria-hidden="true" className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-500/20 text-xs font-semibold text-primary-400">
                   {initials(userName)}
                 </span>
-                <span className="hidden text-sm font-medium text-slate-200 md:block">
+                <span className="hidden text-sm font-medium text-slate-200 2xl:block">
                   {userName.split(" ")[0]}
                 </span>
-                <ChevronDown className="hidden h-4 w-4 text-slate-400 md:block" />
+                <ChevronDown aria-hidden="true" className="hidden h-4 w-4 text-slate-400 2xl:block" />
               </button>
               {profileOpen && (
                 <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
@@ -762,7 +763,7 @@ export function Header({
             </div>
 
             {/* Data (xl+) */}
-            <span className="ml-2 hidden text-xs capitalize text-slate-400 xl:block">
+            <span className="ml-2 hidden text-xs capitalize text-slate-400 2xl:block">
               {formatDate()}
             </span>
           </div>

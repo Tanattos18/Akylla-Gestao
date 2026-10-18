@@ -16,6 +16,8 @@ import {
   type PetSpecies,
   type WhatsAppConsentDto,
 } from "../../../lib/types";
+import { useDialog } from "../../../components/ui/Dialog";
+import { DataTable } from "../../../components/ui/DataTable";
 
 const emptyPetForm = {
   name: "",
@@ -29,6 +31,7 @@ const emptyPetForm = {
 };
 
 export default function ClienteDetalhePage() {
+  const dialog = useDialog();
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const clientId = params.id;
@@ -167,7 +170,7 @@ export default function ClienteDetalhePage() {
 
   async function handlePetStatus(pet: PetDto, status: "ACTIVE" | "INACTIVE") {
     const label = status === "INACTIVE" ? "inativar" : "reativar";
-    if (!window.confirm(`Deseja ${label} o pet "${pet.name}"?`)) return;
+    if (!await dialog.confirm(`Deseja ${label} o pet "${pet.name}"?`)) return;
     setActionError(null);
     try {
       await api(`/api/pets/${pet.id}/status`, {
@@ -184,7 +187,7 @@ export default function ClienteDetalhePage() {
   async function handleClientStatus(status: "ACTIVE" | "INACTIVE") {
     if (!client) return;
     const label = status === "INACTIVE" ? "inativar" : "reativar";
-    if (!window.confirm(`Deseja ${label} o cliente "${client.name}"?`)) return;
+    if (!await dialog.confirm(`Deseja ${label} o cliente "${client.name}"?`)) return;
     setActionError(null);
     try {
       await api(`/api/clients/${client.id}/status`, {
@@ -201,7 +204,7 @@ export default function ClienteDetalhePage() {
   async function handleConsent(status: "OPTED_IN" | "OPTED_OUT") {
     if (!client) return;
     if (status === "OPTED_OUT") {
-      const confirmed = window.confirm(
+      const confirmed = await dialog.confirm(
         `Registrar o descadastro de ${client.name} no WhatsApp? Novos envios ficam bloqueados.`,
       );
       if (!confirmed) return;
@@ -263,7 +266,7 @@ export default function ClienteDetalhePage() {
           <h2 className="text-xl font-semibold text-slate-900">{client.name}</h2>
           <p className="text-sm text-slate-500">Ficha do cliente</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link
             href="/clientes"
             className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
@@ -306,7 +309,7 @@ export default function ClienteDetalhePage() {
               className={
                 client.status === "ACTIVE"
                   ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700"
-                  : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500"
+                  : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"
               }
             >
               {client.status === "ACTIVE" ? "Ativo" : "Inativo"}
@@ -315,7 +318,7 @@ export default function ClienteDetalhePage() {
               <button
                 type="button"
                 onClick={() => void handleClientStatus("INACTIVE")}
-                className="text-xs font-medium text-red-600 hover:underline"
+                className="text-xs font-medium text-red-700 hover:underline"
               >
                 Inativar cliente
               </button>
@@ -332,29 +335,29 @@ export default function ClienteDetalhePage() {
         </div>
         <dl className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
           <div>
-            <dt className="text-xs uppercase text-slate-400">Contato</dt>
+            <dt className="text-xs uppercase text-slate-500">Contato</dt>
             <dd className="text-slate-700">
               {[client.mobile, client.phone, client.email].filter(Boolean).join(" · ") || "—"}
             </dd>
           </div>
           <div>
-            <dt className="text-xs uppercase text-slate-400">CPF</dt>
+            <dt className="text-xs uppercase text-slate-500">CPF</dt>
             <dd className="text-slate-700">{client.cpf || "—"}</dd>
           </div>
           <div>
-            <dt className="text-xs uppercase text-slate-400">Endereço</dt>
+            <dt className="text-xs uppercase text-slate-500">Endereço</dt>
             <dd className="text-slate-700">{address || "—"}</dd>
           </div>
           <div className="sm:col-span-2 lg:col-span-3">
-            <dt className="text-xs uppercase text-slate-400">Observações</dt>
+            <dt className="text-xs uppercase text-slate-500">Observações</dt>
             <dd className="text-slate-700">{client.notes || "—"}</dd>
           </div>
           <div>
-            <dt className="text-xs uppercase text-slate-400">Pets</dt>
+            <dt className="text-xs uppercase text-slate-500">Pets</dt>
             <dd className="text-slate-700">{client._count?.pets ?? pets.length}</dd>
           </div>
           <div>
-            <dt className="text-xs uppercase text-slate-400">Vendas</dt>
+            <dt className="text-xs uppercase text-slate-500">Vendas</dt>
             <dd className="text-slate-700">{client._count?.sales ?? 0}</dd>
           </div>
         </dl>
@@ -371,7 +374,7 @@ export default function ClienteDetalhePage() {
                 ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700"
                 : consent?.status === "OPTED_OUT"
                   ? "rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700"
-                  : "rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500"
+                  : "rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700"
             }
           >
             {consent
@@ -381,23 +384,23 @@ export default function ClienteDetalhePage() {
         </div>
         <div className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <dt className="text-xs uppercase text-slate-400">Origem</dt>
+            <dt className="text-xs uppercase text-slate-500">Origem</dt>
             <dd className="text-slate-700">
               {consent ? whatsappConsentSourceLabels[consent.source] : "—"}
             </dd>
           </div>
           <div>
-            <dt className="text-xs uppercase text-slate-400">Telefone (E.164)</dt>
+            <dt className="text-xs uppercase text-slate-500">Telefone (E.164)</dt>
             <dd className="text-slate-700">{consent?.phone || "—"}</dd>
           </div>
           <div>
-            <dt className="text-xs uppercase text-slate-400">Última alteração</dt>
+            <dt className="text-xs uppercase text-slate-500">Última alteração</dt>
             <dd className="text-slate-700">
               {consent?.changedAt ? new Date(consent.changedAt).toLocaleString("pt-BR") : "—"}
             </dd>
           </div>
           <div>
-            <dt className="text-xs uppercase text-slate-400">Envios</dt>
+            <dt className="text-xs uppercase text-slate-500">Envios</dt>
             <dd className="text-slate-700">
               {consent?.status === "OPTED_IN"
                 ? "Permitidos"
@@ -448,7 +451,7 @@ export default function ClienteDetalhePage() {
               onChange={(event) => setPetForm({ ...petForm, name: event.target.value })}
               className={inputClass}
             />
-            {petErrors.name && <p className="mt-1 text-xs text-red-600">{petErrors.name}</p>}
+            {petErrors.name && <p className="mt-1 text-xs text-red-700">{petErrors.name}</p>}
           </div>
           <div>
             <label htmlFor="pet-species" className="mb-1 block text-sm text-slate-700">
@@ -469,7 +472,7 @@ export default function ClienteDetalhePage() {
               ))}
             </select>
             {petErrors.species && (
-              <p className="mt-1 text-xs text-red-600">{petErrors.species}</p>
+              <p className="mt-1 text-xs text-red-700">{petErrors.species}</p>
             )}
           </div>
           <div>
@@ -512,7 +515,7 @@ export default function ClienteDetalhePage() {
               className={inputClass}
             />
             {petErrors.birthDate && (
-              <p className="mt-1 text-xs text-red-600">{petErrors.birthDate}</p>
+              <p className="mt-1 text-xs text-red-700">{petErrors.birthDate}</p>
             )}
           </div>
           <div>
@@ -528,7 +531,7 @@ export default function ClienteDetalhePage() {
               className={inputClass}
             />
             {petErrors.weight && (
-              <p className="mt-1 text-xs text-red-600">{petErrors.weight}</p>
+              <p className="mt-1 text-xs text-red-700">{petErrors.weight}</p>
             )}
           </div>
           <div>
@@ -563,7 +566,7 @@ export default function ClienteDetalhePage() {
             <button
               type="submit"
               disabled={savingPet}
-              className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
+              className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60"
             >
               {savingPet ? "Salvando..." : editingPetId ? "Salvar pet" : "Cadastrar pet"}
             </button>
@@ -580,42 +583,26 @@ export default function ClienteDetalhePage() {
         </form>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-              <th className="px-4 py-3">Pet</th>
-              <th className="px-4 py-3">Espécie</th>
-              <th className="px-4 py-3">Raça</th>
-              <th className="px-4 py-3">Nascimento</th>
-              <th className="px-4 py-3">Peso</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pets.map((pet) => (
-              <tr key={pet.id} className="border-b border-slate-100">
-                <td className="px-4 py-3 font-medium text-slate-800">{pet.name}</td>
-                <td className="px-4 py-3 text-slate-600">{petSpeciesLabels[pet.species]}</td>
-                <td className="px-4 py-3 text-slate-600">{pet.breed || "—"}</td>
-                <td className="px-4 py-3 text-slate-600">{pet.birthDate || "—"}</td>
-                <td className="px-4 py-3 text-slate-600">
-                  {pet.weight ? `${pet.weight} kg` : "—"}
-                </td>
-                <td className="px-4 py-3">
-                  <span
+      <DataTable
+        rows={pets}
+        rowKey={(pet) => pet.id}
+        empty={<>Nenhum pet cadastrado para este cliente.</>}
+        columns={[
+          { key: "c0", header: "Pet", cell: (pet) => pet.name, className: "font-medium" },
+          { key: "c1", header: "Espécie", cell: (pet) => petSpeciesLabels[pet.species] },
+          { key: "c2", header: "Raça", cell: (pet) => pet.breed || "—" },
+          { key: "c3", header: "Nascimento", cell: (pet) => pet.birthDate || "—" },
+          { key: "c4", header: "Peso", cell: (pet) => <>{pet.weight ? `${pet.weight} kg` : "—"}</> },
+          { key: "c5", header: "Status", cell: (pet) => <><span
                     className={
                       pet.status === "ACTIVE"
                         ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700"
-                        : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500"
+                        : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"
                     }
                   >
                     {pet.status === "ACTIVE" ? "Ativo" : "Inativo"}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex gap-3 text-xs font-medium">
+                  </span></> },
+          { key: "c6", header: "Ações", cell: (pet) => <><div className="flex gap-3 text-xs font-medium">
                     <button
                       type="button"
                       onClick={() => startEditPet(pet)}
@@ -627,7 +614,7 @@ export default function ClienteDetalhePage() {
                       <button
                         type="button"
                         onClick={() => void handlePetStatus(pet, "INACTIVE")}
-                        className="text-red-600 hover:underline"
+                        className="text-red-700 hover:underline"
                       >
                         Inativar
                       </button>
@@ -640,20 +627,9 @@ export default function ClienteDetalhePage() {
                         Reativar
                       </button>
                     )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {pets.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-slate-400">
-                  Nenhum pet cadastrado para este cliente.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                  </div></> },
+        ]}
+      />
     </div>
   );
 }

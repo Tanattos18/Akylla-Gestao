@@ -13,6 +13,7 @@ import {
   type WhatsAppHealthResult,
   type WhatsAppTemplateDto,
 } from "../../lib/types";
+import { useDialog } from "../../components/ui/Dialog";
 
 const emptyForm = {
   phoneNumberId: "",
@@ -25,12 +26,13 @@ const emptyForm = {
 const statusBadgeClass: Record<string, string> = {
   ACTIVE: "rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700",
   CONFIGURED: "rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700",
-  NOT_CONFIGURED: "rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500",
+  NOT_CONFIGURED: "rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700",
   ERROR: "rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700",
   DISCONNECTED: "rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700",
 };
 
 export default function WhatsAppConfigPage() {
+  const dialog = useDialog();
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -135,7 +137,7 @@ export default function WhatsAppConfigPage() {
 
   async function handleStatus(status: "CONFIGURED" | "DISCONNECTED") {
     const label = status === "DISCONNECTED" ? "desconectar" : "reconectar";
-    if (!window.confirm(`Deseja ${label} a integração do WhatsApp?`)) return;
+    if (!await dialog.confirm(`Deseja ${label} a integração do WhatsApp?`)) return;
     setNotice(null);
     setPageError(null);
     try {
@@ -166,7 +168,7 @@ export default function WhatsAppConfigPage() {
             WhatsApp Business Cloud API (Meta) · credenciais mantidas apenas no servidor
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link
             href="/whatsapp/mensagens"
             className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
@@ -211,7 +213,7 @@ export default function WhatsAppConfigPage() {
           </div>
           <dl className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
             <div>
-              <dt className="text-xs uppercase text-slate-400">Provedor</dt>
+              <dt className="text-xs uppercase text-slate-500">Provedor</dt>
               <dd className="text-slate-700">
                 {config.provider.provider === "meta" ? "Meta Cloud API" : "Mock (dev/teste)"}
                 {config.provider.credentialsConfigured
@@ -220,19 +222,19 @@ export default function WhatsAppConfigPage() {
               </dd>
             </div>
             <div>
-              <dt className="text-xs uppercase text-slate-400">Phone Number ID</dt>
+              <dt className="text-xs uppercase text-slate-500">Phone Number ID</dt>
               <dd className="text-slate-700">{config.phoneNumberId || "—"}</dd>
             </div>
             <div>
-              <dt className="text-xs uppercase text-slate-400">Nome exibido</dt>
+              <dt className="text-xs uppercase text-slate-500">Nome exibido</dt>
               <dd className="text-slate-700">{config.displayName || "—"}</dd>
             </div>
             <div>
-              <dt className="text-xs uppercase text-slate-400">WABA ID</dt>
+              <dt className="text-xs uppercase text-slate-500">WABA ID</dt>
               <dd className="text-slate-700">{config.wabaId || "—"}</dd>
             </div>
             <div>
-              <dt className="text-xs uppercase text-slate-400">Último teste</dt>
+              <dt className="text-xs uppercase text-slate-500">Último teste</dt>
               <dd className="text-slate-700">
                 {config.lastHealthAt
                   ? new Date(config.lastHealthAt).toLocaleString("pt-BR")
@@ -240,7 +242,7 @@ export default function WhatsAppConfigPage() {
               </dd>
             </div>
             <div>
-              <dt className="text-xs uppercase text-slate-400">Webhook</dt>
+              <dt className="text-xs uppercase text-slate-500">Webhook</dt>
               <dd className="break-all text-slate-700">
                 {config.webhook.path}
                 <span className="mt-1 block text-xs text-slate-500">
@@ -263,7 +265,7 @@ export default function WhatsAppConfigPage() {
                 type="button"
                 onClick={() => void handleHealth()}
                 disabled={checking}
-                className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
+                className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60"
               >
                 {checking ? "Testando..." : "Testar conexão"}
               </button>
@@ -346,7 +348,7 @@ export default function WhatsAppConfigPage() {
               />
             </div>
             <div className="sm:col-span-2 border-t border-slate-100 pt-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Lembrete de agendamentos
               </p>
             </div>
@@ -405,7 +407,7 @@ export default function WhatsAppConfigPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
+                className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60"
               >
                 {saving ? "Salvando..." : "Salvar configuração"}
               </button>

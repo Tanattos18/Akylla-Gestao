@@ -6,6 +6,9 @@ import { useRouter } from "next/navigation";
 import { api, ApiError } from "../../lib/api";
 import { fetchSession, type Session } from "../../lib/session";
 import type { ClientDto, Paginated } from "../../lib/types";
+import { useDialog } from "../../components/ui/Dialog";
+import { DataTable } from "../../components/ui/DataTable";
+import { useToast } from "../../components/ui/Toast";
 
 const emptyForm = {
   name: "",
@@ -24,6 +27,8 @@ const emptyForm = {
 };
 
 export default function ClientesPage() {
+  const toast = useToast();
+  const dialog = useDialog();
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,7 +40,6 @@ export default function ClientesPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
   const [listError, setListError] = useState<string | null>(null);
 
   const loadClients = useCallback(async (term: string) => {
@@ -133,10 +137,10 @@ export default function ClientesPage() {
           method: "PATCH",
           body: JSON.stringify(payload),
         });
-        setNotice("Cliente atualizado.");
+        toast.success("Cliente atualizado.");
       } else {
         await api("/api/clients", { method: "POST", body: JSON.stringify(payload) });
-        setNotice("Cliente criado.");
+        toast.success("Cliente criado.");
       }
       resetForm();
       await loadClients(search);
@@ -158,17 +162,16 @@ export default function ClientesPage() {
 
   async function handleStatus(client: ClientDto, status: "ACTIVE" | "INACTIVE") {
     const label = status === "INACTIVE" ? "inativar" : "reativar";
-    if (!window.confirm(`Deseja ${label} o cliente "${client.name}"?`)) return;
-    setNotice(null);
+    if (!await dialog.confirm(`Deseja ${label} o cliente "${client.name}"?`)) return;
     try {
       await api(`/api/clients/${client.id}/status`, {
         method: "PATCH",
         body: JSON.stringify({ status }),
       });
-      setNotice(`Cliente ${status === "INACTIVE" ? "inativado" : "reativado"}.`);
+      toast.success(`Cliente ${status === "INACTIVE" ? "inativado" : "reativado"}.`);
       await loadClients(search);
     } catch (err) {
-      setListError(err instanceof ApiError ? err.message : "Falha ao atualizar status.");
+      toast.error(err, "Falha ao atualizar status.");
     }
   }
 
@@ -186,7 +189,7 @@ export default function ClientesPage() {
           <h2 className="text-xl font-semibold text-slate-900">Clientes</h2>
           <p className="text-sm text-slate-500">Empresa {session.company.name}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link
             href="/pets"
             className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
@@ -208,11 +211,6 @@ export default function ClientesPage() {
         </div>
       </div>
 
-      {notice && (
-        <div className="rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-sm text-primary-800">
-          {notice}
-        </div>
-      )}
       {listError && (
         <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {listError}
@@ -235,7 +233,7 @@ export default function ClientesPage() {
               className={inputClass}
             />
             {fieldErrors.name && (
-              <p className="mt-1 text-xs text-red-600">{fieldErrors.name}</p>
+              <p className="mt-1 text-xs text-red-700">{fieldErrors.name}</p>
             )}
           </div>
           <div>
@@ -250,7 +248,7 @@ export default function ClientesPage() {
               className={inputClass}
             />
             {fieldErrors.phone && (
-              <p className="mt-1 text-xs text-red-600">{fieldErrors.phone}</p>
+              <p className="mt-1 text-xs text-red-700">{fieldErrors.phone}</p>
             )}
           </div>
           <div>
@@ -264,7 +262,7 @@ export default function ClientesPage() {
               className={inputClass}
             />
             {fieldErrors.mobile && (
-              <p className="mt-1 text-xs text-red-600">{fieldErrors.mobile}</p>
+              <p className="mt-1 text-xs text-red-700">{fieldErrors.mobile}</p>
             )}
           </div>
           <div>
@@ -279,7 +277,7 @@ export default function ClientesPage() {
               className={inputClass}
             />
             {fieldErrors.email && (
-              <p className="mt-1 text-xs text-red-600">{fieldErrors.email}</p>
+              <p className="mt-1 text-xs text-red-700">{fieldErrors.email}</p>
             )}
           </div>
           <div>
@@ -294,7 +292,7 @@ export default function ClientesPage() {
               className={inputClass}
             />
             {fieldErrors.cpf && (
-              <p className="mt-1 text-xs text-red-600">{fieldErrors.cpf}</p>
+              <p className="mt-1 text-xs text-red-700">{fieldErrors.cpf}</p>
             )}
           </div>
           <div>
@@ -396,7 +394,7 @@ export default function ClientesPage() {
             <button
               type="submit"
               disabled={saving}
-              className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
+              className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60"
             >
               {saving ? "Salvando..." : editingId ? "Salvar" : "Criar"}
             </button>
@@ -426,43 +424,26 @@ export default function ClientesPage() {
         />
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-              <th className="px-4 py-3">Nome</th>
-              <th className="px-4 py-3">Contato</th>
-              <th className="px-4 py-3">Cidade</th>
-              <th className="px-4 py-3">Pets</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {clients.map((client) => (
-              <tr key={client.id} className="border-b border-slate-100">
-                <td className="px-4 py-3 font-medium text-slate-800">{client.name}</td>
-                <td className="px-4 py-3 text-slate-600">
-                  {[client.mobile, client.phone, client.email].filter(Boolean).join(" · ") ||
-                    "—"}
-                </td>
-                <td className="px-4 py-3 text-slate-600">
-                  {[client.city, client.state].filter(Boolean).join("/") || "—"}
-                </td>
-                <td className="px-4 py-3 text-slate-600">{client._count?.pets ?? 0}</td>
-                <td className="px-4 py-3">
-                  <span
+      <DataTable
+        rows={clients}
+        rowKey={(client) => client.id}
+        empty={<>Nenhum cliente encontrado.</>}
+        columns={[
+          { key: "c0", header: "Nome", cell: (client) => client.name, className: "font-medium" },
+          { key: "c1", header: "Contato", cell: (client) => [client.mobile, client.phone, client.email].filter(Boolean).join(" · ") ||
+                    "—" },
+          { key: "c2", header: "Cidade", cell: (client) => [client.city, client.state].filter(Boolean).join("/") || "—" },
+          { key: "c3", header: "Pets", cell: (client) => client._count?.pets ?? 0 },
+          { key: "c4", header: "Status", cell: (client) => <><span
                     className={
                       client.status === "ACTIVE"
                         ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700"
-                        : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500"
+                        : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"
                     }
                   >
                     {client.status === "ACTIVE" ? "Ativo" : "Inativo"}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex gap-3 text-xs font-medium">
+                  </span></> },
+          { key: "c5", header: "Ações", cell: (client) => <><div className="flex gap-3 text-xs font-medium">
                     <Link href={`/clientes/${client.id}`} className="text-primary-700 hover:underline">
                       Ficha
                     </Link>
@@ -477,7 +458,7 @@ export default function ClientesPage() {
                       <button
                         type="button"
                         onClick={() => void handleStatus(client, "INACTIVE")}
-                        className="text-red-600 hover:underline"
+                        className="text-red-700 hover:underline"
                       >
                         Inativar
                       </button>
@@ -490,20 +471,9 @@ export default function ClientesPage() {
                         Reativar
                       </button>
                     )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {clients.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-slate-400">
-                  Nenhum cliente encontrado.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                  </div></> },
+        ]}
+      />
     </div>
   );
 }

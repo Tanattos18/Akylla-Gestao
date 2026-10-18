@@ -10,14 +10,17 @@ import {
   subscriptionStatusLabels,
   type SubscriptionDto,
 } from "../../../lib/types";
+import { useDialog } from "../../../components/ui/Dialog";
+import { DataTable } from "../../../components/ui/DataTable";
 
 const statusBadge: Record<string, string> = {
   ACTIVE: "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700",
   EXPIRED: "rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700",
-  CANCELLED: "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500",
+  CANCELLED: "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700",
 };
 
 export default function AssinaturaDetalhePage() {
+  const dialog = useDialog();
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
@@ -56,7 +59,7 @@ export default function AssinaturaDetalhePage() {
   }, [session, load]);
 
   async function handleRenew() {
-    if (!window.confirm("Registrar renovação (novo pagamento no caixa)?")) return;
+    if (!await dialog.confirm("Registrar renovação (novo pagamento no caixa)?")) return;
     setBusy(true);
     setNotice(null);
     setError(null);
@@ -72,7 +75,7 @@ export default function AssinaturaDetalhePage() {
   }
 
   async function handleCancel() {
-    const reason = window.prompt("Motivo do cancelamento (3 a 500 caracteres):");
+    const reason = await dialog.prompt({ title: "Cancelar assinatura", label: "Motivo do cancelamento", minLength: 3, maxLength: 500, danger: true, confirmLabel: "Cancelar assinatura" });
     if (reason === null) return;
     setBusy(true);
     setNotice(null);
@@ -102,7 +105,7 @@ export default function AssinaturaDetalhePage() {
   if (error && !subscription) {
     return (
       <div className="space-y-4 text-center">
-        <p className="text-sm text-red-600">{error}</p>
+        <p className="text-sm text-red-700">{error}</p>
         <Link href="/assinaturas" className="text-sm text-primary-700 underline">
           Voltar para assinaturas
         </Link>
@@ -189,7 +192,7 @@ export default function AssinaturaDetalhePage() {
                 type="button"
                 onClick={() => void handleRenew()}
                 disabled={busy}
-                className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
+                className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60"
               >
                 {busy ? "Processando..." : "Renovar (pagar no caixa)"}
               </button>
@@ -217,37 +220,17 @@ export default function AssinaturaDetalhePage() {
         <h3 className="border-b border-slate-100 px-6 py-4 text-sm font-semibold uppercase tracking-wide text-slate-500">
           Pagamentos
         </h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-                <th className="px-6 py-3">Data</th>
-                <th className="px-6 py-3">Valor</th>
-                <th className="px-6 py-3">Descrição</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(subscription.payments ?? []).map((payment) => (
-                <tr key={payment.id} className="border-b border-slate-100">
-                  <td className="px-6 py-3 text-slate-600">
-                    {formatDateTime(payment.createdAt)}
-                  </td>
-                  <td className="px-6 py-3 font-medium text-slate-800">
-                    {formatBrl(payment.amount)}
-                  </td>
-                  <td className="px-6 py-3 text-slate-600">{payment.description}</td>
-                </tr>
-              ))}
-              {(subscription.payments ?? []).length === 0 && (
-                <tr>
-                  <td colSpan={3} className="px-6 py-6 text-center text-slate-400">
-                    Nenhum pagamento registrado.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          bare
+          rows={(subscription.payments ?? [])}
+          rowKey={(payment) => payment.id}
+          empty={<>Nenhum pagamento registrado.</>}
+          columns={[
+            { key: "c0", header: "Data", cell: (payment) => formatDateTime(payment.createdAt) },
+            { key: "c1", header: "Valor", cell: (payment) => formatBrl(payment.amount), numeric: true, className: "font-medium" },
+            { key: "c2", header: "Descrição", cell: (payment) => payment.description },
+          ]}
+        />
       </div>
     </div>
   );

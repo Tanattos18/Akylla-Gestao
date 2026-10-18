@@ -6,6 +6,54 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-18 - Fase 5: Design, UX e acessibilidade
+
+Padroniza tabelas, diálogos, avisos e abas, e leva o painel a **0
+violações** de acessibilidade (axe-core, WCAG 2.1 AA) em 36 telas. Regras
+em `docs/akylla/DESIGN_SYSTEM.md`.
+
+### Adicionado
+
+- **Componentes** (estilo shadcn/ui, sem Radix):
+  - `DataTable`: colunas tipadas, moeda à direita, cartões no celular,
+    totais, linha expansível, linha clicável por teclado;
+  - `Dialog`/`useDialog`: confirmação e motivo, sobre o `<dialog>` nativo;
+  - `Toast`/`useToast`: lê os `issues[]` da API;
+  - `Tabs`: padrão WAI-ARIA.
+- **Tokens** semânticos de cor, foco visível único, link "Pular para o
+  conteúdo" e CSS de impressão.
+- **`npm run test:a11y`** (`scripts/a11y.mjs`) e o job "Acessibilidade"
+  na CI. Dependência nova: `@axe-core/playwright` (MPL-2.0, dev), prevista
+  no roteiro.
+
+### Alterado
+
+- **Tabelas (débitos D-4 e D-6):** 31 tabelas passaram para o
+  `DataTable`; o carrinho do PDV virou lista.
+- **Diálogos:** os 33 `window.confirm`/`window.prompt` viraram diálogos
+  acessíveis. O motivo é validado antes de enviar; a justificativa da
+  nota fiscal, por exemplo, exige de 15 a 255 caracteres.
+- **Avisos:** toasts em criar ou atualizar cliente, liquidar, cancelar ou
+  estornar título, enfileirar WhatsApp, emitir nota e ligar ou desligar
+  módulo.
+- **Abas** em `/relatorios` e `/configuracoes`.
+- **Contraste:**
+  - botões principais em `primary-700`;
+  - texto colorido nos tons 700;
+  - texto cinza no mínimo `slate-500`;
+  - links dentro de texto sublinhados.
+
+### Corrigido
+
+- **Barra do topo:** era mais larga que a tela em 1280 px (rolagem
+  horizontal e nome do usuário fora da tela).
+- **Botão do menu do usuário:** o nome acessível não continha o texto
+  visível.
+- **Arquivo de importação:** o campo estava sem rótulo.
+- **Tela Financeiro:** os acentos estavam quebrados (codificação).
+- **Listas de botões:** agora quebram linha no celular.
+- **Vendas:** o total usa o formato de moeda e fica alinhado à direita.
+
 ## [Akylla Gestão] - 2026-10-18 - Fase 4: Perfis no cadastro (onboarding)
 
 Depois de criar a conta, o cliente escolhe **Comércio**, **Serviços**,

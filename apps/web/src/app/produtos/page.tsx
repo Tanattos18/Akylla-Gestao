@@ -14,10 +14,13 @@ import {
   type RecordStatus,
   type SupplierDto,
 } from "../../lib/types";
+import { useDialog } from "../../components/ui/Dialog";
+import { DataTable } from "../../components/ui/DataTable";
 
 const pageSize = 10;
 
 export default function ProdutosPage() {
+  const dialog = useDialog();
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -107,7 +110,7 @@ export default function ProdutosPage() {
   }, [session, products]);
 
   async function handleInactive(product: ProductDto) {
-    if (!window.confirm(`Inativar o produto "${product.name}"?`)) return;
+    if (!await dialog.confirm(`Inativar o produto "${product.name}"?`)) return;
     setNotice(null);
     try {
       await api(`/api/products/${product.id}/status`, {
@@ -139,7 +142,7 @@ export default function ProdutosPage() {
           <h2 className="text-xl font-semibold text-slate-900">Produtos e estoque</h2>
           <p className="text-sm text-slate-500">Empresa {session.company.name}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link
             href="/categorias"
             className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
@@ -155,7 +158,7 @@ export default function ProdutosPage() {
           {isAdmin && (
             <Link
               href="/produtos/novo"
-              className="rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
+              className="rounded-md bg-primary-700 px-3 py-2 text-sm font-medium text-white hover:bg-primary-800"
             >
               Novo produto
             </Link>
@@ -205,7 +208,7 @@ export default function ProdutosPage() {
             <label htmlFor="search" className="mb-1 block text-sm text-slate-700">
               Busca (nome, SKU ou código de barras)
             </label>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <input
                 id="search"
                 value={searchInput}
@@ -299,49 +302,32 @@ export default function ProdutosPage() {
         </label>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-              <th className="px-4 py-3">Produto</th>
-              <th className="px-4 py-3">SKU</th>
-              <th className="px-4 py-3">Categoria</th>
-              <th className="px-4 py-3">Saldo</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map((product) => (
-              <tr key={product.id} className="border-b border-slate-100">
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-2">
+      <DataTable
+        rows={products}
+        rowKey={(product) => product.id}
+        empty={<>Nenhum produto encontrado.</>}
+        columns={[
+          { key: "c0", header: "Produto", cell: (product) => <><div className="flex items-center gap-2">
                     <span className="font-medium text-slate-800">{product.name}</span>
                     {product.lowStock && (
                       <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">
                         Estoque baixo
                       </span>
                     )}
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-slate-600">{product.sku ?? "—"}</td>
-                <td className="px-4 py-3 text-slate-600">{product.category?.name ?? "—"}</td>
-                <td className="px-4 py-3 text-slate-700">
-                  {Number(product.stockQuantity)} {productUnitLabels[product.unit]}
-                </td>
-                <td className="px-4 py-3">
-                  <span
+                  </div></> },
+          { key: "c1", header: "SKU", cell: (product) => product.sku ?? "—" },
+          { key: "c2", header: "Categoria", cell: (product) => product.category?.name ?? "—" },
+          { key: "c3", header: "Saldo", cell: (product) => <>{Number(product.stockQuantity)} {productUnitLabels[product.unit]}</> },
+          { key: "c4", header: "Status", cell: (product) => <><span
                     className={
                       product.status === "ACTIVE"
                         ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700"
-                        : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500"
+                        : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"
                     }
                   >
                     {product.status === "ACTIVE" ? "Ativo" : "Inativo"}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex gap-3 text-xs font-medium">
+                  </span></> },
+          { key: "c5", header: "Ações", cell: (product) => <><div className="flex gap-3 text-xs font-medium">
                     <Link href={`/produtos/${product.id}`} className="text-primary-700 hover:underline">
                       Detalhes
                     </Link>
@@ -356,32 +342,21 @@ export default function ProdutosPage() {
                         <button
                           type="button"
                           onClick={() => void handleInactive(product)}
-                          className="text-red-600 hover:underline"
+                          className="text-red-700 hover:underline"
                         >
                           Inativar
                         </button>
                       </>
                     )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {products.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-slate-400">
-                  Nenhum produto encontrado.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                  </div></> },
+        ]}
+      />
 
       <div className="flex items-center justify-between text-sm text-slate-600">
         <span>
           {total} produto(s) — página {page} de {totalPages}
         </span>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
             disabled={page <= 1}

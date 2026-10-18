@@ -10,6 +10,8 @@ import { serviceOrderStatusLabels, type ServiceOrderDto, type ServiceOrderStatus
 import { ItemsEditor, newItem, toPayload, type EditableItem } from "../../../components/os/ItemsEditor";
 import { serviceOrderStatusClass } from "../../../components/os/status";
 import { EmitFiscalButton } from "../../../components/fiscal/EmitFiscalButton";
+import { useDialog } from "../../../components/ui/Dialog";
+import { DataTable } from "../../../components/ui/DataTable";
 
 /** Fase 2 · 2.3 — detalhe da OS: etapas, itens, anexos e histórico de WhatsApp. */
 
@@ -40,6 +42,7 @@ function toEditable(order: ServiceOrderDto): EditableItem[] {
 }
 
 export default function OsDetailPage() {
+  const dialog = useDialog();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
@@ -95,18 +98,18 @@ export default function OsDetailPage() {
     }
   }
 
-  function advance() {
+  async function advance() {
     if (!order) return;
     const step = nextStep[order.status];
-    if (!step || !window.confirm(step.confirm)) return;
+    if (!step || !await dialog.confirm(step.confirm)) return;
     void run(
       () => api(`/api/service-orders/${id}/status`, { method: "PATCH", body: JSON.stringify({ status: step.status }) }),
       `OS: ${serviceOrderStatusLabels[step.status as ServiceOrderStatus]}.`,
     );
   }
 
-  function cancel() {
-    const reason = window.prompt("Motivo do cancelamento (mínimo 3 caracteres):");
+  async function cancel() {
+    const reason = await dialog.prompt({ title: "Cancelar ordem de serviço", label: "Motivo do cancelamento", minLength: 3, maxLength: 500, danger: true, confirmLabel: "Cancelar OS" });
     if (!reason) return;
     void run(() => api(`/api/service-orders/${id}/cancel`, { method: "POST", body: JSON.stringify({ reason }) }), "OS cancelada.");
   }
@@ -143,8 +146,8 @@ export default function OsDetailPage() {
     }, "Anexo enviado.");
   }
 
-  function removeAttachment(attachmentId: string, filename: string) {
-    if (!window.confirm(`Remover o anexo "${filename}"?`)) return;
+  async function removeAttachment(attachmentId: string, filename: string) {
+    if (!await dialog.confirm(`Remover o anexo "${filename}"?`)) return;
     void run(() => api(`/api/service-orders/${id}/attachments/${attachmentId}`, { method: "DELETE" }), "Anexo removido.");
   }
 
@@ -172,7 +175,7 @@ export default function OsDetailPage() {
         </div>
         <div className="flex flex-wrap gap-2 print:hidden">
           {step && (
-            <button type="button" disabled={busy} onClick={advance} className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60">
+            <button type="button" disabled={busy} onClick={advance} className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60">
               {step.label}
             </button>
           )}
@@ -220,26 +223,17 @@ export default function OsDetailPage() {
             </div>
           </div>
         ) : (
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-                <th className="py-2">Descrição</th>
-                <th className="py-2 text-right">Qtd.</th>
-                <th className="py-2 text-right">Unit.</th>
-                <th className="py-2 text-right">Subtotal</th>
-              </tr>
-            </thead>
-            <tbody>
-              {order.items.map((item) => (
-                <tr key={item.id} className="border-b border-slate-100">
-                  <td className="py-2 text-slate-800">{item.description}</td>
-                  <td className="py-2 text-right text-slate-700">{Number(item.quantity).toLocaleString("pt-BR")}</td>
-                  <td className="py-2 text-right text-slate-700">{formatBrl(item.unitPrice)}</td>
-                  <td className="py-2 text-right text-slate-900">{formatBrl(item.subtotal)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <DataTable
+            bare
+            rows={order.items}
+            rowKey={(item) => item.id}
+            columns={[
+              { key: "c0", header: "Descrição", cell: (item) => item.description },
+              { key: "c1", header: "Qtd.", cell: (item) => Number(item.quantity).toLocaleString("pt-BR"), numeric: true },
+              { key: "c2", header: "Unit.", cell: (item) => formatBrl(item.unitPrice), numeric: true },
+              { key: "c3", header: "Subtotal", cell: (item) => formatBrl(item.subtotal), numeric: true },
+            ]}
+          />
         )}
         <dl className="mt-4 ml-auto max-w-xs space-y-1 text-sm">
           <div className="flex justify-between text-slate-600"><dt>Subtotal</dt><dd>{formatBrl(order.subtotal)}</dd></div>
@@ -273,7 +267,7 @@ export default function OsDetailPage() {
               {a.mimeType.startsWith("image/") ? (
                 <img src={`/api/service-orders/${id}/attachments/${a.id}`} alt={a.filename} className="mb-2 h-28 w-full rounded object-cover" />
               ) : (
-                <div className="mb-2 flex h-28 items-center justify-center rounded bg-slate-100 text-slate-600">PDF</div>
+                <div className="mb-2 flex h-28 items-center justify-center rounded bg-slate-100 text-slate-700">PDF</div>
               )}
               <a href={`/api/service-orders/${id}/attachments/${a.id}`} target="_blank" rel="noreferrer" className="block truncate font-medium text-primary-700 hover:underline">{a.filename}</a>
               <p className="text-slate-600">{(a.size / 1024).toFixed(0)} KB · {formatDateTime(a.uploadedAt)}</p>

@@ -6,8 +6,11 @@ import { useRouter } from "next/navigation";
 import { api, ApiError } from "../../lib/api";
 import { fetchSession, type Session } from "../../lib/session";
 import type { CategoryDto, Paginated } from "../../lib/types";
+import { useDialog } from "../../components/ui/Dialog";
+import { DataTable } from "../../components/ui/DataTable";
 
 export default function CategoriasPage() {
+  const dialog = useDialog();
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -108,7 +111,7 @@ export default function CategoriasPage() {
 
   async function handleStatus(category: CategoryDto, status: "ACTIVE" | "INACTIVE") {
     const label = status === "INACTIVE" ? "inativar" : "reativar";
-    if (!window.confirm(`Deseja ${label} a categoria "${category.name}"?`)) return;
+    if (!await dialog.confirm(`Deseja ${label} a categoria "${category.name}"?`)) return;
     setNotice(null);
     try {
       await api(`/api/categories/${category.id}/status`, {
@@ -172,7 +175,7 @@ export default function CategoriasPage() {
                 className={inputClass}
               />
               {fieldErrors.name && (
-                <p className="mt-1 text-xs text-red-600">{fieldErrors.name}</p>
+                <p className="mt-1 text-xs text-red-700">{fieldErrors.name}</p>
               )}
             </div>
             <div>
@@ -195,7 +198,7 @@ export default function CategoriasPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
+                className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60"
               >
                 {saving ? "Salvando..." : editingId ? "Salvar" : "Criar"}
               </button>
@@ -213,35 +216,23 @@ export default function CategoriasPage() {
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-              <th className="px-4 py-3">Nome</th>
-              <th className="px-4 py-3">Descrição</th>
-              <th className="px-4 py-3">Status</th>
-              {isAdmin && <th className="px-4 py-3">Ações</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {categories.map((category) => (
-              <tr key={category.id} className="border-b border-slate-100">
-                <td className="px-4 py-3 font-medium text-slate-800">{category.name}</td>
-                <td className="px-4 py-3 text-slate-600">{category.description ?? "—"}</td>
-                <td className="px-4 py-3">
-                  <span
+      <DataTable
+        rows={categories}
+        rowKey={(category) => category.id}
+        empty={<>Nenhuma categoria cadastrada.</>}
+        columns={[
+          { key: "c0", header: "Nome", cell: (category) => category.name, className: "font-medium" },
+          { key: "c1", header: "Descrição", cell: (category) => category.description ?? "—" },
+          { key: "c2", header: "Status", cell: (category) => <><span
                     className={
                       category.status === "ACTIVE"
                         ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700"
-                        : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500"
+                        : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"
                     }
                   >
                     {category.status === "ACTIVE" ? "Ativa" : "Inativa"}
-                  </span>
-                </td>
-                {isAdmin && (
-                  <td className="px-4 py-3">
-                    <div className="flex gap-3 text-xs font-medium">
+                  </span></> },
+          { key: "c3", header: "Ações", cell: (category) => <><div className="flex gap-3 text-xs font-medium">
                       <button
                         type="button"
                         onClick={() => startEdit(category)}
@@ -253,7 +244,7 @@ export default function CategoriasPage() {
                         <button
                           type="button"
                           onClick={() => void handleStatus(category, "INACTIVE")}
-                          className="text-red-600 hover:underline"
+                          className="text-red-700 hover:underline"
                         >
                           Inativar
                         </button>
@@ -266,21 +257,9 @@ export default function CategoriasPage() {
                           Reativar
                         </button>
                       )}
-                    </div>
-                  </td>
-                )}
-              </tr>
-            ))}
-            {categories.length === 0 && (
-              <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-slate-400">
-                  Nenhuma categoria cadastrada.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                    </div></>, hidden: !(isAdmin) },
+        ]}
+      />
     </div>
   );
 }

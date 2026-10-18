@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { api, ApiError } from "../../../lib/api";
 import { fetchSession, type Session } from "../../../lib/session";
 import type { CommissionRuleDto, Paginated, ProfessionalDto, ReleasePolicy } from "../../../lib/types";
+import { DataTable } from "../../../components/ui/DataTable";
 
 /** Fase 2 · 2.1 — regras de comissão (ADMIN). */
 
@@ -188,7 +189,7 @@ export default function RegrasComissaoPage() {
           <div>
             <label htmlFor="r-pct" className="mb-1 block text-sm text-slate-700">Percentual (%) *</label>
             <input id="r-pct" inputMode="decimal" placeholder="5" value={form.percentage} onChange={(e) => setForm({ ...form, percentage: e.target.value })} className={inputClass} aria-invalid={Boolean(fieldErrors.percentage)} />
-            {fieldErrors.percentage && <p className="mt-1 text-xs text-red-600">{fieldErrors.percentage}</p>}
+            {fieldErrors.percentage && <p className="mt-1 text-xs text-red-700">{fieldErrors.percentage}</p>}
           </div>
           <div>
             <label htmlFor="r-policy" className="mb-1 block text-sm text-slate-700">Liberação</label>
@@ -198,50 +199,30 @@ export default function RegrasComissaoPage() {
             <p className="mt-1 text-xs text-slate-500">Vendas pagas na hora liberam a comissão na venda.</p>
           </div>
           <div className="flex items-end sm:col-span-3">
-            <button type="submit" disabled={saving} className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60">
+            <button type="submit" disabled={saving} className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60">
               {saving ? "Salvando..." : "Criar regra"}
             </button>
           </div>
         </form>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-              <th className="px-4 py-3">Profissional</th>
-              <th className="px-4 py-3">Alvo</th>
-              <th className="px-4 py-3 text-right">%</th>
-              <th className="px-4 py-3">Liberação</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rules.map((rule) => (
-              <tr key={rule.id} className="border-b border-slate-100">
-                <td className="px-4 py-3 text-slate-800">{rule.professional?.name ?? "Todos"}</td>
-                <td className="px-4 py-3 text-slate-700">{describeTarget(rule)}</td>
-                <td className="px-4 py-3 text-right font-medium text-slate-900">{Number(rule.percentage).toLocaleString("pt-BR")}%</td>
-                <td className="px-4 py-3 text-slate-700">{policyLabels[rule.releasePolicy]}</td>
-                <td className="px-4 py-3">
-                  <span className={rule.active ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700" : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600"}>
+      <DataTable
+        rows={rules}
+        rowKey={(rule) => rule.id}
+        empty={<>Nenhuma regra. Sem regras, vale o padrão de cada profissional.</>}
+        columns={[
+          { key: "c0", header: "Profissional", cell: (rule) => rule.professional?.name ?? "Todos" },
+          { key: "c1", header: "Alvo", cell: (rule) => describeTarget(rule) },
+          { key: "c2", header: "%", cell: (rule) => <>{Number(rule.percentage).toLocaleString("pt-BR")}%</>, numeric: true, className: "font-medium" },
+          { key: "c3", header: "Liberação", cell: (rule) => policyLabels[rule.releasePolicy] },
+          { key: "c4", header: "Status", cell: (rule) => <><span className={rule.active ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700" : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"}>
                     {rule.active ? "Ativa" : "Inativa"}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <button type="button" onClick={() => void toggle(rule)} className={rule.active ? "text-xs font-medium text-red-700 hover:underline" : "text-xs font-medium text-primary-700 hover:underline"}>
+                  </span></> },
+          { key: "c5", header: "Ações", cell: (rule) => <><button type="button" onClick={() => void toggle(rule)} className={rule.active ? "text-xs font-medium text-red-700 hover:underline" : "text-xs font-medium text-primary-700 hover:underline"}>
                     {rule.active ? "Desativar" : "Reativar"}
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {rules.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-6 text-center text-slate-500">Nenhuma regra. Sem regras, vale o padrão de cada profissional.</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                  </button></> },
+        ]}
+      />
     </div>
   );
 }

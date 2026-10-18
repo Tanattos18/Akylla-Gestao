@@ -8,6 +8,9 @@ import type {
   FinancialListResponse,
   FinancialStatus,
 } from "../lib/types";
+import { useDialog } from "./ui/Dialog";
+import { DataTable } from "./ui/DataTable";
+import { useToast } from "./ui/Toast";
 
 interface Option {
   id: string;
@@ -31,6 +34,8 @@ function isOverdue(entry: FinancialEntryDto): boolean {
 }
 
 export default function FinancialEntries({ direction, isAdmin }: Props) {
+  const toast = useToast();
+  const dialog = useDialog();
   const counterpartyLabel = direction === "RECEIVABLE" ? "Cliente" : "Fornecedor";
 
   const [items, setItems] = useState<FinancialEntryDto[]>([]);
@@ -39,7 +44,6 @@ export default function FinancialEntries({ direction, isAdmin }: Props) {
   const [status, setStatus] = useState<FinancialStatus | "">("");
   const [loading, setLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
 
   const [options, setOptions] = useState<Option[]>([]);
   const [form, setForm] = useState({
@@ -68,7 +72,7 @@ export default function FinancialEntries({ direction, isAdmin }: Props) {
       setTotal(data.total);
       setListError(null);
     } catch (err) {
-      setListError(err instanceof Error ? err.message : "NÃ£o foi possÃ­vel carregar os tÃ­tulos.");
+      setListError(err instanceof Error ? err.message : "Não foi possível carregar os títulos.");
     } finally {
       setLoading(false);
     }
@@ -110,7 +114,7 @@ export default function FinancialEntries({ direction, isAdmin }: Props) {
     setFormError(null);
 
     if (!form.description.trim() || !form.dueDate) {
-      setFormError("DescriÃ§Ã£o e vencimento sÃ£o obrigatÃ³rios.");
+      setFormError("Descrição e vencimento são obrigatórios.");
       return;
     }
     if (!form.amount || Number(form.amount) <= 0) {
@@ -134,69 +138,60 @@ export default function FinancialEntries({ direction, isAdmin }: Props) {
           method: "PATCH",
           body: JSON.stringify(payload),
         });
-        setNotice("TÃ­tulo atualizado.");
+        toast.success("Título atualizado.");
       } else {
         await api("/api/financial", { method: "POST", body: JSON.stringify(payload) });
-        setNotice("TÃ­tulo criado.");
+        toast.success("Título criado.");
       }
       resetForm();
       await load();
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "NÃ£o foi possÃ­vel salvar o tÃ­tulo.");
+      setFormError(err instanceof Error ? err.message : "Não foi possível salvar o título.");
     } finally {
       setSaving(false);
     }
   }
 
   async function handlePay(entry: FinancialEntryDto) {
-    if (!window.confirm(`Confirmar liquidaÃ§Ã£o de "${entry.description}" (R$ ${entry.amount})?`)) {
+    if (!await dialog.confirm(`Confirmar liquidação de "${entry.description}" (R$ ${entry.amount})?`)) {
       return;
     }
-    setNotice(null);
     try {
       await api(`/api/financial/${entry.id}/pay`, { method: "POST" });
-      setNotice("TÃ­tulo liquidado e lanÃ§ado no caixa.");
+      toast.success("Título liquidado e lançado no caixa.");
       await load();
     } catch (err) {
-      setListError(err instanceof Error ? err.message : "Falha ao liquidar o tÃ­tulo.");
+      toast.error(err, "Falha ao liquidar o título.");
     }
   }
 
   async function handleCancel(entry: FinancialEntryDto) {
-    const reason = window.prompt(`Motivo para cancelar "${entry.description}":`);
-    if (!reason || reason.trim().length < 3) {
-      if (reason !== null) window.alert("Motivo Ã© obrigatÃ³rio (mÃ­nimo 3 caracteres).");
-      return;
-    }
-    setNotice(null);
+    const reason = await dialog.prompt({ title: `Cancelar "${entry.description}"`, label: "Motivo do cancelamento", minLength: 3, maxLength: 500, danger: true, confirmLabel: "Cancelar título" });
+    if (!reason) return;
     try {
       await api(`/api/financial/${entry.id}/cancel`, {
         method: "POST",
         body: JSON.stringify({ reason: reason.trim() }),
       });
-      setNotice("TÃ­tulo cancelado.");
+      toast.success("Título cancelado.");
       await load();
     } catch (err) {
-      setListError(err instanceof Error ? err.message : "Falha ao cancelar o tÃ­tulo.");
+      toast.error(err, "Falha ao cancelar o título.");
     }
   }
 
   async function handleReverse(entry: FinancialEntryDto) {
-    const reason = window.prompt(`Motivo para estornar a liquidaÃ§Ã£o de "${entry.description}":`);
-    if (!reason || reason.trim().length < 3) {
-      if (reason !== null) window.alert("Motivo Ã© obrigatÃ³rio (mÃ­nimo 3 caracteres).");
-      return;
-    }
-    setNotice(null);
+    const reason = await dialog.prompt({ title: `Estornar a liquidação de "${entry.description}"`, description: "O valor volta para o caixa por um movimento de estorno.", label: "Motivo do estorno", minLength: 3, maxLength: 500, danger: true, confirmLabel: "Estornar" });
+    if (!reason) return;
     try {
       await api(`/api/financial/${entry.id}/reverse`, {
         method: "POST",
         body: JSON.stringify({ reason: reason.trim() }),
       });
-      setNotice("LiquidaÃ§Ã£o estornada e valor devolvido ao caixa.");
+      toast.success("Liquidação estornada e valor devolvido ao caixa.");
       await load();
     } catch (err) {
-      setListError(err instanceof Error ? err.message : "Falha ao estornar a liquidaÃ§Ã£o.");
+      toast.error(err, "Falha ao estornar a liquidação.");
     }
   }
 
@@ -207,11 +202,6 @@ export default function FinancialEntries({ direction, isAdmin }: Props) {
 
   return (
     <div className="space-y-4">
-      {notice && (
-        <div className="rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-sm text-primary-800">
-          {notice}
-        </div>
-      )}
       {listError && (
         <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {listError}
@@ -220,12 +210,12 @@ export default function FinancialEntries({ direction, isAdmin }: Props) {
 
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">
-          {editingId ? "Editar tÃ­tulo" : "Novo tÃ­tulo"}
+          {editingId ? "Editar título" : "Novo título"}
         </h3>
         <form onSubmit={handleSubmit} noValidate className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="lg:col-span-2">
             <label htmlFor="fin-description" className="mb-1 block text-sm text-slate-700">
-              DescriÃ§Ã£o *
+              Descrição *
             </label>
             <input
               id="fin-description"
@@ -270,7 +260,7 @@ export default function FinancialEntries({ direction, isAdmin }: Props) {
               onChange={(event) => setForm({ ...form, counterpartyId: event.target.value })}
               className={inputClass}
             >
-              <option value="">Sem vÃ­nculo</option>
+              <option value="">Sem vínculo</option>
               {options.map((option) => (
                 <option key={option.id} value={option.id}>
                   {option.name}
@@ -287,7 +277,7 @@ export default function FinancialEntries({ direction, isAdmin }: Props) {
             <button
               type="submit"
               disabled={saving}
-              className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
+              className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60"
             >
               {saving ? "Salvando..." : editingId ? "Salvar" : "Criar"}
             </button>
@@ -322,49 +312,32 @@ export default function FinancialEntries({ direction, isAdmin }: Props) {
           <option value="PAID">Liquidado</option>
           <option value="CANCELLED">Cancelado</option>
         </select>
-        <span className="text-sm text-slate-500">{total} tÃ­tulo(s)</span>
+        <span className="text-sm text-slate-500">{total} título(s)</span>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-              <th className="px-4 py-3">DescriÃ§Ã£o</th>
-              <th className="px-4 py-3">{counterpartyLabel}</th>
-              <th className="px-4 py-3">Valor</th>
-              <th className="px-4 py-3">Vencimento</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">AÃ§Ãµes</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((entry) => (
-              <tr key={entry.id} className="border-b border-slate-100">
-                <td className="px-4 py-3 font-medium text-slate-800">{entry.description}</td>
-                <td className="px-4 py-3 text-slate-600">
-                  {entry.client?.name ?? entry.supplier?.name ?? "â€”"}
-                </td>
-                <td className="px-4 py-3 text-slate-700">R$ {entry.amount}</td>
-                <td className="px-4 py-3 text-slate-600">
-                  {new Date(entry.dueDate).toLocaleDateString("pt-BR")}
-                </td>
-                <td className="px-4 py-3">
-                  <span
+      <DataTable
+        rows={items}
+        rowKey={(entry) => entry.id}
+        empty={loading ? "Carregando..." : "Nenhum título encontrado."}
+        columns={[
+          { key: "c0", header: "Descrição", cell: (entry) => entry.description, className: "font-medium" },
+          { key: "c1", header: counterpartyLabel, cell: (entry) => entry.client?.name ?? entry.supplier?.name ?? "â€”" },
+          { key: "c2", header: "Valor", cell: (entry) => <>R$ {entry.amount}</> },
+          { key: "c3", header: "Vencimento", cell: (entry) => new Date(entry.dueDate).toLocaleDateString("pt-BR") },
+          { key: "c4", header: "Status", cell: (entry) => <><span
                     className={
                       entry.status === "PAID"
                         ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700"
                         : entry.status === "CANCELLED"
-                          ? "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500"
+                          ? "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"
                           : isOverdue(entry)
                             ? "rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-700"
                             : "rounded-full bg-sky-50 px-2 py-0.5 text-xs text-sky-700"
                     }
                   >
                     {isOverdue(entry) ? "Vencido" : statusLabel[entry.status]}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex gap-3 text-xs font-medium">
+                  </span></> },
+          { key: "c5", header: "Ações", cell: (entry) => <><div className="flex gap-3 text-xs font-medium">
                     {entry.status === "OPEN" && (
                       <>
                         <button
@@ -385,7 +358,7 @@ export default function FinancialEntries({ direction, isAdmin }: Props) {
                           <button
                             type="button"
                             onClick={() => void handleCancel(entry)}
-                            className="text-red-600 hover:underline"
+                            className="text-red-700 hover:underline"
                           >
                             Cancelar
                           </button>
@@ -396,30 +369,19 @@ export default function FinancialEntries({ direction, isAdmin }: Props) {
                       <button
                         type="button"
                         onClick={() => void handleReverse(entry)}
-                        className="text-red-600 hover:underline"
+                        className="text-red-700 hover:underline"
                       >
                         Estornar
                       </button>
                     )}
                     {entry.status === "CANCELLED" && entry.cancelReason && (
-                      <span className="text-xs text-slate-400" title={entry.cancelReason}>
+                      <span className="text-xs text-slate-500" title={entry.cancelReason}>
                         motivo registrado
                       </span>
                     )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {items.length === 0 && !loading && (
-              <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-slate-400">
-                  Nenhum tÃ­tulo encontrado.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                  </div></> },
+        ]}
+      />
 
       {pages > 1 && (
         <div className="flex items-center justify-between">
@@ -432,7 +394,7 @@ export default function FinancialEntries({ direction, isAdmin }: Props) {
             Anterior
           </button>
           <span className="text-sm text-slate-500">
-            PÃ¡gina {page} de {pages}
+            Página {page} de {pages}
           </span>
           <button
             type="button"
@@ -440,7 +402,7 @@ export default function FinancialEntries({ direction, isAdmin }: Props) {
             onClick={() => setPage(page + 1)}
             className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50"
           >
-            PrÃ³xima
+            Próxima
           </button>
         </div>
       )}

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "../../lib/api";
 import { fetchSession, type Session } from "../../lib/session";
+import { DataTable } from "../../components/ui/DataTable";
 
 interface UserDto {
   id: string;
@@ -190,7 +191,7 @@ export default function UsuariosPage() {
               onChange={(event) => setName(event.target.value)}
               className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
             />
-            {fieldErrors.name && <p className="mt-1 text-xs text-red-600">{fieldErrors.name}</p>}
+            {fieldErrors.name && <p className="mt-1 text-xs text-red-700">{fieldErrors.name}</p>}
           </div>
           <div>
             <label htmlFor="user-email" className="mb-1 block text-sm text-slate-700">
@@ -204,7 +205,7 @@ export default function UsuariosPage() {
               className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
             />
             {fieldErrors.email && (
-              <p className="mt-1 text-xs text-red-600">{fieldErrors.email}</p>
+              <p className="mt-1 text-xs text-red-700">{fieldErrors.email}</p>
             )}
           </div>
           <div>
@@ -219,7 +220,7 @@ export default function UsuariosPage() {
               className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
             />
             {fieldErrors.password && (
-              <p className="mt-1 text-xs text-red-600">{fieldErrors.password}</p>
+              <p className="mt-1 text-xs text-red-700">{fieldErrors.password}</p>
             )}
           </div>
           <div>
@@ -240,7 +241,7 @@ export default function UsuariosPage() {
             <button
               type="submit"
               disabled={saving}
-              className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
+              className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60"
             >
               {saving ? "Criando..." : "Criar usuário"}
             </button>
@@ -252,41 +253,30 @@ export default function UsuariosPage() {
         <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">
           Lista de usuários
         </h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-                <th className="py-2 pr-4">Nome</th>
-                <th className="py-2 pr-4">Email</th>
-                <th className="py-2 pr-4">Papel</th>
-                <th className="py-2 pr-4">Status</th>
-                <th className="py-2">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user.id} className="border-b border-slate-100">
-                  <td className="py-2 pr-4 text-slate-800">{user.name}</td>
-                  <td className="py-2 pr-4 text-slate-600">{user.email}</td>
-                  <td className="py-2 pr-4">{user.role === "ADMIN" ? "Admin" : "Membro"}</td>
-                  <td className="py-2 pr-4">
-                    <span
+        <DataTable
+          bare
+          rows={users}
+          rowKey={(user) => user.id}
+          empty={<>Nenhum usuário encontrado.</>}
+          columns={[
+            { key: "c0", header: "Nome", cell: (user) => user.name },
+            { key: "c1", header: "Email", cell: (user) => user.email },
+            { key: "c2", header: "Papel", cell: (user) => user.role === "ADMIN" ? "Admin" : "Membro" },
+            { key: "c3", header: "Status", cell: (user) => <><span
                       className={
                         user.status === "ACTIVE"
                           ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700"
-                          : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500"
+                          : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"
                       }
                     >
                       {user.status === "ACTIVE" ? "Ativo" : "Inativo"}
-                    </span>
-                  </td>
-                  <td className="py-2">
-                    {user.id !== session.user.id &&
+                    </span></> },
+            { key: "c4", header: "Ações", cell: (user) => <>{user.id !== session.user.id &&
                       (user.status === "ACTIVE" ? (
                         <button
                           type="button"
                           onClick={() => handleChangeStatus(user, "INACTIVE")}
-                          className="text-xs font-medium text-red-600 hover:underline"
+                          className="text-xs font-medium text-red-700 hover:underline"
                         >
                           Inativar
                         </button>
@@ -298,20 +288,9 @@ export default function UsuariosPage() {
                         >
                           Reativar
                         </button>
-                      ))}
-                  </td>
-                </tr>
-              ))}
-              {users.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="py-4 text-center text-slate-400">
-                    Nenhum usuário encontrado.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                      ))}</> },
+          ]}
+        />
       </div>
     </div>
   );

@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { api, ApiError } from "../../lib/api";
 import { fetchSession, type Session } from "../../lib/session";
 import type { Paginated, SupplierDto } from "../../lib/types";
+import { useDialog } from "../../components/ui/Dialog";
+import { DataTable } from "../../components/ui/DataTable";
 
 const emptyForm = {
   name: "",
@@ -16,6 +18,7 @@ const emptyForm = {
 };
 
 export default function FornecedoresPage() {
+  const dialog = useDialog();
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -125,7 +128,7 @@ export default function FornecedoresPage() {
 
   async function handleStatus(supplier: SupplierDto, status: "ACTIVE" | "INACTIVE") {
     const label = status === "INACTIVE" ? "inativar" : "reativar";
-    if (!window.confirm(`Deseja ${label} o fornecedor "${supplier.name}"?`)) return;
+    if (!await dialog.confirm(`Deseja ${label} o fornecedor "${supplier.name}"?`)) return;
     setNotice(null);
     try {
       await api(`/api/suppliers/${supplier.id}/status`, {
@@ -189,7 +192,7 @@ export default function FornecedoresPage() {
                 className={inputClass}
               />
               {fieldErrors.name && (
-                <p className="mt-1 text-xs text-red-600">{fieldErrors.name}</p>
+                <p className="mt-1 text-xs text-red-700">{fieldErrors.name}</p>
               )}
             </div>
             <div>
@@ -215,7 +218,7 @@ export default function FornecedoresPage() {
                 className={inputClass}
               />
               {fieldErrors.email && (
-                <p className="mt-1 text-xs text-red-600">{fieldErrors.email}</p>
+                <p className="mt-1 text-xs text-red-700">{fieldErrors.email}</p>
               )}
             </div>
             <div>
@@ -250,7 +253,7 @@ export default function FornecedoresPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
+                className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60"
               >
                 {saving ? "Salvando..." : editingId ? "Salvar" : "Criar"}
               </button>
@@ -268,39 +271,24 @@ export default function FornecedoresPage() {
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-              <th className="px-4 py-3">Nome</th>
-              <th className="px-4 py-3">Documento</th>
-              <th className="px-4 py-3">Contato</th>
-              <th className="px-4 py-3">Status</th>
-              {isAdmin && <th className="px-4 py-3">Ações</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {suppliers.map((supplier) => (
-              <tr key={supplier.id} className="border-b border-slate-100">
-                <td className="px-4 py-3 font-medium text-slate-800">{supplier.name}</td>
-                <td className="px-4 py-3 text-slate-600">{supplier.document ?? "—"}</td>
-                <td className="px-4 py-3 text-slate-600">
-                  {[supplier.email, supplier.phone].filter(Boolean).join(" · ") || "—"}
-                </td>
-                <td className="px-4 py-3">
-                  <span
+      <DataTable
+        rows={suppliers}
+        rowKey={(supplier) => supplier.id}
+        empty={<>Nenhum fornecedor cadastrado.</>}
+        columns={[
+          { key: "c0", header: "Nome", cell: (supplier) => supplier.name, className: "font-medium" },
+          { key: "c1", header: "Documento", cell: (supplier) => supplier.document ?? "—" },
+          { key: "c2", header: "Contato", cell: (supplier) => [supplier.email, supplier.phone].filter(Boolean).join(" · ") || "—" },
+          { key: "c3", header: "Status", cell: (supplier) => <><span
                     className={
                       supplier.status === "ACTIVE"
                         ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700"
-                        : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500"
+                        : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"
                     }
                   >
                     {supplier.status === "ACTIVE" ? "Ativo" : "Inativo"}
-                  </span>
-                </td>
-                {isAdmin && (
-                  <td className="px-4 py-3">
-                    <div className="flex gap-3 text-xs font-medium">
+                  </span></> },
+          { key: "c4", header: "Ações", cell: (supplier) => <><div className="flex gap-3 text-xs font-medium">
                       <button
                         type="button"
                         onClick={() => startEdit(supplier)}
@@ -312,7 +300,7 @@ export default function FornecedoresPage() {
                         <button
                           type="button"
                           onClick={() => void handleStatus(supplier, "INACTIVE")}
-                          className="text-red-600 hover:underline"
+                          className="text-red-700 hover:underline"
                         >
                           Inativar
                         </button>
@@ -325,21 +313,9 @@ export default function FornecedoresPage() {
                           Reativar
                         </button>
                       )}
-                    </div>
-                  </td>
-                )}
-              </tr>
-            ))}
-            {suppliers.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
-                  Nenhum fornecedor cadastrado.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                    </div></>, hidden: !(isAdmin) },
+        ]}
+      />
     </div>
   );
 }

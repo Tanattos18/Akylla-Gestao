@@ -95,7 +95,7 @@ export function Receipt({
         </div>
       )}
 
-      <p className="mt-4 text-center text-[10px] text-slate-400">
+      <p className="mt-4 text-center text-[10px] text-slate-500">
         Akylla Gestão — Obrigado pela preferência!
       </p>
     </div>

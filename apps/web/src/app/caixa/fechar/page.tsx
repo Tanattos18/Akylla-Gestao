@@ -121,7 +121,7 @@ export default function FecharCaixaPage() {
         <div className="flex justify-center gap-2">
           <Link
             href="/caixa"
-            className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800"
           >
             Voltar ao caixa
           </Link>

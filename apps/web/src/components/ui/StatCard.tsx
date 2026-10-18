@@ -5,11 +5,11 @@ type IconBg = "violet" | "amber" | "red" | "teal" | "sky" | "slate";
 
 const iconBackgrounds: Record<IconBg, string> = {
   violet: "bg-violet-50 text-violet-600",
-  amber: "bg-amber-50 text-amber-600",
-  red: "bg-red-50 text-red-500",
+  amber: "bg-amber-50 text-amber-700",
+  red: "bg-red-50 text-red-700",
   teal: "bg-primary-50 text-primary-600",
-  sky: "bg-sky-50 text-sky-600",
-  slate: "bg-slate-100 text-slate-500",
+  sky: "bg-sky-50 text-sky-700",
+  slate: "bg-slate-100 text-slate-700",
 };
 
 export function StatCard({
@@ -38,7 +38,7 @@ export function StatCard({
         )}
       </div>
       <p className="mt-3 text-2xl font-semibold tracking-tight text-slate-900">{value}</p>
-      {subtext && <p className="mt-1 text-xs text-slate-400">{subtext}</p>}
+      {subtext && <p className="mt-1 text-xs text-slate-500">{subtext}</p>}
     </Card>
   );
 }

@@ -12,10 +12,13 @@ import {
   type Paginated,
   type ProductDto,
 } from "../../../lib/types";
+import { useDialog } from "../../../components/ui/Dialog";
+import { DataTable } from "../../../components/ui/DataTable";
 
 const movementPageSize = 10;
 
 export default function ProdutoDetalhePage() {
+  const dialog = useDialog();
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const productId = params.id;
@@ -138,7 +141,7 @@ export default function ProdutoDetalhePage() {
 
   async function handleInactive() {
     if (!product) return;
-    if (!window.confirm(`Inativar o produto "${product.name}"?`)) return;
+    if (!await dialog.confirm(`Inativar o produto "${product.name}"?`)) return;
     try {
       await api(`/api/products/${product.id}/status`, {
         method: "PATCH",
@@ -187,7 +190,7 @@ export default function ProdutoDetalhePage() {
             {product.supplier?.name ?? "Sem fornecedor"}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {isAdmin && product.status === "ACTIVE" && (
             <>
               <Link
@@ -297,7 +300,7 @@ export default function ProdutoDetalhePage() {
                     },
                   );
                 }}
-                className="w-full rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
+                className="w-full rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60"
               >
                 Registrar entrada
               </button>
@@ -419,25 +422,14 @@ export default function ProdutoDetalhePage() {
         <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">
           Histórico de movimentações
         </h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-                <th className="py-2 pr-4">Data</th>
-                <th className="py-2 pr-4">Tipo</th>
-                <th className="py-2 pr-4">Quantidade</th>
-                <th className="py-2 pr-4">Motivo / referência</th>
-                <th className="py-2">Usuário</th>
-              </tr>
-            </thead>
-            <tbody>
-              {movements.map((movement) => (
-                <tr key={movement.id} className="border-b border-slate-100">
-                  <td className="py-2 pr-4 text-slate-600">
-                    {new Date(movement.createdAt).toLocaleString("pt-BR")}
-                  </td>
-                  <td className="py-2 pr-4">
-                    <span
+        <DataTable
+          bare
+          rows={movements}
+          rowKey={(movement) => movement.id}
+          empty={<>Nenhuma movimentação registrada.</>}
+          columns={[
+            { key: "c0", header: "Data", cell: (movement) => new Date(movement.createdAt).toLocaleString("pt-BR") },
+            { key: "c1", header: "Tipo", cell: (movement) => <><span
                       className={
                         movement.type === "IN" || movement.type === "ADJUST_POSITIVE"
                           ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700"
@@ -445,31 +437,18 @@ export default function ProdutoDetalhePage() {
                       }
                     >
                       {stockMovementTypeLabels[movement.type]}
-                    </span>
-                  </td>
-                  <td className="py-2 pr-4 text-slate-800">{Number(movement.quantity)}</td>
-                  <td className="py-2 pr-4 text-slate-600">
-                    {movement.notes ?? movement.reference ?? "—"}
-                  </td>
-                  <td className="py-2 text-slate-600">{movement.createdBy.name}</td>
-                </tr>
-              ))}
-              {movements.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="py-4 text-center text-slate-400">
-                    Nenhuma movimentação registrada.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                    </span></> },
+            { key: "c2", header: "Quantidade", cell: (movement) => Number(movement.quantity) },
+            { key: "c3", header: "Motivo / referência", cell: (movement) => movement.notes ?? movement.reference ?? "—" },
+            { key: "c4", header: "Usuário", cell: (movement) => movement.createdBy.name },
+          ]}
+        />
         {movementPages > 1 && (
           <div className="mt-4 flex items-center justify-between text-sm text-slate-600">
             <span>
               Página {movementPage} de {movementPages}
             </span>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 disabled={movementPage <= 1}

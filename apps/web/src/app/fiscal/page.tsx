@@ -15,6 +15,8 @@ import {
   type FiscalDocumentType,
   type Paginated,
 } from "../../lib/types";
+import { useDialog } from "../../components/ui/Dialog";
+import { DataTable } from "../../components/ui/DataTable";
 
 /** Fase 3 — nota fiscal por integração: configuração (ADMIN) e documentos. */
 
@@ -37,6 +39,7 @@ function formatCnpj(value: string | null): string {
 }
 
 export default function FiscalPage() {
+  const dialog = useDialog();
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
   const [config, setConfig] = useState<FiscalConfigDto | null>(null);
@@ -133,8 +136,8 @@ export default function FiscalPage() {
     }, "Certificado validado e guardado (cifrado).");
   }
 
-  function cancelDocument(doc: FiscalDocumentDto) {
-    const reason = window.prompt(`Justificativa para cancelar a ${fiscalTypeLabels[doc.type]} nº ${doc.number} (mínimo 15 caracteres):`);
+  async function cancelDocument(doc: FiscalDocumentDto) {
+    const reason = await dialog.prompt({ title: `Cancelar ${fiscalTypeLabels[doc.type]} nº ${doc.number}`, description: "A SEFAZ exige uma justificativa de 15 a 255 caracteres.", label: "Justificativa", minLength: 15, maxLength: 255, multiline: true, danger: true, confirmLabel: "Cancelar nota" });
     if (!reason) return;
     void run(() => api(`/api/fiscal/documents/${doc.id}/cancel`, { method: "POST", body: JSON.stringify({ reason }) }), "Nota cancelada.");
   }
@@ -200,7 +203,7 @@ export default function FiscalPage() {
             </div>
             <div className="flex flex-wrap items-end gap-2">
               <button type="submit" disabled={busy} className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60">Salvar</button>
-              <button type="button" disabled={busy} onClick={(e) => saveConfig(e, !config.active)} className={config.active ? "rounded-md border border-red-300 px-4 py-2 text-sm text-red-700 hover:bg-red-50" : "rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"}>
+              <button type="button" disabled={busy} onClick={(e) => saveConfig(e, !config.active)} className={config.active ? "rounded-md border border-red-300 px-4 py-2 text-sm text-red-700 hover:bg-red-50" : "rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800"}>
                 {config.active ? "Desativar" : "Ativar emissão"}
               </button>
             </div>
@@ -240,51 +243,28 @@ export default function FiscalPage() {
             {(Object.keys(fiscalStatusLabels) as FiscalDocumentStatus[]).map((s) => <option key={s} value={s}>{fiscalStatusLabels[s]}</option>)}
           </select>
         </div>
-        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-                <th className="px-4 py-3">Emissão</th>
-                <th className="px-4 py-3">Tipo / nº</th>
-                <th className="px-4 py-3">Origem</th>
-                <th className="px-4 py-3 text-right">Valor</th>
-                <th className="px-4 py-3">Situação</th>
-                <th className="px-4 py-3">Chave / motivo</th>
-                <th className="px-4 py-3">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {docs?.items.map((d) => (
-                <tr key={d.id} className="border-b border-slate-100 align-top">
-                  <td className="px-4 py-3 text-slate-600">{formatDateTime(d.createdAt)}</td>
-                  <td className="px-4 py-3 text-slate-800">{fiscalTypeLabels[d.type]} {d.number}/{d.series}{d.environment === "HOMOLOGATION" && <span className="ml-1 text-xs text-slate-600">(homolog.)</span>}</td>
-                  <td className="px-4 py-3">
-                    {d.sale && <Link href={`/vendas/${d.sale.id}`} className="font-mono text-xs text-primary-700 hover:underline">{d.sale.receiptCode}</Link>}
-                    {d.serviceOrder && <Link href={`/os/${d.serviceOrder.id}`} className="font-mono text-xs text-primary-700 hover:underline">OS-{String(d.serviceOrder.number).padStart(5, "0")}</Link>}
-                  </td>
-                  <td className="px-4 py-3 text-right text-slate-900">{formatBrl(d.amount)}</td>
-                  <td className="px-4 py-3"><span className={`rounded-full px-2 py-0.5 text-xs ${statusClass[d.status]}`}>{fiscalStatusLabels[d.status]}</span></td>
-                  <td className="max-w-xs px-4 py-3 text-xs text-slate-700">
-                    {d.accessKey && <span className="break-all font-mono">{d.accessKey}</span>}
+        <DataTable
+          rows={docs?.items ?? []}
+          rowKey={(d) => d.id}
+          empty={<>Nenhuma nota emitida.</>}
+          columns={[
+            { key: "c0", header: "Emissão", cell: (d) => formatDateTime(d.createdAt) },
+            { key: "c1", header: "Tipo / nº", cell: (d) => <>{fiscalTypeLabels[d.type]} {d.number}/{d.series}{d.environment === "HOMOLOGATION" && <span className="ml-1 text-xs text-slate-600">(homolog.)</span>}</> },
+            { key: "c2", header: "Origem", cell: (d) => <>{d.sale && <Link href={`/vendas/${d.sale.id}`} className="font-mono text-xs text-primary-700 hover:underline">{d.sale.receiptCode}</Link>}
+                    {d.serviceOrder && <Link href={`/os/${d.serviceOrder.id}`} className="font-mono text-xs text-primary-700 hover:underline">OS-{String(d.serviceOrder.number).padStart(5, "0")}</Link>}</> },
+            { key: "c3", header: "Valor", cell: (d) => formatBrl(d.amount), numeric: true },
+            { key: "c4", header: "Situação", cell: (d) => <><span className={`rounded-full px-2 py-0.5 text-xs ${statusClass[d.status]}`}>{fiscalStatusLabels[d.status]}</span></> },
+            { key: "c5", header: "Chave / motivo", cell: (d) => <>{d.accessKey && <span className="break-all font-mono">{d.accessKey}</span>}
                     {d.rejectionReason && <span className="text-red-700">{d.rejectionReason}</span>}
-                    {d.cancellationReason && <span>Cancelada: {d.cancellationReason}</span>}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-3 text-xs font-medium">
+                    {d.cancellationReason && <span>Cancelada: {d.cancellationReason}</span>}</>, className: "max-w-xs text-xs" },
+            { key: "c6", header: "Ações", cell: (d) => <><div className="flex flex-wrap gap-3 text-xs font-medium">
                       {d.status === "AUTHORIZED" && <a href={`/api/fiscal/documents/${d.id}/xml`} className="text-primary-700 hover:underline">XML</a>}
                       {isAdmin && d.status === "AUTHORIZED" && (
                         <button type="button" disabled={busy} onClick={() => cancelDocument(d)} className="text-red-700 hover:underline">Cancelar</button>
                       )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {docs && docs.items.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-6 text-center text-slate-500">Nenhuma nota emitida.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                    </div></> },
+          ]}
+        />
       </section>
     </div>
   );

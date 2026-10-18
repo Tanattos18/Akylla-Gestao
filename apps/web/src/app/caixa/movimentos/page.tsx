@@ -14,6 +14,7 @@ import {
   type CashSessionDto,
   type Paginated,
 } from "../../../lib/types";
+import { DataTable } from "../../../components/ui/DataTable";
 
 const pageSize = 20;
 
@@ -135,7 +136,7 @@ export default function MovimentosCaixaPage() {
             {total} movimentação{total === 1 ? "" : "ões"} encontrada{total === 1 ? "" : "s"}.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link
             href="/caixa"
             className="rounded-md border border-primary-600 px-3 py-2 text-sm font-medium text-primary-800 hover:bg-primary-100"
@@ -243,7 +244,7 @@ export default function MovimentosCaixaPage() {
         <div className="flex items-end gap-2">
           <button
             type="submit"
-            className="flex-1 rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            className="flex-1 rounded-md bg-primary-700 px-3 py-2 text-sm font-medium text-white hover:bg-primary-800"
           >
             Filtrar
           </button>
@@ -305,28 +306,13 @@ export default function MovimentosCaixaPage() {
         </form>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-              <th className="px-4 py-3">Data</th>
-              <th className="px-4 py-3">Tipo</th>
-              <th className="px-4 py-3">Origem</th>
-              <th className="px-4 py-3">Descrição</th>
-              <th className="px-4 py-3">Caixa</th>
-              <th className="px-4 py-3">Situação</th>
-              <th className="px-4 py-3 text-right">Valor</th>
-              {isAdmin && <th className="px-4 py-3 text-right">Ação</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {movements.map((movement) => (
-              <tr key={movement.id} className="border-b border-slate-100 hover:bg-slate-50">
-                <td className="px-4 py-3 text-slate-600">
-                  {new Date(movement.createdAt).toLocaleString("pt-BR")}
-                </td>
-                <td className="px-4 py-3">
-                  <span
+      <DataTable
+        rows={movements}
+        rowKey={(movement) => movement.id}
+        empty={<>Nenhuma movimentação encontrada.</>}
+        columns={[
+          { key: "c0", header: "Data", cell: (movement) => new Date(movement.createdAt).toLocaleString("pt-BR") },
+          { key: "c1", header: "Tipo", cell: (movement) => <><span
                     className={
                       movement.type === "IN"
                         ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700"
@@ -334,18 +320,14 @@ export default function MovimentosCaixaPage() {
                     }
                   >
                     {cashMovementTypeLabels[movement.type]}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-slate-600">
-                  {cashMovementOriginLabels[movement.origin]}
+                  </span></> },
+          { key: "c2", header: "Origem", cell: (movement) => <>{cashMovementOriginLabels[movement.origin]}
                   {movement.sale && (
-                    <span className="ml-1 font-mono text-xs text-slate-400">
+                    <span className="ml-1 font-mono text-xs text-slate-500">
                       {movement.sale.receiptCode}
                     </span>
-                  )}
-                </td>
-                <td className="max-w-xs px-4 py-3 text-slate-700">
-                  <span className="block truncate">{movement.description}</span>
+                  )}</> },
+          { key: "c3", header: "Descrição", cell: (movement) => <><span className="block truncate">{movement.description}</span>
                   {movement.saleId && (
                     <Link
                       href={`/vendas/${movement.saleId}`}
@@ -353,21 +335,17 @@ export default function MovimentosCaixaPage() {
                     >
                       Ver venda
                     </Link>
-                  )}
-                </td>
-                <td className="px-4 py-3">
-                  <span
+                  )}</>, className: "max-w-xs" },
+          { key: "c4", header: "Caixa", cell: (movement) => <><span
                     className={
                       movement.inCash
                         ? "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"
-                        : "rounded-full bg-slate-50 px-2 py-0.5 text-xs text-slate-400"
+                        : "rounded-full bg-slate-50 px-2 py-0.5 text-xs text-slate-500"
                     }
                   >
                     {movement.inCash ? "Físico" : "Outro"}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  {movement.reversedAt ? (
+                  </span></> },
+          { key: "c5", header: "Situação", cell: (movement) => <>{movement.reversedAt ? (
                     <span
                       title={movement.reversalReason ?? undefined}
                       className="rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700"
@@ -378,48 +356,31 @@ export default function MovimentosCaixaPage() {
                     <span className="rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700">
                       Ativo
                     </span>
-                  )}
-                </td>
-                <td className="px-4 py-3 text-right font-medium text-slate-900">
-                  {movement.type === "IN" ? "+" : "-"} R$ {Number(movement.amount).toFixed(2)}
-                </td>
-                {isAdmin && (
-                  <td className="px-4 py-3 text-right">
-                    {movement.origin === "MANUAL" && !movement.reversedAt ? (
+                  )}</> },
+          { key: "c6", header: "Valor", cell: (movement) => <>{movement.type === "IN" ? "+" : "-"} R$ {Number(movement.amount).toFixed(2)}</>, numeric: true, className: "font-medium" },
+          { key: "c7", header: "Ação", cell: (movement) => <>{movement.origin === "MANUAL" && !movement.reversedAt ? (
                       <button
                         type="button"
                         onClick={() => {
                           setReversalTarget(movement);
                           setReason("");
                         }}
-                        className="text-sm text-red-600 hover:underline"
+                        className="text-sm text-red-700 hover:underline"
                       >
                         Estornar
                       </button>
                     ) : (
                       <span className="text-xs text-slate-300">—</span>
-                    )}
-                  </td>
-                )}
-              </tr>
-            ))}
-            {!movements.length && (
-              <tr>
-                <td colSpan={isAdmin ? 8 : 7} className="px-4 py-8 text-center text-slate-400">
-                  Nenhuma movimentação encontrada.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                    )}</>, numeric: true, hidden: !(isAdmin) },
+        ]}
+      />
 
       {pages > 1 && (
         <div className="flex items-center justify-between text-sm text-slate-600">
           <span>
             Página {page} de {pages}
           </span>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
               disabled={page <= 1}

@@ -127,14 +127,14 @@ export default function LoginPage() {
               aria-invalid={Boolean(fieldErrors.totp)}
             />
             {fieldErrors.totp && (
-              <p className="mb-3 text-xs text-red-600">{fieldErrors.totp}</p>
+              <p className="mb-3 text-xs text-red-700">{fieldErrors.totp}</p>
             )}
             {!fieldErrors.totp && <div className="mb-5" />}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? "Verificando..." : "Verificar"}
             </button>
@@ -184,7 +184,7 @@ export default function LoginPage() {
             className="mb-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             aria-invalid={Boolean(fieldErrors.email)}
           />
-          {fieldErrors.email && <p className="mb-3 text-xs text-red-600">{fieldErrors.email}</p>}
+          {fieldErrors.email && <p className="mb-3 text-xs text-red-700">{fieldErrors.email}</p>}
           {!fieldErrors.email && <div className="mb-3" />}
 
           <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="password">
@@ -200,14 +200,14 @@ export default function LoginPage() {
             aria-invalid={Boolean(fieldErrors.password)}
           />
           {fieldErrors.password && (
-            <p className="mb-3 text-xs text-red-600">{fieldErrors.password}</p>
+            <p className="mb-3 text-xs text-red-700">{fieldErrors.password}</p>
           )}
           {!fieldErrors.password && <div className="mb-5" />}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Entrando..." : "Entrar"}
           </button>

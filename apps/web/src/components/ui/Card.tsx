@@ -27,7 +27,7 @@ export function CardHeader({
     <div className="flex items-start justify-between border-b border-slate-100 px-5 py-4">
       <div>
         {subtitle && (
-          <p className="text-[11px] font-medium uppercase tracking-widest text-slate-400">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-slate-500">
             {subtitle}
           </p>
         )}

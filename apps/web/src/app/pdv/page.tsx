@@ -296,7 +296,7 @@ export default function PdvPage() {
           <button
             type="button"
             onClick={() => handlePrint(completedSale)}
-            className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800"
           >
             Imprimir comprovante
           </button>
@@ -327,7 +327,7 @@ export default function PdvPage() {
             Busque por nome, SKU ou código de barras para iniciar a venda.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link
             href="/vendas"
             className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
@@ -357,7 +357,7 @@ export default function PdvPage() {
           </span>
           <Link
             href="/caixa"
-            className="rounded-md bg-primary-600 px-3 py-1.5 font-medium text-white hover:bg-primary-700"
+            className="rounded-md bg-primary-700 px-3 py-1.5 font-medium text-white hover:bg-primary-800"
           >
             Abrir caixa
           </Link>
@@ -406,7 +406,7 @@ export default function PdvPage() {
                 </li>
               ))}
               {!results.length && (
-                <li className="px-4 py-4 text-center text-sm text-slate-400">
+                <li className="px-4 py-4 text-center text-sm text-slate-500">
                   {search.trim() ? "Nenhum produto encontrado." : "Digite para buscar produtos."}
                 </li>
               )}
@@ -420,51 +420,39 @@ export default function PdvPage() {
               Carrinho ({cart.length})
             </div>
             <div className="max-h-72 overflow-y-auto">
-              <table className="w-full text-sm">
-                <tbody>
-                  {cart.map((item) => (
-                    <tr key={item.productId} className="border-b border-slate-100">
-                      <td className="px-4 py-2">
-                        <p className="font-medium text-slate-800">{item.name}</p>
-                        <p className="text-xs text-slate-500">
-                          R$ {Number(item.unitPrice).toFixed(2)} × {productUnitLabels[item.unit]}
-                        </p>
-                      </td>
-                      <td className="px-2 py-2">
-                        <input
-                          type="number"
-                          min={1}
-                          max={Number(item.stock)}
-                          value={item.quantity}
-                          onChange={(event) => changeQuantity(item.productId, event.target.value)}
-                          aria-label={`Quantidade de ${item.name}`}
-                          className="w-20 rounded-md border border-slate-300 px-2 py-1 text-sm"
-                        />
-                      </td>
-                      <td className="px-2 py-2 text-right font-medium text-slate-800">
-                        R$ {(Number(item.unitPrice) * item.quantity).toFixed(2)}
-                      </td>
-                      <td className="px-4 py-2 text-right">
-                        <button
-                          type="button"
-                          onClick={() => removeFromCart(item.productId)}
-                          aria-label={`Remover ${item.name}`}
-                          className="text-xs text-red-600 hover:underline"
-                        >
-                          Remover
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {!cart.length && (
-                    <tr>
-                      <td colSpan={4} className="px-4 py-6 text-center text-sm text-slate-400">
-                        Carrinho vazio.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+              <ul aria-label="Itens no carrinho">
+                {cart.map((item) => (
+                  <li key={item.productId} className="flex flex-wrap items-center gap-2 border-b border-slate-100 px-4 py-2 text-sm">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-slate-800">{item.name}</p>
+                      <p className="text-xs text-slate-600">
+                        R$ {Number(item.unitPrice).toFixed(2)} × {productUnitLabels[item.unit]}
+                      </p>
+                    </div>
+                    <input
+                      type="number"
+                      min={1}
+                      max={Number(item.stock)}
+                      value={item.quantity}
+                      onChange={(event) => changeQuantity(item.productId, event.target.value)}
+                      aria-label={`Quantidade de ${item.name}`}
+                      className="w-20 rounded-md border border-slate-300 px-2 py-1 text-sm"
+                    />
+                    <span className="w-24 text-right font-medium tabular-nums text-slate-800">
+                      R$ {(Number(item.unitPrice) * item.quantity).toFixed(2)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeFromCart(item.productId)}
+                      aria-label={`Remover ${item.name}`}
+                      className="text-xs text-red-700 hover:underline"
+                    >
+                      Remover
+                    </button>
+                  </li>
+                ))}
+                {!cart.length && <li className="px-4 py-6 text-center text-sm text-slate-600">Carrinho vazio.</li>}
+              </ul>
             </div>
           </div>
 
@@ -610,7 +598,7 @@ export default function PdvPage() {
           <button
             type="submit"
             disabled={saving || cart.length === 0 || cashOpen === false}
-            className="w-full rounded-md bg-primary-600 px-4 py-3 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-60"
+            className="w-full rounded-md bg-primary-700 px-4 py-3 text-sm font-semibold text-white hover:bg-primary-800 disabled:opacity-60"
           >
             {saving ? "Finalizando..." : cashOpen === false ? "Caixa fechado" : "Finalizar venda"}
           </button>

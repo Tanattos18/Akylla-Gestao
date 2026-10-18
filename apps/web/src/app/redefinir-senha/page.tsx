@@ -73,7 +73,7 @@ export default function RedefinirSenhaPage() {
             </div>
             <Link
               href="/login"
-              className="block w-full rounded-md bg-primary-600 px-4 py-2 text-center text-sm font-medium text-white hover:bg-primary-700"
+              className="block w-full rounded-md bg-primary-700 px-4 py-2 text-center text-sm font-medium text-white hover:bg-primary-800"
             >
               Ir para o login
             </Link>
@@ -103,7 +103,7 @@ export default function RedefinirSenhaPage() {
                 aria-invalid={Boolean(fieldErrors.email)}
               />
               {fieldErrors.email && (
-                <p className="mb-3 text-xs text-red-600">{fieldErrors.email}</p>
+                <p className="mb-3 text-xs text-red-700">{fieldErrors.email}</p>
               )}
               {!fieldErrors.email && <div className="mb-3" />}
 
@@ -120,7 +120,7 @@ export default function RedefinirSenhaPage() {
                 aria-invalid={Boolean(fieldErrors.password)}
               />
               {fieldErrors.password && (
-                <p className="mb-3 text-xs text-red-600">{fieldErrors.password}</p>
+                <p className="mb-3 text-xs text-red-700">{fieldErrors.password}</p>
               )}
               {!fieldErrors.password && <div className="mb-3" />}
 
@@ -137,14 +137,14 @@ export default function RedefinirSenhaPage() {
                 aria-invalid={Boolean(fieldErrors.confirm)}
               />
               {fieldErrors.confirm && (
-                <p className="mb-3 text-xs text-red-600">{fieldErrors.confirm}</p>
+                <p className="mb-3 text-xs text-red-700">{fieldErrors.confirm}</p>
               )}
               {!fieldErrors.confirm && <div className="mb-5" />}
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading ? "Salvando..." : "Redefinir senha"}
               </button>

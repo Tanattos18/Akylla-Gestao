@@ -7,7 +7,7 @@ const colors: Record<Color, string> = {
   amber: "bg-amber-50 text-amber-700",
   red: "bg-red-50 text-red-700",
   sky: "bg-sky-50 text-sky-700",
-  slate: "bg-slate-100 text-slate-600",
+  slate: "bg-slate-100 text-slate-700",
   violet: "bg-violet-50 text-violet-700",
   green: "bg-green-50 text-green-700",
 };

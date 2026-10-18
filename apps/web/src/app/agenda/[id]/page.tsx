@@ -12,11 +12,12 @@ import {
   type AppointmentDto,
   type AppointmentStatus,
 } from "../../../lib/types";
+import { useDialog } from "../../../components/ui/Dialog";
 
 const statusBadgeClass: Record<AppointmentStatus, string> = {
   SCHEDULED: "rounded-full bg-sky-50 px-2 py-0.5 text-xs text-sky-700",
   CONFIRMED: "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700",
-  COMPLETED: "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600",
+  COMPLETED: "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700",
   CANCELLED: "rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-700",
   NO_SHOW: "rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700",
 };
@@ -42,6 +43,7 @@ const actionLabels: Array<{
 ];
 
 export default function AgendamentoDetalhePage() {
+  const dialog = useDialog();
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const appointmentId = params.id;
@@ -80,7 +82,7 @@ export default function AgendamentoDetalhePage() {
   }, [session, loadAppointment]);
 
   async function changeStatus(status: AppointmentActionStatus) {
-    if (!window.confirm(`Marcar este agendamento como "${appointmentStatusLabels[status]}"?`)) {
+    if (!await dialog.confirm(`Marcar este agendamento como "${appointmentStatusLabels[status]}"?`)) {
       return;
     }
     setBusy(true);
@@ -99,7 +101,7 @@ export default function AgendamentoDetalhePage() {
   }
 
   async function cancelAppointment() {
-    const reason = window.prompt("Motivo do cancelamento (mínimo 3 caracteres):");
+    const reason = await dialog.prompt({ title: "Cancelar agendamento", label: "Motivo do cancelamento", minLength: 3, maxLength: 500, danger: true, confirmLabel: "Cancelar agendamento" });
     if (reason === null) return;
     if (reason.trim().length < 3) {
       setError("Informe um motivo com pelo menos 3 caracteres.");
@@ -154,7 +156,7 @@ export default function AgendamentoDetalhePage() {
             {formatLocalTime(appointment.startLocal)} · {appointment.durationMinutes} min
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {!isTerminal && (
             <Link
               href={`/agenda/${appointment.id}/editar`}
@@ -185,19 +187,19 @@ export default function AgendamentoDetalhePage() {
 
       <div className="grid gap-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm sm:grid-cols-2">
         <div>
-          <p className="text-xs uppercase text-slate-400">Status</p>
+          <p className="text-xs uppercase text-slate-500">Status</p>
           <span className={`mt-1 inline-block ${statusBadgeClass[appointment.status]}`}>
             {appointmentStatusLabels[appointment.status]}
           </span>
         </div>
         <div>
-          <p className="text-xs uppercase text-slate-400">Serviço</p>
+          <p className="text-xs uppercase text-slate-500">Serviço</p>
           <p className="mt-1 text-sm text-slate-800">
             {appointment.service.name} · R$ {Number(appointment.service.price).toFixed(2)}
           </p>
         </div>
         <div>
-          <p className="text-xs uppercase text-slate-400">Cliente</p>
+          <p className="text-xs uppercase text-slate-500">Cliente</p>
           <p className="mt-1 text-sm text-slate-800">
             <Link href={`/clientes/${appointment.client.id}`} className="text-primary-700 hover:underline">
               {appointment.client.name}
@@ -206,7 +208,7 @@ export default function AgendamentoDetalhePage() {
           </p>
         </div>
         <div>
-          <p className="text-xs uppercase text-slate-400">Pet</p>
+          <p className="text-xs uppercase text-slate-500">Pet</p>
           <p className="mt-1 text-sm text-slate-800">
             {appointment.pet
               ? `${appointment.pet.name} (${appointment.pet.species === "DOG" ? "Cachorro" : appointment.pet.species === "CAT" ? "Gato" : "Outro"})`
@@ -214,18 +216,18 @@ export default function AgendamentoDetalhePage() {
           </p>
         </div>
         <div className="sm:col-span-2">
-          <p className="text-xs uppercase text-slate-400">Observações</p>
+          <p className="text-xs uppercase text-slate-500">Observações</p>
           <p className="mt-1 whitespace-pre-wrap text-sm text-slate-800">
             {appointment.notes || "—"}
           </p>
         </div>
         <div>
-          <p className="text-xs uppercase text-slate-400">Criado por</p>
+          <p className="text-xs uppercase text-slate-500">Criado por</p>
           <p className="mt-1 text-sm text-slate-800">{appointment.createdBy.name}</p>
         </div>
         {appointment.cancelledAt && (
           <div>
-            <p className="text-xs uppercase text-slate-400">Cancelamento</p>
+            <p className="text-xs uppercase text-slate-500">Cancelamento</p>
             <p className="mt-1 text-sm text-slate-800">
               {appointment.cancelReason} — {appointment.cancelledBy?.name ?? "—"}
             </p>

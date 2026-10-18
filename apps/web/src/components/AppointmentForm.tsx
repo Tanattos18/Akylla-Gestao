@@ -154,7 +154,7 @@ export function AppointmentForm({ initial, onSubmit, submitLabel }: AppointmentF
             ))}
         </select>
         {fieldErrors.clientId && (
-          <p className="mt-1 text-xs text-red-600">{fieldErrors.clientId}</p>
+          <p className="mt-1 text-xs text-red-700">{fieldErrors.clientId}</p>
         )}
       </div>
       <div>
@@ -175,7 +175,7 @@ export function AppointmentForm({ initial, onSubmit, submitLabel }: AppointmentF
             </option>
           ))}
         </select>
-        {fieldErrors.petId && <p className="mt-1 text-xs text-red-600">{fieldErrors.petId}</p>}
+        {fieldErrors.petId && <p className="mt-1 text-xs text-red-700">{fieldErrors.petId}</p>}
       </div>
       <div>
         <label htmlFor="appointment-service" className="mb-1 block text-sm text-slate-700">
@@ -198,7 +198,7 @@ export function AppointmentForm({ initial, onSubmit, submitLabel }: AppointmentF
             ))}
         </select>
         {fieldErrors.serviceId && (
-          <p className="mt-1 text-xs text-red-600">{fieldErrors.serviceId}</p>
+          <p className="mt-1 text-xs text-red-700">{fieldErrors.serviceId}</p>
         )}
       </div>
       <div>
@@ -213,7 +213,7 @@ export function AppointmentForm({ initial, onSubmit, submitLabel }: AppointmentF
           className={inputClass}
         />
         {fieldErrors.startLocal && (
-          <p className="mt-1 text-xs text-red-600">{fieldErrors.startLocal}</p>
+          <p className="mt-1 text-xs text-red-700">{fieldErrors.startLocal}</p>
         )}
       </div>
       <div>
@@ -229,7 +229,7 @@ export function AppointmentForm({ initial, onSubmit, submitLabel }: AppointmentF
           className={inputClass}
         />
         {fieldErrors.durationMinutes && (
-          <p className="mt-1 text-xs text-red-600">{fieldErrors.durationMinutes}</p>
+          <p className="mt-1 text-xs text-red-700">{fieldErrors.durationMinutes}</p>
         )}
       </div>
       <div className="sm:col-span-2">
@@ -243,13 +243,13 @@ export function AppointmentForm({ initial, onSubmit, submitLabel }: AppointmentF
           rows={3}
           className={inputClass}
         />
-        {fieldErrors.notes && <p className="mt-1 text-xs text-red-600">{fieldErrors.notes}</p>}
+        {fieldErrors.notes && <p className="mt-1 text-xs text-red-700">{fieldErrors.notes}</p>}
       </div>
       <div className="sm:col-span-2">
         <button
           type="submit"
           disabled={saving}
-          className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
+          className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60"
         >
           {saving ? "Salvando..." : submitLabel}
         </button>

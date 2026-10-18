@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api, ApiError } from "../../lib/api";
+import { useToast } from "../ui/Toast";
 import {
   fiscalStatusLabels,
   fiscalTypeLabels,
@@ -27,6 +28,7 @@ export function EmitFiscalButton({
   types: FiscalDocumentType[];
   isAdmin: boolean;
 }) {
+  const toast = useToast();
   const [status, setStatus] = useState<FiscalStatusDto | null>(null);
   const [documents, setDocuments] = useState<FiscalDocumentDto[]>([]);
   const [busy, setBusy] = useState(false);
@@ -52,8 +54,12 @@ export function EmitFiscalButton({
         body: JSON.stringify({ ...(saleId ? { saleId } : { serviceOrderId }), type }),
       });
       setDocuments((current) => [document, ...current]);
+      if (document.status === "AUTHORIZED") toast.success(`${fiscalTypeLabels[type]} nº ${document.number} autorizada.`);
+      else if (document.status === "REJECTED") toast.error(`${fiscalTypeLabels[type]} rejeitada: ${document.rejectionReason ?? "sem motivo"}`);
+      else toast.success(`${fiscalTypeLabels[type]} enviada; aguardando a autorização.`);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Não foi possível emitir a nota.");
+      toast.error(err, "Não foi possível emitir a nota.");
     } finally {
       setBusy(false);
     }

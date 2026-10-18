@@ -13,6 +13,7 @@ import {
   type CashSessionDto,
   type Paginated,
 } from "../../lib/types";
+import { DataTable } from "../../components/ui/DataTable";
 
 export default function CaixaPage() {
   const router = useRouter();
@@ -149,7 +150,7 @@ export default function CaixaPage() {
         <div className="flex flex-wrap gap-2">
           <Link
             href="/financeiro"
-            className="rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            className="rounded-md bg-primary-700 px-3 py-2 text-sm font-medium text-white hover:bg-primary-800"
           >
             Resumo financeiro
           </Link>
@@ -220,11 +221,11 @@ export default function CaixaPage() {
                     className={inputClass}
                   />
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <button
                     type="submit"
                     disabled={saving}
-                    className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
+                    className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60"
                   >
                     {saving ? "Abrindo..." : "Confirmar abertura"}
                   </button>
@@ -241,7 +242,7 @@ export default function CaixaPage() {
               <button
                 type="button"
                 onClick={() => setOpening(true)}
-                className="mt-4 rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+                className="mt-4 rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800"
               >
                 Abrir caixa
               </button>
@@ -350,7 +351,7 @@ export default function CaixaPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="w-full rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
+                  className="w-full rounded-md bg-primary-700 px-3 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60"
                 >
                   {saving ? "Registrando..." : "Registrar"}
                 </button>
@@ -381,24 +382,14 @@ export default function CaixaPage() {
             <div className="border-b border-slate-100 px-4 py-3 text-xs uppercase text-slate-500">
               Movimentações recentes
             </div>
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-                  <th className="px-4 py-3">Data</th>
-                  <th className="px-4 py-3">Tipo</th>
-                  <th className="px-4 py-3">Origem</th>
-                  <th className="px-4 py-3">Descrição</th>
-                  <th className="px-4 py-3 text-right">Valor</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recent.map((movement) => (
-                  <tr key={movement.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="px-4 py-3 text-slate-600">
-                      {new Date(movement.createdAt).toLocaleString("pt-BR")}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
+            <DataTable
+              bare
+              rows={recent}
+              rowKey={(movement) => movement.id}
+              empty={<>Nenhuma movimentação nesta sessão.</>}
+              columns={[
+                { key: "c0", header: "Data", cell: (movement) => new Date(movement.createdAt).toLocaleString("pt-BR") },
+                { key: "c1", header: "Tipo", cell: (movement) => <><span
                         className={
                           movement.type === "IN"
                             ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700"
@@ -406,34 +397,18 @@ export default function CaixaPage() {
                         }
                       >
                         {cashMovementTypeLabels[movement.type]}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {cashMovementOriginLabels[movement.origin]}
+                      </span></> },
+                { key: "c2", header: "Origem", cell: (movement) => <>{cashMovementOriginLabels[movement.origin]}
                       {movement.reversedAt && (
                         <span className="ml-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700">
                           Estornado
                         </span>
-                      )}
-                    </td>
-                    <td className="max-w-xs truncate px-4 py-3 text-slate-700">
-                      {movement.description}
-                    </td>
-                    <td className="px-4 py-3 text-right font-medium text-slate-900">
-                      {movement.type === "IN" ? "+" : "-"} R${" "}
-                      {Number(movement.amount).toFixed(2)}
-                    </td>
-                  </tr>
-                ))}
-                {!recent.length && (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
-                      Nenhuma movimentação nesta sessão.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                      )}</> },
+                { key: "c3", header: "Descrição", cell: (movement) => movement.description, className: "max-w-xs truncate" },
+                { key: "c4", header: "Valor", cell: (movement) => <>{movement.type === "IN" ? "+" : "-"} R${" "}
+                      {Number(movement.amount).toFixed(2)}</>, numeric: true, className: "font-medium" },
+              ]}
+            />
           </section>
 
           <div className="text-right">

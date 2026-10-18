@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api, ApiError } from "../../lib/api";
 import type { CompanyModuleDto, OnboardingStatusDto } from "../../lib/types";
+import { Tabs } from "../../components/ui/Tabs";
+import { useToast } from "../../components/ui/Toast";
 
 const segmentLabels: Record<string, string> = {
   COMERCIO: "Comércio",
@@ -19,6 +21,8 @@ export default function ConfiguracoesPage() {
   const [saving, setSaving] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [changed, setChanged] = useState(false);
+  const [tab, setTab] = useState<"modulos" | "perfil">("modulos");
+  const toast = useToast();
 
   useEffect(() => {
     api<CompanyModuleDto[]>("/api/company-modules").then(setModules).catch(() => setModules([]));
@@ -38,6 +42,7 @@ export default function ConfiguracoesPage() {
       });
       setModules((current) => current.map((m) => (m.module === updated.module ? updated : m)));
       setChanged(true);
+      toast.success(`${updated.label}: ${updated.status === "ACTIVE" ? "ligado" : "desligado"}.`);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Não foi possível salvar.");
     } finally {
@@ -46,9 +51,20 @@ export default function ConfiguracoesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-3xl">
+      <h2 className="mb-4 text-xl font-semibold text-slate-900">Configurações</h2>
+      <Tabs
+        label="Configurações"
+        items={[
+          { key: "modulos", label: "Módulos" },
+          { key: "perfil", label: "Perfil do negócio" },
+        ]}
+        value={tab}
+        onChange={setTab}
+      >
+      {tab === "perfil" && (
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Perfil do negócio</h2>
+        <h3 className="text-lg font-semibold text-slate-900">Perfil do negócio</h3>
         <p className="mt-1 text-sm text-slate-600">
           {status?.segment ? (
             <>
@@ -67,9 +83,11 @@ export default function ConfiguracoesPage() {
           Trocar perfil
         </Link>
       </section>
+      )}
 
+      {tab === "modulos" && (
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Módulos</h2>
+        <h3 className="text-lg font-semibold text-slate-900">Módulos</h3>
         <p className="mt-1 text-sm text-slate-600">
           Módulos desligados somem do menu e as rotas deles ficam bloqueadas. Os dados são mantidos.
         </p>
@@ -91,7 +109,7 @@ export default function ConfiguracoesPage() {
                   aria-label={entry.label}
                   disabled={saving !== null}
                   onClick={() => void toggle(entry)}
-                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition disabled:opacity-60 ${active ? "bg-primary-600" : "bg-slate-300"}`}
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition disabled:opacity-60 ${active ? "bg-primary-700" : "bg-slate-300"}`}
                 >
                   <span
                     className={`inline-block h-5 w-5 rounded-full bg-white shadow transition ${active ? "translate-x-5" : "translate-x-0.5"}`}
@@ -114,6 +132,8 @@ export default function ConfiguracoesPage() {
           </p>
         )}
       </section>
+      )}
+      </Tabs>
     </div>
   );
 }

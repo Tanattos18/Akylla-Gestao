@@ -14,6 +14,9 @@ import {
   type WhatsAppMessageStatus,
   type WhatsAppTemplateDto,
 } from "../../../lib/types";
+import { useDialog } from "../../../components/ui/Dialog";
+import { DataTable } from "../../../components/ui/DataTable";
+import { useToast } from "../../../components/ui/Toast";
 
 const statusFilterOptions: Array<WhatsAppMessageStatus | ""> = [
   "",
@@ -27,7 +30,7 @@ const statusFilterOptions: Array<WhatsAppMessageStatus | ""> = [
 ];
 
 const statusBadgeClass: Record<WhatsAppMessageStatus, string> = {
-  PENDING: "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600",
+  PENDING: "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700",
   PROCESSING: "rounded-full bg-sky-50 px-2 py-0.5 text-xs text-sky-700",
   ACCEPTED: "rounded-full bg-sky-50 px-2 py-0.5 text-xs text-sky-700",
   SENT: "rounded-full bg-indigo-50 px-2 py-0.5 text-xs text-indigo-700",
@@ -42,6 +45,8 @@ function formatDate(value: string | null): string {
 }
 
 export default function WhatsAppMensagensPage() {
+  const toast = useToast();
+  const dialog = useDialog();
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -50,7 +55,6 @@ export default function WhatsAppMensagensPage() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("");
   const [search, setSearch] = useState("");
-  const [notice, setNotice] = useState<string | null>(null);
   const [listError, setListError] = useState<string | null>(null);
 
   const [clients, setClients] = useState<ClientDto[]>([]);
@@ -151,7 +155,7 @@ export default function WhatsAppMensagensPage() {
         method: "POST",
         body: JSON.stringify({ clientId: form.clientId, templateId: form.templateId, variables }),
       });
-      setNotice("Mensagem enfileirada — o worker envia em seguida.");
+      toast.success("Mensagem enfileirada — o worker envia em seguida.");
       setForm({ clientId: "", templateId: "", variables: "" });
       await loadMessages(statusFilter, search, page);
     } catch (err) {
@@ -162,19 +166,18 @@ export default function WhatsAppMensagensPage() {
   }
 
   async function handleCancel(message: WhatsAppMessageDto) {
-    const reason = window.prompt("Motivo do cancelamento:");
+    const reason = await dialog.prompt({ title: "Cancelar mensagem", label: "Motivo do cancelamento", minLength: 3, maxLength: 500, danger: true, confirmLabel: "Cancelar mensagem" });
     if (!reason || reason.trim().length < 3) return;
-    setNotice(null);
     setListError(null);
     try {
       await api(`/api/whatsapp/messages/${message.id}/cancel`, {
         method: "POST",
         body: JSON.stringify({ reason: reason.trim() }),
       });
-      setNotice("Mensagem cancelada.");
+      toast.success("Mensagem cancelada.");
       await loadMessages(statusFilter, search, page);
     } catch (err) {
-      setListError(err instanceof ApiError ? err.message : "Falha ao cancelar.");
+      toast.error(err, "Falha ao cancelar.");
     }
   }
 
@@ -195,7 +198,7 @@ export default function WhatsAppMensagensPage() {
             Histórico de envios, status de entrega e cancelamento
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link
             href="/whatsapp"
             className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
@@ -217,11 +220,6 @@ export default function WhatsAppMensagensPage() {
         </div>
       </div>
 
-      {notice && (
-        <div className="rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-sm text-primary-800">
-          {notice}
-        </div>
-      )}
       {listError && (
         <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {listError}
@@ -293,7 +291,7 @@ export default function WhatsAppMensagensPage() {
               <button
                 type="submit"
                 disabled={sending}
-                className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
+                className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60"
               >
                 {sending ? "Enfileirando..." : "Enviar mensagem"}
               </button>
@@ -332,33 +330,19 @@ export default function WhatsAppMensagensPage() {
         />
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-              <th className="px-4 py-3">Cliente</th>
-              <th className="px-4 py-3">Destino</th>
-              <th className="px-4 py-3">Template</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Tentativas</th>
-              <th className="px-4 py-3">Criada em</th>
-              <th className="px-4 py-3">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {messages.map((message) => (
-              <tr key={message.id} className="border-b border-slate-100">
-                <td className="px-4 py-3 font-medium text-slate-800">
-                  {message.client?.name ?? "—"}
-                </td>
-                <td className="px-4 py-3 text-slate-600">{message.toPhone}</td>
-                <td className="px-4 py-3 text-slate-600">{message.templateNameSnapshot}</td>
-                <td className="px-4 py-3">
-                  <span className={statusBadgeClass[message.status]}>
+      <DataTable
+        rows={messages}
+        rowKey={(message) => message.id}
+        empty={<>Nenhuma mensagem encontrada.</>}
+        columns={[
+          { key: "c0", header: "Cliente", cell: (message) => message.client?.name ?? "—", className: "font-medium" },
+          { key: "c1", header: "Destino", cell: (message) => message.toPhone },
+          { key: "c2", header: "Template", cell: (message) => message.templateNameSnapshot },
+          { key: "c3", header: "Status", cell: (message) => <><span className={statusBadgeClass[message.status]}>
                     {whatsappMessageStatusLabels[message.status]}
                   </span>
                   {message.failureReason && (
-                    <p className="mt-1 max-w-[16rem] truncate text-xs text-red-600">
+                    <p className="mt-1 max-w-[16rem] truncate text-xs text-red-700">
                       {message.failureReason}
                     </p>
                   )}
@@ -366,14 +350,10 @@ export default function WhatsAppMensagensPage() {
                     <p className="mt-1 max-w-[16rem] truncate text-xs text-amber-700">
                       {message.cancelReason}
                     </p>
-                  )}
-                </td>
-                <td className="px-4 py-3 text-slate-600">
-                  {message.attempts}/{message.maxAttempts}
-                </td>
-                <td className="px-4 py-3 text-slate-600">{formatDate(message.createdAt)}</td>
-                <td className="px-4 py-3">
-                  <div className="flex gap-3 text-xs font-medium">
+                  )}</> },
+          { key: "c4", header: "Tentativas", cell: (message) => <>{message.attempts}/{message.maxAttempts}</> },
+          { key: "c5", header: "Criada em", cell: (message) => formatDate(message.createdAt) },
+          { key: "c6", header: "Ações", cell: (message) => <><div className="flex gap-3 text-xs font-medium">
                     <Link
                       href={`/whatsapp/mensagens/${message.id}`}
                       className="text-primary-700 hover:underline"
@@ -384,32 +364,21 @@ export default function WhatsAppMensagensPage() {
                       <button
                         type="button"
                         onClick={() => void handleCancel(message)}
-                        className="text-red-600 hover:underline"
+                        className="text-red-700 hover:underline"
                       >
                         Cancelar
                       </button>
                     )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {messages.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-slate-400">
-                  Nenhuma mensagem encontrada.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                  </div></> },
+        ]}
+      />
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between text-sm text-slate-600">
           <span>
             Página {page} de {totalPages} · {total} mensagens
           </span>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
               disabled={page <= 1}

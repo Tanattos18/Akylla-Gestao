@@ -8,3 +8,7 @@ export { Skeleton, StatCardSkeleton } from "./Skeleton";
 export { ComboChart } from "./ComboChart";
 export { DonutChart } from "./DonutChart";
 export { Progress } from "./Progress";
+export { DataTable, type Column } from "./DataTable";
+export { Dialog, DialogProvider, useDialog } from "./Dialog";
+export { ToastProvider, useToast } from "./Toast";
+export { Tabs, type TabItem } from "./Tabs";

@@ -6,12 +6,15 @@ import { useRouter } from "next/navigation";
 import { api, ApiError } from "../../lib/api";
 import { fetchSession, type Session } from "../../lib/session";
 import type { Paginated, ProfessionalDto } from "../../lib/types";
+import { useDialog } from "../../components/ui/Dialog";
+import { DataTable } from "../../components/ui/DataTable";
 
 /** Fase 2 · 2.1 — cadastro de profissionais que recebem comissão. */
 
 const emptyForm = { name: "", document: "", commissionDefault: "" };
 
 export default function ProfissionaisPage() {
+  const dialog = useDialog();
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -108,7 +111,7 @@ export default function ProfissionaisPage() {
 
   async function handleStatus(p: ProfessionalDto, status: "ACTIVE" | "INACTIVE") {
     const label = status === "INACTIVE" ? "inativar" : "reativar";
-    if (!window.confirm(`Deseja ${label} "${p.name}"?`)) return;
+    if (!await dialog.confirm(`Deseja ${label} "${p.name}"?`)) return;
     try {
       await api(`/api/professionals/${p.id}/status`, { method: "PATCH", body: JSON.stringify({ status }) });
       setNotice(`Profissional ${status === "INACTIVE" ? "inativado" : "reativado"}.`);
@@ -134,7 +137,7 @@ export default function ProfissionaisPage() {
             Quem recebe comissão nas vendas (vendedores, tosadores, cabeleireiros…)
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link href="/comissoes" className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
             Comissões
           </Link>
@@ -166,7 +169,7 @@ export default function ProfissionaisPage() {
             <div>
               <label htmlFor="prof-name" className="mb-1 block text-sm text-slate-700">Nome *</label>
               <input id="prof-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inputClass} aria-invalid={Boolean(fieldErrors.name)} />
-              {fieldErrors.name && <p className="mt-1 text-xs text-red-600">{fieldErrors.name}</p>}
+              {fieldErrors.name && <p className="mt-1 text-xs text-red-700">{fieldErrors.name}</p>}
             </div>
             <div>
               <label htmlFor="prof-document" className="mb-1 block text-sm text-slate-700">CPF/documento</label>
@@ -175,7 +178,7 @@ export default function ProfissionaisPage() {
             <div>
               <label htmlFor="prof-default" className="mb-1 block text-sm text-slate-700">Comissão padrão (%)</label>
               <input id="prof-default" inputMode="decimal" placeholder="10" value={form.commissionDefault} onChange={(e) => setForm({ ...form, commissionDefault: e.target.value })} className={inputClass} aria-invalid={Boolean(fieldErrors.commissionDefault)} />
-              {fieldErrors.commissionDefault && <p className="mt-1 text-xs text-red-600">{fieldErrors.commissionDefault}</p>}
+              {fieldErrors.commissionDefault && <p className="mt-1 text-xs text-red-700">{fieldErrors.commissionDefault}</p>}
               <p className="mt-1 text-xs text-slate-500">Usada quando nenhuma regra específica se aplica.</p>
             </div>
             {formError && (
@@ -184,7 +187,7 @@ export default function ProfissionaisPage() {
               </div>
             )}
             <div className="flex gap-2 sm:col-span-3">
-              <button type="submit" disabled={saving} className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60">
+              <button type="submit" disabled={saving} className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60">
                 {saving ? "Salvando..." : editingId ? "Salvar" : "Cadastrar"}
               </button>
               {editingId && (
@@ -197,53 +200,27 @@ export default function ProfissionaisPage() {
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-              <th className="px-4 py-3">Profissional</th>
-              <th className="px-4 py-3 text-right">Comissão padrão</th>
-              <th className="px-4 py-3">Status</th>
-              {isAdmin && <th className="px-4 py-3">Ações</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((p) => (
-              <tr key={p.id} className="border-b border-slate-100">
-                <td className="px-4 py-3">
-                  <p className="font-medium text-slate-800">{p.name}</p>
-                  {p.document && <p className="text-xs text-slate-500">{p.document}</p>}
-                </td>
-                <td className="px-4 py-3 text-right text-slate-700">
-                  {p.commissionDefault ? `${Number(p.commissionDefault).toLocaleString("pt-BR")}%` : "—"}
-                </td>
-                <td className="px-4 py-3">
-                  <span className={p.status === "ACTIVE" ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700" : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600"}>
+      <DataTable
+        rows={items}
+        rowKey={(p) => p.id}
+        empty={<>Nenhum profissional cadastrado.</>}
+        columns={[
+          { key: "c0", header: "Profissional", cell: (p) => <><p className="font-medium text-slate-800">{p.name}</p>
+                  {p.document && <p className="text-xs text-slate-500">{p.document}</p>}</> },
+          { key: "c1", header: "Comissão padrão", cell: (p) => <>{p.commissionDefault ? `${Number(p.commissionDefault).toLocaleString("pt-BR")}%` : "—"}</>, numeric: true },
+          { key: "c2", header: "Status", cell: (p) => <><span className={p.status === "ACTIVE" ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700" : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"}>
                     {p.status === "ACTIVE" ? "Ativo" : "Inativo"}
-                  </span>
-                </td>
-                {isAdmin && (
-                  <td className="px-4 py-3">
-                    <div className="flex gap-3 text-xs font-medium">
+                  </span></> },
+          { key: "c3", header: "Ações", cell: (p) => <><div className="flex gap-3 text-xs font-medium">
                       <button type="button" onClick={() => startEdit(p)} className="text-primary-700 hover:underline">Editar</button>
                       {p.status === "ACTIVE" ? (
                         <button type="button" onClick={() => void handleStatus(p, "INACTIVE")} className="text-red-700 hover:underline">Inativar</button>
                       ) : (
                         <button type="button" onClick={() => void handleStatus(p, "ACTIVE")} className="text-primary-700 hover:underline">Reativar</button>
                       )}
-                    </div>
-                  </td>
-                )}
-              </tr>
-            ))}
-            {items.length === 0 && (
-              <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-slate-500">Nenhum profissional cadastrado.</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                    </div></>, hidden: !(isAdmin) },
+        ]}
+      />
     </div>
   );
 }

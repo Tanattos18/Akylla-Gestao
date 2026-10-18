@@ -156,7 +156,7 @@ anterior estão verdes. A especificação completa está em
 | **2** | Retenção | comissões ✅, crediário ✅, ordem de serviço com anexos ✅ | ✅ concluída |
 | **3** | Fiscal | NFC-e / NF-e / NFS-e via integração: provedor abstraído ✅, segredos cifrados ✅, webhook HMAC ✅, simulada ✅; integradora real 🟡 (contrato do proprietário) | ✅ código concluído |
 | **4** | Perfis | onboarding Comércio / Serviços / Híbrido, landing pages por segmento | ✅ |
-| **5** | Design e UX | componentes compartilhados, impressão de cupom, acessibilidade | ⬜ |
+| **5** | Design e UX | componentes compartilhados, impressão de cupom, acessibilidade (axe: 0 violações em 36 telas) | ✅ |
 | **6** | Qualidade | cobertura na CI, E2E com Playwright, OpenAPI em `/api/docs` | ⬜ |
 | **7** | Produto | edição da empresa, busca global, agenda semana/mês, seeds por segmento | ⬜ |
 

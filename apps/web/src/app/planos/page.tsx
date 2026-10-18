@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { api, ApiError } from "../../lib/api";
 import { fetchSession, type Session } from "../../lib/session";
 import type { Paginated, SubscriptionPlanDto } from "../../lib/types";
+import { useDialog } from "../../components/ui/Dialog";
+import { DataTable } from "../../components/ui/DataTable";
 
 const emptyForm = {
   name: "",
@@ -15,6 +17,7 @@ const emptyForm = {
 };
 
 export default function PlanosPage() {
+  const dialog = useDialog();
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -134,7 +137,7 @@ export default function PlanosPage() {
 
   async function handleStatus(plan: SubscriptionPlanDto, status: "ACTIVE" | "INACTIVE") {
     const label = status === "INACTIVE" ? "inativar" : "reativar";
-    if (!window.confirm(`Deseja ${label} o plano "${plan.name}"?`)) return;
+    if (!await dialog.confirm(`Deseja ${label} o plano "${plan.name}"?`)) return;
     setNotice(null);
     try {
       await api(`/api/subscription-plans/${plan.id}/status`, {
@@ -164,7 +167,7 @@ export default function PlanosPage() {
             Pacotes recorrentes para clientes · {session.company.name}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link
             href="/assinaturas"
             className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
@@ -208,7 +211,7 @@ export default function PlanosPage() {
                 className={inputClass}
               />
               {fieldErrors.name && (
-                <p className="mt-1 text-xs text-red-600">{fieldErrors.name}</p>
+                <p className="mt-1 text-xs text-red-700">{fieldErrors.name}</p>
               )}
             </div>
             <div>
@@ -224,7 +227,7 @@ export default function PlanosPage() {
                 className={inputClass}
               />
               {fieldErrors.price && (
-                <p className="mt-1 text-xs text-red-600">{fieldErrors.price}</p>
+                <p className="mt-1 text-xs text-red-700">{fieldErrors.price}</p>
               )}
             </div>
             <div>
@@ -241,7 +244,7 @@ export default function PlanosPage() {
                 className={inputClass}
               />
               {fieldErrors.durationDays && (
-                <p className="mt-1 text-xs text-red-600">{fieldErrors.durationDays}</p>
+                <p className="mt-1 text-xs text-red-700">{fieldErrors.durationDays}</p>
               )}
             </div>
             <div className="sm:col-span-2">
@@ -265,7 +268,7 @@ export default function PlanosPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
+                className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60"
               >
                 {saving ? "Salvando..." : editingId ? "Salvar" : "Criar"}
               </button>
@@ -296,44 +299,27 @@ export default function PlanosPage() {
         />
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-              <th className="px-4 py-3">Plano</th>
-              <th className="px-4 py-3">Duração</th>
-              <th className="px-4 py-3">Preço</th>
-              <th className="px-4 py-3">Status</th>
-              {isAdmin && <th className="px-4 py-3">Ações</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {plans.map((plan) => (
-              <tr key={plan.id} className="border-b border-slate-100">
-                <td className="px-4 py-3">
-                  <p className="font-medium text-slate-800">{plan.name}</p>
+      <DataTable
+        rows={plans}
+        rowKey={(plan) => plan.id}
+        empty={<>Nenhum plano cadastrado.</>}
+        columns={[
+          { key: "c0", header: "Plano", cell: (plan) => <><p className="font-medium text-slate-800">{plan.name}</p>
                   {plan.description && (
                     <p className="text-xs text-slate-500">{plan.description}</p>
-                  )}
-                </td>
-                <td className="px-4 py-3 text-slate-600">{plan.durationDays} dias</td>
-                <td className="px-4 py-3 font-medium text-slate-800">
-                  R$ {Number(plan.price).toFixed(2)}
-                </td>
-                <td className="px-4 py-3">
-                  <span
+                  )}</> },
+          { key: "c1", header: "Duração", cell: (plan) => <>{plan.durationDays} dias</> },
+          { key: "c2", header: "Preço", cell: (plan) => <>R$ {Number(plan.price).toFixed(2)}</>, className: "font-medium" },
+          { key: "c3", header: "Status", cell: (plan) => <><span
                     className={
                       plan.status === "ACTIVE"
                         ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700"
-                        : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500"
+                        : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"
                     }
                   >
                     {plan.status === "ACTIVE" ? "Ativo" : "Inativo"}
-                  </span>
-                </td>
-                {isAdmin && (
-                  <td className="px-4 py-3">
-                    <div className="flex gap-3 text-xs font-medium">
+                  </span></> },
+          { key: "c4", header: "Ações", cell: (plan) => <><div className="flex gap-3 text-xs font-medium">
                       <button
                         type="button"
                         onClick={() => startEdit(plan)}
@@ -345,7 +331,7 @@ export default function PlanosPage() {
                         <button
                           type="button"
                           onClick={() => void handleStatus(plan, "INACTIVE")}
-                          className="text-red-600 hover:underline"
+                          className="text-red-700 hover:underline"
                         >
                           Inativar
                         </button>
@@ -358,21 +344,9 @@ export default function PlanosPage() {
                           Reativar
                         </button>
                       )}
-                    </div>
-                  </td>
-                )}
-              </tr>
-            ))}
-            {plans.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
-                  Nenhum plano cadastrado.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                    </div></>, hidden: !(isAdmin) },
+        ]}
+      />
     </div>
   );
 }

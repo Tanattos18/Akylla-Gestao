@@ -66,7 +66,7 @@ export default async function PerfilPage({ params }: { params: Promise<{ perfil:
       <ul className="mt-8 space-y-3">
         {data.items.map((item) => (
           <li key={item} className="flex gap-3 text-slate-800">
-            <span aria-hidden className="mt-2 h-2 w-2 shrink-0 rounded-full bg-primary-600" />
+            <span aria-hidden className="mt-2 h-2 w-2 shrink-0 rounded-full bg-primary-700" />
             {item}
           </li>
         ))}

@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api } from "../../lib/api";
+import { formatBrl } from "../../lib/format";
 import { fetchSession, type Session } from "../../lib/session";
 import {
   paymentMethodLabels,
@@ -12,6 +13,7 @@ import {
   type SaleDto,
   type SaleStatus,
 } from "../../lib/types";
+import { DataTable } from "../../components/ui/DataTable";
 
 const pageSize = 20;
 
@@ -95,10 +97,10 @@ export default function VendasPage() {
             {total} venda{total === 1 ? "" : "s"} encontrada{total === 1 ? "" : "s"}.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link
             href="/pdv"
-            className="rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            className="rounded-md bg-primary-700 px-3 py-2 text-sm font-medium text-white hover:bg-primary-800"
           >
             Abrir PDV
           </Link>
@@ -172,7 +174,7 @@ export default function VendasPage() {
         <div className="flex items-end gap-2">
           <button
             type="submit"
-            className="flex-1 rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            className="flex-1 rounded-md bg-primary-700 px-3 py-2 text-sm font-medium text-white hover:bg-primary-800"
           >
             Filtrar
           </button>
@@ -186,39 +188,18 @@ export default function VendasPage() {
         </div>
       </form>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-              <th className="px-4 py-3">Data</th>
-              <th className="px-4 py-3">Código</th>
-              <th className="px-4 py-3">Cliente</th>
-              <th className="px-4 py-3">Itens</th>
-              <th className="px-4 py-3">Pagamento</th>
-              <th className="px-4 py-3">Total</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3 text-right">Ação</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sales.map((sale) => (
-              <tr key={sale.id} className="border-b border-slate-100 hover:bg-slate-50">
-                <td className="px-4 py-3 text-slate-600">
-                  {new Date(sale.createdAt).toLocaleString("pt-BR")}
-                </td>
-                <td className="px-4 py-3 font-mono text-xs font-semibold text-slate-800">
-                  {sale.receiptCode}
-                </td>
-                <td className="px-4 py-3 text-slate-600">{sale.client?.name ?? "—"}</td>
-                <td className="px-4 py-3 text-slate-600">{sale.items.length}</td>
-                <td className="px-4 py-3 text-slate-600">
-                  {paymentMethodLabels[sale.paymentMethod]}
-                </td>
-                <td className="px-4 py-3 font-medium text-slate-900">
-                  R$ {Number(sale.total).toFixed(2)}
-                </td>
-                <td className="px-4 py-3">
-                  <span
+      <DataTable
+        rows={sales}
+        rowKey={(sale) => sale.id}
+        empty={<>Nenhuma venda encontrada.</>}
+        columns={[
+          { key: "c0", header: "Data", cell: (sale) => new Date(sale.createdAt).toLocaleString("pt-BR") },
+          { key: "c1", header: "Código", cell: (sale) => sale.receiptCode, className: "font-mono text-xs font-semibold" },
+          { key: "c2", header: "Cliente", cell: (sale) => sale.client?.name ?? "—" },
+          { key: "c3", header: "Itens", cell: (sale) => sale.items.length },
+          { key: "c4", header: "Pagamento", cell: (sale) => paymentMethodLabels[sale.paymentMethod] },
+          { key: "c5", header: "Total", cell: (sale) => formatBrl(sale.total), numeric: true, className: "font-medium" },
+          { key: "c6", header: "Status", cell: (sale) => <><span
                     className={
                       sale.status === "COMPLETED"
                         ? "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700"
@@ -226,35 +207,22 @@ export default function VendasPage() {
                     }
                   >
                     {saleStatusLabels[sale.status]}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <Link
+                  </span></> },
+          { key: "c7", header: "Ação", cell: (sale) => <><Link
                     href={`/vendas/${sale.id}`}
                     className="text-sm text-primary-700 hover:underline"
                   >
                     Ver detalhe
-                  </Link>
-                </td>
-              </tr>
-            ))}
-            {!sales.length && (
-              <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-slate-400">
-                  Nenhuma venda encontrada.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                  </Link></>, numeric: true },
+        ]}
+      />
 
       {pages > 1 && (
         <div className="flex items-center justify-between text-sm text-slate-600">
           <span>
             Página {page} de {pages}
           </span>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
               disabled={page <= 1}

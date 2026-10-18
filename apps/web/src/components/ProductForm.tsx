@@ -114,7 +114,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: ProductFormProps
           onChange={(event) => setName(event.target.value)}
           className={inputClass}
         />
-        {fieldErrors.name && <p className="mt-1 text-xs text-red-600">{fieldErrors.name}</p>}
+        {fieldErrors.name && <p className="mt-1 text-xs text-red-700">{fieldErrors.name}</p>}
       </div>
       <div>
         <label htmlFor="product-sku" className="mb-1 block text-sm text-slate-700">
@@ -126,7 +126,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: ProductFormProps
           onChange={(event) => setSku(event.target.value)}
           className={inputClass}
         />
-        {fieldErrors.sku && <p className="mt-1 text-xs text-red-600">{fieldErrors.sku}</p>}
+        {fieldErrors.sku && <p className="mt-1 text-xs text-red-700">{fieldErrors.sku}</p>}
       </div>
       <div>
         <label htmlFor="product-barcode" className="mb-1 block text-sm text-slate-700">
@@ -168,7 +168,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: ProductFormProps
           className={inputClass}
         />
         {fieldErrors.costPrice && (
-          <p className="mt-1 text-xs text-red-600">{fieldErrors.costPrice}</p>
+          <p className="mt-1 text-xs text-red-700">{fieldErrors.costPrice}</p>
         )}
       </div>
       <div>
@@ -183,7 +183,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: ProductFormProps
           className={inputClass}
         />
         {fieldErrors.salePrice && (
-          <p className="mt-1 text-xs text-red-600">{fieldErrors.salePrice}</p>
+          <p className="mt-1 text-xs text-red-700">{fieldErrors.salePrice}</p>
         )}
       </div>
       <div>
@@ -198,7 +198,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: ProductFormProps
           className={inputClass}
         />
         {fieldErrors.minimumStock && (
-          <p className="mt-1 text-xs text-red-600">{fieldErrors.minimumStock}</p>
+          <p className="mt-1 text-xs text-red-700">{fieldErrors.minimumStock}</p>
         )}
       </div>
       <div>
@@ -257,7 +257,7 @@ export function ProductForm({ initial, onSubmit, submitLabel }: ProductFormProps
         <button
           type="submit"
           disabled={saving}
-          className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
+          className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60"
         >
           {saving ? "Salvando..." : submitLabel}
         </button>

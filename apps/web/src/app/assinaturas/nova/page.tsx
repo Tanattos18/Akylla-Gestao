@@ -148,7 +148,7 @@ export default function NovaAssinaturaPage() {
               ))}
             </select>
             {fieldErrors.clientId && (
-              <p className="mt-1 text-xs text-red-600">{fieldErrors.clientId}</p>
+              <p className="mt-1 text-xs text-red-700">{fieldErrors.clientId}</p>
             )}
             {clients.length === 0 && (
               <p className="mt-1 text-xs text-amber-700">
@@ -175,7 +175,7 @@ export default function NovaAssinaturaPage() {
               ))}
             </select>
             {fieldErrors.planId && (
-              <p className="mt-1 text-xs text-red-600">{fieldErrors.planId}</p>
+              <p className="mt-1 text-xs text-red-700">{fieldErrors.planId}</p>
             )}
             {plans.length === 0 && (
               <p className="mt-1 text-xs text-amber-700">
@@ -225,7 +225,7 @@ export default function NovaAssinaturaPage() {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-60"
+            className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60"
           >
             {saving ? "Criando..." : "Criar assinatura"}
           </button>

@@ -14,6 +14,7 @@ import {
 } from "../../../lib/types";
 import { Receipt } from "../../../components/Receipt";
 import { EmitFiscalButton } from "../../../components/fiscal/EmitFiscalButton";
+import { DataTable } from "../../../components/ui/DataTable";
 
 export default function VendaDetalhePage() {
   const router = useRouter();
@@ -138,7 +139,7 @@ export default function VendaDetalhePage() {
             {sale.professional ? ` · Profissional: ${sale.professional.name}` : ""}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={handlePrint}
@@ -208,7 +209,7 @@ export default function VendaDetalhePage() {
               {cancelError}
             </div>
           )}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               type="submit"
               disabled={cancelling}
@@ -236,37 +237,20 @@ export default function VendaDetalhePage() {
           <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
             Itens da venda
           </h3>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-                <th className="py-2 text-left">Produto</th>
-                <th className="py-2 text-right">Qtd</th>
-                <th className="py-2 text-right">Unitário</th>
-                <th className="py-2 text-right">Subtotal</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sale.items.map((item) => (
-                <tr key={item.id} className="border-b border-slate-100">
-                  <td className="py-2 text-slate-800">
-                    {item.productName}
+          <DataTable
+            bare
+            rows={sale.items}
+            rowKey={(item) => item.id}
+            columns={[
+              { key: "c0", header: "Produto", cell: (item) => <>{item.productName}
                     {item.productSku && (
-                      <span className="ml-1 text-xs text-slate-400">({item.productSku})</span>
-                    )}
-                  </td>
-                  <td className="py-2 text-right text-slate-600">
-                    {Number(item.quantity)} {productUnitLabels[item.unit]}
-                  </td>
-                  <td className="py-2 text-right text-slate-600">
-                    R$ {Number(item.unitPrice).toFixed(2)}
-                  </td>
-                  <td className="py-2 text-right font-medium text-slate-900">
-                    R$ {Number(item.subtotal).toFixed(2)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                      <span className="ml-1 text-xs text-slate-500">({item.productSku})</span>
+                    )}</> },
+              { key: "c1", header: "Qtd", cell: (item) => <>{Number(item.quantity)} {productUnitLabels[item.unit]}</>, numeric: true },
+              { key: "c2", header: "Unitário", cell: (item) => <>R$ {Number(item.unitPrice).toFixed(2)}</>, numeric: true },
+              { key: "c3", header: "Subtotal", cell: (item) => <>R$ {Number(item.subtotal).toFixed(2)}</>, numeric: true, className: "font-medium" },
+            ]}
+          />
 
           <div className="mt-4 space-y-1 border-t border-slate-200 pt-3 text-sm">
             <div className="flex justify-between text-slate-600">

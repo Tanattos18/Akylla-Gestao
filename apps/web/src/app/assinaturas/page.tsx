@@ -12,13 +12,14 @@ import {
   type SubscriptionDto,
   type SubscriptionStatus,
 } from "../../lib/types";
+import { DataTable } from "../../components/ui/DataTable";
 
 const PAGE_SIZE = 20;
 
 const statusBadge: Record<SubscriptionStatus, string> = {
   ACTIVE: "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700",
   EXPIRED: "rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700",
-  CANCELLED: "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500",
+  CANCELLED: "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700",
 };
 
 export default function AssinaturasPage() {
@@ -81,7 +82,7 @@ export default function AssinaturasPage() {
             Assinaturas recorrentes de clientes · {session.company.name}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link
             href="/planos"
             className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
@@ -91,7 +92,7 @@ export default function AssinaturasPage() {
           {isAdmin && (
             <Link
               href="/assinaturas/nova"
-              className="rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
+              className="rounded-md bg-primary-700 px-3 py-2 text-sm font-medium text-white hover:bg-primary-800"
             >
               Nova assinatura
             </Link>
@@ -140,61 +141,34 @@ export default function AssinaturasPage() {
         />
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-              <th className="px-4 py-3">Cliente</th>
-              <th className="px-4 py-3">Plano</th>
-              <th className="px-4 py-3">Período</th>
-              <th className="px-4 py-3">Renovações</th>
-              <th className="px-4 py-3">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((subscription) => (
-              <tr key={subscription.id} className="border-b border-slate-100">
-                <td className="px-4 py-3">
-                  <Link
+      <DataTable
+        rows={items}
+        rowKey={(subscription) => subscription.id}
+        empty={<>Nenhuma assinatura encontrada.</>}
+        columns={[
+          { key: "c0", header: "Cliente", cell: (subscription) => <><Link
                     href={`/assinaturas/${subscription.id}`}
                     className="font-medium text-slate-800 hover:text-primary-700 hover:underline"
                   >
                     {subscription.client.name}
-                  </Link>
-                </td>
-                <td className="px-4 py-3 text-slate-600">
-                  {subscription.plan.name}
-                  <span className="ml-2 text-xs text-slate-400">
+                  </Link></> },
+          { key: "c1", header: "Plano", cell: (subscription) => <>{subscription.plan.name}
+                  <span className="ml-2 text-xs text-slate-500">
                     R$ {Number(subscription.plan.price).toFixed(2)}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-slate-600">
-                  {formatDate(subscription.startAt)} — {formatDate(subscription.endAt)}
-                </td>
-                <td className="px-4 py-3 text-slate-600">{subscription.renewalCount}</td>
-                <td className="px-4 py-3">
-                  <span className={statusBadge[subscription.status]}>
+                  </span></> },
+          { key: "c2", header: "Período", cell: (subscription) => <>{formatDate(subscription.startAt)} — {formatDate(subscription.endAt)}</> },
+          { key: "c3", header: "Renovações", cell: (subscription) => subscription.renewalCount },
+          { key: "c4", header: "Status", cell: (subscription) => <><span className={statusBadge[subscription.status]}>
                     {subscriptionStatusLabels[subscription.status]}
-                  </span>
-                </td>
-              </tr>
-            ))}
-            {items.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
-                  Nenhuma assinatura encontrada.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                  </span></> },
+        ]}
+      />
 
       <div className="flex items-center justify-between text-sm text-slate-600">
         <span>
           {total} assinatura{total === 1 ? "" : "s"} · página {page} de {totalPages}
         </span>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
             disabled={page <= 1}

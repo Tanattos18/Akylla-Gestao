@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "../../lib/api";
@@ -14,6 +14,8 @@ import type {
   Paginated,
   ProfessionalDto,
 } from "../../lib/types";
+import { useDialog } from "../../components/ui/Dialog";
+import { DataTable } from "../../components/ui/DataTable";
 
 /** Fase 2 · 2.1 — comissões: fechamento por período, liberação e pagamento. */
 
@@ -28,7 +30,7 @@ const statusClass: Record<CommissionStatus, string> = {
   PENDING: "bg-amber-50 text-amber-800",
   RELEASED: "bg-sky-50 text-sky-800",
   PAID: "bg-emerald-50 text-emerald-800",
-  CANCELLED: "bg-slate-100 text-slate-600",
+  CANCELLED: "bg-slate-100 text-slate-700",
 };
 
 function firstDayOfMonth(): string {
@@ -37,6 +39,7 @@ function firstDayOfMonth(): string {
 }
 
 export default function ComissoesPage() {
+  const dialog = useDialog();
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
   const [professionals, setProfessionals] = useState<ProfessionalDto[]>([]);
@@ -93,7 +96,7 @@ export default function ComissoesPage() {
       action === "pay"
         ? `${verb} ${formatBrl(c.amount)} para ${c.professional.name}? Sai do caixa aberto agora.`
         : `${verb} a comissão de ${c.professional.name} (${formatBrl(c.amount)})? Gera conta a pagar.`;
-    if (!window.confirm(detail)) return;
+    if (!await dialog.confirm(detail)) return;
     setBusyId(c.id);
     setNotice(null);
     try {
@@ -123,7 +126,7 @@ export default function ComissoesPage() {
             Calculadas automaticamente nas vendas com profissional · pagamento sai do caixa aberto
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link href="/profissionais" className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">
             Profissionais
           </Link>
@@ -168,135 +171,102 @@ export default function ComissoesPage() {
       {error && <div role="alert" className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
 
       {summary && (
-        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-          <table className="w-full text-left text-sm">
-            <caption className="px-4 pt-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Fechamento do período por profissional
-            </caption>
-            <thead>
-              <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-                <th className="px-4 py-3">Profissional</th>
-                <th className="px-4 py-3 text-right">A pagar</th>
-                <th className="px-4 py-3 text-right">Pago</th>
-                <th className="px-4 py-3 text-right">Pendente</th>
-                <th className="px-4 py-3 text-right">Cancelado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {summary.items.map((row) => (
-                <tr key={row.professionalId} className="border-b border-slate-100">
-                  <td className="px-4 py-3 font-medium text-slate-800">{row.name}</td>
-                  <td className="px-4 py-3 text-right font-semibold text-slate-900">{formatBrl(row.toPay)}</td>
-                  <td className="px-4 py-3 text-right text-slate-700">{formatBrl(row.paid)}</td>
-                  <td className="px-4 py-3 text-right text-slate-700">{formatBrl(row.pending)}</td>
-                  <td className="px-4 py-3 text-right text-slate-500">{formatBrl(row.cancelled)}</td>
-                </tr>
-              ))}
-              {summary.items.length === 0 && (
-                <tr><td colSpan={5} className="px-4 py-6 text-center text-slate-500">Nenhuma comissão no período.</td></tr>
-              )}
-            </tbody>
-            {summary.items.length > 0 && (
-              <tfoot>
-                <tr className="text-sm font-semibold text-slate-900">
-                  <td className="px-4 py-3">Total</td>
-                  <td className="px-4 py-3 text-right">{formatBrl(summary.totals.released)}</td>
-                  <td className="px-4 py-3 text-right">{formatBrl(summary.totals.paid)}</td>
-                  <td className="px-4 py-3 text-right">{formatBrl(summary.totals.pending)}</td>
-                  <td className="px-4 py-3 text-right">{formatBrl(summary.totals.cancelled)}</td>
-                </tr>
-              </tfoot>
-            )}
-          </table>
-        </div>
+        <DataTable
+          title="Fechamento do período por profissional"
+          rows={summary.items}
+          rowKey={(row) => row.professionalId}
+          empty="Nenhuma comissão no período."
+          totals={{
+            label: "Total",
+            cells: {
+              toPay: formatBrl(summary.totals.released),
+              paid: formatBrl(summary.totals.paid),
+              pending: formatBrl(summary.totals.pending),
+              cancelled: formatBrl(summary.totals.cancelled),
+            },
+          }}
+          columns={[
+            { key: "name", header: "Profissional", cell: (row) => row.name, className: "font-medium" },
+            { key: "toPay", header: "A pagar", cell: (row) => formatBrl(row.toPay), numeric: true, className: "font-semibold" },
+            { key: "paid", header: "Pago", cell: (row) => formatBrl(row.paid), numeric: true },
+            { key: "pending", header: "Pendente", cell: (row) => formatBrl(row.pending), numeric: true },
+            { key: "cancelled", header: "Cancelado", cell: (row) => formatBrl(row.cancelled), numeric: true },
+          ]}
+        />
       )}
 
       {list && (
-        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-          <table className="w-full text-left text-sm">
-            <caption className="px-4 pt-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Comissões ({list.total}) · total {formatBrl(list.totals.amount)} sobre {formatBrl(list.totals.baseAmount)} vendidos
-            </caption>
-            <thead>
-              <tr className="border-b border-slate-200 text-xs uppercase text-slate-500">
-                <th className="px-4 py-3">Data</th>
-                <th className="px-4 py-3">Venda</th>
-                <th className="px-4 py-3">Profissional</th>
-                <th className="px-4 py-3 text-right">Base</th>
-                <th className="px-4 py-3 text-right">%</th>
-                <th className="px-4 py-3 text-right">Comissão</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {list.items.map((c) => (
-                <Fragment key={c.id}>
-                  <tr className="border-b border-slate-100">
-                    <td className="px-4 py-3 text-slate-600">{formatDateTime(c.createdAt)}</td>
-                    <td className="px-4 py-3">
-                      {c.sale ? (
-                        <Link href={`/vendas/${c.sale.id}`} className="font-mono text-xs text-primary-700 hover:underline">{c.sale.receiptCode}</Link>
-                      ) : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-slate-800">{c.professional.name}</td>
-                    <td className="px-4 py-3 text-right text-slate-700">{formatBrl(c.baseAmount)}</td>
-                    <td className="px-4 py-3 text-right text-slate-700">{Number(c.percentage).toLocaleString("pt-BR")}%</td>
-                    <td className="px-4 py-3 text-right font-semibold text-slate-900">{formatBrl(c.amount)}</td>
-                    <td className="px-4 py-3">
-                      <span className={`rounded-full px-2 py-0.5 text-xs ${statusClass[c.status]}`} title={c.cancelReason ?? undefined}>
-                        {statusLabels[c.status]}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-3 text-xs font-medium">
-                        <button type="button" onClick={() => setExpanded(expanded === c.id ? null : c.id)} className="text-slate-700 hover:underline" aria-expanded={expanded === c.id}>
-                          {expanded === c.id ? "Ocultar itens" : "Itens"}
-                        </button>
-                        {isAdmin && c.status === "PENDING" && (
-                          <button type="button" disabled={busyId === c.id} onClick={() => void act(c, "release")} className="text-primary-700 hover:underline disabled:opacity-60">Liberar</button>
-                        )}
-                        {isAdmin && c.status === "RELEASED" && (
-                          <button type="button" disabled={busyId === c.id} onClick={() => void act(c, "pay")} className="text-emerald-700 hover:underline disabled:opacity-60">Pagar</button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                  {expanded === c.id && (
-                    <tr className="border-b border-slate-100 bg-slate-50">
-                      <td colSpan={8} className="px-4 py-3">
-                        <table className="w-full text-xs">
-                          <thead>
-                            <tr className="text-slate-500">
-                              <th className="py-1 text-left font-medium">Item</th>
-                              <th className="py-1 text-right font-medium">Base</th>
-                              <th className="py-1 text-right font-medium">%</th>
-                              <th className="py-1 text-right font-medium">Comissão</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {c.lines.map((line) => (
-                              <tr key={line.saleItemId}>
-                                <td className="py-1 text-slate-700">{line.productName}</td>
-                                <td className="py-1 text-right text-slate-700">{formatBrl(line.base)}</td>
-                                <td className="py-1 text-right text-slate-700">{Number(line.percentage).toLocaleString("pt-BR")}%</td>
-                                <td className="py-1 text-right text-slate-900">{formatBrl(line.amount)}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                        {c.cancelReason && <p className="mt-2 text-xs text-slate-600">Motivo: {c.cancelReason}</p>}
-                      </td>
-                    </tr>
+        <DataTable
+          title={<>Comissões ({list.total}) · total {formatBrl(list.totals.amount)} sobre {formatBrl(list.totals.baseAmount)} vendidos</>}
+          caption="Comissões"
+          rows={list.items}
+          rowKey={(c) => c.id}
+          empty="Nenhuma comissão com estes filtros."
+          expanded={(c) =>
+            expanded === c.id ? (
+              <>
+                <DataTable
+                  bare
+                  caption="Itens da comissão"
+                  rows={c.lines}
+                  rowKey={(line) => line.saleItemId}
+                  columns={[
+                    { key: "item", header: "Item", cell: (line) => line.productName },
+                    { key: "base", header: "Base", cell: (line) => formatBrl(line.base), numeric: true },
+                    { key: "pct", header: "%", cell: (line) => <>{Number(line.percentage).toLocaleString("pt-BR")}%</>, numeric: true },
+                    { key: "amount", header: "Comissão", cell: (line) => formatBrl(line.amount), numeric: true },
+                  ]}
+                />
+                {c.cancelReason && <p className="mt-2 text-xs text-slate-600">Motivo: {c.cancelReason}</p>}
+              </>
+            ) : null
+          }
+          columns={[
+            { key: "date", header: "Data", cell: (c) => formatDateTime(c.createdAt) },
+            {
+              key: "sale",
+              header: "Venda",
+              cell: (c) =>
+                c.sale ? (
+                  <Link href={`/vendas/${c.sale.id}`} className="font-mono text-xs text-primary-700 hover:underline">
+                    {c.sale.receiptCode}
+                  </Link>
+                ) : (
+                  "—"
+                ),
+            },
+            { key: "professional", header: "Profissional", cell: (c) => c.professional.name },
+            { key: "base", header: "Base", cell: (c) => formatBrl(c.baseAmount), numeric: true },
+            { key: "pct", header: "%", cell: (c) => <>{Number(c.percentage).toLocaleString("pt-BR")}%</>, numeric: true },
+            { key: "amount", header: "Comissão", cell: (c) => formatBrl(c.amount), numeric: true, className: "font-semibold" },
+            {
+              key: "status",
+              header: "Status",
+              cell: (c) => (
+                <span className={`rounded-full px-2 py-0.5 text-xs ${statusClass[c.status]}`} title={c.cancelReason ?? undefined}>
+                  {statusLabels[c.status]}
+                </span>
+              ),
+            },
+            {
+              key: "actions",
+              header: "Ações",
+              cell: (c) => (
+                <div className="flex flex-wrap justify-end gap-3 text-xs font-medium md:justify-start">
+                  <button type="button" onClick={() => setExpanded(expanded === c.id ? null : c.id)} className="text-slate-700 hover:underline" aria-expanded={expanded === c.id}>
+                    {expanded === c.id ? "Ocultar itens" : "Itens"}
+                  </button>
+                  {isAdmin && c.status === "PENDING" && (
+                    <button type="button" disabled={busyId === c.id} onClick={() => void act(c, "release")} className="text-primary-700 hover:underline disabled:opacity-60">Liberar</button>
                   )}
-                </Fragment>
-              ))}
-              {list.items.length === 0 && (
-                <tr><td colSpan={8} className="px-4 py-6 text-center text-slate-500">Nenhuma comissão com estes filtros.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                  {isAdmin && c.status === "RELEASED" && (
+                    <button type="button" disabled={busyId === c.id} onClick={() => void act(c, "pay")} className="text-emerald-700 hover:underline disabled:opacity-60">Pagar</button>
+                  )}
+                </div>
+              ),
+            },
+          ]}
+        />
       )}
     </div>
   );
