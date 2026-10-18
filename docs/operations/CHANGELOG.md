@@ -6,6 +6,42 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-18 - Organização: itens fora de uso movidos para `Arquivos Sem USO/`
+
+Pedido do proprietário: deixar no projeto só o que será usado, **sem
+apagar nada**. Tudo foi movido para `Arquivos Sem USO/`, uma pasta
+local que o `.gitignore` exclui (para que credenciais e materiais
+comerciais nunca subam ao GitHub). Os itens que eram versionados
+continuam no histórico do Git até o commit `672463f`.
+
+### Movido
+
+- `automação do whatsapp/` (base histórica; o WhatsApp do produto está
+  em `apps/worker` e `packages/whatsapp`).
+- Entregáveis do roteiro antigo: `docs/PASSO_A_PASSO_OPENCODE_AKYLLA.md`,
+  `docs/AKYLLA_GESTAO_DIRETRIZES_OPENCODE.md` e 11 arquivos de
+  `docs/akylla/` (ficam em uso: `GO_NO_GO`, `CHECKLIST_PRE_PRODUCAO`,
+  `PDV`, `DICIONARIO_INDICADORES`).
+- Rascunhos em `upgrade/` (deepseek ×2, GEMINI, GPT,
+  `COMPILADO_MELHORIAS`), substituídos pelo `Prompt_Mestre.md`.
+- Não versionados: a apresentação `.pptx`, o arquivo de credencial
+  (em `credenciais/`, sem ser lido), `coverage/` e `test-results/`.
+- Trabalho não commitado da Fase 6 (`config/playwright.config.ts`,
+  `tests/e2e/`, `tests/integration/concurrency.test.ts`) e um `.patch`
+  com as alterações dele em `ci.yml`, `cd.yml`, `vitest.config.ts`,
+  `package.json` e `package-lock.json`, que voltaram ao estado do Git.
+
+### Alterado
+
+- `.gitignore`: `/Arquivos Sem USO/`.
+- `AGENTS.md`: introdução e regra 12 (a pasta arquivada substitui a
+  antiga regra de `automação do whatsapp/`).
+- `config/eslint.config.mjs` e `scripts/check-secrets.mjs`: exclusão
+  passa a ser `Arquivos Sem USO/`.
+- `docs/README.md`: índice sem links quebrados e seção "Arquivados".
+- `README.md`, `ARCHITECTURE.md`, `AKYLLA_GESTAO_DOCUMENTACAO_COMPLETA.md`
+  e `PROJECT_STATUS.md`: menções atualizadas.
+
 ## [Akylla Gestão] - 2026-10-18 - Fase 1 (Confiabilidade) · 1A: backup com restore testado + registro de N1–N4c
 
 Primeira entrega do roteiro `upgrade/Prompt_Mestre.md` (Fase 1 §1.1),

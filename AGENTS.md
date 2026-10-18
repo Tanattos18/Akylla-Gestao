@@ -1,8 +1,9 @@
 # Instruções para agentes de desenvolvimento — Akylla Gestão
 
-Este repositório contém: (1) o monorepo do **Akylla Gestão** (produto em
-desenvolvimento) e (2) a pasta `automação do whatsapp/`, base histórica que
-deve ser preservada e não confundida com o código do monorepo.
+Este repositório contém o monorepo do **Akylla Gestão** (produto em
+desenvolvimento). A pasta local `Arquivos Sem USO/` (ignorada pelo Git)
+guarda itens arquivados pelo proprietário — inclusive a antiga base
+`automação do whatsapp/` — e não faz parte do monorepo.
 
 ## Regras obrigatórias
 
@@ -38,8 +39,10 @@ deve ser preservada e não confundida com o código do monorepo.
     concluída.
 11. **Commits**: somente quando solicitado pelo proprietário; mensagem objetiva
     no padrão do repositório.
-12. **Pasta `automação do whatsapp/`**: não modificar sem instrução; não é
-    parte do monorepo Akylla Gestão (excluída do lint e do build).
+12. **Pasta `Arquivos Sem USO/`**: arquivo local do proprietário, fora do
+    Git, do lint e do build. Não modificar, apagar nem versionar sem
+    instrução; não ler `credenciais/`. Itens fora de uso vão para lá
+    (não são apagados).
 
 ## Padrões permanentes
 

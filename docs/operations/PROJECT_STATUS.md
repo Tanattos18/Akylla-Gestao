@@ -21,9 +21,11 @@ Já existentes antes da Fase 1 (N1–N4c, 2026-10-15): LGPD
 ADMIN, webhook MP com timing-safe + anti-replay + fail-closed, guard ORM
 de tenant (ADR-0001), rate limit de cadastro. Detalhes no CHANGELOG.
 
-Trabalho **não commitado** de outra sessão (Fase 6 — cobertura,
-Playwright, `concurrency.test.ts`, ajustes de CI/CD) está no working
-tree aguardando decisão do proprietário.
+Itens fora de uso (inclusive o trabalho não commitado da Fase 6 —
+cobertura, Playwright, `concurrency.test.ts`, ajustes de CI/CD, salvo
+como arquivos + `alteracoes-rastreadas.patch`) foram movidos em
+2026-10-18 para `Arquivos Sem USO/` (local, ignorado pelo Git). Nada foi
+apagado.
 
 ### Roteiro anterior
 

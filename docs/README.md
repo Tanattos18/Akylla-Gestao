@@ -26,9 +26,7 @@ Para começar, leia nesta ordem:
 
 | Documento | Conteúdo |
 |---|---|
-| [Diretrizes do produto](AKYLLA_GESTAO_DIRETRIZES_OPENCODE.md) | posicionamento, tom, o que anunciar/não anunciar |
 | [PDV](akylla/PDV.md) | fluxo de venda, API, regras, comprovante, limitações |
-| [Limitações de vendas](akylla/LIMITACOES_VENDAS.md) | fluxo PDV validado e o que não fazemos |
 | [Dicionário de indicadores](akylla/DICIONARIO_INDICADORES.md) | definição exata de cada número do dashboard |
 
 ## Arquitetura e dados
@@ -45,26 +43,31 @@ Para começar, leia nesta ordem:
 |---|---|
 | [Desenvolvimento](operations/DEVELOPMENT.md) | ambiente e execução local |
 
-## Entregáveis de etapa
+## Roteiro de evolução e decisão de venda
 
-> Registros de entrega por etapa. Descrevem o sistema **na data da
-> entrega** e trazem banner quando já foram superados. Quando
-> conflitarem com os documentos acima, valem os de estado atual.
-
-| Documento | Etapa |
+| Documento | Conteúdo |
 |---|---|
-| [Diagnóstico inicial](akylla/DIAGNOSTICO_INICIAL.md) | 0 — linha de base |
-| [Plano de adaptação](akylla/PLANO_DE_ADAPTACAO.md) | 1 — etapas, riscos, aceitação |
-| [Identidade e navegação](akylla/IDENTIDADE_E_NAVEGACAO.md) | 2 — marca, textos e navegação |
-| [Auditoria multiempresa](akylla/AUDITORIA_MULTIEMPRESA.md) | 3 — isolamento A×B |
-| [Mapa de módulos](akylla/MAPA_DE_MODULOS.md) | 4 — classificação núcleo/opcional/nicho |
-| [Modelo financeiro](akylla/MODELO_FINANCEIRO.md) | 8 — caixa e contas a pagar/receber (AP/AR) |
-| [Redesign do painel](akylla/REDESIGN_PAINEL.md) | design tokens + layout topbar B |
-| [Plano de modularização](akylla/PLANO_MODULARIZACAO.md) | 10 — destinos dos módulos de nicho |
-| [Plano de billing](akylla/PLANO_BILLING.md) | 11 — planos, limites por tenant, Mercado Pago |
-| [Checklist pré-produção](akylla/CHECKLIST_PRE_PRODUCAO.md) | 12 — evidências e limitações L1–L14 |
-| [Plano de importação](akylla/PLANO_IMPORTACAO.md) | pós-12 — importação de CSVs (D1–D8) |
-| [Passo a passo OpenCode](PASSO_A_PASSO_OPENCODE_AKYLLA.md) | roteiro Etapas 0–12 (13 etapas) |
+| [Roteiro de evolução (Prompt Mestre)](../upgrade/Prompt_Mestre.md) | 7 fases, regras invioláveis e critérios de aceite |
+| [Go/No-go para venda](akylla/GO_NO_GO.md) | matriz de liberação do primeiro cliente pagante |
+| [Checklist pré-produção](akylla/CHECKLIST_PRE_PRODUCAO.md) | evidências e limitações L1–L14 |
+
+## Arquivados (fora do Git)
+
+Em 2026-10-18, a pedido do proprietário, os itens fora de uso foram
+movidos para `../Arquivos Sem USO/`, uma pasta **local, ignorada pelo
+Git**. Eles continuam no histórico do Git até o commit `672463f`:
+
+- entregáveis do roteiro antigo (Etapas 0–12): diagnóstico inicial,
+  plano de adaptação, identidade e navegação, auditoria multiempresa,
+  mapa de módulos, modelo financeiro, redesign do painel, plano de
+  modularização, plano de billing, plano de importação, limitações de
+  vendas, diretrizes do produto e passo a passo OpenCode;
+- a base histórica `automação do whatsapp/`;
+- rascunhos de planejamento (deepseek, GEMINI, GPT, compilado de
+  melhorias), substituídos pelo Prompt Mestre.
+
+Para consultar um deles pelo Git:
+`git show 672463f:docs/akylla/MAPA_DE_MODULOS.md`.
 
 ## Requisitos
 
@@ -90,7 +93,7 @@ Nenhuma ideia de `upgrade/` vale como plano sem decisão do proprietário
 - **Idioma:** português do Brasil.
 - **Estado:** documentos de etapa usam data; documentos de estado
   atual são reescritos quando o sistema muda (ver CHANGELOG).
-- **Nomenclatura:** `docs/akylla/` = produto/entregáveis de etapa ·
+- **Nomenclatura:** `docs/akylla/` = produto e decisão de venda ·
   `docs/architecture/` = técnica · `docs/operations/` = processo ·
   `docs/requirements/` = requisitos do produto.
 - **Agentes:** regras em [`../AGENTS.md`](../AGENTS.md).

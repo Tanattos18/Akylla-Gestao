@@ -12,4 +12,6 @@ coverage/
 *.tsbuildinfo
 .idea/
 .vscode/
-test-results/
+
+# Arquivo local de itens fora de uso (nunca versionar)
+/Arquivos Sem USO/

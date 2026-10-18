@@ -104,6 +104,8 @@ tests/        → testes compartilhados/integração
   de negócio existe ainda); o health reflete status técnico da API.
 - Pasta `automação do whatsapp/` mantida intacta na raiz como base existente de
   automação; será avaliada/integrada em etapa própria (não faz parte da Etapa 0).
+  **Atualização 2026-10-18:** arquivada em `Arquivos Sem USO/` (local, fora
+  do Git); o WhatsApp do produto vive em `apps/worker` e `packages/whatsapp`.
 
 ## Autenticação, autorização e multiempresa (Etapa 1)
 

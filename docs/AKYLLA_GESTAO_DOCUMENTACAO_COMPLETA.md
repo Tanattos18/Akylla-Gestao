@@ -131,11 +131,13 @@ backup/         → README de procedimento de backup (contém SÓ o README)
 upgrade/        → catálogos de melhoria (backend MELHORIAS.md, design MELHORIAS_DESIGN.md)
 .github/        → workflows ci.yml (ativo) e cd.yml (placeholder)
 docs/           → documentação
-automação do whatsapp/ → base legada PRESERVADA, fora do monorepo (não mexer)
+Arquivos Sem USO/ → arquivo LOCAL de itens fora de uso, ignorado pelo Git (não mexer)
 ```
 
-A pasta `automação do whatsapp/` é história do projeto e está
-**excluída** do lint e do build (regra 12 do `AGENTS.md`).
+Desde 2026-10-18 a antiga base `automação do whatsapp/`, os
+entregáveis do roteiro 0–12 e rascunhos de planejamento estão em
+`Arquivos Sem USO/` (local, fora do Git, do lint e do build — regra 12
+do `AGENTS.md`). Continuam no histórico do Git até o commit `672463f`.
 
 ### Comandos
 

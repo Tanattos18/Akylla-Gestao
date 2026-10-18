@@ -8,7 +8,7 @@ export default tseslint.config(
       "**/dist/**",
       "**/.next/**",
       "**/coverage/**",
-      "automação do whatsapp/**",
+      "Arquivos Sem USO/**",
       "apps/web/next-env.d.ts",
     ],
   },

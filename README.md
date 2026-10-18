@@ -253,7 +253,7 @@ backup/      dumps locais (fora do Git; só o README é versionado)
 upgrade/     roteiro de evolução e catálogos de melhorias
 docs/        documentação (índice em docs/README.md)
 .github/     CI, CD e Dependabot
-automação do whatsapp/   base histórica preservada (fora do monorepo)
+Arquivos Sem USO/        arquivo local de itens fora de uso (ignorado pelo Git)
 ```
 
 ---

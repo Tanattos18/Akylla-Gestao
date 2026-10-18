@@ -3,7 +3,7 @@
  * Scanner de segredos para o repositório (N1 — L11).
  * Percorre apenas arquivos versionados (git ls-files) e procura padrões
  * comuns de credenciais. Não examina .env, node_modules, dist, backup ou a
- * pasta "automação do whatsapp" (fora do monorepo).
+ * pasta "Arquivos Sem USO" (arquivo local, fora do Git).
  *
  * Uso: node scripts/check-secrets.mjs  (ou via CI)
  * Exit code 0 = sem achados; 1 = achou possíveis segredos.
@@ -23,7 +23,7 @@ const IGNORED = [
   "dist/",
   "coverage/",
   "backup/",
-  "automação do whatsapp/",
+  "Arquivos Sem USO/",
 ];
 
 const PATTERNS = [
