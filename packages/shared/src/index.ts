@@ -1522,6 +1522,13 @@ export const platformCompaniesQuerySchema = z.object({
 });
 export type PlatformCompaniesQuery = z.infer<typeof platformCompaniesQuerySchema>;
 
+/** Trocar a própria senha (qualquer usuário logado). */
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Informe a senha atual").max(200),
+  newPassword: passwordFieldSchema,
+});
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+
 export const platformActivateSchema = z.object({
   planId: z.string().trim().min(1, "Plano é obrigatório").max(60),
   cycle: billingCycleSchema.default("MONTHLY"),
@@ -1563,6 +1570,22 @@ export interface PlatformCompanyDto {
   billingExempt: boolean;
   suspendedReason: string | null;
   access: AccessSummaryDto;
+}
+
+/** Nova empresa cliente criada pelo dono (Fase 8): admin com senha provisória. */
+export const platformCreateCompanySchema = z.object({
+  companyName: z.string().trim().min(2, "Nome da empresa deve ter ao menos 2 caracteres").max(120),
+  adminName: z.string().trim().min(2, "Nome do responsável deve ter ao menos 2 caracteres").max(120),
+  adminEmail: emailFieldSchema,
+  /** Dias de teste grátis (0 = sem teste; ative um plano em seguida) */
+  trialDays: z.coerce.number().int().min(0).max(90).default(14),
+});
+export type PlatformCreateCompanyInput = z.infer<typeof platformCreateCompanySchema>;
+
+export interface PlatformCreateCompanyResult {
+  company: PlatformCompanyDto;
+  /** Mostrada uma única vez: envie ao cliente e peça para trocar no 1º acesso */
+  temporaryPassword: string;
 }
 
 export interface PlatformPaymentDto {

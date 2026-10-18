@@ -179,7 +179,7 @@ Documentação da API: `/api/docs` (Swagger, gerada do código).
 | Verificação | Resultado (2026-10-18) |
 |---|---|
 | `npm run validate` (lint, typecheck, testes, build, schema) | ✅ verde |
-| Testes de integração em PostgreSQL real | **727/727** (42 arquivos), incluindo isolamento por RLS |
+| Testes de integração em PostgreSQL real | **729/729** (42 arquivos), incluindo isolamento por RLS |
 | Cobertura de services/controllers da API | **93,7%** das linhas (CI falha se cair) |
 | E2E no navegador (Playwright) | **7 fluxos**: login; cliente; caixa → venda → NFC-e → fechamento; importação CSV; rota protegida; CNPJ no comprovante + busca global; agenda semana/mês |
 | Acessibilidade (axe, WCAG 2.1 AA) | **0 violações** em 36 telas |

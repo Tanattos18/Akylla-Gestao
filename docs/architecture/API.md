@@ -35,6 +35,7 @@ inclui `issues[]`).
 | POST | `/api/auth/2fa/enable` | sessão | `{token}` (código de 6 dígitos) confirma e ativa o 2FA |
 | POST | `/api/auth/2fa/disable` | sessão | `{password}` desativa o 2FA |
 | POST | `/api/auth/2fa/verify` | público | `{challengeId, token}`: segunda etapa do login com 2FA; abre a sessão (cookie). Rate limit por IP |
+| POST | `/api/auth/change-password` | sessão | **Fase 8:** `{currentPassword, newPassword}` (8–72): troca a própria senha e encerra as outras sessões do usuário (a atual continua). Senha atual errada ou igual → 400. Rate limit por usuário |
 | POST | `/api/auth/logout` | sessão | Revoga a sessão atual |
 | GET | `/api/auth/me` | sessão | Usuário + empresa autenticados |
 | GET | `/api/users` | ADMIN | Lista usuários da empresa |
@@ -697,6 +698,7 @@ papel ADMIN e, em produção, 2FA ativo; senão 403. Usa conexão de sistema
 | Método | Rota | Acesso | Descrição |
 |---|---|---|---|
 | GET | `/api/platform/companies` | dono | `?search=&status=`: empresas (até 200) com admin, último login, uso (usuários, clientes, produtos, vendas 30 dias), isenção, suspensão e `access` |
+| POST | `/api/platform/companies` | dono | `{companyName, adminName, adminEmail, trialDays=14}` (0–90): cadastra a empresa e o admin (e-mail já verificado) e devolve `{company, temporaryPassword}` (senha provisória mostrada uma vez). E-mail já usado → 409 |
 | GET | `/api/platform/companies/:id` | dono | uma empresa |
 | GET | `/api/platform/companies/:id/payments` | dono | pagamentos registrados (imutáveis) |
 | POST | `/api/platform/companies/:id/activate` | dono | `{planId, cycle: MONTHLY\|YEARLY, method: PIX\|BOLETO\|CARD\|MERCADO_PAGO\|OTHER, amount?, note?}`: registra o pagamento e ativa/renova. Novo período começa no fim do período vigente (ou agora); mensal = `durationDays`, anual = 365 dias; valor padrão = preço do plano no ciclo |

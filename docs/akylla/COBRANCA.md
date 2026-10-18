@@ -40,6 +40,23 @@ dono: ISENTAR (sem cobrança) · SUSPENDER (bloqueia login) · REATIVAR
 
 **Nunca se apaga dado** de empresa vencida ou suspensa.
 
+## Passo a passo para liberar um cliente
+
+1. **Cadastrar:** em **Plataforma › + Nova empresa**, informe o nome da
+   empresa, o responsável, o e-mail (login) e os dias de teste (padrão
+   14; 0 se ele já vai pagar). Sai uma **senha provisória**: use
+   **Copiar mensagem** e mande pelo WhatsApp.
+2. **Primeiro acesso:** o cliente entra em `app.akyllagestao.com.br`,
+   troca a senha em **Minha conta** (clique no nome, no canto superior
+   direito) e escolhe o perfil do negócio.
+3. **Contratou:** recebeu o Pix ou boleto, vá em **Registrar pagamento**
+   (plano, mensal/anual, forma e valor). Libera na hora.
+4. **Renovação:** a cada pagamento, **Registrar pagamento** de novo. O
+   período soma ao final do atual, sem perder dias pagos.
+5. **Não pagou:** o sistema avisa sozinho, dá 5 dias de tolerância e
+   depois fica em somente leitura. Pagou, **Registrar pagamento** e volta
+   na hora. Casos extremos: **Suspender**.
+
 ## Como cobrar hoje (sem Mercado Pago em produção)
 
 1. O cliente se cadastra em `app.akyllagestao.com.br/cadastro` e ganha 14

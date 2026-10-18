@@ -19,6 +19,7 @@ import {
   PASSWORD_RESET_TOKEN_TTL_MS,
   type ResendVerificationInput,
   type VerifyEmailInput,
+  type ChangePasswordInput,
   type ConfirmPasswordResetInput,
   type DisableTwoFactorInput,
   type EnableTwoFactorInput,
@@ -588,6 +589,31 @@ export class AuthService {
       path: "/",
       maxAge: env.AUTH_SESSION_TTL_HOURS * 3600_000,
     });
+  }
+
+  /**
+   * Troca a própria senha (Fase 8): confere a senha atual, grava o novo hash
+   * e encerra as OUTRAS sessões do usuário (a atual continua).
+   */
+  async changePassword(auth: AuthContext, input: ChangePasswordInput): Promise<void> {
+    const user = await this.prisma.user.findFirst({
+      where: { id: auth.userId, companyId: auth.companyId },
+      select: { id: true, passwordHash: true },
+    });
+    if (!user || !(await bcrypt.compare(input.currentPassword, user.passwordHash))) {
+      throw new BadRequestException("Senha atual incorreta");
+    }
+    if (input.currentPassword === input.newPassword) {
+      throw new BadRequestException("A nova senha precisa ser diferente da atual");
+    }
+    const passwordHash = await bcrypt.hash(input.newPassword, BCRYPT_ROUNDS);
+    await this.prisma.$transaction([
+      this.prisma.user.update({ where: { id: user.id }, data: { passwordHash } }),
+      this.prisma.session.updateMany({
+        where: { userId: user.id, revokedAt: null, id: { not: auth.sessionId } },
+        data: { revokedAt: new Date() },
+      }),
+    ]);
   }
 
   async logout(

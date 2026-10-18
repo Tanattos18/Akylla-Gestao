@@ -34,6 +34,8 @@ import {
   type RequestPasswordResetInput,
   type ResetPasswordInput,
   type VerifyTwoFactorInput,
+  changePasswordSchema,
+  type ChangePasswordInput,
 } from "@petflow/shared";
 import { Public } from "../common/decorators/public.decorator";
 import { Auth, type AuthContext } from "../common/decorators/auth.decorator";
@@ -225,6 +227,20 @@ export class AuthController {
     this.authService.setSessionCookie(response, result.token);
 
     return { user: result.user, company: result.company } satisfies MeResponse;
+  }
+
+  /** Fase 8: trocar a própria senha (encerra as outras sessões). */
+  @Post("change-password")
+  @HttpCode(200)
+  async changePassword(
+    @Auth() auth: AuthContext,
+    @Body(new ZodValidationPipe(changePasswordSchema)) body: ChangePasswordInput,
+  ) {
+    const rateKey = `change-password|${auth.userId}`;
+    await this.rateLimiter.check(rateKey);
+    await this.authService.changePassword(auth, body);
+    await this.rateLimiter.reset(rateKey);
+    return { ok: true };
   }
 
   @Post("logout")

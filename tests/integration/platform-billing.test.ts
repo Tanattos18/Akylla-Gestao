@@ -238,3 +238,49 @@ describe("painel do dono da plataforma", () => {
     expect((await http().post(`/api/platform/companies/${id}/reactivate`).set("Cookie", ownerCookie)).status).toBe(400);
   });
 });
+
+describe("novo cliente pelo painel e troca de senha", () => {
+  it("dono cadastra a empresa com senha provisória; o cliente entra e troca a senha", async () => {
+    const res = await http()
+      .post("/api/platform/companies")
+      .set("Cookie", ownerCookie)
+      .send({ companyName: "Mercadinho do Zé", adminName: "José", adminEmail: "ze@mercadinho.test", trialDays: 14 });
+    expect(res.status).toBe(201);
+    expect(res.body.company).toMatchObject({ slug: "mercadinho-do-ze", adminEmail: "ze@mercadinho.test", access: { status: "TRIAL" } });
+    const temp = res.body.temporaryPassword as string;
+    expect(temp.length).toBeGreaterThanOrEqual(12);
+
+    // e-mail repetido → 409; só o dono cria
+    expect(
+      (await http().post("/api/platform/companies").set("Cookie", ownerCookie).send({ companyName: "Outra", adminName: "Zé", adminEmail: "ze@mercadinho.test" })).status,
+    ).toBe(409);
+
+    const login = await http().post("/api/auth/login").send({ email: "ze@mercadinho.test", password: temp });
+    expect(login.status).toBe(200);
+    const cookie = sessionCookieFrom(login);
+    const other = sessionCookieFrom(await http().post("/api/auth/login").send({ email: "ze@mercadinho.test", password: temp }));
+
+    expect(
+      (await http().post("/api/auth/change-password").set("Cookie", cookie).send({ currentPassword: "errada", newPassword: "NovaSenhaDoZe123" })).status,
+    ).toBe(400);
+    const changed = await http()
+      .post("/api/auth/change-password")
+      .set("Cookie", cookie)
+      .send({ currentPassword: temp, newPassword: "NovaSenhaDoZe123" });
+    expect(changed.status).toBe(200);
+    // a sessão atual continua; as outras são encerradas
+    expect((await http().get("/api/auth/me").set("Cookie", cookie)).status).toBe(200);
+    expect((await http().get("/api/auth/me").set("Cookie", other)).status).toBe(401);
+    expect((await http().post("/api/auth/login").send({ email: "ze@mercadinho.test", password: temp })).status).toBe(401);
+    expect((await http().post("/api/auth/login").send({ email: "ze@mercadinho.test", password: "NovaSenhaDoZe123" })).status).toBe(200);
+  });
+
+  it("administrador comum não cria empresas", async () => {
+    const admin = await login("admin@teste.test");
+    const res = await http()
+      .post("/api/platform/companies")
+      .set("Cookie", admin)
+      .send({ companyName: "Intrusa", adminName: "X Y", adminEmail: "x@intrusa.test" });
+    expect(res.status).toBe(403);
+  });
+});

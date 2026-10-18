@@ -6,6 +6,19 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-18 - Liberação de clientes sem terminal
+
+- **Plataforma › + Nova empresa** (`POST /api/platform/companies`):
+  - cadastra a empresa cliente e o responsável (e-mail já verificado, sem
+    depender de SMTP), com teste de N dias;
+  - gera uma senha provisória mostrada uma vez, com mensagem pronta para
+    o WhatsApp e atalho para registrar o pagamento.
+- **Minha conta** (`/conta`, no menu do usuário): troca da própria senha
+  (`POST /api/auth/change-password`). Encerra as outras sessões e tem
+  limite de tentativas.
+- **Testes:** +2 em `platform-billing.test.ts`; 729 no total.
+- **Passo a passo** de liberação de clientes em `docs/akylla/COBRANCA.md`.
+
 ## [Akylla Gestão] - 2026-10-18 - Demonstração e correção do backup na VPS
 
 - **`scripts/deploy/vps/create-demo.sh`:** cria uma empresa de

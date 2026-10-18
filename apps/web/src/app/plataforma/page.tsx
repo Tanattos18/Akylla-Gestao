@@ -7,6 +7,7 @@ import {
   type AccessStatus,
   type BillingCycle,
   type PlatformCompanyDto,
+  type PlatformCreateCompanyResult,
   type PlatformPaymentDto,
   type PlatformPaymentMethod,
 } from "@petflow/shared";
@@ -54,6 +55,45 @@ export default function PlataformaPage() {
   const [paying, setPaying] = useState<PlatformCompanyDto | null>(null);
   const [payForm, setPayForm] = useState({ planId: "", cycle: "MONTHLY" as BillingCycle, method: "PIX" as PlatformPaymentMethod, amount: "", note: "" });
   const [history, setHistory] = useState<{ id: string; items: PlatformPaymentDto[] } | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [createForm, setCreateForm] = useState({ companyName: "", adminName: "", adminEmail: "", trialDays: "14" });
+  const [created, setCreated] = useState<PlatformCreateCompanyResult | null>(null);
+
+  const welcomeMessage = created
+    ? `Olá, ${created.company.adminName ?? ""}! Seu acesso ao Akylla Gestão está pronto.\n\n` +
+      `Endereço: ${typeof window !== "undefined" ? window.location.origin : ""}/login\n` +
+      `Login: ${created.company.adminEmail ?? ""}\n` +
+      `Senha provisória: ${created.temporaryPassword}\n\n` +
+      `No primeiro acesso, troque a senha em Minha conta (clique no seu nome, no canto superior direito).`
+    : "";
+
+  async function submitCreate(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    try {
+      const result = await api<PlatformCreateCompanyResult>("/api/platform/companies", {
+        method: "POST",
+        body: JSON.stringify({ ...createForm, trialDays: Number(createForm.trialDays || 0) }),
+      });
+      setCompanies((current) => [result.company, ...current]);
+      setCreating(false);
+      setCreateForm({ companyName: "", adminName: "", adminEmail: "", trialDays: "14" });
+      setCreated(result);
+    } catch (err) {
+      toast.error(err, "Não foi possível cadastrar a empresa.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function copyWelcome() {
+    try {
+      await navigator.clipboard.writeText(welcomeMessage);
+      toast.success("Mensagem copiada. Cole no WhatsApp do cliente.");
+    } catch {
+      toast.error("Não foi possível copiar. Selecione o texto e copie manualmente.");
+    }
+  }
 
   const load = useCallback(async () => {
     const params = new URLSearchParams();
@@ -186,9 +226,18 @@ export default function PlataformaPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold text-slate-900">Plataforma Akylla</h2>
-        <p className="text-sm text-slate-600">Empresas clientes, cobrança e acesso. Visível só para você.</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-semibold text-slate-900">Plataforma Akylla</h2>
+          <p className="text-sm text-slate-600">Empresas clientes, cobrança e acesso. Visível só para você.</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setCreating(true)}
+          className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800"
+        >
+          + Nova empresa
+        </button>
       </div>
 
       <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6" aria-label="Empresas por situação">
@@ -378,6 +427,76 @@ export default function PlataformaPage() {
             </button>
           </div>
         </form>
+      </Dialog>
+
+      <Dialog
+        open={creating}
+        title="Nova empresa cliente"
+        description="Cria a empresa e o acesso do responsável. Uma senha provisória é gerada para você enviar ao cliente."
+        onClose={() => setCreating(false)}
+      >
+        <form onSubmit={(event) => void submitCreate(event)} className="grid gap-3">
+          <div>
+            <label htmlFor="new-company" className="mb-1 block text-sm text-slate-700">Nome da empresa</label>
+            <input id="new-company" required minLength={2} value={createForm.companyName} onChange={(e) => setCreateForm((f) => ({ ...f, companyName: e.target.value }))} className={inputClass} />
+          </div>
+          <div>
+            <label htmlFor="new-admin" className="mb-1 block text-sm text-slate-700">Nome do responsável</label>
+            <input id="new-admin" required minLength={2} value={createForm.adminName} onChange={(e) => setCreateForm((f) => ({ ...f, adminName: e.target.value }))} className={inputClass} />
+          </div>
+          <div>
+            <label htmlFor="new-email" className="mb-1 block text-sm text-slate-700">E-mail do responsável (login)</label>
+            <input id="new-email" type="email" required value={createForm.adminEmail} onChange={(e) => setCreateForm((f) => ({ ...f, adminEmail: e.target.value }))} className={inputClass} />
+          </div>
+          <div>
+            <label htmlFor="new-trial" className="mb-1 block text-sm text-slate-700">Dias de teste grátis (0 = já vai pagar)</label>
+            <input id="new-trial" type="number" min={0} max={90} value={createForm.trialDays} onChange={(e) => setCreateForm((f) => ({ ...f, trialDays: e.target.value }))} className={inputClass} />
+          </div>
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={() => setCreating(false)} className="rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+              Voltar
+            </button>
+            <button type="submit" disabled={busy} className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60">
+              Cadastrar
+            </button>
+          </div>
+        </form>
+      </Dialog>
+
+      <Dialog
+        open={created !== null}
+        title={created ? `Acesso criado: ${created.company.name}` : ""}
+        description="A senha provisória aparece só agora. Envie ao cliente e peça para trocá-la no primeiro acesso."
+        onClose={() => setCreated(null)}
+      >
+        <textarea
+          readOnly
+          aria-label="Mensagem de boas-vindas para o cliente"
+          value={welcomeMessage}
+          rows={8}
+          className="w-full rounded-md border border-slate-300 bg-slate-50 p-3 font-mono text-xs text-slate-800"
+        />
+        <div className="mt-4 flex flex-wrap justify-end gap-2">
+          <button type="button" onClick={() => void copyWelcome()} className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800">
+            Copiar mensagem
+          </button>
+          {created && (
+            <button
+              type="button"
+              onClick={() => {
+                const company = created.company;
+                setCreated(null);
+                openPay(company);
+              }}
+              className="rounded-md border border-primary-600 px-4 py-2 text-sm font-medium text-primary-800 hover:bg-primary-50"
+            >
+              Registrar pagamento agora
+            </button>
+          )}
+          <button type="button" onClick={() => setCreated(null)} className="rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+            Fechar
+          </button>
+        </div>
       </Dialog>
     </div>
   );

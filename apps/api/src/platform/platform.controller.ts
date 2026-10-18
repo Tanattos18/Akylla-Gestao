@@ -3,6 +3,8 @@ import type { Request } from "express";
 import {
   platformActivateSchema,
   platformCompaniesQuerySchema,
+  platformCreateCompanySchema,
+  type PlatformCreateCompanyInput,
   platformExemptSchema,
   platformSuspendSchema,
   platformTrialSchema,
@@ -29,6 +31,14 @@ export class PlatformController {
   @Get("companies")
   list(@Query(new ZodValidationPipe(platformCompaniesQuerySchema)) query: PlatformCompaniesQuery) {
     return this.platform.listCompanies(query);
+  }
+
+  @Post("companies")
+  create(
+    @Body(new ZodValidationPipe(platformCreateCompanySchema)) body: PlatformCreateCompanyInput,
+    @Req() request: PlatformRequest,
+  ) {
+    return this.platform.createCompany(body, by(request));
   }
 
   @Get("companies/:id")

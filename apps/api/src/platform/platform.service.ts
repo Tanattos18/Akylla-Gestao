@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Inject,
   Injectable,
   Logger,
@@ -7,10 +8,14 @@ import {
   type OnModuleDestroy,
 } from "@nestjs/common";
 import { Prisma, PrismaClient } from "@prisma/client";
+import { randomBytes } from "node:crypto";
+import bcrypt from "bcryptjs";
 import type {
   PlatformActivateInput,
   PlatformCompaniesQuery,
   PlatformCompanyDto,
+  PlatformCreateCompanyInput,
+  PlatformCreateCompanyResult,
   PlatformPaymentDto,
   PlatformSuspendInput,
 } from "@petflow/shared";
@@ -20,6 +25,16 @@ import { env } from "../config/env";
 
 const DAY_MS = 86_400_000;
 const YEAR_DAYS = 365;
+
+function slugify(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 50);
+}
 
 const companySelect = {
   id: true,
@@ -232,6 +247,46 @@ export class PlatformService implements OnModuleDestroy {
     this.access.invalidate(companyId);
     this.logger.log(`Pagamento registrado por ${recordedBy}: empresa ${companyId}, ${plan.name} ${input.cycle} R$ ${amount}`);
     return this.getCompany(companyId);
+  }
+
+  /**
+   * Cadastra uma empresa cliente (Fase 8), sem depender do cadastro aberto
+   * nem de SMTP: admin com e-mail já verificado e senha provisória
+   * (mostrada uma vez ao dono, que envia ao cliente). Teste grátis de
+   * `trialDays`; com 0, o dono registra o pagamento em seguida.
+   */
+  async createCompany(input: PlatformCreateCompanyInput, by: string): Promise<PlatformCreateCompanyResult> {
+    const email = input.adminEmail.trim().toLowerCase();
+    if (await this.db.user.findFirst({ where: { email }, select: { id: true } })) {
+      throw new ConflictException("Já existe um usuário com este e-mail");
+    }
+    const base = slugify(input.companyName) || "empresa";
+    let slug = base;
+    for (let i = 2; await this.db.company.findUnique({ where: { slug }, select: { id: true } }); i += 1) {
+      slug = `${base}-${i}`;
+    }
+    const temporaryPassword = `Akylla-${randomBytes(9).toString("base64url")}`;
+    const now = new Date();
+    const company = await this.db.company.create({
+      data: {
+        name: input.companyName,
+        slug,
+        status: "ACTIVE",
+        trialEndsAt: new Date(now.getTime() + input.trialDays * DAY_MS),
+        users: {
+          create: {
+            name: input.adminName,
+            email,
+            role: "ADMIN",
+            emailVerifiedAt: now,
+            passwordHash: await bcrypt.hash(temporaryPassword, 12),
+          },
+        },
+      },
+      select: { id: true },
+    });
+    this.logger.log(`Empresa ${company.id} (${slug}) cadastrada por ${by}, teste de ${input.trialDays} dia(s)`);
+    return { company: await this.getCompany(company.id), temporaryPassword };
   }
 
   async extendTrial(companyId: string, days: number, by: string): Promise<PlatformCompanyDto> {
