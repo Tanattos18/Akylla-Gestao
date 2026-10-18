@@ -1,8 +1,12 @@
 import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
+import { systemDatabaseUrl } from "../common/tenant/rls.extension";
 
-const prisma = new PrismaClient();
+// Processo de sistema: conexão com bypass da RLS (Fase 1 · 1E)
+const prisma = new PrismaClient({
+  datasources: { db: { url: systemDatabaseUrl(process.env.DATABASE_URL ?? "") } },
+});
 const BCRYPT_ROUNDS = 12;
 const OFFSET_MIN = -180;
 const RECEIPT_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";

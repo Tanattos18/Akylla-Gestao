@@ -2,6 +2,7 @@ import "dotenv/config";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
+import { systemDatabaseUrl } from "../common/tenant/rls.extension";
 import { normalizeEmail } from "@petflow/shared";
 
 const BCRYPT_ROUNDS = 12;
@@ -55,7 +56,10 @@ Exemplo de execução (PowerShell):
 
   const { BOOTSTRAP_COMPANY_NAME, BOOTSTRAP_COMPANY_SLUG, BOOTSTRAP_ADMIN_NAME, BOOTSTRAP_ADMIN_EMAIL, BOOTSTRAP_ADMIN_PASSWORD } = parsed.data;
 
-  const prisma = new PrismaClient();
+  // Processo de sistema: conexão com bypass da RLS (Fase 1 · 1E)
+  const prisma = new PrismaClient({
+    datasources: { db: { url: systemDatabaseUrl(process.env.DATABASE_URL ?? "") } },
+  });
   const slug = BOOTSTRAP_COMPANY_SLUG ?? slugify(BOOTSTRAP_COMPANY_NAME);
 
   try {

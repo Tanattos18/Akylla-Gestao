@@ -1,4 +1,8 @@
-# ADR-0001 — Defesa de tenant: guard ORM agora, RLS nativa como pré-requisito de produção
+# ADR-0001 — Defesa de tenant: guard ORM + RLS nativa do PostgreSQL
+
+> **Atualização 2026-10-18 (Fase 1 · 1E): a RLS nativa foi implementada.**
+> Ver a seção "Implementação da RLS" no fim. As seções abaixo registram a
+> decisão original (2026-10-15).
 
 **Data:** 2026-10-15 · **Escopo:** N4 · 1.4 (compilado de melhorias)
 **Status:** aceito (decisão do proprietário: "implementar com testes")
@@ -88,3 +92,66 @@ CREATE POLICY tenant_isolation_client ON "Client"
   mismatch (leitura e escrita) e transparência sem contexto.
 - Suíte inteira verde (569 testes pré-existentes comprovam que nenhum
   fluxo legítimo regrediu).
+
+
+## Implementação da RLS (2026-10-18, Fase 1 · 1E)
+
+Os três bloqueios do contexto original foram resolvidos assim:
+
+1. **Role dono das tabelas:** `FORCE ROW LEVEL SECURITY` faz a política
+   valer também para o dono. O role da aplicação (`logistica` em dev) não
+   é superusuário nem tem `BYPASSRLS`, verificado em teste. Não foi
+   preciso trocar credenciais nem ownership.
+2. **Fluxos públicos e de sistema:** a política aceita
+   `app.rls_bypass = 'on'`. A API liga o bypass só quando não há
+   contexto de tenant (rotas `@Public`, login, webhooks, CLI). Worker,
+   scripts de CLI e backup abrem conexão de sistema (`systemDatabaseUrl`:
+   `options=-c app.rls_bypass=on`). Em rota autenticada, a API define
+   `app.company_id` e desliga o bypass.
+3. **Conexão por request:** padrão do exemplo oficial do Prisma
+   (`prisma-client-extensions/row-level-security`, Apache-2.0). Cada
+   consulta fora de transação roda em `[set_config(...), consulta]` numa
+   transação em lote. `$transaction` (interativa e em lote) define o
+   contexto no primeiro statement. Consultas já dentro de transação não
+   são re-embrulhadas (`__internalParams.transaction`), e a atomicidade é
+   coberta por teste.
+
+**Política** (25 tabelas: as 24 com `companyId` e mais `Company` por `id`):
+
+```sql
+USING (current_setting('app.rls_bypass', true) = 'on'
+       OR "companyId" = current_setting('app.company_id', true))
+WITH CHECK (mesma condição)
+```
+
+Sem nenhuma configuração, a conexão não vê nem grava nada (fail-closed).
+O `set_config(..., true)` é local à transação, então não vaza entre
+requisições do pool.
+
+**Limites conhecidos:**
+
+- O bypass é uma configuração de sessão: quem tem acesso SQL direto ao
+  role pode ligá-lo. A RLS protege contra **bugs da aplicação** (consulta
+  sem filtro, SQL bruto esquecido), não contra credencial vazada. Contra
+  isso valem segredos fora do Git e role sem privilégio de DDL em
+  produção.
+- Tabelas sem `companyId` (`SaleItem`, `Session`, `WhatsAppMessageAttempt`,
+  tokens) não têm política própria. Ficam protegidas pelo pai (FK) e
+  pelas regras da aplicação.
+- `__internalParams` não é API pública do Prisma: ao atualizar o Prisma,
+  rode `tests/integration/rls.test.ts`, que testa a atomicidade.
+
+**Custo medido:** a suíte completa (614 testes) levou 30,0 s com RLS
+contra 31,9 s antes, sem regressão perceptível.
+
+**Regras permanentes (AGENTS.md):** toda tabela nova com `companyId`
+entra na política na própria migration. Migration com DML começa com
+`SET LOCAL app.rls_bypass = 'on';`.
+
+**Verificação:** `tests/integration/rls.test.ts` (16): políticas e FORCE
+nas 25 tabelas, role sem bypass, conexão crua vê 0 linhas, WITH CHECK
+contra outra empresa, contexto local à transação, conexão de sistema,
+SQL bruto da aplicação confinado à empresa, `Company` própria, transação
+interativa e em lote, caminho HTTP via `TenantContextInterceptor` e
+atomicidade (rollback interativo e falha em lote). A suíte inteira roda
+com a RLS ativa.

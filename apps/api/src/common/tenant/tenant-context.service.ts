@@ -25,3 +25,18 @@ export class TenantContext {
     return this.storage.getStore();
   }
 }
+
+/**
+ * Executa `fn` como se fosse uma requisição da empresa (Fase 1 · 1E): o
+ * guard ORM e a RLS passam a valer para `companyId`. Útil para jobs/CLI
+ * que agem em nome de UMA empresa. O `await` acontece dentro do contexto
+ * (PrismaPromise só executa no `then`).
+ */
+export function withTenantContext<T>(
+  tenantContext: TenantContext,
+  companyId: string,
+  fn: () => PromiseLike<T>,
+  userId = "system",
+): Promise<T> {
+  return tenantContext.run({ companyId, userId }, async () => await fn());
+}

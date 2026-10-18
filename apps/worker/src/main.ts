@@ -6,13 +6,29 @@ import { processDueMessages } from "./whatsapp/processor";
 
 const HEARTBEAT_INTERVAL_MS = 60_000;
 
+/**
+ * Mesmo contrato de `systemDatabaseUrl` da API (apps/api/src/common/tenant/
+ * rls.extension.ts): fixa `app.rls_bypass=on` na sessão via `options`.
+ */
+function systemDatabaseUrl(databaseUrl: string): string {
+  const url = new URL(databaseUrl);
+  const current = url.searchParams.get("options");
+  const flag = "-c app.rls_bypass=on";
+  url.searchParams.set("options", current ? `${current} ${flag}` : flag);
+  return url.toString();
+}
+
 function log(message: string) {
   console.log(`[petflow-worker] ${new Date().toISOString()} ${message}`);
 }
 
 async function main() {
   const monitoring = initWorkerMonitoring();
-  const prisma = new PrismaClient();
+  // Processo de sistema: conexão com bypass da RLS (Fase 1 · 1E) — o worker
+  // atende todas as empresas e não tem sessão de usuário
+  const prisma = new PrismaClient({
+    datasources: { db: { url: systemDatabaseUrl(workerEnv.DATABASE_URL) } },
+  });
 
   let provider;
   try {

@@ -23,6 +23,19 @@ ou **503** `{"status":"unavailable","database":"down"}`. A resposta não traz
 detalhes internos (host, erro). Não exige sessão e fica fora do prefixo
 `/api`.
 
+### Banco: role da aplicação e RLS (Fase 1 · 1E)
+
+- O `DATABASE_URL` da API e do worker deve usar um role **sem**
+  `SUPERUSER` e **sem** `BYPASSRLS` (confira com
+  `SELECT rolsuper, rolbypassrls FROM pg_roles WHERE rolname = current_user;`).
+  Em provedores gerenciados, o usuário "admin/postgres" padrão costuma ter
+  esses poderes: crie um role próprio para a aplicação.
+- O backup (`npm run db:backup`) já liga o bypass na própria sessão
+  (`PGOPTIONS`) e usa `pg_dump --enable-row-security`.
+- Para investigar dados manualmente no `psql`, use
+  `SET app.rls_bypass = 'on';` na sessão. Sem isso as tabelas aparecem
+  vazias, e isso **não** quer dizer perda de dados.
+
 ## 2. Monitoramento de erros — Sentry
 
 **Configuração** (variáveis no ambiente do servidor; nunca no Git):

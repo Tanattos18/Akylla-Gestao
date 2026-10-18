@@ -69,6 +69,14 @@ guarda itens arquivados pelo proprietário — inclusive a antiga base
   calculados no servidor (nunca aceitar do cliente); histórico de
   movimentações imutável (correção = movimento compensatório). Padrão
   completo em `docs/architecture/API.md`.
+- **RLS do PostgreSQL** (Fase 1 · 1E, ADR-0001): toda tabela nova com
+  `companyId` recebe, **na mesma migration**, `ENABLE` + `FORCE ROW LEVEL
+  SECURITY` e a política `tenant_isolation` (modelo em
+  `20261018120000_row_level_security`), e entra em `TENANT_TABLES` de
+  `tests/integration/rls.test.ts`. Migration com DML começa com
+  `SET LOCAL app.rls_bypass = 'on';`. Processos de sistema (worker, CLI,
+  scripts) conectam com `systemDatabaseUrl()`; a API nunca usa role
+  superusuário ou `BYPASSRLS`.
 
 ## Comandos de verificação
 

@@ -6,6 +6,69 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-18 - Fase 1 · 1E: RLS nativa do PostgreSQL (defesa em profundidade)
+
+Referência usada (`upgrade/REFERENCIAS_GIT.md`, Fase 1 · 1E):
+`prisma/prisma-client-extensions › row-level-security` (Apache-2.0), cujo
+padrão `[set_config, consulta]` foi adaptado. Detalhes em
+`docs/architecture/ADR-0001-tenant-defense.md`.
+
+### Adicionado
+
+- **Migration `20261018120000_row_level_security`:** `ENABLE` + `FORCE ROW
+  LEVEL SECURITY` e a política `tenant_isolation` em 25 tabelas (as 24 com
+  `companyId` e mais `Company` por `id`). Uma linha só aparece ou é
+  gravada se `app.company_id` bater ou se `app.rls_bypass = 'on'`. Sem
+  nenhum dos dois, nada aparece.
+- **`apps/api/src/common/tenant/rls.extension.ts`:**
+  - `rlsExtension`: toda consulta fora de transação roda numa transação em
+    lote que primeiro define o contexto;
+  - `withRlsTransactions`: `$transaction` interativa e em lote definem o
+    contexto no primeiro statement;
+  - consultas já dentro de transação não são re-embrulhadas, o que
+    preserva a atomicidade;
+  - `systemDatabaseUrl()`: conexão de sistema com bypass via `options`.
+- **`withTenantContext(tenantContext, companyId, fn)`** para jobs que agem
+  em nome de uma empresa.
+- **`tests/integration/rls.test.ts`** (16 testes): políticas e FORCE nas
+  25 tabelas, role sem bypass, conexão crua vê 0 linhas, WITH CHECK contra
+  outra empresa, contexto local à transação, conexão de sistema, SQL bruto
+  confinado à empresa, transação interativa e em lote, caminho HTTP pelo
+  `TenantContextInterceptor` e atomicidade.
+
+### Alterado
+
+- `PrismaService`: guard ORM + RLS + transações com contexto.
+- Worker e CLI (`bootstrap-admin`, `seed-demo`) usam conexão de sistema.
+- `scripts/db-backup.mjs`: `PGOPTIONS=-c app.rls_bypass=on` em todos os
+  binários e `pg_dump --enable-row-security`. Sem isso, o `pg_dump`
+  aborta com RLS + FORCE.
+- `AGENTS.md`: regra permanente nova (tabela com `companyId` recebe a
+  política na mesma migration; DML em migration liga o bypass).
+- ADR-0001 atualizada (status: RLS implementada), `DATABASE.md`,
+  `RUNBOOK.md` (role da aplicação sem SUPERUSER/BYPASSRLS; `psql` manual)
+  e `CHECKLIST_PRE_PRODUCAO` (L3 resolvido).
+
+### Bugs encontrados e corrigidos durante a implementação
+
+- **Atomicidade:** embrulhar cada consulta numa transação própria, como
+  no exemplo, tirava as consultas de dentro das transações da aplicação
+  (rollback deixava dados gravados). Corrigido detectando a transação
+  corrente; há teste para isso.
+- **Contexto preguiçoso:** uma `PrismaPromise` só executa no `await`; se
+  for aguardada fora do contexto, roda sem tenant. Nas rotas o `await`
+  acontece dentro do interceptor, e há teste do caminho HTTP.
+
+### Verificação
+
+- `npm run validate` verde: lint · typecheck · **630/630** (34 arquivos)
+  · build · db:validate. **A suíte inteira roda com a RLS ativa**, e o
+  tempo não piorou (30,0 s contra 31,9 s).
+- Migration aplicada no banco de dev. `npm run db:backup` com RLS ativa:
+  restore validado (32 tabelas, 18 migrations).
+- API e worker compilados rodando no banco de dev com RLS: login, `/me` e
+  `/api/clients` 200; worker iniciou normalmente.
+
 ## [Akylla Gestão] - 2026-10-18 - Fase 1 · 1D: cadastro anti-abuso (verificação de e-mail + Turnstile)
 
 Referências usadas (`upgrade/REFERENCIAS_GIT.md`, Fase 1 · 1D):

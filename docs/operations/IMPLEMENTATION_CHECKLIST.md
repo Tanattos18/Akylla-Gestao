@@ -61,9 +61,18 @@
 - [x] Fluxo testado no navegador (cadastro → link → painel)
 - [ ] SMTP e Turnstile de produção configurados (contas do proprietário)
 
+### 1E · RLS nativa (2026-10-18)
+
+- [x] Migration `20261018120000_row_level_security`: ENABLE + FORCE + `tenant_isolation` em 25 tabelas
+- [x] `rlsExtension` + `withRlsTransactions` (contexto por transação; atomicidade preservada)
+- [x] `systemDatabaseUrl()` no worker e na CLI; backup com `PGOPTIONS` + `--enable-row-security`
+- [x] `tests/integration/rls.test.ts` (16), incluindo o caminho HTTP pelo interceptor
+- [x] Suíte inteira verde com RLS ativa; backup/restore validado com RLS no banco de dev
+- [x] ADR-0001, DATABASE.md, RUNBOOK e AGENTS.md (regra permanente)
+- [ ] Produção: role da aplicação sem SUPERUSER/BYPASSRLS (conferir ao provisionar, junto com o 1G)
+
 ### Pendentes da Fase 1
 
-- [ ] 1E · RLS + `withTenantContext` + `rls.test.ts`
 - [ ] 1F · `npm audit --omit=dev` = 0 (next 16, vitest major)
 - [ ] 1G · CD real com health check e rollback documentado
 

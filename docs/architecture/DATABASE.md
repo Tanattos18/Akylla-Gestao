@@ -1,5 +1,25 @@
 # Banco de dados — diretrizes e modelo atual
 
+## Row-Level Security (Fase 1 · 1E)
+
+Migration: `20261018120000_row_level_security`. Detalhes e limites em
+[`ADR-0001`](ADR-0001-tenant-defense.md).
+
+- **Tabelas:** as 24 com `companyId` e mais `Company` (por `id`), todas com
+  `ENABLE` + `FORCE ROW LEVEL SECURITY` e a política `tenant_isolation`.
+- **Visível/gravável** quando `app.company_id` = `companyId` da linha ou
+  `app.rls_bypass = 'on'`, definidos por transação (`set_config(..., true)`).
+  Sem nenhum dos dois, a conexão não vê nada.
+- **API:** `PrismaService` (extensões `tenantGuardExtension` +
+  `rlsExtension` + `withRlsTransactions`). **Sistema:** `systemDatabaseUrl()`
+  (worker, CLI) e `PGOPTIONS` no backup (`pg_dump --enable-row-security`).
+- **Regras para mudanças futuras:**
+  1. Tabela nova com `companyId` recebe a política na mesma migration.
+  2. Migration com DML começa com `SET LOCAL app.rls_bypass = 'on';`,
+     senão o `UPDATE` afeta 0 linhas sem dar erro.
+  3. Nunca rode a aplicação com role superusuário ou `BYPASSRLS`, porque
+     isso desliga a RLS sem aviso.
+
 ## Modelos implementados (Fase 1 · 1D — verificação de e-mail)
 
 Migration: `database/prisma/migrations/20261018090000_email_verification`

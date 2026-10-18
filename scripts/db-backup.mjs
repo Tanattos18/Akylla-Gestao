@@ -122,7 +122,13 @@ function run(cmd, argsList, { password, allowFail = false } = {}) {
   const result = spawnSync(cmd, argsList, {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
-    env: { ...process.env, ...(password ? { PGPASSWORD: password } : {}) },
+    env: {
+      ...process.env,
+      ...(password ? { PGPASSWORD: password } : {}),
+      // RLS (Fase 1 · 1E): backup/restore são processos de sistema e
+      // precisam ver todas as empresas — bypass só nesta sessão
+      PGOPTIONS: [process.env.PGOPTIONS, "-c app.rls_bypass=on"].filter(Boolean).join(" "),
+    },
     cwd: rootDir,
   });
   if (result.error) {
@@ -196,7 +202,9 @@ function dump(source) {
   if (!existsSync(backupDir)) mkdirSync(backupDir, { recursive: true });
   const file = dumpFileFor();
   log(`🔄 Gerando backup de "${source.database}" em ${file}...`);
-  run(tool("pg_dump"), [source.conn, "--format=custom", "--compress=6", "--no-owner", "--file", file], {
+  // --enable-row-security: com RLS + FORCE, o pg_dump padrão aborta; com a
+  // flag ele aplica as políticas, e o bypass da sessão libera todas as linhas
+  run(tool("pg_dump"), [source.conn, "--format=custom", "--compress=6", "--no-owner", "--enable-row-security", "--file", file], {
     password: source.password,
   });
   log(`✅ Backup gerado (${statSync(file).size} bytes).`);
