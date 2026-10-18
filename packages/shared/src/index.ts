@@ -1402,6 +1402,23 @@ export const upsertCompanyModuleSchema = z.object({
 export type UpsertCompanyModuleInput = z.infer<typeof upsertCompanyModuleSchema>;
 
 // ---------------------------------------------------------------------------
+// Onboarding por perfil (Fase 4)
+// ---------------------------------------------------------------------------
+
+export const onboardingSegmentSchema = z.enum([
+  "COMERCIO",
+  "SERVICOS",
+  "HIBRIDO",
+  "PERSONALIZADO",
+]);
+export type OnboardingSegment = z.infer<typeof onboardingSegmentSchema>;
+
+export const applyOnboardingSchema = z.object({
+  slug: onboardingSegmentSchema,
+});
+export type ApplyOnboardingInput = z.infer<typeof applyOnboardingSchema>;
+
+// ---------------------------------------------------------------------------
 // Importação de planilhas (CSV) — PLANO_IMPORTACAO.md
 // ---------------------------------------------------------------------------
 

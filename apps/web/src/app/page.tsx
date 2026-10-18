@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api } from "../lib/api";
 import { fetchSession, type Session } from "../lib/session";
-import type { BusinessModule, CompanyModuleDto } from "../lib/types";
+import type { BusinessModule, CompanyModuleDto, OnboardingStatusDto } from "../lib/types";
 
 const plannedModules: Array<{
   name: string;
@@ -120,6 +120,7 @@ export default function HomePage() {
   const [companyModules, setCompanyModules] = useState<CompanyModuleDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [onboarding, setOnboarding] = useState<OnboardingStatusDto | null>(null);
 
   useEffect(() => {
     fetchSession().then((value) => {
@@ -131,6 +132,12 @@ export default function HomePage() {
       setLoading(false);
     });
   }, [router]);
+
+  useEffect(() => {
+    api<OnboardingStatusDto>("/api/onboarding/status")
+      .then(setOnboarding)
+      .catch(() => setOnboarding(null));
+  }, []);
 
   useEffect(() => {
     api<CompanyModuleDto[]>("/api/company-modules")
@@ -176,6 +183,17 @@ export default function HomePage() {
 
   return (
     <div>
+      {onboarding && !onboarding.completed && session.user.role === "ADMIN" && (
+        <section className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <p className="text-sm text-amber-900">
+            <strong className="font-medium">Configure o Akylla para o seu negócio.</strong> Escolha o perfil e o
+            sistema liga os módulos certos para você.
+          </p>
+          <Link href="/onboarding" className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800">
+            Escolher perfil
+          </Link>
+        </section>
+      )}
       <section className="mb-10 rounded-lg border border-primary-200 bg-primary-50 p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>

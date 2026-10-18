@@ -16,6 +16,11 @@ que o site akyllagestao.com.br promete. Fases em ordem rígida (1 → 7).
 | 1F · `npm audit --omit=dev` = 0 (next 16, vitest major) (§1.5.1) | ✅ 2026-10-18 (0 em produção) |
 | 1G · CD real com health check (§1.3) | 🟡 2026-10-18: pipeline e guia prontos, CI corrigida. **Ligar** depende de escolher o provedor e configurar os secrets (`docs/operations/DEPLOY.md`) |
 
+**Fase 4 (Perfis no cadastro)**: concluída em 2026-10-18. Inclui o
+onboarding Comércio, Serviços, Híbrido e Personalizado, a tela
+`/configuracoes` e as páginas públicas `/para/*`
+(`docs/akylla/ONBOARDING.md`). Próxima: **Fase 5 (design e UX)**.
+
 **Fase 3 (Fiscal por integração)** — código concluído em 2026-10-18 com
 emissora **simulada**. A emissão real depende de contratar a integradora,
 implementar o adaptador e fazer o cadastro fiscal dos produtos

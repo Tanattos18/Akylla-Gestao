@@ -7,7 +7,16 @@ import { fetchSession, type Session } from "@/lib/session";
 import { api } from "@/lib/api";
 import type { CompanyModuleDto } from "@/lib/types";
 
-const AUTH_ROUTES = ["/login", "/cadastro", "/redefinir-senha", "/confirmar-email"];
+/** Rotas sem sessão e sem menu: autenticação, páginas legais e de perfil (Fase 4). */
+const AUTH_ROUTES = [
+  "/login",
+  "/cadastro",
+  "/redefinir-senha",
+  "/confirmar-email",
+  "/termos",
+  "/privacidade",
+  "/para",
+];
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();

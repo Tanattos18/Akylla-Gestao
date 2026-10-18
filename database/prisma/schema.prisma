@@ -283,6 +283,10 @@ model Company {
   name      String
   slug      String        @unique
   status    CompanyStatus @default(ACTIVE)
+  /// Fase 4: perfil escolhido no onboarding (slug de OnboardingPreset)
+  segment   String?
+  /// Fase 4: quando o onboarding foi concluído (null = mostrar a escolha)
+  onboardingCompletedAt DateTime?
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
   users     User[]
@@ -1149,6 +1153,21 @@ model Subscription {
   @@index([companyId, status, endAt])
   @@index([clientId])
   @@index([companyId, createdAt])
+}
+
+/// Fase 4 — perfil de onboarding (catálogo GLOBAL, sem empresa): módulos
+/// que ficam ativos ao escolher o perfil. Dados de referência gravados na
+/// migration `20261018230000_onboarding_presets`.
+model OnboardingPreset {
+  id                   String           @id @default(cuid())
+  slug                 String           @unique
+  name                 String
+  description          String
+  defaultModules       BusinessModule[]
+  defaultFiscalEnabled Boolean          @default(false)
+  active               Boolean          @default(true)
+  sortOrder            Int              @default(0)
+  createdAt            DateTime         @default(now())
 }
 
 model TenantPlan {

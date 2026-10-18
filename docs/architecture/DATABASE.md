@@ -1,5 +1,17 @@
 # Banco de dados — diretrizes e modelo atual
 
+## Modelos implementados (Fase 4 — Onboarding por perfil)
+
+Migration: `20261018230000_onboarding_presets` (aditiva + dados de referência).
+
+| Modelo | Campos principais | Restrições/índices |
+|---|---|---|
+| `OnboardingPreset` | `slug`, `name`, `description`, `defaultModules BusinessModule[]`, `defaultFiscalEnabled`, `active`, `sortOrder` | `slug` único. **Global** (sem `companyId`, sem RLS); alterado só por migration |
+| `Company` (+) | `segment?`, `onboardingCompletedAt?` | empresas anteriores à Fase 4 recebem `onboardingCompletedAt = createdAt` |
+
+A migration grava dados em `Company`, que tem RLS FORCE. Por isso usa
+`SET LOCAL app.rls_bypass = 'on'`, válido só dentro da transação dela.
+
 ## Modelos implementados (Fase 3 — Fiscal por integração)
 
 Migration: `20261018210000_fiscal` (aditiva + RLS nas 2 tabelas novas).

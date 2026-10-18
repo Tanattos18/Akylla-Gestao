@@ -916,6 +916,22 @@ export type BusinessModule =
 
 export type CompanyModuleStatus = "ACTIVE" | "DISABLED";
 
+export type OnboardingSegment = "COMERCIO" | "SERVICOS" | "HIBRIDO" | "PERSONALIZADO";
+
+export interface OnboardingPresetDto {
+  slug: OnboardingSegment;
+  name: string;
+  description: string;
+  defaultModules: BusinessModule[];
+  defaultFiscalEnabled: boolean;
+}
+
+export interface OnboardingStatusDto {
+  segment: OnboardingSegment | null;
+  completed: boolean;
+  completedAt: string | null;
+}
+
 export interface CompanyModuleDto {
   module: BusinessModule;
   status: CompanyModuleStatus;

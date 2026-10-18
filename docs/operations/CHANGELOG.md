@@ -6,6 +6,36 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-18 - Fase 4: Perfis no cadastro (onboarding)
+
+Depois de criar a conta, o cliente escolhe **Comércio**, **Serviços**,
+**Comércio e serviços** ou **Personalizado**, e o sistema liga os módulos
+certos. Regras em `docs/akylla/ONBOARDING.md`.
+
+### Adicionado
+
+- **Modelo** `OnboardingPreset` (catálogo global) e os campos
+  `Company.segment` e `Company.onboardingCompletedAt`. A migration
+  `20261018230000_onboarding_presets` é aditiva, cadastra os 4 perfis e
+  marca as empresas existentes como já configuradas.
+- **API:** `GET /api/onboarding/presets`, `GET /api/onboarding/status` e
+  `POST /api/onboarding/apply` (ADMIN, idempotente). Comércio também
+  prepara a configuração fiscal com a emissora simulada, inativa.
+- **Web:**
+  - `/onboarding`, a escolha do perfil; a confirmação de e-mail leva
+    direto para cá;
+  - aviso na tela inicial enquanto o perfil não for escolhido;
+  - `/configuracoes` (ADMIN), com o perfil atual e chaves liga/desliga
+    por módulo;
+  - páginas públicas `/para/comercio`, `/para/servicos` e
+    `/para/hibrido`.
+- `tests/integration/onboarding.test.ts` (8 testes).
+
+### Corrigido
+
+- `/termos` e `/privacidade` exigiam login, o que impedia ler os termos
+  durante o cadastro. Agora são públicas.
+
 ## [Akylla Gestão] - 2026-10-18 - Fase 3: Fiscal por integração (NFC-e / NF-e / NFS-e)
 
 Último item "em breve" do site. A emissão é feita por **integradora

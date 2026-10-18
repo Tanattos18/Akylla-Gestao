@@ -28,6 +28,7 @@ import { CommissionsModule } from "./commissions/commissions.module";
 import { CreditModule } from "./credit/credit.module";
 import { ServiceOrdersModule } from "./service-orders/service-orders.module";
 import { FiscalModule } from "./fiscal/fiscal.module";
+import { OnboardingModule } from "./onboarding/onboarding.module";
 import { AuthGuard } from "./common/guards/auth.guard";
 import { ModuleGuard } from "./common/guards/module.guard";
 import { TenantContextInterceptor } from "./common/tenant/tenant-context.interceptor";
@@ -47,6 +48,7 @@ import { TenantContextInterceptor } from "./common/tenant/tenant-context.interce
     CreditModule,
     ServiceOrdersModule,
     FiscalModule,
+    OnboardingModule,
     CashModule,
     FinancialModule,
     ClientsModule,

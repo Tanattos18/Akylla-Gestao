@@ -23,7 +23,7 @@ function ConfirmarEmail() {
       body: JSON.stringify({ token }),
       redirectOnUnauthorized: false,
     })
-      .then(() => router.replace("/"))
+      .then(() => router.replace("/onboarding"))
       .catch((err: unknown) =>
         setError(err instanceof ApiError ? err.message : "Não foi possível conectar ao servidor"),
       );

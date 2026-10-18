@@ -628,6 +628,16 @@ Módulo opcional `FISCAL`. Regras e pendências: [`docs/akylla/FISCAL.md`](../ak
 **Vendas:** cancelar venda com nota pendente ou autorizada → 409 (cancele a
 nota antes).
 
+## Onboarding por perfil (Fase 4)
+
+Regras: [`docs/akylla/ONBOARDING.md`](../akylla/ONBOARDING.md).
+
+| Método | Rota | Acesso | Descrição |
+|---|---|---|---|
+| GET | `/api/onboarding/presets` | sessão | perfis ativos em ordem (`slug`, `name`, `description`, `defaultModules`, `defaultFiscalEnabled`) |
+| GET | `/api/onboarding/status` | sessão | `{segment, completed, completedAt}` |
+| POST | `/api/onboarding/apply` | ADMIN | `{slug}` (`COMERCIO`, `SERVICOS`, `HIBRIDO`, `PERSONALIZADO`). Idempotente: módulos do perfil → ACTIVE, demais → DISABLED (Personalizado não altera). Retorna 200 com o status. Slug inválido → 400 |
+
 ## Padrão para módulos futuros
 
 1. Modelo sempre com `companyId` + FK `Restrict` e índices por empresa.

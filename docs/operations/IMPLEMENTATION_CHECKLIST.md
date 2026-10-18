@@ -4,6 +4,14 @@
 > Este checklist cobre apenas a era do Akylla Gestão. O histórico
 > anterior à adaptação está preservado no Git.
 
+## Fase 4 — Perfis no cadastro (2026-10-18)
+
+- [x] `OnboardingPreset` global + `Company.segment`/`onboardingCompletedAt`; migration aditiva com os 4 perfis e empresas existentes marcadas como concluídas
+- [x] API presets/status/apply (ADMIN, idempotente; Comércio prepara fiscal simulado inativo)
+- [x] `/onboarding` (após confirmar e-mail), aviso na home, `/configuracoes` com liga/desliga de módulos
+- [x] Páginas públicas `/para/comercio`, `/para/servicos`, `/para/hibrido`; `/termos` e `/privacidade` sem login
+- [x] `tests/integration/onboarding.test.ts` (8)
+
 ## Fase 3 — Fiscal por integração (2026-10-18)
 
 - [x] Regras e pendências (`docs/akylla/FISCAL.md`); FinOpenPOS avaliado (emissor próprio, não integrado; extração de certificado insegura, não reaproveitada)
