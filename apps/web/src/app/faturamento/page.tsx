@@ -57,18 +57,10 @@ export default function FaturamentoPage() {
     try {
       const plansData = await api<PlansResponse>("/api/billing/plans");
       setPlans(plansData.items);
-      try {
-        const sub = await api<TenantSubscriptionDto>("/api/billing/subscription");
-        setSubscription(sub);
-      } catch (err) {
-        if (err instanceof ApiError && err.status === 404) {
-          setSubscription(null);
-        } else {
-          throw err;
-        }
-      }
+      // O uso já traz a assinatura (sem chamada extra que responde 404 quando não há plano)
       const usage = await api<PlanUsageDto>("/api/billing/usage");
       setPlanUsage(usage);
+      setSubscription(usage.subscription);
       setAccess(await api<AccessSummaryDto>("/api/billing/access"));
       setError(null);
     } catch (err) {
@@ -113,6 +105,14 @@ export default function FaturamentoPage() {
 
   if (loading || !session) {
     return <p className="py-16 text-center text-sm text-slate-500">Carregando...</p>;
+  }
+
+  if (!isAdmin) {
+    return (
+      <p role="alert" className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        Acesso restrito: apenas administradores veem o faturamento da empresa.
+      </p>
+    );
   }
 
   return (

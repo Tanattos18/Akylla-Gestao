@@ -5,9 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "../../lib/api";
 import { ResendVerification } from "../../components/auth/ResendVerification";
+import { useAuthOptions, whatsappLink } from "../../lib/auth-options";
 
 export default function LoginPage() {
   const router = useRouter();
+  const authOptions = useAuthOptions();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [challengeId, setChallengeId] = useState<string | null>(null);
@@ -158,7 +160,7 @@ export default function LoginPage() {
       <div className="rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
         <h2 className="mb-1 text-xl font-semibold text-slate-900">Entrar no Akylla Gestão</h2>
         <p className="mb-6 text-sm text-slate-500">
-          Use o email e a senha do seu usuário administrador.
+          Use o e-mail e a senha do seu usuário.
         </p>
 
         {error && (
@@ -218,15 +220,33 @@ export default function LoginPage() {
             href="/redefinir-senha"
             className="text-primary-700 hover:underline"
           >
-            Não consegue entrar? Defina sua senha
+            Esqueci minha senha
           </Link>
         </p>
-        <p className="mt-2 text-center text-sm text-slate-500">
-          Não tem conta?{" "}
-          <Link href="/cadastro" className="text-primary-700 hover:underline">
-            Cadastre-se
-          </Link>
-        </p>
+        {authOptions && (
+          <p className="mt-2 text-center text-sm text-slate-600">
+            {authOptions.registrationEnabled ? (
+              <>
+                Não tem conta?{" "}
+                <Link href="/cadastro" className="text-primary-700 hover:underline">
+                  Teste grátis por 14 dias
+                </Link>
+              </>
+            ) : (
+              <>
+                Quer usar o Akylla?{" "}
+                <a
+                  href={whatsappLink("Olá! Quero conhecer o Akylla Gestão.")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary-700 hover:underline"
+                >
+                  Fale com a gente
+                </a>
+              </>
+            )}
+          </p>
+        )}
       </div>
       )}
     </div>

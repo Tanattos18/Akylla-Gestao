@@ -91,6 +91,12 @@ export class PlatformController {
     return this.platform.suspend(id, body, by(request));
   }
 
+  @Post("companies/:id/reset-password")
+  @HttpCode(200)
+  resetPassword(@Param("id") id: string, @Req() request: PlatformRequest) {
+    return this.platform.resetAdminPassword(id, by(request));
+  }
+
   @Post("companies/:id/reactivate")
   @HttpCode(200)
   reactivate(@Param("id") id: string, @Req() request: PlatformRequest) {

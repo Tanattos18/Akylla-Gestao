@@ -23,6 +23,7 @@ inclui `issues[]`).
 
 | Método | Rota | Acesso | Descrição |
 |---|---|---|---|
+| GET | `/api/auth/options` | público | **Fase 8:** `{registrationEnabled, emailEnabled}` para as telas públicas esconderem cadastro e recuperação de senha quando indisponíveis |
 | POST | `/api/auth/login` | público | Email+senha; retorna cookie HttpOnly |
 | POST | `/api/auth/register` | público (flag) | **Fase 1 · 1D:** cria empresa nova em `PENDING_VERIFICATION` + administrador e envia o link de confirmação; responde 201 `{status:"PENDING_VERIFICATION", email}` **sem sessão**. Só responde quando `REGISTRATION_ENABLED=true` (senão 404). Rate limit por IP (`register|ip`, conta também os cadastros com sucesso). Turnstile quando `TURNSTILE_SECRET_KEY` existe (`captchaToken`; sem token ou inválido → 400). E-mail global único → 409; slug único gerado do nome da empresa |
 | POST | `/api/auth/verify-email` | público | `{token}` do link: uso único, expira em `EMAIL_VERIFICATION_TTL_HOURS` (24 h). Ativa a empresa, marca `emailVerifiedAt`, abre a sessão e devolve `{user, company}` (200). Inválido, usado ou expirado → 400. Rate limit por IP |
@@ -40,6 +41,7 @@ inclui `issues[]`).
 | GET | `/api/auth/me` | sessão | Usuário + empresa autenticados |
 | GET | `/api/users` | ADMIN | Lista usuários da empresa |
 | POST | `/api/users` | ADMIN | Cria usuário na empresa |
+| POST | `/api/users/:id/reset-password` | ADMIN | **Fase 8:** senha provisória para alguém da equipe (`{temporaryPassword}`), sem depender de e-mail; derruba as sessões. A própria senha → 403 (use `change-password`) |
 | PATCH | `/api/users/:id/status` | ADMIN | Ativa/inativa (revoga sessões) |
 | GET | `/health` | público | Liveness: processo respondendo (não toca no banco) |
 | GET | `/health/ready` | público | Readiness (Fase 1 · 1B): processo + banco (`SELECT 1`, limite de 2 s) → 200 `{status, database:"ok", databaseLatencyMs}` ou 503 `{status:"unavailable", database:"down"}`, sem detalhes internos. URL do UptimeRobot (`docs/operations/RUNBOOK.md`) |
@@ -706,6 +708,7 @@ papel ADMIN e, em produção, 2FA ativo; senão 403. Usa conexão de sistema
 | POST | `/api/platform/companies/:id/exempt` | dono | `{exempt}`: isenta ou remove a isenção |
 | POST | `/api/platform/companies/:id/suspend` | dono | `{reason}`: suspende (login bloqueado, sessões revogadas) |
 | POST | `/api/platform/companies/:id/reactivate` | dono | reativa a empresa suspensa (senão 400) |
+| POST | `/api/platform/companies/:id/reset-password` | dono | senha provisória para o admin principal da empresa (`{email, temporaryPassword}`); derruba as sessões dele |
 
 ## Padrão para módulos futuros
 

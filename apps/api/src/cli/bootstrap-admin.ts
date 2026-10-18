@@ -68,7 +68,8 @@ Exemplo de execução (PowerShell):
 
     if (!company) {
       company = await prisma.company.create({
-        data: { name: BOOTSTRAP_COMPANY_NAME, slug },
+        // Fase 8: empresa criada pela CLI (dono, demonstração) é isenta de cobrança
+        data: { name: BOOTSTRAP_COMPANY_NAME, slug, billingExempt: true },
       });
       companyCreated = true;
       console.log(`Empresa criada: ${company.name} (slug: ${company.slug})`);
@@ -103,7 +104,8 @@ Exemplo de execução (PowerShell):
 
     console.log(`Administrador criado: ${admin.email} na empresa ${company.name}.`);
     console.log(`Empresa criada nesta execução: ${companyCreated ? "sim" : "não"}`);
-    console.log("Próximo passo: faça login em http://localhost:3000/login");
+    const origin = (process.env.APP_ORIGINS ?? "http://localhost:3000").split(",")[0]?.trim();
+    console.log(`Próximo passo: faça login em ${origin}/login`);
   } finally {
     await prisma.$disconnect();
   }

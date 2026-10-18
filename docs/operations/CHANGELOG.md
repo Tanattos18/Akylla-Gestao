@@ -6,6 +6,62 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-18 - Auditoria completa (site + app)
+
+Auditoria em produção (de fora) e local, varrendo 41 telas em desktop e
+celular, como admin, membro e visitante; revisão de código da cobrança;
+re-auditoria do site de divulgação.
+
+### Corrigido
+
+- **Recuperação de senha quebrada em produção:**
+  - a tela usava uma rota de desenvolvimento (desligada em produção), e o
+    link enviado por e-mail (`/redefinir-senha?token=`) ignorava o token;
+  - agora há uma tela com três caminhos: com token define a nova senha;
+    com SMTP pede o link; sem e-mail orienta falar com o suporte.
+- **Senha provisória sem depender de e-mail:**
+  - o admin gera para alguém da equipe (`POST /api/users/:id/reset-password`,
+    botão "Nova senha" em Usuários);
+  - o dono gera para o admin do cliente (`POST /api/platform/companies/:id/reset-password`).
+- **Login e cadastro com links quebrados:**
+  - o login mostrava "Cadastre-se" mesmo com o cadastro desligado;
+  - agora `GET /api/auth/options` informa o que está disponível;
+  - sem cadastro aberto, o login mostra "Fale com a gente" e a tela de
+    cadastro orienta pelo WhatsApp.
+  - O texto do login dizia "usuário administrador", mas a equipe também
+    entra por ele.
+- **Cobrança (bug latente para quando o Mercado Pago entrar):**
+  - um checkout aberto e não pago (`EXPIRED` com data futura) contava
+    como período pago;
+  - renovar uma assinatura cancelada ainda vigente perdia os dias
+    restantes.
+  - A isenção ficou explícita (`billingExempt`) para empresas criadas pela
+    CLI e para as demonstrações (migration
+    `20261019130000_billing_exempt_backfill`).
+- **Membro (não admin) abria Configurações e Faturamento** pela URL;
+  agora vê "acesso restrito" (o servidor já bloqueava salvar).
+- **Faturamento:** fazia uma chamada que respondia 404 (erro no console)
+  quando a empresa não tem plano.
+- **Dashboard no celular:** cartões vazavam 4 px da tela (`min-w-0` no
+  `Card`).
+
+### Segurança
+
+- **Cabeçalhos nas páginas do app** (antes só a API tinha):
+  - `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy` e
+    `Permissions-Policy`;
+  - **CSP** em produção (só o próprio site, Sentry e Turnstile;
+    `frame-ancestors 'none'`).
+  - Verificado: 0 violações em todas as telas.
+- **Sem `X-Powered-By`** (Next e Express).
+- **`robots.txt`** do app: só as páginas públicas podem ser indexadas.
+  Também entrou o `favicon.ico`.
+
+### Verificação
+
+- 733 testes; 7 fluxos E2E; 0 violações de acessibilidade.
+- Varredura de 41 telas sem erro de console nem vazamento no celular.
+
 ## [Akylla Gestão] - 2026-10-18 - Liberação de clientes sem terminal
 
 - **Plataforma › + Nova empresa** (`POST /api/platform/companies`):

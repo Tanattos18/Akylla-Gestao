@@ -6,6 +6,9 @@ import { useRouter } from "next/navigation";
 import { api, ApiError } from "../../lib/api";
 import { fetchSession, type Session } from "../../lib/session";
 import { DataTable } from "../../components/ui/DataTable";
+import { TemporaryPasswordDialog } from "../../components/ui/TemporaryPasswordDialog";
+import { useDialog } from "../../components/ui/Dialog";
+import { useToast } from "../../components/ui/Toast";
 
 interface UserDto {
   id: string;
@@ -31,6 +34,24 @@ export default function UsuariosPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [tempPassword, setTempPassword] = useState<{ name: string; email: string; password: string } | null>(null);
+  const confirmDialog = useDialog();
+  const toast = useToast();
+
+  async function handleResetPassword(user: UserDto) {
+    const ok = await confirmDialog.confirm({
+      title: `Gerar senha provisória para ${user.name}?`,
+      description: "A senha atual deixa de valer e a pessoa é desconectada.",
+      confirmLabel: "Gerar senha",
+    });
+    if (!ok) return;
+    try {
+      const result = await api<{ temporaryPassword: string }>(`/api/users/${user.id}/reset-password`, { method: "POST" });
+      setTempPassword({ name: user.name, email: user.email, password: result.temporaryPassword });
+    } catch (err) {
+      toast.error(err, "Não foi possível gerar a senha.");
+    }
+  }
   const [notice, setNotice] = useState<string | null>(null);
 
   const loadUsers = useCallback(async () => {
@@ -271,7 +292,15 @@ export default function UsuariosPage() {
                     >
                       {user.status === "ACTIVE" ? "Ativo" : "Inativo"}
                     </span></> },
-            { key: "c4", header: "Ações", cell: (user) => <>{user.id !== session.user.id &&
+            { key: "c4", header: "Ações", cell: (user) => <span className="flex flex-wrap gap-3">{user.id !== session.user.id && user.status === "ACTIVE" && (
+                        <button
+                          type="button"
+                          onClick={() => void handleResetPassword(user)}
+                          className="text-xs font-medium text-slate-700 hover:underline"
+                        >
+                          Nova senha
+                        </button>
+                      )}{user.id !== session.user.id &&
                       (user.status === "ACTIVE" ? (
                         <button
                           type="button"
@@ -288,10 +317,11 @@ export default function UsuariosPage() {
                         >
                           Reativar
                         </button>
-                      ))}</> },
+                      ))}</span> },
           ]}
         />
       </div>
+      <TemporaryPasswordDialog data={tempPassword} onClose={() => setTempPassword(null)} />
     </div>
   );
 }

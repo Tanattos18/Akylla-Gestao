@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, Patch, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, Inject, Param, Patch, Post, UseGuards } from "@nestjs/common";
 import { createUserSchema, updateUserStatusSchema, type CreateUserInput, type UpdateUserStatusInput } from "@petflow/shared";
 import { AdminGuard } from "../common/guards/admin.guard";
 import { Auth, type AuthContext } from "../common/decorators/auth.decorator";
@@ -21,6 +21,13 @@ export class UsersController {
     @Body(new ZodValidationPipe(createUserSchema)) body: CreateUserInput,
   ) {
     return this.usersService.create(auth, body);
+  }
+
+  /** Fase 8: senha provisória para alguém da equipe (sem depender de e-mail). */
+  @Post(":id/reset-password")
+  @HttpCode(200)
+  resetPassword(@Auth() auth: AuthContext, @Param("id") id: string) {
+    return this.usersService.resetPassword(auth, id);
   }
 
   @Patch(":id/status")

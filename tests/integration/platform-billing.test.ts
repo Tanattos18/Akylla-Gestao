@@ -284,3 +284,57 @@ describe("novo cliente pelo painel e troca de senha", () => {
     expect(res.status).toBe(403);
   });
 });
+
+describe("recuperação de acesso sem e-mail (auditoria)", () => {
+  it("/api/auth/options informa o que está disponível (público)", async () => {
+    const res = await http().get("/api/auth/options");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ registrationEnabled: true, emailEnabled: expect.any(Boolean) });
+  });
+
+  it("dono gera senha provisória para o admin do cliente; a antiga deixa de valer", async () => {
+    const id = (await prisma.company.findFirstOrThrow({ where: { slug: "mercadinho-do-ze" } })).id;
+    const old = await login("ze@mercadinho.test").catch(() => null);
+    const res = await http().post(`/api/platform/companies/${id}/reset-password`).set("Cookie", ownerCookie);
+    expect(res.status).toBe(200);
+    expect(res.body.email).toBe("ze@mercadinho.test");
+    expect((await http().post("/api/auth/login").send({ email: "ze@mercadinho.test", password: "NovaSenhaDoZe123" })).status).toBe(401);
+    expect((await http().post("/api/auth/login").send({ email: "ze@mercadinho.test", password: res.body.temporaryPassword })).status).toBe(200);
+    if (old) expect((await http().get("/api/auth/me").set("Cookie", old)).status).toBe(401);
+  });
+
+  it("admin gera senha provisória para alguém da equipe; não para si mesmo; membro não pode", async () => {
+    const companyId = (await prisma.company.findFirstOrThrow({ where: { slug: "teste" } })).id;
+    const member = await prisma.user.findFirstOrThrow({ where: { companyId, role: "MEMBER" } });
+    const admin = await prisma.user.findFirstOrThrow({ where: { companyId, role: "ADMIN" } });
+    const adminCookie = await login("admin@teste.test");
+    const memberCookie = await login("member@teste.test");
+
+    expect((await http().post(`/api/users/${member.id}/reset-password`).set("Cookie", memberCookie)).status).toBe(403);
+    expect((await http().post(`/api/users/${admin.id}/reset-password`).set("Cookie", adminCookie)).status).toBe(403);
+
+    const res = await http().post(`/api/users/${member.id}/reset-password`).set("Cookie", adminCookie);
+    expect(res.status).toBe(200);
+    expect((await http().get("/api/auth/me").set("Cookie", memberCookie)).status).toBe(401);
+    expect((await http().post("/api/auth/login").send({ email: "member@teste.test", password: res.body.temporaryPassword })).status).toBe(200);
+
+    // outra empresa → 404
+    const other = (await prisma.user.findFirstOrThrow({ where: { email: "member@isenta.test" } })).id;
+    expect((await http().post(`/api/users/${other}/reset-password`).set("Cookie", adminCookie)).status).toBe(404);
+  });
+
+  it("checkout aberto e não pago não conta como período pago", () => {
+    const now = new Date("2026-10-18T12:00:00Z");
+    const pending = computeAccess(
+      {
+        companyStatus: "ACTIVE",
+        billingExempt: false,
+        trialEndsAt: new Date(now.getTime() - 10 * DAY_MS),
+        subscription: { status: "EXPIRED", currentPeriodEnd: new Date(now.getTime() + 30 * DAY_MS), billingCycle: "MONTHLY", planName: "Essencial" },
+      },
+      now,
+    );
+    expect(pending.status).toBe("READ_ONLY");
+  });
+});
+

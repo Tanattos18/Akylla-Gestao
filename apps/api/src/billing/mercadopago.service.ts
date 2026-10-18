@@ -108,6 +108,8 @@ export class MercadoPagoService {
         companyId,
         planId: plan.id,
         status: "EXPIRED",
+        // Fase 8: EXPIRED com fim no futuro = checkout pendente; computeAccess
+        // não conta como período pago até o webhook confirmar (ACTIVE).
         currentPeriodStart: new Date(),
         currentPeriodEnd: new Date(Date.now() + plan.durationDays * 86_400_000),
         gateway: "MERCADO_PAGO",

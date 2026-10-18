@@ -13,6 +13,7 @@ export async function createTestApp(): Promise<{
 }> {
   const app = await NestFactory.create(AppModule, { logger: false, rawBody: true });
   app.setGlobalPrefix("api", { exclude: ["health", "health/ready"] });
+  app.getHttpAdapter().getInstance().disable("x-powered-by");
   app.use(cookieParser());
   app.use(securityHeadersMiddleware);
   app.useGlobalFilters(new AllExceptionsFilter());

@@ -6,6 +6,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import bcrypt from "bcryptjs";
+import { randomBytes } from "node:crypto";
 import { PrismaService } from "../prisma/prisma.module";
 import { TenantLimitsService } from "../tenant-limits/tenant-limits.service";
 import type { CreateUserInput, UpdateUserStatusInput } from "@petflow/shared";
@@ -94,5 +95,30 @@ export class UsersService {
     }
 
     return updated;
+  }
+
+  /**
+   * Fase 8 (auditoria): o administrador gera uma senha provisória para alguém
+   * da equipe que esqueceu a senha (funciona sem e-mail configurado). Derruba
+   * as sessões do usuário. A própria senha se troca em Minha conta.
+   */
+  async resetPassword(auth: AuthContext, userId: string): Promise<{ temporaryPassword: string }> {
+    if (userId === auth.userId) {
+      throw new ForbiddenException("Para a sua própria senha, use Minha conta");
+    }
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, companyId: auth.companyId },
+      select: { id: true },
+    });
+    if (!user) throw new NotFoundException("Usuário não encontrado");
+    const temporaryPassword = `Akylla-${randomBytes(9).toString("base64url")}`;
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash: await bcrypt.hash(temporaryPassword, BCRYPT_ROUNDS) },
+      }),
+      this.prisma.session.updateMany({ where: { userId: user.id, revokedAt: null }, data: { revokedAt: new Date() } }),
+    ]);
+    return { temporaryPassword };
   }
 }

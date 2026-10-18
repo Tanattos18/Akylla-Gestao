@@ -31,7 +31,10 @@ export interface AccessInput {
  */
 export function computeAccess(input: AccessInput, now: Date = new Date()): AccessSummaryDto {
   const sub = input.subscription;
-  const paidUntil = sub ? sub.currentPeriodEnd : null;
+  // EXPIRED com fim no futuro = checkout aberto e ainda não pago: não vale
+  // como período pago (só a expiração natural mantém a data).
+  const pendingCheckout = sub?.status === "EXPIRED" && sub.currentPeriodEnd.getTime() > now.getTime();
+  const paidUntil = sub && !pendingCheckout ? sub.currentPeriodEnd : null;
   const base = {
     trialEndsAt: input.trialEndsAt?.toISOString() ?? null,
     paidUntil: paidUntil?.toISOString() ?? null,
@@ -42,7 +45,7 @@ export function computeAccess(input: AccessInput, now: Date = new Date()): Acces
   if (input.companyStatus === "INACTIVE") {
     return { ...base, status: "SUSPENDED", graceEndsAt: null, daysLeft: null, readOnly: true };
   }
-  if (input.billingExempt || (!sub && !input.trialEndsAt)) {
+  if (input.billingExempt || ((!sub || pendingCheckout) && !input.trialEndsAt)) {
     return { ...base, status: "EXEMPT", graceEndsAt: null, daysLeft: null, readOnly: false };
   }
 

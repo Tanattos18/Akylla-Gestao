@@ -1522,6 +1522,12 @@ export const platformCompaniesQuerySchema = z.object({
 });
 export type PlatformCompaniesQuery = z.infer<typeof platformCompaniesQuerySchema>;
 
+/** GET /api/auth/options (público) */
+export interface AuthOptionsDto {
+  registrationEnabled: boolean;
+  emailEnabled: boolean;
+}
+
 /** Trocar a própria senha (qualquer usuário logado). */
 export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, "Informe a senha atual").max(200),

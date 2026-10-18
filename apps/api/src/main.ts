@@ -17,6 +17,8 @@ async function bootstrap() {
   const logger = new Logger("Bootstrap");
 
   app.setGlobalPrefix("api", { exclude: ["health", "health/ready"] });
+  // Não anunciar a tecnologia do servidor (auditoria pós-Fase 8)
+  app.getHttpAdapter().getInstance().disable("x-powered-by");
   app.use(cookieParser());
   app.use(securityHeadersMiddleware);
   app.useGlobalFilters(new AllExceptionsFilter());

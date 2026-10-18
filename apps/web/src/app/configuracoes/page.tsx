@@ -8,6 +8,7 @@ import { Tabs } from "../../components/ui/Tabs";
 import { useToast } from "../../components/ui/Toast";
 import { CompanyForm } from "../../components/settings/CompanyForm";
 import { SecurityForm } from "../../components/settings/SecurityForm";
+import { fetchSession } from "../../lib/session";
 
 const segmentLabels: Record<string, string> = {
   COMERCIO: "Comércio",
@@ -25,6 +26,11 @@ export default function ConfiguracoesPage() {
   const [changed, setChanged] = useState(false);
   const [tab, setTab] = useState<"empresa" | "modulos" | "perfil" | "seguranca">("empresa");
   const toast = useToast();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    fetchSession().then((session) => setIsAdmin(session?.user.role === "ADMIN"));
+  }, []);
 
   useEffect(() => {
     api<CompanyModuleDto[]>("/api/company-modules").then(setModules).catch(() => setModules([]));
@@ -50,6 +56,14 @@ export default function ConfiguracoesPage() {
     } finally {
       setSaving(null);
     }
+  }
+
+  if (isAdmin === false) {
+    return (
+      <p role="alert" className="mx-auto max-w-3xl rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        Acesso restrito: apenas administradores alteram as configurações da empresa.
+      </p>
+    );
   }
 
   return (

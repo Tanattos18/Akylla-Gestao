@@ -5,8 +5,10 @@ import Link from "next/link";
 import { api, ApiError } from "../../lib/api";
 import { ResendVerification } from "../../components/auth/ResendVerification";
 import { Turnstile, turnstileSiteKey } from "../../components/auth/Turnstile";
+import { useAuthOptions, whatsappLink } from "../../lib/auth-options";
 
 export default function CadastroPage() {
+  const authOptions = useAuthOptions();
   const [companyName, setCompanyName] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -70,6 +72,34 @@ export default function CadastroPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (authOptions && !authOptions.registrationEnabled) {
+    return (
+      <div className="mx-auto max-w-md">
+        <div className="rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
+          <h2 className="mb-2 text-xl font-semibold text-slate-900">Cadastro pelo atendimento</h2>
+          <p className="text-sm text-slate-700">
+            No momento, as novas contas são criadas pela equipe da Akylla. Fale com a gente e liberamos o seu
+            teste grátis de 14 dias.
+          </p>
+          <a
+            href={whatsappLink("Olá! Quero testar o Akylla Gestão.")}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 block w-full rounded-md bg-primary-700 px-4 py-2 text-center text-sm font-medium text-white hover:bg-primary-800"
+          >
+            Falar no WhatsApp
+          </a>
+          <p className="mt-6 text-center text-sm">
+            Já tem conta?{" "}
+            <Link href="/login" className="text-primary-700 hover:underline">
+              Entrar
+            </Link>
+          </p>
+        </div>
+      </div>
+    );
   }
 
   if (sentTo) {

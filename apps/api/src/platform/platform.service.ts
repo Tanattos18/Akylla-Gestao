@@ -206,8 +206,10 @@ export class PlatformService implements OnModuleDestroy {
       if (!company) throw new NotFoundException("Empresa não encontrada");
       const current = await tx.tenantSubscription.findUnique({ where: { companyId } });
       const now = new Date();
+      // Período ainda pago (ativa ou cancelada que vale até o fim) é preservado;
+      // checkout pendente (EXPIRED com data futura) não conta.
       const start =
-        current && current.status !== "CANCELLED" && current.currentPeriodEnd > now ? current.currentPeriodEnd : now;
+        current && current.status !== "EXPIRED" && current.currentPeriodEnd > now ? current.currentPeriodEnd : now;
       const end = new Date(start.getTime() + days * DAY_MS);
       await tx.tenantSubscription.upsert({
         where: { companyId },
@@ -287,6 +289,23 @@ export class PlatformService implements OnModuleDestroy {
     });
     this.logger.log(`Empresa ${company.id} (${slug}) cadastrada por ${by}, teste de ${input.trialDays} dia(s)`);
     return { company: await this.getCompany(company.id), temporaryPassword };
+  }
+
+  /** Senha provisória para o administrador da empresa (cliente esqueceu a senha). */
+  async resetAdminPassword(companyId: string, by: string): Promise<{ email: string; temporaryPassword: string }> {
+    const admin = await this.db.user.findFirst({
+      where: { companyId, role: "ADMIN", status: "ACTIVE" },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, email: true },
+    });
+    if (!admin) throw new NotFoundException("Empresa sem administrador ativo");
+    const temporaryPassword = `Akylla-${randomBytes(9).toString("base64url")}`;
+    await this.db.$transaction([
+      this.db.user.update({ where: { id: admin.id }, data: { passwordHash: await bcrypt.hash(temporaryPassword, 12) } }),
+      this.db.session.updateMany({ where: { userId: admin.id, revokedAt: null }, data: { revokedAt: new Date() } }),
+    ]);
+    this.logger.log(`Senha provisória gerada por ${by} para o admin da empresa ${companyId}`);
+    return { email: admin.email, temporaryPassword };
   }
 
   async extendTrial(companyId: string, days: number, by: string): Promise<PlatformCompanyDto> {

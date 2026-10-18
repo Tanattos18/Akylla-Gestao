@@ -54,6 +54,19 @@ export class AuthController {
     @Inject(CAPTCHA_VERIFIER) private readonly captcha: CaptchaVerifier,
   ) {}
 
+  /**
+   * Fase 8 (auditoria): o que está disponível nesta instalação, para as telas
+   * públicas não mostrarem links quebrados (cadastro desligado, sem SMTP).
+   */
+  @Public()
+  @Get("options")
+  options() {
+    return {
+      registrationEnabled: env.REGISTRATION_ENABLED,
+      emailEnabled: Boolean(env.SMTP_HOST),
+    };
+  }
+
   @Public()
   @Post("login")
   @HttpCode(200)

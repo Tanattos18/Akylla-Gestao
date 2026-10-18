@@ -18,6 +18,7 @@ import type { TenantPlanDto } from "../../lib/types";
 import { DataTable } from "../../components/ui/DataTable";
 import { Dialog, useDialog } from "../../components/ui/Dialog";
 import { useToast } from "../../components/ui/Toast";
+import { TemporaryPasswordDialog } from "../../components/ui/TemporaryPasswordDialog";
 
 const STATUS_ORDER: AccessStatus[] = ["TRIAL", "ACTIVE", "GRACE", "READ_ONLY", "SUSPENDED", "EXEMPT"];
 
@@ -58,6 +59,17 @@ export default function PlataformaPage() {
   const [creating, setCreating] = useState(false);
   const [createForm, setCreateForm] = useState({ companyName: "", adminName: "", adminEmail: "", trialDays: "14" });
   const [created, setCreated] = useState<PlatformCreateCompanyResult | null>(null);
+  const [resetResult, setResetResult] = useState<{ name: string | null; email: string; password: string } | null>(null);
+
+  async function resetAdminPassword(company: PlatformCompanyDto) {
+    if (!(await dialog.confirm({ title: `Gerar senha provisória para o admin de ${company.name}?`, description: "A senha atual deixa de valer e ele é desconectado." }))) return;
+    try {
+      const r = await api<{ email: string; temporaryPassword: string }>(`/api/platform/companies/${company.id}/reset-password`, { method: "POST" });
+      setResetResult({ name: company.adminName, email: r.email, password: r.temporaryPassword });
+    } catch (err) {
+      toast.error(err);
+    }
+  }
 
   const welcomeMessage = created
     ? `Olá, ${created.company.adminName ?? ""}! Seu acesso ao Akylla Gestão está pronto.\n\n` +
@@ -358,6 +370,9 @@ export default function PlataformaPage() {
                 <button type="button" onClick={() => void toggleHistory(c)} aria-expanded={history?.id === c.id} className="text-slate-700 hover:underline">
                   Pagamentos
                 </button>
+                <button type="button" disabled={busy} onClick={() => void resetAdminPassword(c)} className="text-slate-700 hover:underline">
+                  Nova senha
+                </button>
                 {c.access.status === "SUSPENDED" ? (
                   <button type="button" disabled={busy} onClick={() => void reactivate(c)} className="text-emerald-700 hover:underline">
                     Reativar
@@ -462,6 +477,8 @@ export default function PlataformaPage() {
           </div>
         </form>
       </Dialog>
+
+      <TemporaryPasswordDialog data={resetResult} onClose={() => setResetResult(null)} />
 
       <Dialog
         open={created !== null}
