@@ -52,6 +52,19 @@ O cadastro aberto começa **desligado** (`REGISTRATION_ENABLED=false`)
 porque exige SMTP. Para ligar: preencha `SMTP_*` no arquivo, mude para
 `true` e rode `sudo systemctl restart akylla-api`.
 
+## 2b. Empresa de demonstração (apresentações)
+
+```bash
+sudo bash /opt/akylla/scripts/deploy/vps/create-demo.sh comercio   # ou servicos, alimentacao, pet
+```
+
+Cria "Demonstração - <marca>" com login `demo-<preset>@akyllagestao.com.br`
+(a senha é digitada na hora), isenta de cobrança, populada com dados
+fictícios: catálogo, clientes, 30 dias de vendas e caixa, agenda,
+assinaturas e WhatsApp. O membro de equipe recebe uma senha aleatória
+mostrada no fim. Para demonstrar a importação ao vivo, use as planilhas
+fictícias de `docs/demo/`.
+
 ## 3. Atualizar
 
 ```bash

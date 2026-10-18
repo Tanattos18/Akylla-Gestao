@@ -1,0 +1,26 @@
+﻿nome;sku;codigo_barras;unidade;preco_custo;preco_venda;estoque_minimo;saldo_inicial;categoria;fornecedor
+Biscoito Recheado Chocolate 130g;DEMO-001;7892000000001;UNIDADE;2,10;3,99;20;60;Mercearia;Atacadão Paulista
+Óleo de Soja 900ml;DEMO-002;7892000000002;UNIDADE;5,20;7,49;15;40;Mercearia;Atacadão Paulista
+Açúcar Refinado 1kg;DEMO-003;7892000000003;PACOTE;3,40;4,99;20;50;Mercearia;Atacadão Paulista
+Farinha de Trigo 1kg;DEMO-004;7892000000004;PACOTE;3,10;4,79;15;35;Mercearia;Atacadão Paulista
+Sardinha em Lata 125g;DEMO-005;7892000000005;UNIDADE;4,20;6,99;12;30;Mercearia;Distribuidora Bom Gosto
+Achocolatado em Pó 400g;DEMO-006;7892000000006;UNIDADE;6,80;10,90;10;25;Mercearia;Distribuidora Bom Gosto
+Chá Mate Gelado 1,5L;DEMO-007;7892000000007;UNIDADE;4,50;7,90;12;30;Bebidas;Distribuidora Bom Gosto
+Energético 473ml;DEMO-008;7892000000008;UNIDADE;6,20;10,99;12;24;Bebidas;Distribuidora Bom Gosto
+Água com Gás 500ml;DEMO-009;7892000000009;UNIDADE;1,40;3,29;24;48;Bebidas;Distribuidora Bom Gosto
+Desinfetante Lavanda 2L;DEMO-010;7892000000010;UNIDADE;6,90;11,49;10;20;Limpeza;Limpa Bem Distribuição
+Limpador Multiuso 500ml;DEMO-011;7892000000011;UNIDADE;3,20;5,99;12;30;Limpeza;Limpa Bem Distribuição
+Saco de Lixo 50L (10 un);DEMO-012;7892000000012;PACOTE;4,10;7,49;10;25;Limpeza;Limpa Bem Distribuição
+Shampoo 350ml;DEMO-013;7892000000013;UNIDADE;9,50;16,90;8;18;Higiene Pessoal;Limpa Bem Distribuição
+Desodorante Aerossol 150ml;DEMO-014;7892000000014;UNIDADE;8,90;15,49;8;20;Higiene Pessoal;Limpa Bem Distribuição
+Escova Dental Macia;DEMO-015;7892000000015;UNIDADE;2,90;5,99;15;40;Higiene Pessoal;Limpa Bem Distribuição
+Panela Antiaderente 20cm;DEMO-016;7892000000016;UNIDADE;42,00;74,90;3;6;Utilidades;Casa & Cia Utilidades
+Jogo de Copos 6 un;DEMO-017;7892000000017;CAIXA;22,00;39,90;3;8;Utilidades;Casa & Cia Utilidades
+Lâmpada LED 9W;DEMO-018;7892000000018;UNIDADE;6,50;12,90;10;25;Utilidades;Casa & Cia Utilidades
+Extensão Elétrica 3m;DEMO-019;7892000000019;UNIDADE;15,00;27,90;4;10;Utilidades;Casa & Cia Utilidades
+Lápis Preto (cx 12);DEMO-020;7892000000020;CAIXA;7,20;13,90;6;15;Papelaria;Papelaria Atlas
+Borracha Branca;DEMO-021;7892000000021;UNIDADE;0,80;1,99;20;60;Papelaria;Papelaria Atlas
+Cola Branca 90g;DEMO-022;7892000000022;UNIDADE;2,30;4,50;12;30;Papelaria;Papelaria Atlas
+Mochila Escolar;DEMO-023;7892000000023;UNIDADE;48,00;89,90;3;7;Papelaria;Papelaria Atlas
+Agenda 2027;DEMO-024;7892000000024;UNIDADE;18,00;34,90;5;12;Papelaria;Papelaria Atlas
+Pilha AAA (4 un);DEMO-025;7892000000025;PACOTE;8,50;15,90;6;1;Utilidades;Casa & Cia Utilidades

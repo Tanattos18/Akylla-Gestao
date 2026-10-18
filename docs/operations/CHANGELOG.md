@@ -6,6 +6,20 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-18 - Demonstração e correção do backup na VPS
+
+- **`scripts/deploy/vps/create-demo.sh`:** cria uma empresa de
+  demonstração isenta, já populada com dados fictícios por segmento.
+- **`docs/demo/`:** planilhas CSV fictícias (categorias, fornecedores, 25
+  produtos, 30 clientes, serviços), validadas na simulação de importação,
+  para demonstrar a importação ao vivo.
+- **Seed em produção:** o membro de equipe da demonstração recebe senha
+  aleatória (antes era sempre a mesma senha pública).
+- **Corrigido:** o role `akylla_app` não tinha `CREATEDB`, e o backup
+  diário (que testa o restore num banco temporário) e o `update.sh`
+  falhariam. O `install.sh` e o `update.sh` agora garantem a permissão.
+  `CREATEDB` não dá superusuário nem ignora a RLS.
+
 ## [Akylla Gestão] - 2026-10-18 - Sistema no ar
 
 - **Endereço:** `https://app.akyllagestao.com.br`, na VPS Hostinger KVM 1

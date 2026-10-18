@@ -281,7 +281,9 @@ Os presets (sempre numa empresa vazia) são:
 - `pet`: Mundo Pet.
 
 Cada um cria catálogo, clientes, 30 dias de vendas e caixa, agenda,
-assinaturas e WhatsApp de exemplo.
+assinaturas e WhatsApp de exemplo. Na VPS, o comando é
+`sudo bash /opt/akylla/scripts/deploy/vps/create-demo.sh comercio`.
+Planilhas fictícias para demonstrar a importação: [`docs/demo/`](docs/demo/LEIA-ME.md).
 
 ---
 

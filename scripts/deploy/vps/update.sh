@@ -11,6 +11,7 @@ BRANCH="${BRANCH:-main}"
 
 before="$(sudo -u "$APP_USER" git -C "$APP_DIR" rev-parse --short HEAD)"
 echo "==> Backup antes de atualizar"
+sudo -u postgres psql -c "ALTER ROLE akylla_app CREATEDB;" >/dev/null 2>&1 || true
 sudo -u "$APP_USER" bash -c "cd '$APP_DIR' && npm run db:backup"
 
 echo "==> Código ($BRANCH)"

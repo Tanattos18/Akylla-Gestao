@@ -1,5 +1,6 @@
 import "dotenv/config";
 import bcrypt from "bcryptjs";
+import { randomBytes } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { systemDatabaseUrl } from "../common/tenant/rls.extension";
 import { ALIMENTACAO, COMERCIO, SERVICOS, type SeedDataset } from "./seed-datasets";
@@ -9,6 +10,9 @@ const prisma = new PrismaClient({
   datasources: { db: { url: systemDatabaseUrl(process.env.DATABASE_URL ?? "") } },
 });
 const BCRYPT_ROUNDS = 12;
+/** Senha do membro de demonstração: fixa no desenvolvimento, aleatória em produção. */
+const MEMBER_PASSWORD =
+  process.env.NODE_ENV === "production" ? `Demo-${randomBytes(9).toString("base64url")}` : "SenhaForte123!";
 const OFFSET_MIN = -180;
 const RECEIPT_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
@@ -569,7 +573,7 @@ async function main() {
       }
       counts.subscriptionPlans = PLAN_ROWS.length;
 
-      const memberPassword = await bcrypt.hash("SenhaForte123!", BCRYPT_ROUNDS);
+      const memberPassword = await bcrypt.hash(MEMBER_PASSWORD, BCRYPT_ROUNDS);
       const member = await tx.user.create({
         data: {
           companyId,
@@ -1129,7 +1133,7 @@ async function main() {
   console.log("");
   console.log("Contas de demonstração:");
   console.log(`  Admin:   ${admin.email} (senha: a já usada)`);
-  console.log(`  Membro:  ${DATA.memberEmail} / SenhaForte123!`);
+  console.log(`  Membro:  ${DATA.memberEmail} / ${MEMBER_PASSWORD}`);
 }
 
 main()

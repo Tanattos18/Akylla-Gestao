@@ -86,9 +86,10 @@ if [[ ! -f "$ENV_FILE" ]]; then
   sudo -u postgres psql -v ON_ERROR_STOP=1 <<SQL
 DO \$\$ BEGIN
   IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '$DB_ROLE') THEN
-    CREATE ROLE $DB_ROLE LOGIN PASSWORD '$DB_PASS' NOSUPERUSER NOBYPASSRLS NOCREATEROLE;
+    -- CREATEDB: o backup diário testa o restore num banco temporário
+    CREATE ROLE $DB_ROLE LOGIN PASSWORD '$DB_PASS' NOSUPERUSER NOBYPASSRLS NOCREATEROLE CREATEDB;
   ELSE
-    ALTER ROLE $DB_ROLE WITH LOGIN PASSWORD '$DB_PASS' NOSUPERUSER NOBYPASSRLS;
+    ALTER ROLE $DB_ROLE WITH LOGIN PASSWORD '$DB_PASS' NOSUPERUSER NOBYPASSRLS CREATEDB;
   END IF;
 END \$\$;
 SQL
@@ -141,6 +142,8 @@ ENV
 else
   echo "$ENV_FILE já existe: mantido (senhas e chaves não mudam)."
 fi
+# Backup testa o restore num banco temporário: o role precisa de CREATEDB
+sudo -u postgres psql -v ON_ERROR_STOP=1 -c "ALTER ROLE $DB_ROLE CREATEDB;" >/dev/null
 # O código lê .env da raiz: link para o arquivo protegido
 ln -sf "$ENV_FILE" "$APP_DIR/.env"
 
