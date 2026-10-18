@@ -23,6 +23,9 @@ export async function createTestApp(): Promise<{
 }
 
 export async function resetDatabase(prisma: PrismaService): Promise<void> {
+  // Fase 2 · 2.2: parcela referencia venda/conta; conta referencia cliente
+  await prisma.creditInstallment.deleteMany();
+  await prisma.creditAccount.deleteMany();
   // Fase 2 · 2.1: comissão referencia venda/profissional (Restrict)
   await prisma.commission.deleteMany();
   await prisma.commissionRule.deleteMany();

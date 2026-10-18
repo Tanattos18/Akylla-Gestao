@@ -26,6 +26,7 @@ import {
   releasesOnSale,
   type CalculatorLine,
 } from "./commission-calculator";
+import { releaseCommissionInTx } from "./commission-release";
 
 type Tx = Prisma.TransactionClient;
 
@@ -366,32 +367,9 @@ export class CommissionsService {
     return commission.id;
   }
 
-  /** PENDING → RELEASED + conta a pagar (origin COMMISSION). */
-  private async releaseInTx(tx: Tx, auth: AuthContext, commissionId: string, label: string) {
-    const now = new Date();
-    const updated = await tx.commission.updateMany({
-      where: { id: commissionId, companyId: auth.companyId, status: "PENDING" },
-      data: { status: "RELEASED", releasedAt: now },
-    });
-    if (updated.count === 0) throw new ConflictException("Comissão não está pendente");
-    const commission = await tx.commission.findFirstOrThrow({
-      where: { id: commissionId },
-      select: { amount: true },
-    });
-    const entry = await tx.financialEntry.create({
-      data: {
-        companyId: auth.companyId,
-        direction: "PAYABLE",
-        description: `Comissão: ${label}`,
-        amount: commission.amount,
-        dueDate: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
-        origin: "COMMISSION",
-        originId: commissionId,
-        createdByUserId: auth.userId,
-      },
-      select: { id: true },
-    });
-    await tx.commission.update({ where: { id: commissionId }, data: { financialEntryId: entry.id } });
+  /** PENDING → RELEASED + conta a pagar (ver commission-release.ts). */
+  private releaseInTx(tx: Tx, auth: AuthContext, commissionId: string, label: string) {
+    return releaseCommissionInTx(tx, auth, commissionId, label);
   }
 
   /**

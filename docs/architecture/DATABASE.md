@@ -1,5 +1,18 @@
 # Banco de dados — diretrizes e modelo atual
 
+## Modelos implementados (Fase 2 · 2.2 — Crediário)
+
+Migration: `20261018170000_credit` (aditiva + RLS nas 2 tabelas novas).
+
+| Modelo | Campos principais | Restrições/índices |
+|---|---|---|
+| `CreditAccount` | `companyId`, `clientId` (**único**: um crediário por cliente), `creditLimit`, `balance` (saldo em aberto, mantido na transação), `status` (`ACTIVE`/`BLOCKED`) | índice `[companyId, status]` |
+| `CreditInstallment` | `companyId`, `creditAccountId`, `saleId`, `number`, `totalInstallments`, `dueDate`, `amount`, `status` (`OPEN`/`PAID`/`OVERDUE`/`CANCELLED`), `paidAt?`, `cancelledAt?`, `financialEntryId?` (único) | único `[saleId, number]`; índices `[companyId, status, dueDate]`, `[creditAccountId, status]` |
+
+Alterações aditivas: `PaymentMethod` ganha `CREDIARIO`, `FinancialOrigin`
+ganha `CREDIT_SALE` e `BusinessModule` ganha `CREDIT`. Todas as FKs são
+`Restrict`; nada é apagado (parcela cancelada fica com histórico).
+
 ## Modelos implementados (Fase 2 · 2.1 — Comissões)
 
 Migration: `20261018150000_commissions` (aditiva + RLS nas 3 tabelas novas).

@@ -16,6 +16,7 @@ import type {
 import type { AuthContext } from "../common/decorators/auth.decorator";
 import { lockOpenCashSession } from "../cash/cash-session.helpers";
 import { CommissionsService } from "../commissions/commissions.service";
+import { CreditService } from "../credit/credit.service";
 
 const saleSelect = {
   id: true,
@@ -91,6 +92,7 @@ export class SalesService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(CommissionsService) private readonly commissions: CommissionsService,
+    @Inject(CreditService) private readonly credit: CreditService,
   ) {}
 
   async create(auth: AuthContext, input: CreateSaleInput) {
@@ -185,6 +187,14 @@ export class SalesService {
         const total = subtotal.minus(discount);
         const receiptCode = generateReceiptCode();
 
+        // Fase 2 · 2.2: venda no crediário — trava a conta do cliente (depois
+        // de caixa e produtos: ordem fixa) e valida aprovação e limite
+        const isCredit = input.paymentMethod === "CREDIARIO";
+        const creditAccount =
+          isCredit && input.clientId
+            ? await this.credit.lockAndCheckForSale(tx, auth, input.clientId, total)
+            : null;
+
         const sale = await tx.sale.create({
           data: {
             companyId: auth.companyId,
@@ -232,9 +242,20 @@ export class SalesService {
           });
         }
 
+        // Fase 2 · 2.2: a prazo não entra no caixa agora — cada parcela vira
+        // um a receber e entra no caixa quando for paga
+        if (creditAccount && input.credit && input.clientId) {
+          await this.credit.createForSale(
+            tx,
+            auth,
+            { id: sale.id, receiptCode, total, clientId: input.clientId, accountId: creditAccount.id },
+            input.credit,
+          );
+        }
+
         // Lançamento financeiro único da venda (unicidade garantida pelo
         // unique (origin, saleId) além da transação atômica).
-        await tx.cashMovement.create({
+        if (!isCredit) await tx.cashMovement.create({
           data: {
             companyId: auth.companyId,
             cashSessionId: cashSession.id,
@@ -257,7 +278,8 @@ export class SalesService {
             subtotal,
             total,
             professionalId: input.professionalId,
-            paidNow: true,
+            // a prazo: comissões ON_PAYMENT/SPLIT aguardam a quitação
+            paidNow: !isCredit,
             lines: sale.items.map((item) => {
               const product = products.get(item.productId);
               return {
@@ -408,19 +430,30 @@ export class SalesService {
       }
 
       // Reversão financeira única do cancelamento na sessão aberta atual.
-      await tx.cashMovement.create({
-        data: {
-          companyId: auth.companyId,
-          cashSessionId: cashSession.id,
-          type: "OUT",
-          origin: "SALE_CANCELMENT",
-          inCash: sale.paymentMethod === "CASH",
-          amount: sale.total,
-          description: `Cancelamento da venda ${sale.receiptCode}`,
-          saleId: sale.id,
-          createdByUserId: auth.userId,
-        },
-      });
+      // Fase 2 · 2.2: no crediário só se devolve o que já foi pago (as
+      // parcelas em aberto são canceladas e saem do saldo do cliente).
+      const refund =
+        sale.paymentMethod === "CREDIARIO"
+          ? await this.credit.cancelForSale(tx, auth, sale.id, input.reason)
+          : sale.total;
+      if (refund.gt(0)) {
+        await tx.cashMovement.create({
+          data: {
+            companyId: auth.companyId,
+            cashSessionId: cashSession.id,
+            type: "OUT",
+            origin: "SALE_CANCELMENT",
+            inCash: sale.paymentMethod === "CASH" || sale.paymentMethod === "CREDIARIO",
+            amount: refund,
+            description:
+              sale.paymentMethod === "CREDIARIO"
+                ? `Cancelamento da venda ${sale.receiptCode} (devolução das parcelas pagas)`
+                : `Cancelamento da venda ${sale.receiptCode}`,
+            saleId: sale.id,
+            createdByUserId: auth.userId,
+          },
+        });
+      }
 
       // Fase 2 · 2.1: comissões da venda canceladas/estornadas (auditado)
       await this.commissions.cancelForSale(tx, auth, sale.id, sale.receiptCode, input.reason);

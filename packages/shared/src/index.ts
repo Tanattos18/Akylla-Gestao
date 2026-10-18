@@ -363,7 +363,7 @@ export type ListMovementsQuery = z.infer<typeof listMovementsQuerySchema>;
 // Etapa 3 — vendas e PDV
 // ---------------------------------------------------------------------------
 
-export const paymentMethodSchema = z.enum(["CASH", "CARD", "PIX", "OTHER"]);
+export const paymentMethodSchema = z.enum(["CASH", "CARD", "PIX", "OTHER", "CREDIARIO"]);
 export type PaymentMethod = z.infer<typeof paymentMethodSchema>;
 
 export const saleStatusSchema = z.enum(["COMPLETED", "CANCELLED"]);
@@ -374,6 +374,7 @@ export const paymentMethodLabels: Record<PaymentMethod, string> = {
   CARD: "Cartão",
   PIX: "Pix",
   OTHER: "Outro",
+  CREDIARIO: "Crediário",
 };
 
 export const saleStatusLabels: Record<SaleStatus, string> = {
@@ -387,6 +388,29 @@ export const createSaleItemSchema = z.object({
 });
 export type CreateSaleItemInput = z.infer<typeof createSaleItemSchema>;
 
+/** Fase 2 · 2.2 — limites do parcelamento no crediário. */
+export const CREDIT_MAX_INSTALLMENTS = 24;
+
+const isoDateField = z
+  .string()
+  .trim()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Data deve estar no formato YYYY-MM-DD");
+
+/**
+ * Venda no crediário: o cliente informa SÓ a quantidade de parcelas e o 1º
+ * vencimento; valores e datas são calculados pelo servidor (autoridade do
+ * servidor — o total nunca vem do cliente).
+ */
+export const saleCreditSchema = z.object({
+  installments: z.coerce
+    .number()
+    .int("Quantidade de parcelas inválida")
+    .min(1, "Mínimo de 1 parcela")
+    .max(CREDIT_MAX_INSTALLMENTS, `Máximo de ${CREDIT_MAX_INSTALLMENTS} parcelas`),
+  firstDueDate: isoDateField,
+});
+export type SaleCreditInput = z.infer<typeof saleCreditSchema>;
+
 export const createSaleSchema = z.object({
   items: z
     .array(createSaleItemSchema)
@@ -398,12 +422,25 @@ export const createSaleSchema = z.object({
   clientId: z.string().trim().min(1, "Cliente inválido").max(60).optional().nullable(),
   // Fase 2 · 2.1: profissional/vendedor da venda (base da comissão)
   professionalId: z.string().trim().min(1, "Profissional inválido").max(60).optional().nullable(),
+  // Fase 2 · 2.2: obrigatório com paymentMethod CREDIARIO
+  credit: saleCreditSchema.optional().nullable(),
   clientRequestId: z
     .string()
     .trim()
     .min(8, "Identificador de requisição inválido")
     .max(64, "Identificador de requisição inválido")
     .optional(),
+}).superRefine((value, ctx) => {
+  if (value.paymentMethod === "CREDIARIO") {
+    if (!value.clientId) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["clientId"], message: "Venda no crediário exige cliente" });
+    }
+    if (!value.credit) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["credit"], message: "Informe as parcelas do crediário" });
+    }
+  } else if (value.credit) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["credit"], message: "Parcelas só valem para pagamento no crediário" });
+  }
 });
 export type CreateSaleInput = z.infer<typeof createSaleSchema>;
 
@@ -1309,6 +1346,7 @@ export const businessModuleSchema = z.enum([
   "WHATSAPP",
   "SUBSCRIPTIONS",
   "COMMISSIONS",
+  "CREDIT",
 ]);
 export type BusinessModule = z.infer<typeof businessModuleSchema>;
 
@@ -1319,6 +1357,7 @@ export const BUSINESS_MODULES: readonly BusinessModule[] = [
   "WHATSAPP",
   "SUBSCRIPTIONS",
   "COMMISSIONS",
+  "CREDIT",
 ];
 
 /** Valores literais para uso como identificadores (ex.: decorators). */
@@ -1329,6 +1368,7 @@ export const BusinessModules = {
   WHATSAPP: "WHATSAPP",
   SUBSCRIPTIONS: "SUBSCRIPTIONS",
   COMMISSIONS: "COMMISSIONS",
+  CREDIT: "CREDIT",
 } as const satisfies Record<BusinessModule, BusinessModule>;
 
 export const businessModuleLabels: Record<BusinessModule, string> = {
@@ -1338,6 +1378,7 @@ export const businessModuleLabels: Record<BusinessModule, string> = {
   WHATSAPP: "Automação WhatsApp",
   SUBSCRIPTIONS: "Assinaturas de clientes",
   COMMISSIONS: "Comissões",
+  CREDIT: "Crediário",
 };
 
 export const companyModuleStatusSchema = z.enum(["ACTIVE", "DISABLED"]);
@@ -1608,3 +1649,45 @@ export const commissionSummaryQuerySchema = z.object({
   to: dateField.optional(),
 });
 export type CommissionSummaryQuery = z.infer<typeof commissionSummaryQuerySchema>;
+
+// ---------------------------------------------------------------------------
+// Fase 2 · 2.2 — Crediário
+// ---------------------------------------------------------------------------
+
+export const creditAccountStatusSchema = z.enum(["ACTIVE", "BLOCKED"]);
+export type CreditAccountStatus = z.infer<typeof creditAccountStatusSchema>;
+
+export const creditInstallmentStatusSchema = z.enum(["OPEN", "PAID", "OVERDUE", "CANCELLED"]);
+export type CreditInstallmentStatus = z.infer<typeof creditInstallmentStatusSchema>;
+
+export const creditInstallmentStatusLabels: Record<CreditInstallmentStatus, string> = {
+  OPEN: "Em aberto",
+  PAID: "Paga",
+  OVERDUE: "Vencida",
+  CANCELLED: "Cancelada",
+};
+
+/** ADMIN aprova/ajusta o crediário do cliente (cria se não existir). */
+export const updateCreditAccountSchema = z
+  .object({
+    creditLimit: priceFieldSchema.optional(),
+    status: creditAccountStatusSchema.optional(),
+  })
+  .refine((value) => value.creditLimit !== undefined || value.status !== undefined, {
+    message: "Informe o limite e/ou o status",
+  });
+export type UpdateCreditAccountInput = z.infer<typeof updateCreditAccountSchema>;
+
+export const listCreditAccountsQuerySchema = paginationQuerySchema.extend({
+  search: z.string().trim().max(120).optional(),
+  status: creditAccountStatusSchema.optional(),
+});
+export type ListCreditAccountsQuery = z.infer<typeof listCreditAccountsQuerySchema>;
+
+export const listCreditInstallmentsQuerySchema = paginationQuerySchema.extend({
+  status: creditInstallmentStatusSchema.optional(),
+  clientId: z.string().trim().max(60).optional(),
+  from: isoDateField.optional(),
+  to: isoDateField.optional(),
+});
+export type ListCreditInstallmentsQuery = z.infer<typeof listCreditInstallmentsQuerySchema>;

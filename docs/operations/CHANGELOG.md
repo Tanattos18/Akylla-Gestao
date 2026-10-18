@@ -6,6 +6,66 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-18 - Fase 2 · 2.2: Crediário
+
+Segundo item "em breve" do site entregue. As regras foram escritas antes
+do código em `docs/akylla/CREDIARIO.md`, com OCA/account-payment e ERPNext
+estudados só como referência.
+
+### Adicionado
+
+- **Modelos:** `CreditAccount` (um por cliente: limite, saldo, situação) e
+  `CreditInstallment`; `PaymentMethod` ganhou `CREDIARIO`,
+  `FinancialOrigin` ganhou `CREDIT_SALE` e `BusinessModule` ganhou `CREDIT`.
+  Migration aditiva `20261018170000_credit`, com RLS.
+- **Venda a prazo no PDV:**
+  - o cliente informa só o nº de parcelas (1–24) e o 1º vencimento;
+  - valores e datas saem do servidor (`installment-plan.ts`): centavos na
+    última parcela, mensal, com último dia em meses curtos;
+  - a conta do cliente é travada com `FOR UPDATE`, em ordem fixa depois de
+    caixa e produtos;
+  - sem aprovação, bloqueada ou acima do limite → 403;
+  - um a receber por parcela; **sem entrada no caixa** na venda.
+- **Vencimento marcado na leitura** (`OVERDUE`).
+- **Recebimento:** passa pelo financeiro (caixa aberto, entrada no caixa),
+  com sincronia nos dois sentidos. Estornar o recebimento devolve a
+  parcela ao saldo. O título da parcela não pode ser editado nem cancelado
+  avulso.
+- **Cancelamento:** parcelas em aberto/vencidas são canceladas e saem do
+  saldo; **só o valor já pago** é devolvido pelo caixa.
+- **Comissões:** `ON_PAYMENT`/`SPLIT_50_50` ficam pendentes na venda a
+  prazo e são liberadas quando a última parcela é paga. A liberação foi
+  extraída para `commission-release.ts` (sem dependência circular).
+- **API:** `/api/credit-accounts` (carteira com totais a receber e
+  vencido, detalhe, aprovar/ajustar) e `/api/credit-installments` (lista,
+  receber).
+- **Telas:**
+  - no PDV: forma "Crediário" com parcelas, prévia do valor e 1º
+    vencimento (some se o módulo estiver desativado);
+  - `/crediario`: totais, cliente, aprovar limite, bloquear/liberar,
+    parcelas com "Receber" e carteira;
+  - atalho "Crediário" na ficha do cliente; menu e card da home.
+- **Testes:** `tests/integration/credit.test.ts` (14).
+
+### Alterado
+
+- `sales.service`: crediário na criação e no cancelamento; a comissão usa
+  `paidNow = forma ≠ CREDIARIO`.
+- `financial.service`: sincronia com parcelas e liberação de comissão na
+  quitação.
+- `company-modules.test` agora espera 7 módulos; `rls.test` cobre 30
+  tabelas; `resetDatabase` apaga as tabelas novas.
+
+### Verificação
+
+- `npm run validate` verde: lint · typecheck · **663/663** (36 arquivos)
+  · build · db:validate. `check:migrations` sem drift.
+- **Fluxo real no navegador (PDV):** venda de 2 × R$ 80 no crediário em
+  3x → `/crediario` mostrou 53,33/53,33/53,34 mensais, saldo R$ 160 e
+  disponível R$ 140. Pela API: parcela recebida (saldo 106,67) e venda
+  acima do limite → 403 "disponível R$ 33,33". Dados de teste ficaram no
+  banco de dev (cliente "Carla Crediário").
+
 ## [Akylla Gestão] - 2026-10-18 - Fase 2 · 2.1: Comissões
 
 Primeiro módulo "em breve" do site entregue. As regras foram escritas antes

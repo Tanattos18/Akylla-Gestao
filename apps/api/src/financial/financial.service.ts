@@ -8,6 +8,7 @@ import {
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.module";
 import { lockOpenCashSession } from "../cash/cash-session.helpers";
+import { releasePendingCommissionsForSale } from "../commissions/commission-release";
 import type {
   CreateFinancialEntryInput,
   FinancialReasonInput,
@@ -167,6 +168,9 @@ export class FinancialService {
     if (entry.origin === "COMMISSION" || entry.origin === "COMMISSION_REVERSAL") {
       throw new ConflictException("Título de comissão: o valor é calculado pelo sistema e não pode ser editado");
     }
+    if (entry.origin === "CREDIT_SALE") {
+      throw new ConflictException("Parcela do crediário: valor e vencimento são definidos na venda");
+    }
 
     await this.validateRelations(auth, {
       clientId: input.clientId !== undefined ? input.clientId || null : entry.clientId,
@@ -226,6 +230,34 @@ export class FinancialService {
           where: { id: entry.originId, companyId: auth.companyId, status: "RELEASED" },
           data: { status: "PAID", paidAt },
         });
+      }
+
+      // Fase 2 · 2.2: parcela do crediário paga → sai do saldo do cliente;
+      // venda quitada libera as comissões que aguardavam o pagamento
+      if (entry.origin === "CREDIT_SALE" && entry.originId) {
+        const installment = await tx.creditInstallment.findFirst({
+          where: { id: entry.originId, companyId: auth.companyId },
+          select: { id: true, saleId: true, creditAccountId: true, amount: true },
+        });
+        if (installment) {
+          const paidInstallment = await tx.creditInstallment.updateMany({
+            where: { id: installment.id, status: { in: ["OPEN", "OVERDUE"] } },
+            data: { status: "PAID", paidAt },
+          });
+          if (paidInstallment.count === 0) {
+            throw new ConflictException("Parcela já paga ou cancelada");
+          }
+          await tx.creditAccount.update({
+            where: { id: installment.creditAccountId },
+            data: { balance: { decrement: installment.amount } },
+          });
+          const remaining = await tx.creditInstallment.count({
+            where: { saleId: installment.saleId, status: { in: ["OPEN", "OVERDUE"] } },
+          });
+          if (remaining === 0) {
+            await releasePendingCommissionsForSale(tx, auth, installment.saleId);
+          }
+        }
       }
 
       const movement = await tx.cashMovement.create({
@@ -307,6 +339,25 @@ export class FinancialService {
         });
       }
 
+      // Fase 2 · 2.2: estorno do recebimento da parcela → volta ao saldo
+      // (o vencimento é reavaliado na próxima leitura)
+      if (entry.origin === "CREDIT_SALE" && entry.originId) {
+        const installment = await tx.creditInstallment.findFirst({
+          where: { id: entry.originId, companyId: auth.companyId, status: "PAID" },
+          select: { id: true, creditAccountId: true, amount: true },
+        });
+        if (installment) {
+          await tx.creditInstallment.update({
+            where: { id: installment.id },
+            data: { status: "OPEN", paidAt: null },
+          });
+          await tx.creditAccount.update({
+            where: { id: installment.creditAccountId },
+            data: { balance: { increment: installment.amount } },
+          });
+        }
+      }
+
       const reversed = await tx.cashMovement.updateMany({
         where: { id: movement.id, reversedAt: null },
         data: {
@@ -356,6 +407,9 @@ export class FinancialService {
     }
     if (entry.origin === "COMMISSION") {
       throw new ConflictException("Título de comissão: cancele a venda de origem (a comissão é cancelada junto)");
+    }
+    if (entry.origin === "CREDIT_SALE") {
+      throw new ConflictException("Parcela do crediário: cancele a venda de origem (as parcelas são canceladas junto)");
     }
 
     const updated = await this.prisma.financialEntry.updateMany({

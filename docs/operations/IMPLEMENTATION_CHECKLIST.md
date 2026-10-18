@@ -6,6 +6,18 @@
 
 ## Fase 2 — Retenção (`upgrade/Prompt_Mestre.md` §4) — em andamento
 
+### 2.2 · Crediário (2026-10-18)
+
+- [x] Regras escritas antes (`docs/akylla/CREDIARIO.md`); OCA/ERPNext só estudados
+- [x] `CreditAccount`/`CreditInstallment` + `CREDIARIO`/`CREDIT_SALE`/`CREDIT`; migration aditiva com RLS
+- [x] Parcelas calculadas no servidor (centavos na última; mensal com último dia do mês); a receber por parcela
+- [x] Limite/bloqueio/aprovação com a conta travada (FOR UPDATE, ordem fixa); venda a prazo sem entrada no caixa
+- [x] Vencimento marcado na leitura; recebimento via financeiro (caixa aberto) com sincronia nos dois sentidos
+- [x] Cancelamento: parcelas em aberto canceladas, devolução só do que foi pago
+- [x] Comissão ON_PAYMENT liberada ao quitar a última parcela
+- [x] Telas: crediário no PDV (parcelas + 1º vencimento), `/crediario` (carteira, totais, aprovar/bloquear, receber), atalho na ficha do cliente
+- [x] `tests/integration/credit.test.ts` (14)
+
 ### 2.1 · Comissões (2026-10-18)
 
 - [x] Regras escritas antes do código (`docs/akylla/COMISSOES.md`), referências OCA/ERPNext só estudadas

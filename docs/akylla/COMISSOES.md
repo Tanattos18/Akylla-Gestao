@@ -43,9 +43,11 @@
 | `ON_PAYMENT` | libera quando a venda é paga |
 | `SPLIT_50_50` | 50% na venda, 50% no pagamento |
 
-Hoje **todas as formas de pagamento do PDV liquidam na hora**, então as
-três políticas liberam na venda. O crediário (Fase 2 · 2.2) trará vendas a
-prazo e o efeito real de `ON_PAYMENT`/`SPLIT`. Se as linhas de uma venda
+Vendas pagas na hora (dinheiro, cartão, Pix, outro) liberam a comissão na
+venda em qualquer política. **No crediário (Fase 2 · 2.2)**, `ON_SALE`
+libera na venda, e `ON_PAYMENT`/`SPLIT_50_50` ficam **pendentes até a última
+parcela ser paga** (aí a comissão inteira é liberada). O SPLIT parcial
+(50% na venda) é uma melhoria futura. Se as linhas de uma venda
 tiverem políticas diferentes, vale a mais conservadora
 (`ON_PAYMENT` > `SPLIT` > `ON_SALE`).
 

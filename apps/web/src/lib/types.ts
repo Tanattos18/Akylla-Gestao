@@ -111,13 +111,14 @@ export interface StockMovementResult {
   stockQuantity: string;
 }
 
-export type PaymentMethod = "CASH" | "CARD" | "PIX" | "OTHER";
+export type PaymentMethod = "CASH" | "CARD" | "PIX" | "OTHER" | "CREDIARIO";
 
 export const paymentMethodLabels: Record<PaymentMethod, string> = {
   CASH: "Dinheiro",
   CARD: "Cartão",
   PIX: "Pix",
   OTHER: "Outro",
+  CREDIARIO: "Crediário",
 };
 
 export type SaleStatus = "COMPLETED" | "CANCELLED";
@@ -908,7 +909,8 @@ export type BusinessModule =
   | "SERVICES"
   | "WHATSAPP"
   | "SUBSCRIPTIONS"
-  | "COMMISSIONS";
+  | "COMMISSIONS"
+  | "CREDIT";
 
 export type CompanyModuleStatus = "ACTIVE" | "DISABLED";
 
@@ -1026,4 +1028,39 @@ export interface CommissionSummaryDto {
     count: number;
   }>;
   totals: { pending: string; released: string; paid: string; cancelled: string };
+}
+
+// Fase 2 · 2.2 — Crediário
+
+export type CreditInstallmentStatus = "OPEN" | "PAID" | "OVERDUE" | "CANCELLED";
+
+export interface CreditInstallmentDto {
+  id: string;
+  number: number;
+  totalInstallments: number;
+  dueDate: string;
+  amount: string;
+  status: CreditInstallmentStatus;
+  paidAt: string | null;
+  cancelledAt: string | null;
+  sale: { id: string; receiptCode: string };
+  client: { id: string; name: string };
+}
+
+export interface CreditAccountDto {
+  id: string;
+  creditLimit: string;
+  balance: string;
+  available: string;
+  overdue: string;
+  status: "ACTIVE" | "BLOCKED";
+  client: { id: string; name: string; phone: string | null };
+}
+
+export interface CreditAccountListDto extends Paginated<CreditAccountDto> {
+  totals: { receivable: string; overdue: string; overdueCount: number };
+}
+
+export interface CreditAccountDetailDto extends CreditAccountDto {
+  installments: CreditInstallmentDto[];
 }

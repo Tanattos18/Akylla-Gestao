@@ -86,6 +86,13 @@ const plannedModules: Array<{
     module: "COMMISSIONS",
   },
   {
+    name: "Crediário",
+    description: "Venda a prazo com parcelas, limite por cliente e controle de vencidas",
+    href: "/crediario",
+    available: true,
+    module: "CREDIT",
+  },
+  {
     name: "Faturamento",
     description: "Assinatura da empresa no Akylla Gestão (billing do SaaS)",
     href: "/faturamento",

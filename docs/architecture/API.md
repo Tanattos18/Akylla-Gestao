@@ -562,6 +562,28 @@ transação. O detalhe da venda traz `professional {id, name}`.
 cancelados avulsos (409). `COMMISSION_REVERSAL` (a receber) não pode ser
 editado.
 
+## Crediário (Fase 2 · 2.2)
+
+Módulo opcional `CREDIT`. Regras: [`docs/akylla/CREDIARIO.md`](../akylla/CREDIARIO.md).
+
+| Método | Rota | Acesso | Descrição |
+|---|---|---|---|
+| GET | `/api/credit-accounts` | sessão | carteira (`search`, `status`) com `available` e `overdue` por cliente + `totals {receivable, overdue, overdueCount}` |
+| GET | `/api/credit-accounts/:clientId` | sessão | conta + parcelas (sem conta → 404) |
+| PATCH | `/api/credit-accounts/:clientId` | ADMIN | `{creditLimit?, status?}`: aprova (cria) ou ajusta; criar sem limite → 400; cliente de outra empresa → 404 |
+| GET | `/api/credit-installments` | sessão | parcelas (`status`, `clientId`, `from`/`to` de vencimento) + `totals.amount` |
+| POST | `/api/credit-installments/:id/pay` | ADMIN | recebe a parcela (caixa aberto, senão 409); paga/cancelada → 409 |
+
+**Venda:** `POST /api/sales` com `paymentMethod: "CREDIARIO"` exige
+`clientId` e `credit {installments 1–24, firstDueDate}` (400 se faltar;
+`credit` com outra forma → 400). Sem conta, bloqueada ou acima do limite →
+403. Não lança entrada no caixa. O cancelamento devolve só o que foi pago.
+Todas as leituras marcam parcelas vencidas (`OVERDUE`).
+
+**Financeiro:** `origin: CREDIT_SALE` sincroniza com a parcela (liquidar →
+paga; estornar → em aberto) e não pode ser editado nem cancelado avulso
+(409).
+
 ## Padrão para módulos futuros
 
 1. Modelo sempre com `companyId` + FK `Restrict` e índices por empresa.

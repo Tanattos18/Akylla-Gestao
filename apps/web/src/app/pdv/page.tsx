@@ -11,6 +11,7 @@ import {
   productUnitLabels,
   type CashSessionDto,
   type ClientDto,
+  type CompanyModuleDto,
   type Paginated,
   type PaymentMethod,
   type ProductDto,
@@ -54,6 +55,14 @@ export default function PdvPage() {
   // Fase 2 · 2.1: profissional da venda (lista vazia = módulo desativado ou sem cadastro)
   const [professionals, setProfessionals] = useState<ProfessionalDto[]>([]);
   const [professionalId, setProfessionalId] = useState("");
+  // Fase 2 · 2.2: crediário (parcelas e 1º vencimento; valores calculados no servidor)
+  const [creditEnabled, setCreditEnabled] = useState(true);
+  const [installments, setInstallments] = useState(1);
+  const [firstDueDate, setFirstDueDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [completedSale, setCompletedSale] = useState<SaleDto | null>(null);
@@ -88,6 +97,9 @@ export default function PdvPage() {
     })
       .then((data) => setProfessionals(data.items))
       .catch(() => setProfessionals([]));
+    api<CompanyModuleDto[]>("/api/company-modules", { redirectOnUnauthorized: false })
+      .then((mods) => setCreditEnabled(!mods.some((m) => m.module === "CREDIT" && m.status === "DISABLED")))
+      .catch(() => setCreditEnabled(true));
   }, [session]);
 
   const searchProducts = useCallback(async (term: string) => {
@@ -207,6 +219,10 @@ export default function PdvPage() {
       setError("Descreva a forma de pagamento usada em \"Outro\".");
       return;
     }
+    if (paymentMethod === "CREDIARIO" && !clientId) {
+      setError("Venda no crediário exige um cliente com crediário aprovado.");
+      return;
+    }
 
     setSaving(true);
     try {
@@ -222,6 +238,7 @@ export default function PdvPage() {
           paymentNote: paymentMethod === "OTHER" ? paymentNote.trim() : null,
           clientId: clientId || null,
           professionalId: professionalId || null,
+          credit: paymentMethod === "CREDIARIO" ? { installments, firstDueDate } : null,
           clientRequestId: clientRequestId.current,
         }),
       });
@@ -511,13 +528,52 @@ export default function PdvPage() {
                 onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)}
                 className={inputClass}
               >
-                {(Object.keys(paymentMethodLabels) as PaymentMethod[]).map((method) => (
-                  <option key={method} value={method}>
-                    {paymentMethodLabels[method]}
-                  </option>
-                ))}
+                {(Object.keys(paymentMethodLabels) as PaymentMethod[])
+                  .filter((method) => method !== "CREDIARIO" || creditEnabled)
+                  .map((method) => (
+                    <option key={method} value={method}>
+                      {paymentMethodLabels[method]}
+                    </option>
+                  ))}
               </select>
             </div>
+            {paymentMethod === "CREDIARIO" && (
+              <>
+                <div>
+                  <label htmlFor="pdv-installments" className="mb-1 block text-sm text-slate-700">
+                    Parcelas
+                  </label>
+                  <select
+                    id="pdv-installments"
+                    value={installments}
+                    onChange={(event) => setInstallments(Number(event.target.value))}
+                    className={inputClass}
+                  >
+                    {Array.from({ length: 24 }, (_, i) => i + 1).map((n) => (
+                      <option key={n} value={n}>
+                        {n}x de R$ {(Math.floor((total / n) * 100) / 100).toFixed(2)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="pdv-first-due" className="mb-1 block text-sm text-slate-700">
+                    1º vencimento
+                  </label>
+                  <input
+                    id="pdv-first-due"
+                    type="date"
+                    value={firstDueDate}
+                    onChange={(event) => setFirstDueDate(event.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <p className="text-xs text-slate-600 sm:col-span-2">
+                  Parcelas mensais; centavos de diferença vão para a última. O valor não entra no caixa agora:
+                  cada parcela entra quando for recebida em Crediário.
+                </p>
+              </>
+            )}
             {paymentMethod === "OTHER" && (
               <div className="sm:col-span-2">
                 <label htmlFor="pdv-note" className="mb-1 block text-sm text-slate-700">

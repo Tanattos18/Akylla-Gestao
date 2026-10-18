@@ -23,7 +23,7 @@ dependem só de contas e hospedagem.
 | Item da Fase 2 | Status |
 |---|---|
 | 2.1 · Comissões (profissionais, regras, cálculo no PDV, pagamento, estorno) | ✅ 2026-10-18 |
-| 2.2 · Crediário | ⬜ |
+| 2.2 · Crediário (limite por cliente, parcelas no servidor, vencidas, recebimento, cancelamento) | ✅ 2026-10-18 |
 | 2.3 · Ordem de serviço | ⬜ |
 
 Já existentes antes da Fase 1 (N1–N4c, 2026-10-15): LGPD

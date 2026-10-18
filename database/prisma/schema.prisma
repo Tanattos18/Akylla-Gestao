@@ -91,6 +91,8 @@ enum PaymentMethod {
   CARD
   PIX
   OTHER
+  // Fase 2 · 2.2: venda a prazo (parcelas no crediário do cliente)
+  CREDIARIO
 }
 
 enum SaleStatus {
@@ -135,6 +137,22 @@ enum FinancialOrigin {
   COMMISSION
   // Fase 2 · 2.1: estorno de comissão já paga (a receber do profissional)
   COMMISSION_REVERSAL
+  // Fase 2 · 2.2: parcela de venda no crediário (a receber do cliente)
+  CREDIT_SALE
+}
+
+/// Fase 2 · 2.2 — situação do crediário do cliente
+enum CreditAccountStatus {
+  ACTIVE
+  BLOCKED
+}
+
+/// Fase 2 · 2.2 — parcela do crediário (OVERDUE é marcado na leitura)
+enum CreditInstallmentStatus {
+  OPEN
+  PAID
+  OVERDUE
+  CANCELLED
 }
 
 /// Fase 2 · 2.1 — quando a comissão fica devida
@@ -280,6 +298,8 @@ model Company {
   professionals   Professional[]
   commissionRules CommissionRule[]
   commissions     Commission[]
+  creditAccounts     CreditAccount[]
+  creditInstallments CreditInstallment[]
 }
 
 enum BusinessModule {
@@ -289,6 +309,7 @@ enum BusinessModule {
   WHATSAPP
   SUBSCRIPTIONS
   COMMISSIONS
+  CREDIT
 }
 
 enum ImportType {
@@ -465,6 +486,7 @@ model Client {
   subscriptions Subscription[]
   financialEntries FinancialEntry[]
   legalConsents LegalConsent[]
+  creditAccount CreditAccount?
 
   @@index([companyId, nameKey])
   @@index([companyId, status])
@@ -646,6 +668,7 @@ model Sale {
   items             SaleItem[]
   cashMovements     CashMovement[]
   commissions       Commission[]
+  creditInstallments CreditInstallment[]
 
   @@unique([companyId, receiptCode])
   @@unique([companyId, clientRequestId])
@@ -731,6 +754,52 @@ model Commission {
   @@unique([saleId, professionalId])
   @@index([companyId, status, createdAt])
   @@index([companyId, professionalId, createdAt])
+}
+
+/// Fase 2 · 2.2 — crediário do cliente: limite aprovado pelo ADMIN e saldo
+/// devedor (soma das parcelas em aberto/vencidas), mantido na mesma
+/// transação de cada venda/pagamento/cancelamento.
+model CreditAccount {
+  id           String              @id @default(cuid())
+  companyId    String
+  company      Company             @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  /// um crediário por cliente (o cliente já pertence a uma única empresa)
+  clientId     String              @unique
+  client       Client              @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  creditLimit  Decimal             @db.Decimal(12, 2)
+  balance      Decimal             @default(0) @db.Decimal(12, 2)
+  status       CreditAccountStatus @default(ACTIVE)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  installments CreditInstallment[]
+
+  @@index([companyId, status])
+}
+
+/// Fase 2 · 2.2 — parcela de uma venda no crediário. Valor e vencimento
+/// calculados pelo servidor; nunca apagada (paga/cancelada com histórico).
+model CreditInstallment {
+  id                String                  @id @default(cuid())
+  companyId         String
+  company           Company                 @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  creditAccountId   String
+  creditAccount     CreditAccount           @relation(fields: [creditAccountId], references: [id], onDelete: Restrict)
+  saleId            String
+  sale              Sale                    @relation(fields: [saleId], references: [id], onDelete: Restrict)
+  number            Int
+  totalInstallments Int
+  dueDate           DateTime
+  amount            Decimal                 @db.Decimal(12, 2)
+  status            CreditInstallmentStatus @default(OPEN)
+  paidAt            DateTime?
+  cancelledAt       DateTime?
+  financialEntryId  String?                 @unique
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+
+  @@unique([saleId, number])
+  @@index([companyId, status, dueDate])
+  @@index([creditAccountId, status])
 }
 
 model SaleItem {

@@ -29,6 +29,7 @@ Para começar, leia nesta ordem:
 | [PDV](akylla/PDV.md) | fluxo de venda, API, regras, comprovante, limitações |
 | [Dicionário de indicadores](akylla/DICIONARIO_INDICADORES.md) | definição exata de cada número do dashboard |
 | [Comissões](akylla/COMISSOES.md) | regras de cálculo, precedência, liberação, pagamento e estorno |
+| [Crediário](akylla/CREDIARIO.md) | venda a prazo: limite, parcelas, vencidas, recebimento e cancelamento |
 
 ## Arquitetura e dados
 

@@ -271,6 +271,12 @@ export default function ClienteDetalhePage() {
             Voltar aos clientes
           </Link>
           <Link
+            href={`/crediario?cliente=${client.id}`}
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+          >
+            Crediário
+          </Link>
+          <Link
             href="/pets"
             className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
           >

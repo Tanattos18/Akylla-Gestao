@@ -30,6 +30,8 @@ const TENANT_TABLES = [
   "Company",
   // Fase 2 · 2.1
   "Professional", "CommissionRule", "Commission",
+  // Fase 2 · 2.2
+  "CreditAccount", "CreditInstallment",
 ];
 
 /**
