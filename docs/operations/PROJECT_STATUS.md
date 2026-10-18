@@ -2,6 +2,31 @@
 
 ## Etapa atual
 
+**Evolução — roteiro `upgrade/Prompt_Mestre.md`, FASE 1 (Confiabilidade)
+em andamento** (desde 2026-10-18). Objetivo do proprietário: entregar o
+que o site akyllagestao.com.br promete. Fases em ordem rígida (1 → 7).
+
+| Item da Fase 1 | Status |
+|---|---|
+| 1A · Backup com restore testado (§1.1) + registro de N1–N4c nos docs | ✅ 2026-10-18 |
+| 1B · Sentry (API/Worker/Web) + `RUNBOOK.md` (uptime, rollback) (§1.2) | ⬜ |
+| 1C · Rate limit com Redis + fallback em memória (§1.5.2) | ⬜ |
+| 1D · Verificação de e-mail no cadastro + Turnstile opcional (§1.5.5) | ⬜ |
+| 1E · RLS no PostgreSQL + `withTenantContext` (§1.5.4) | ⬜ |
+| 1F · `npm audit --omit=dev` = 0 (next 16, vitest major) (§1.5.1) | ⬜ |
+| 1G · CD real com health check (§1.3) — depende da escolha de hospedagem | ⬜ |
+
+Já existentes antes da Fase 1 (N1–N4c, 2026-10-15): LGPD
+(consentimento/exportação/anonimização), reset de senha por token, 2FA
+ADMIN, webhook MP com timing-safe + anti-replay + fail-closed, guard ORM
+de tenant (ADR-0001), rate limit de cadastro. Detalhes no CHANGELOG.
+
+Trabalho **não commitado** de outra sessão (Fase 6 — cobertura,
+Playwright, `concurrency.test.ts`, ajustes de CI/CD) está no working
+tree aguardando decisão do proprietário.
+
+### Roteiro anterior
+
 **Roteiro Akylla Gestão (Etapas 0–12) — CONCLUÍDO** (2026-10-12).
 
 A Etapa 12 (Qualidade, segurança e preparação para produção) é a última

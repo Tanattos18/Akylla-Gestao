@@ -28,6 +28,60 @@ npm run db:validate
 npm test
 ```
 
+## Backup automatizado com restore testado (Fase 1 · `scripts/db-backup.mjs`)
+
+| Comando | O que faz |
+|---|---|
+| `npm run db:backup` | `pg_dump --format=custom --compress=6` → `akylla_YYYY-MM-DD_HHmm.dump`, aplica a retenção e **restaura em banco efêmero** para validar |
+| `npm run db:backup -- --retain=7` | retenção em dias (padrão `RETENTION_DAYS` ou 30) |
+| `npm run db:backup -- --skip-verify` | só o dump, sem o restore de teste |
+| `npm run db:restore-test [-- <arquivo>]` | só o teste de restore (padrão: dump mais recente) |
+| `npm run db:restore -- <arquivo>` | restaura um dump no banco de `DATABASE_URL` (**destrutivo** — confira o alvo) |
+
+**Validação do restore** (o backup só "passa" se tudo bater): o dump é
+restaurado em `akylla_restore_test` (`RESTORE_TEST_DB`), e o script
+confere (1) a contagem de linhas de **todas** as tabelas igual à origem,
+(2) o mesmo número de migrations aplicadas e (3) `prisma migrate diff`
+sem diferenças entre o banco restaurado e o `schema.prisma`. O banco
+efêmero é removido sempre, com sucesso ou falha. Log em
+`<BACKUP_DIR>/backup.log`; exit code ≠ 0 em qualquer falha (o
+agendador deve alertar nesse caso).
+
+**Segurança:** a senha do banco nunca vai na linha de comando nem no log
+(é passada por `PGPASSWORD`). Requisitos: `pg_dump`, `pg_restore`,
+`psql`, `createdb` e `dropdb` da **mesma versão major do servidor**
+(no PATH, em `PG_BIN` ou, no Windows, detectados em
+`C:\Program Files\PostgreSQL\<versão>\bin`).
+
+### Agendamento em produção
+
+```cron
+# diário às 02:00 (horário do servidor); falha ⇒ exit ≠ 0 ⇒ alerta
+0 2 * * * cd /srv/akylla && npm run db:backup >> /var/log/akylla-backup.log 2>&1 || /srv/akylla/bin/alerta-backup.sh
+```
+
+No Windows (Agendador de Tarefas): ação `npm run db:backup` com
+"Iniciar em" na raiz do repositório, gatilho diário às 02:00.
+
+### Política
+
+| Item | Valor |
+|---|---|
+| Frequência | diária (02:00) |
+| Retenção local | 30 dias (`RETENTION_DAYS`) |
+| Cópia fora do servidor (offsite) | obrigatória em produção: enviar cada dump para bucket S3/Backblaze B2 com criptografia e versionamento (ex.: `rclone copy backup/ b2:akylla-backups`), retenção ≥ 30 dias |
+| **RPO** (perda máxima de dados) | ≤ 24 h |
+| **RTO** (tempo máximo para voltar) | ≤ 4 h |
+| Drill | o próprio `db:backup` testa o restore a cada execução; ensaio manual completo (restaurar em ambiente novo + `npm run validate`) 1×/mês |
+
+Se o provedor de banco gerenciado já oferecer backup com PITR, mantenha
+o `db:backup` como segunda cópia independente (e offsite).
+
+**Teste automatizado:** `tests/integration/backup.test.ts` roda o script
+real contra o banco de teste (dump, restore validado, retenção, dump
+corrompido, ausência de senha no log). É pulado com aviso quando os
+binários do PostgreSQL não estão disponíveis na versão do servidor.
+
 ## Regras obrigatórias
 
 1. **Nada sensível vai para o Git.** Todo o conteúdo de `backup/` é
@@ -41,10 +95,10 @@ npm test
    `npm run validate`.
 4. **Retenção:** apague dumps com mais de 30 dias. Não é arquivo
    histórico — o histórico é o Git.
-5. **Produção:** os backups **automatizados e monitorados** de
-   produção são pendência registrada (L8 em
-   [`../docs/akylla/CHECKLIST_PRE_PRODUCAO.md`](../docs/akylla/CHECKLIST_PRE_PRODUCAO.md));
-   esta pasta é só o procedimento manual local.
+5. **Produção:** o script automatizado existe (seção acima); falta
+   agendá-lo no servidor de produção, configurar a cópia offsite e o
+   alerta de falha (L8 em
+   [`../docs/akylla/CHECKLIST_PRE_PRODUCAO.md`](../docs/akylla/CHECKLIST_PRE_PRODUCAO.md)).
 
 ## Por que existe
 

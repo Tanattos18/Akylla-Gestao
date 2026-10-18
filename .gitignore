@@ -12,3 +12,4 @@ coverage/
 *.tsbuildinfo
 .idea/
 .vscode/
+test-results/

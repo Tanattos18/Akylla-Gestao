@@ -6,6 +6,80 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-18 - Fase 1 (Confiabilidade) · 1A: backup com restore testado + registro de N1–N4c
+
+Primeira entrega do roteiro `upgrade/Prompt_Mestre.md` (Fase 1 §1.1),
+autorizada pelo proprietário. Também registra aqui os commits N1–N4c
+(2026-10-15), que não tinham entrada neste changelog.
+
+### Corrigido
+
+- **`scripts/db-backup.mjs`** (criado em N1) não funcionava:
+  - a `DATABASE_URL` do Prisma (`?schema=public`) era passada direto ao
+    `pg_dump`, que rejeita o parâmetro;
+  - `--retain=30` (forma documentada) não era lido;
+  - `createdb`/`dropdb` ignoravam a URL (usavam o servidor/usuário
+    padrão) e uma falha neles encerrava o processo antes do `catch`;
+  - a "validação" do restore rodava só `prisma validate` (checa o
+    arquivo `schema.prisma`, não o banco restaurado);
+  - a senha ia na linha de comando.
+
+### Alterado
+
+- **`scripts/db-backup.mjs`** reescrito: `db:backup` = dump
+  (`--format=custom --compress=6`, nome `akylla_YYYY-MM-DD_HHmm.dump`,
+  sem sobrescrever no mesmo minuto) → retenção (`RETENTION_DAYS`/
+  `--retain`, padrão 30) → restore em banco efêmero
+  (`RESTORE_TEST_DB`, padrão `akylla_restore_test`) com validação real:
+  contagem de linhas de todas as tabelas = origem, mesmas migrations e
+  `prisma migrate diff --exit-code` sem diferenças. Banco efêmero
+  sempre removido; log em `<BACKUP_DIR>/backup.log`; exit ≠ 0 em falha;
+  senha só via `PGPASSWORD`; detecção dos binários em `PG_BIN` ou
+  `C:\Program Files\PostgreSQL\<versão>\bin`.
+- **`package.json`**: novo `db:restore-test` (nome do roteiro);
+  `db:restore:test` mantido como alias.
+- **`.env.example`**: `BACKUP_DIR`, `RETENTION_DAYS`, `RESTORE_TEST_DB`,
+  `PG_BIN` (sem valores sensíveis).
+- **`backup/README.md`**: comandos, validação, agendamento (cron
+  `0 2 * * *` e Agendador do Windows), offsite S3/B2, RPO ≤ 24 h,
+  RTO ≤ 4 h, drill mensal.
+
+### Adicionado
+
+- **`tests/integration/backup.test.ts`** (7 testes): dump + restore
+  validado + remoção do efêmero; senha ausente do log; dois dumps no
+  mesmo minuto; retenção; dump corrompido → exit ≠ 0 e efêmero
+  removido; retenção inválida; sem `DATABASE_URL`. A suíte pula com
+  aviso se os binários do PostgreSQL não estiverem na versão do
+  servidor (ex.: runner de CI sem `postgresql-client-17` contra o
+  serviço `postgres:17`).
+
+### Verificação manual
+
+- `npm run db:backup` no banco de desenvolvimento: dump de 149 KB,
+  restore validado (31 tabelas, 16 migrations), efêmero removido.
+
+### Registro retroativo — N1 a N4c (2026-10-15, já commitados)
+
+- **N1** — LGPD (`/api/lgpd`: consentimento, `data-export` e
+  `anonymize` de cliente com `AdminGuard`; modelo `LegalConsent`;
+  páginas `/termos` e `/privacidade`; aceite no cadastro), primeira
+  versão do script de backup, `scripts/check-secrets.mjs`,
+  `scripts/check-migrations.mjs`, matriz `docs/akylla/GO_NO_GO.md`.
+- **N2/N3** — dependências do Sentry (`@sentry/node`,
+  `@sentry/profiling-node`, ainda **não inicializadas**), esqueleto do
+  `cd.yml`, webhook Mercado Pago com comparação em tempo constante,
+  anti-replay por `ts` e fail-closed, uso do plano em `/faturamento`.
+- **N3** — `GET /api/company/export` (portabilidade da empresa, sem
+  segredos, isolamento A×B).
+- **N4** — rate limit atrás de interface (`rate-limit-store.ts`, store
+  em memória), redefinição de senha por token de e-mail
+  (`PasswordResetToken`, `mail.module.ts`), cabeçalhos de segurança,
+  2FA TOTP para ADMIN.
+- **N4c** — guard ORM de tenant (`ADR-0001`; RLS nativa registrada como
+  pré-requisito de produção) e rate limit dedicado de cadastro
+  (`REGISTER_RATE_LIMIT_MAX`). L1 (next 16) pendente.
+
 ## [Akylla Gestão] - 2026-10-15 - Débitos de design D-1, D-2, D-3, D-5 e D-7
 
 Sexta entrega única autorizada. Primeira execução de código desde a

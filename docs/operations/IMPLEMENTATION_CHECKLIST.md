@@ -4,6 +4,34 @@
 > Este checklist cobre apenas a era do Akylla Gestão. O histórico
 > anterior à adaptação está preservado no Git.
 
+## Fase 1 — Confiabilidade (`upgrade/Prompt_Mestre.md` §4) — em andamento
+
+### 1A · Backup com restore testado (2026-10-18)
+
+- [x] `scripts/db-backup.mjs`: `pg_dump --format=custom --compress=6`,
+      nome `akylla_YYYY-MM-DD_HHmm.dump`, `BACKUP_DIR`, `RETENTION_DAYS`
+- [x] Restore em banco efêmero com validação (contagem de linhas,
+      migrations, `prisma migrate diff`) e remoção garantida do efêmero
+- [x] Log em `<BACKUP_DIR>/backup.log`; exit ≠ 0 em falha
+- [x] `npm run db:backup` e `npm run db:restore-test`
+- [x] `backup/README.md`: cron `0 2 * * *`, retenção, offsite S3/B2,
+      RPO ≤ 24 h, RTO ≤ 4 h
+- [x] `tests/integration/backup.test.ts` (7 testes)
+- [x] Evidência: `npm run db:backup` no banco de dev — 31 tabelas,
+      16 migrations, restore validado
+- [ ] Agendamento + offsite + alerta no servidor de produção (depende
+      da hospedagem)
+- [x] CHANGELOG/STATUS registram N1–N4c
+
+### Pendentes da Fase 1
+
+- [ ] 1B · Sentry API/Worker/Web + `docs/operations/RUNBOOK.md`
+- [ ] 1C · Rate limit Redis + fallback em memória
+- [ ] 1D · Verificação de e-mail no cadastro + Turnstile opcional
+- [ ] 1E · RLS + `withTenantContext` + `rls.test.ts`
+- [ ] 1F · `npm audit --omit=dev` = 0 (next 16, vitest major)
+- [ ] 1G · CD real com health check e rollback documentado
+
 ## Fora do roteiro — Débitos de design D-1 a D-7 (2026-10-15)
 
 Concluída. Lote "uma tarde" de `upgrade/MELHORIAS_DESIGN.md` §0 — só

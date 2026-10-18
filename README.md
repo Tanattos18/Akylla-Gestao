@@ -1,322 +1,234 @@
 # Akylla Gestão
 
-**SaaS multiempresa de gestão para pequenos negócios brasileiros.**
+**Seu negócio inteiro, num só lugar.**
 
-Centralize clientes, produtos, estoque, vendas, caixa, financeiro,
-agendamentos e comunicação com clientes em um único sistema — com
-isolamento total entre empresas, permissões por perfil e trilha de
-auditoria em cada operação.
+Sistema online de gestão para **comércio e serviços**: frente de caixa,
+estoque, caixa por turno, contas a pagar e a receber, clientes, agenda
+com lembretes pelo WhatsApp, relatórios e importação de planilhas. Roda
+no navegador do computador, tablet ou celular, sem instalar nada. É
+multiempresa: cada empresa vê só os próprios dados.
 
-> **Status:** roteiro Akylla Gestão **Etapas 0–12 (13 etapas)** concluído
-> (fundação + núcleo genérico + módulos + billing SaaS + checklist
-> pré-produção). Painel com layout topbar escura (opção B). Detalhes em
-> [`docs/operations/PROJECT_STATUS.md`](docs/operations/PROJECT_STATUS.md)
-> e índice completo em [`docs/README.md`](docs/README.md).
+Site: [akyllagestao.com.br](https://akyllagestao.com.br/)
+
+> **Status (2026-10-18):** o produto base está pronto, com as Etapas 0–12
+> do roteiro original concluídas. A versão atual segue o roteiro de
+> evolução [`upgrade/Prompt_Mestre.md`](upgrade/Prompt_Mestre.md), cuja
+> meta é entregar tudo o que o site promete e deixar o sistema pronto
+> para venda paga. **Fase 1 (Confiabilidade) em andamento.** O andamento
+> detalhado fica em
+> [`docs/operations/PROJECT_STATUS.md`](docs/operations/PROJECT_STATUS.md).
 
 ---
 
 ## Sumário
 
-1. [Propósito](#propósito)
-2. [Para quem é](#para-quem-é)
+1. [O que o site promete × o que o sistema entrega](#o-que-o-site-promete--o-que-o-sistema-entrega)
+2. [Perfis: Comércio, Serviços e Híbrido](#perfis-comércio-serviços-e-híbrido)
 3. [Módulos](#módulos)
-4. [Ativação por segmento](#ativação-por-segmento)
-5. [Como funciona a operação](#como-funciona-a-operação)
-6. [Qualidade, segurança e auditoria](#qualidade-segurança-e-auditoria)
-7. [Como executar o projeto](#como-executar-o-projeto)
+4. [Segurança, dados e LGPD](#segurança-dados-e-lgpd)
+5. [Roteiro de evolução (7 fases)](#roteiro-de-evolução-7-fases)
+6. [Como executar](#como-executar)
+7. [Backup e restauração](#backup-e-restauração)
 8. [Estrutura do repositório](#estrutura-do-repositório)
 9. [Tecnologias](#tecnologias)
 10. [Documentação](#documentação)
 
 ---
 
-## Propósito
+## O que o site promete × o que o sistema entrega
 
-O **Akylla Gestão** é um software como serviço (SaaS) pensado para o
-pequeno empreendedor brasileiro que precisa controlar a operação do seu
-negócio sem depender de planilhas soltas ou ferramentas desconectadas.
-
-O produto foi desenhado a partir de um **núcleo comum de comércio e
-gestão** — o tipo de operação que atravessa quase todos os pequenos
-negócios: cadastrar clientes, controlar produtos e estoque, vender,
-abrir e fechar o caixa, acompanhar contas a pagar e a receber, medir
-resultados. Sobre esse núcleo, **módulos opcionais** podem ser
-habilitados conforme o segmento de cada empresa (agendamentos,
-catálogo de serviços, assinaturas de clientes, WhatsApp).
-
-O Akylla Gestão **não se posiciona como ERP completo** para qualquer
-setor. Operações que exijam módulos fiscais, contábeis, de frota ou de
-produção estão fora do escopo inicial.
-
-### Diferenciais
-
-- **Multiempresa de verdade:** cada empresa enxerga apenas os próprios
-  dados. O isolamento é imposto no servidor (`companyId` sempre derivado
-  da sessão autenticada) — nunca depende do comportamento da interface.
-- **Valores e saldos confiáveis:** preços, totais, saldos de estoque e
-  de caixa são recalculados no servidor a cada operação; nada de estado
-  crítico confiado ao navegador.
-- **Trilha de auditoria:** vendas, movimentações e lançamentos nunca são
-  apagados. Cancelamentos e estornos geram registros compensatórios com
-  autor, data e motivo.
-- **Módulos que crescem com o negócio:** a empresa começa com o núcleo e
-  ativa novos módulos quando precisar — sem trocar de sistema.
+| Promessa do site | Situação no sistema |
+|---|---|
+| Frente de caixa (nome, código, leitor), descontos, várias formas de pagamento, baixa automática no estoque | ✅ disponível (`/pdv`) |
+| Caixa por turno com valor esperado e diferença | ✅ disponível (`/caixa`) |
+| Estoque com saldo em tempo real e alerta de mínimo | ✅ disponível (`/produtos`) |
+| Contas a pagar e a receber com vencimento | ✅ disponível (`/financeiro`) |
+| Clientes, histórico de compras e aviso de cadastro duplicado | ✅ disponível (`/clientes`) |
+| Painel e relatórios por período com exportação para planilha | ✅ disponível (`/dashboard`, `/relatorios`) |
+| Agenda com conflito de horário e lembrete automático pelo WhatsApp | ✅ disponível (`/agenda`, `/whatsapp`) |
+| Importação de clientes e produtos por CSV com prévia de erros | ✅ disponível (`/importacoes`) |
+| Equipe vende e atende; o dono controla caixa, usuários e configurações | ✅ perfis ADMIN/MEMBER validados no servidor |
+| Cada empresa só acessa os próprios dados | ✅ isolamento no servidor; RLS no banco na Fase 1 |
+| Planos Essencial / Profissional / Completo com limites | ✅ billing SaaS com limites de usuários, clientes e produtos (Mercado Pago em sandbox) |
+| Perfis Comércio, Serviços e Híbrido | 🟡 hoje por ativação manual de módulos; escolha guiada no cadastro na **Fase 4** |
+| **Em breve:** comissões | 🔜 **Fase 2** |
+| **Em breve:** crediário | 🔜 **Fase 2** |
+| **Em breve:** ordem de serviço com fotos | 🔜 **Fase 2** |
+| **Em breve:** nota fiscal (NFC-e, NF-e, NFS-e) por integração | 🔜 **Fase 3**, via emissor autorizado, sem emissor próprio |
 
 ---
 
-## Para quem é
+## Perfis: Comércio, Serviços e Híbrido
 
-Priorizado para **pequenos negócios** com processos comuns de comércio e
-gestão de produtos e serviços:
+Todas as empresas usam o mesmo produto. O que muda é o conjunto de
+**módulos ativos** de cada uma:
 
-- Lojas de roupas, calçados, acessórios e presentes;
-- Mercadinhos, adegas e lojas de conveniência;
-- Papelarias, livrarias e lojas de presentes;
-- Oficinas, assistências técnicas e pequenos serviços;
-- Pet shops, salões e clínicas (com o módulo de pets e agenda);
-- Qualquer negócio que precise de clientes, produtos, caixa e
-  controle financeiro básico em um só lugar.
+| Perfil | Para quem | Módulos típicos |
+|---|---|---|
+| **Comércio** | lojas, mercadinhos, adegas, papelarias, conveniência | PDV, estoque, caixa, financeiro, WhatsApp. Na Fase 2/3: crediário, comissões e nota fiscal |
+| **Serviços** | salões, clínicas, oficinas, assistências técnicas | serviços, agenda, WhatsApp, assinaturas de clientes. Na Fase 2: OS e comissões |
+| **Híbrido** | pet shops, oficinas com loja, estúdios que vendem produtos | os dois conjuntos. A ficha de **pets** é um módulo opcional |
+
+A ativação fica na tabela `CompanyModule`. Linha `DISABLED` bloqueia as
+rotas do módulo **no servidor** (`ModuleGuard`). A interface só
+acompanha o que o servidor permite e não serve como controle de acesso.
+O núcleo (clientes, produtos, vendas, caixa, financeiro, relatórios,
+billing) nunca pode ser desativado.
 
 ---
 
 ## Módulos
 
-### Núcleo (sempre disponível)
+### Núcleo (sempre ativo)
 
 | Módulo | O que entrega |
 |---|---|
-| **Autenticação e usuários** | Login por sessão `HttpOnly`, perfis ADMIN/MEMBER, primeiro administrador via variáveis de ambiente |
-| **Empresas** | Isolamento multiempresa por tenant; dados de cada empresa separados no banco e no servidor |
-| **Clientes** | Cadastro com busca, contatos normalizados, endereço e histórico — base para vendas, agenda e assinaturas |
-| **Fornecedores e categorias** | Cadastros de apoio ao catálogo de produtos |
-| **Produtos e estoque** | SKU e código de barras únicos por empresa, entradas/saídas/ajustes, saldo em tempo real, alerta de estoque mínimo |
-| **Vendas e PDV** | Frente de caixa com busca por nome/SKU/código de barras, desconto, formas de pagamento, comprovante e histórico |
-| **Caixa** | Abertura/fechamento por turno, entradas e saídas manuais, estorno auditável, uma única sessão aberta por empresa |
-| **Financeiro (AP/AR)** | Contas a pagar e a receber com vencimento, status e baixa — separado do caixa e do billing do SaaS |
-| **Dashboard e relatórios** | Indicadores calculados no servidor, filtros por período, exportação CSV protegida |
-| **Faturamento da empresa (billing)** | Planos globais da Akylla e assinatura da própria empresa no SaaS |
+| **Autenticação e usuários** | sessão em cookie `HttpOnly`, perfis ADMIN/MEMBER, 2FA (TOTP) para administradores, recuperação de senha por token enviado por e-mail |
+| **Clientes** | busca, contatos normalizados, histórico e aviso de duplicidade |
+| **Produtos, categorias, fornecedores e estoque** | SKU e código de barras únicos por empresa, entradas, saídas e ajustes em histórico que não se apaga, alerta de mínimo |
+| **Vendas / PDV** | busca por nome, SKU ou código de barras, desconto, formas de pagamento, comprovante, cancelamento auditado e proteção contra venda duplicada |
+| **Caixa** | turno com abertura e fechamento, valor esperado × contado, entradas, saídas e estornos auditados |
+| **Financeiro (AP/AR)** | contas a pagar e a receber com vencimento, status e baixa |
+| **Dashboard e relatórios** | indicadores calculados no servidor, filtros por período, CSV protegido contra injeção de fórmulas |
+| **Importação de planilhas** | CSV de categorias, fornecedores, produtos, clientes e serviços, com simulação antes de gravar, deduplicação e relatório de erros |
+| **Faturamento (billing SaaS)** | plano da empresa, uso × limites, checkout Mercado Pago (sandbox) |
 
-### Módulos opcionais (genéricos, ativáveis por segmento)
+### Módulos opcionais
 
-| Módulo | O que entrega | Ativação |
-|---|---|---|
-| **Serviços** | Catálogo de serviços com preço e duração | `CompanyModule` |
-| **Agendamentos** | Agenda diária, conflito de horário, transições de status e lembrete automático de WhatsApp | `CompanyModule` |
-| **Assinaturas de clientes** | Planos recorrentes com pagamento pelo caixa, renovação e cancelamento auditado | `CompanyModule` |
-| **WhatsApp** | Integração oficial com a Cloud API da Meta: templates, consentimento auditável, fila com retentativas e webhook assinado | `CompanyModule` |
-
-### Módulo de nicho (opcional)
-
-| Módulo | Observação |
+| Módulo | O que entrega |
 |---|---|
-| **Pets** | Ficha de animais vinculada ao cliente (espécie, raça, sexo, peso). Desativável; fora da navegação inicial. Uso típico: pet shops, clínicas e salões |
-
----
-
-## Ativação por segmento
-
-Desde a Etapa 10, cada empresa decide quais módulos opcionais utiliza.
-O mecanismo é a tabela **`CompanyModule`** (opção aprovada pelo
-proprietário):
-
-- **Ausência de linha = módulo ativo** (padrão — todas as empresas
-  existentes funcionam sem nenhuma configuração);
-- Linha gravada com `DISABLED` **bloqueia as rotas do módulo no
-  servidor** (`ModuleGuard`) — a ocultação de cards na interface
-  acompanha o status, mas **não é controle de acesso**: a fonte de
-  verdade é sempre o backend;
-- Escrita restrita ao administrador (`PATCH /api/company-modules`);
-- O núcleo (clientes, produtos, vendas, caixa, financeiro, relatórios,
-  billing) **nunca é desativável**;
-- Webhook do WhatsApp e demais rotas públicas permanecem acessíveis
-  mesmo com o módulo desativado.
-
-Detalhes técnicos em
-[`docs/architecture/API.md`](docs/architecture/API.md#módulos-por-empresa-etapa-10)
-e
-[`docs/akylla/PLANO_MODULARIZACAO.md`](docs/akylla/PLANO_MODULARIZACAO.md).
-
----
-
-## Como funciona a operação
-
-### Perfis de acesso
-
-| Área | Administrador | Membro |
-|---|:--:|:--:|
-| Clientes, fichas e vendas no PDV | sim | sim |
-| Caixa: abrir, fechar, entradas/saídas e estorno | sim | somente leitura |
-| Catálogo: serviços, produtos, categorias, fornecedores | sim | somente leitura |
-| Agendamentos e leitura de relatórios | sim | sim |
-| Cancelar venda, configurar/enviar WhatsApp e usuários | sim | — |
-| Planos, assinaturas de clientes, faturamento e módulos da empresa | sim | somente leitura |
-
-A regra é sempre a mesma: a interface apenas reflete o que o servidor já
-exige — tentar uma ação sem permissão responde com erro, não com tela
-bonita.
-
-### Rotina de um dia de trabalho
-
-1. **Abra o caixa** (`/caixa`) informando o troco inicial — sem caixa
-   aberto, o PDV bloqueia venda e o pagamento de assinatura responde
-   409.
-2. **Confira a agenda do dia** (`/agenda`, se o módulo estiver ativo):
-   confirme ou conclua atendimentos; lembretes de WhatsApp saem
-   automaticamente se a antecedência estiver configurada.
-3. **Atenda no PDV** (`/pdv`): venda produtos com baixa automática de
-   estoque.
-4. **No fim do turno, feche o caixa** (`/caixa/fechar`): conte o
-   dinheiro fisicamente e informe — o sistema calcula saldo esperado e
-   diferença.
-5. **Acompanhe os números** (`/dashboard` e `/relatorios`).
+| **Serviços** | catálogo com preço e duração |
+| **Agendamentos** | agenda diária, conflito de horário, status e lembretes |
+| **WhatsApp** | Cloud API oficial da Meta: templates, consentimento, fila com retentativas e webhook assinado |
+| **Assinaturas de clientes** | planos recorrentes pagos no caixa, com renovação e cancelamento auditados |
+| **Pets** | ficha de animais vinculada ao cliente (nicho) |
 
 ### Mapa de páginas
 
-| Rota | Para quê | Quem usa |
-|---|---|---|
-| `/` | Home com cards dos módulos ativos da empresa | todos |
-| `/login`, `/cadastro`, `/redefinir-senha` | Entrar, criar conta e definir/recuperar a senha | todos |
-| `/usuarios` | Gerenciar contas e perfis | admin |
-| `/clientes`, `/pets` | Clientes e (se ativo) ficha de animais | todos |
-| `/servicos` | Catálogo de serviços (preço/duração) | admin escreve |
-| `/produtos`, `/categorias`, `/fornecedores` | Estoque e catálogo | admin escreve; entrada/saída de estoque: todos |
-| `/pdv`, `/vendas` | Vender e histórico (cancelar: admin) | todos |
-| `/caixa`, `/caixa/*`, `/financeiro` | Turnos, movimentos, contas a pagar/receber e resumo | admin opera, todos leem |
-| `/agenda` | Agendamentos do dia (módulo opcional) | todos |
-| `/planos`, `/assinaturas` | Planos e assinaturas de clientes (módulo opcional) | admin escreve |
-| `/faturamento` | Plano da empresa no Akylla Gestão (billing do SaaS) | admin |
-| `/importacoes` | Importar planilhas CSV (clientes/produtos) e ver o histórico | admin |
-| `/whatsapp`, `/whatsapp/*` | Config, templates, consentimento e envios (módulo opcional) | admin (leitura: todos) |
-| `/dashboard`, `/relatorios` | Indicadores, relatórios e exportação CSV | todos |
-
----
-
-## Qualidade, segurança e auditoria
-
-| Compromisso | Como o Akylla Gestão entrega |
+| Rota | Para quê |
 |---|---|
-| **Dados isolados por empresa** | `companyId` obrigatório em toda entidade, derivado da sessão autenticada — nunca enviado pelo cliente |
-| **Permissões no servidor** | Guards globais de sessão, perfil administrativo e módulo ativo; o frontend apenas reflete o que o servidor já exige |
-| **Valores monetários corretos** | Decimais de 2 casas no banco e nas validações — nunca ponto flutuante |
-| **Nada de estado crítico confiado ao cliente** | Preços, totais, saldos de estoque, saldo de caixa e diferenças são recalculados no servidor |
-| **Trilha de auditoria** | Vendas, movimentações de estoque e de caixa nunca são apagadas: cancelamento e estorno criam registros compensatórios com autor, data e motivo |
-| **Sessões seguras** | Cookie `HttpOnly` com hash SHA-256 no banco; revogação no logout e ao inativar usuários |
-| **Concorrência tratada** | Trava pessimista (`FOR UPDATE`) em ordem fixa: caixa → produtos — vendas simultâneas nunca corrompem saldo |
-| **Exportação CSV segura** | Proteção contra injeção de fórmulas (`=`, `+`, `-`, `@`, inclusive após espaço) e limite de 5000 linhas |
-
-**Evidências de verificação (Etapa 10; números atualizados em 2026-10-14):**
-
-- `538` testes automatizados em PostgreSQL real — **538 aprovados em 24
-  arquivos** (cobrindo autenticação, catálogo, PDV, caixa, financeiro,
-  clientes, WhatsApp, agenda, assinaturas, billing, relatórios, tenancy,
-  módulos por empresa e importação de planilhas)
-- `npm run lint` — 0 erros · `npm run typecheck` — workspaces `apps/*` OK
-- `npm run build` — shared, whatsapp, API, web e worker compilando ·
-  `npm run db:validate` — schema válido
+| `/login`, `/cadastro`, `/redefinir-senha` | entrar, criar conta (com aceite de termos) e recuperar a senha |
+| `/termos`, `/privacidade` | termos de uso e política de privacidade |
+| `/pdv`, `/vendas` | vender e consultar o histórico |
+| `/caixa`, `/financeiro` | turnos, movimentos e contas a pagar/receber |
+| `/clientes`, `/pets` | clientes e fichas de animais |
+| `/produtos`, `/categorias`, `/fornecedores` | catálogo e estoque |
+| `/servicos`, `/agenda` | serviços e agendamentos |
+| `/planos`, `/assinaturas` | assinaturas de clientes |
+| `/whatsapp/*` | configuração, templates, consentimento e envios |
+| `/importacoes` | importar planilhas |
+| `/dashboard`, `/relatorios` | indicadores e exportação |
+| `/usuarios`, `/faturamento` | equipe e plano da empresa (admin) |
 
 ---
 
-## Como executar o projeto
+## Segurança, dados e LGPD
 
-### 1. Pré-requisitos
+| Compromisso | Como é cumprido |
+|---|---|
+| **Isolamento por empresa** | `companyId` sempre vem da sessão, nunca do cliente. Leitura de registro de outra empresa responde 404. Guard ORM de tenant ([ADR-0001](docs/architecture/ADR-0001-tenant-defense.md)) e RLS no PostgreSQL na Fase 1 |
+| **Cálculos no servidor** | preços, totais, saldos de estoque e de caixa são sempre recalculados no backend |
+| **Histórico que não se apaga** | vendas, estoque e caixa funcionam como registro contínuo. Correção vira lançamento compensatório com autor, data e motivo |
+| **Dinheiro sem arredondamento errado** | `Decimal(12,2)` no banco e transmitido como texto; nunca ponto flutuante |
+| **Concorrência** | travas `FOR UPDATE` em ordem fixa (caixa → produtos), então vendas simultâneas não corrompem saldos |
+| **Autenticação** | bcrypt, sessão com hash SHA-256 no banco, rate limit de login e de cadastro, 2FA para admin, cabeçalhos de segurança |
+| **LGPD** | consentimento registrado, exportação dos dados do cliente, anonimização (`/api/lgpd/...`) que preserva os registros financeiros, exportação completa da empresa (`GET /api/company/export`) |
+| **Pagamentos** | webhook do Mercado Pago com assinatura comparada em tempo constante, anti-replay e bloqueio total se o segredo não estiver configurado |
+| **Backup** | dump diário com **restauração testada automaticamente** em banco temporário (ver [Backup e restauração](#backup-e-restauração)) |
+| **Segredos** | só em `.env`, que não vai para o Git. `.env.example` sem valores reais e varredura de segredos no repositório |
+
+**Verificação atual:** `npm run validate` verde, com lint 0, typecheck
+OK, **584/584 testes** em PostgreSQL real (30 arquivos), build OK e
+`db:validate` OK.
+
+---
+
+## Roteiro de evolução (7 fases)
+
+Fases em ordem rígida: uma só começa quando os critérios de aceite da
+anterior estão verdes. A especificação completa está em
+[`upgrade/Prompt_Mestre.md`](upgrade/Prompt_Mestre.md).
+
+| Fase | Tema | Conteúdo | Status |
+|---|---|---|---|
+| **1** | Confiabilidade | backup com restore testado ✅, Sentry + runbook, CD real, rate limit Redis, verificação de e-mail, RLS, `npm audit` = 0 | 🚧 em andamento |
+| **2** | Retenção | comissões, crediário, ordem de serviço com anexos | ⬜ |
+| **3** | Fiscal | NFC-e / NF-e / NFS-e via integração (provedor abstraído, credenciais criptografadas) | ⬜ |
+| **4** | Perfis | onboarding Comércio / Serviços / Híbrido, landing pages por segmento | ⬜ |
+| **5** | Design e UX | componentes compartilhados, impressão de cupom, acessibilidade | ⬜ |
+| **6** | Qualidade | cobertura na CI, E2E com Playwright, OpenAPI em `/api/docs` | ⬜ |
+| **7** | Produto | edição da empresa, busca global, agenda semana/mês, seeds por segmento | ⬜ |
+
+**Fora do escopo:** modo offline completo, emissor fiscal próprio,
+ERP contábil e RH/folha.
+
+---
+
+## Como executar
+
+### Pré-requisitos
 
 | Ferramenta | Versão |
 |---|---|
-| Node.js | 20 ou superior |
-| npm | 11+ (workspaces nativos) |
-| PostgreSQL | 17 (porta 5432) |
+| Node.js | 20+ (testado no 24) |
+| npm | 11+ |
+| PostgreSQL | 17 (porta 5432); os binários `pg_dump`/`pg_restore`/`psql` são usados pelo backup |
 | Git | 2.x |
 
-### 2. Instalação
-
-Caminho rápido (cria `.env`, instala dependências, gera o client
-Prisma, aplica migrations e cria o admin inicial):
+### Instalação rápida
 
 ```bash
 git clone https://github.com/Tanattos18/Akylla-Gestao.git
 cd Akylla-Gestao
-npm run setup:dev
+npm run setup:dev   # .env, dependências, Prisma, migrations e admin inicial
 ```
 
-Ou manualmente:
+Ou manualmente: `npm install`, `cp .env.example .env` (preencha
+`DATABASE_URL` e `BOOTSTRAP_*`), `npm run db:migrate` e
+`npm run bootstrap:admin`.
+
+> O `.env` não é versionado. `.env.example` é o único template. Os nomes
+> `petflow` (banco), `petflow_session` (cookie) e `@petflow/*` (pacotes)
+> são identificadores técnicos legados, mantidos por compatibilidade.
+
+### Rodar (três terminais)
 
 ```bash
-git clone https://github.com/Tanattos18/Akylla-Gestao.git
-cd Akylla-Gestao
-npm install
-cp .env.example .env
+npm run dev:api      # API    → http://localhost:3001/health
+npm run dev:web      # Web    → http://localhost:3000
+npm run dev:worker   # fila do WhatsApp
 ```
 
-### 3. Variáveis de ambiente (`.env`)
-
-```dotenv
-DATABASE_URL=postgresql://usuario:senha@localhost:5432/petflow
-BOOTSTRAP_COMPANY_NAME=Minha Empresa
-BOOTSTRAP_COMPANY_SLUG=minha-empresa
-BOOTSTRAP_ADMIN_NAME=Administrador
-BOOTSTRAP_ADMIN_EMAIL=admin@exemplo.com
-BOOTSTRAP_ADMIN_PASSWORD=<senha-forte>
-```
-
-> O `.env` **não é versionado** e nunca deve conter senhas reais em
-> arquivos versionados. O nome do banco (`petflow`) e do cookie de
-> sessão (`petflow_session`) são mantidos por compatibilidade técnica.
-
-### 4. Banco de dados
+### Verificações (obrigatórias antes de concluir qualquer mudança)
 
 ```bash
-npm run db:migrate     # aplica as migrations
-npm run db:validate    # valida o schema Prisma
+npm run validate     # lint + typecheck + test + build + db:validate
 ```
-
-### 5. Primeiro administrador
-
-```bash
-npm run bootstrap:admin
-```
-
-Comando idempotente: cria empresa e administrador apenas se ainda não
-existirem.
-
-### 6. Executar (três terminais)
-
-```bash
-npm run dev:api        # API  → http://localhost:3001/health
-npm run dev:web        # Web  → http://localhost:3000
-npm run dev:worker     # worker de tarefas
-```
-
-Acesse `http://localhost:3000` e entre com o e-mail/senha do
-administrador.
-
-### 7. Verificações antes de qualquer alteração
-
-```bash
-npm run validate        # roda as 5 verificações abaixo em sequência
-npm run lint           # padrão de código
-npm run typecheck      # tipagem estrita
-npm test               # testes em PostgreSQL real
-npm run build          # build completo
-npm run db:validate    # schema Prisma
-```
-
-Guia completo de ambiente em
-[`docs/operations/DEVELOPMENT.md`](docs/operations/DEVELOPMENT.md).
 
 ### Dados de demonstração
-
-Para uma apresentação ao cliente, popule uma empresa vazia:
 
 ```bash
 npm run db:seed:demo -- --company=<slug|id|e-mail-do-admin>
 ```
 
-O script (transação única, só roda em empresa sem produtos/clientes)
-cria categorias, fornecedores, produtos com estoque, clientes,
-serviços, vendas em sessões de caixa, agendamentos, assinaturas, dados
-do WhatsApp e um usuário membro de teste. **Observação:** o seed ainda
-contém dados temáticos de pet shop — a reescrita com dados de comércio
-variado está prevista em etapa futura.
+O seed ainda usa dados de pet shop. Seeds por segmento estão previstos
+para a Fase 7.
+
+---
+
+## Backup e restauração
+
+```bash
+npm run db:backup                 # dump + retenção (30 dias) + restore testado em banco temporário
+npm run db:backup -- --retain=7   # outra retenção
+npm run db:restore-test           # só testa o restore do dump mais recente
+npm run db:restore -- <arquivo>   # restaura (destrutivo; confira o banco alvo)
+```
+
+O restore só passa se o banco restaurado tiver as mesmas linhas em
+todas as tabelas, as mesmas migrations e nenhuma diferença em relação ao
+`schema.prisma`. Agendamento (cron `0 2 * * *`), cópia externa (S3/B2),
+RPO ≤ 24 h e RTO ≤ 4 h estão em [`backup/README.md`](backup/README.md).
 
 ---
 
@@ -324,21 +236,23 @@ variado está prevista em etapa futura.
 
 ```
 apps/
-  web/       interface web (Next.js)
-  api/       API (NestJS)
-  worker/    tarefas em segundo plano (fila do WhatsApp)
+  api/       API (NestJS) — prefixo /api, /health fora
+  web/       interface (Next.js) — proxy /api → :3001
+  worker/    fila do WhatsApp (PostgreSQL, sem Redis)
 packages/
-  shared/    tipos e validações compartilhados (Zod)
-  whatsapp/  cliente do provedor WhatsApp (Meta Cloud API)
-  config/    base de TypeScript compartilhada (tsconfig)
-config/      configurações do monorepo (ESLint e Vitest)
-scripts/     utilitários locais (setup:dev, db, validate)
-database/    schema Prisma e migrations
-docs/        documentação (ver docs/README.md)
+  shared/    schemas Zod, tipos e constantes (@petflow/shared)
+  whatsapp/  provedor WhatsApp (Meta/Mock)
+  config/    tsconfig base
+database/    schema Prisma e migrations versionadas
+config/      ESLint, Vitest, Playwright
+scripts/     setup:dev, db, db-backup, validate, check-secrets, check-migrations
 tests/
-  helpers/       infraestrutura compartilhada dos testes
-  integration/   testes de integração (Vitest + Supertest)
-.github/     CI (GitHub Actions) e Dependabot
+  helpers/       infraestrutura de testes
+  integration/   testes de integração (Vitest + Supertest, PostgreSQL real)
+backup/      dumps locais (fora do Git; só o README é versionado)
+upgrade/     roteiro de evolução e catálogos de melhorias
+docs/        documentação (índice em docs/README.md)
+.github/     CI, CD e Dependabot
 automação do whatsapp/   base histórica preservada (fora do monorepo)
 ```
 
@@ -350,34 +264,25 @@ automação do whatsapp/   base histórica preservada (fora do monorepo)
 |---|---|
 | Frontend | Next.js 15 · React 19 · Tailwind CSS 4 |
 | Backend | NestJS 11 · TypeScript estrito · Zod |
-| Banco | PostgreSQL 17 · Prisma ORM |
-| Mensageria | WhatsApp Business Cloud API (Meta) · fila própria com worker |
+| Banco | PostgreSQL 17 · Prisma 5 |
+| Integrações | WhatsApp Cloud API (Meta) · Mercado Pago |
 | Testes | Vitest · Supertest · PostgreSQL real |
-| Processos | npm workspaces (monorepo) |
+| Monorepo | npm workspaces |
 
 ---
 
 ## Documentação
 
-Este `README.md` apresenta o produto. O **índice técnico** de todos os
-documentos (estado, arquitetura, operação, histórico) está em
-[`docs/README.md`](docs/README.md).
-
 | Documento | Conteúdo |
 |---|---|
-| [Índice da documentação](docs/README.md) | mapa completo, organizado por finalidade |
-| [Documento técnico completo](docs/AKYLLA_GESTAO_DOCUMENTACAO_COMPLETA.md) | mapa único do sistema (29 seções) — fonte para leitura por IA |
-| [Status do projeto](docs/operations/PROJECT_STATUS.md) | etapa atual, entregas e pendências |
-| [Checklist de implementação](docs/operations/IMPLEMENTATION_CHECKLIST.md) | progresso etapa a etapa |
-| [Changelog](docs/operations/CHANGELOG.md) | histórico completo de alterações |
-| [Checklist pré-produção](docs/akylla/CHECKLIST_PRE_PRODUCAO.md) | limitações e itens antes de comercializar |
-| [PDV](docs/akylla/PDV.md) | fluxo de venda, regras e API |
-| [Arquitetura](docs/architecture/ARCHITECTURE.md) | tecnologias e decisões registradas |
-| [API](docs/architecture/API.md) | endpoints, permissões e payloads |
-| [Banco de dados](docs/architecture/DATABASE.md) | modelo de dados e diretrizes |
-| [Desenvolvimento](docs/operations/DEVELOPMENT.md) | ambiente e execução local |
+| [Índice da documentação](docs/README.md) | mapa completo por finalidade |
+| [Roteiro de evolução](upgrade/Prompt_Mestre.md) | as 7 fases, regras e critérios de aceite |
+| [Status do projeto](docs/operations/PROJECT_STATUS.md) | fase atual, entregas e pendências |
+| [Checklist de implementação](docs/operations/IMPLEMENTATION_CHECKLIST.md) | progresso item a item |
+| [Changelog](docs/operations/CHANGELOG.md) | histórico de alterações |
+| [Go/No-go para venda](docs/akylla/GO_NO_GO.md) | critérios para liberar o primeiro cliente pagante |
+| [Checklist pré-produção](docs/akylla/CHECKLIST_PRE_PRODUCAO.md) | limitações conhecidas (L1–L14) |
+| [Documento técnico completo](docs/AKYLLA_GESTAO_DOCUMENTACAO_COMPLETA.md) | visão única do sistema |
+| [Arquitetura](docs/architecture/ARCHITECTURE.md) · [API](docs/architecture/API.md) · [Banco](docs/architecture/DATABASE.md) | referência técnica |
+| [Desenvolvimento](docs/operations/DEVELOPMENT.md) | ambiente local |
 | [AGENTS.md](AGENTS.md) | regras para agentes de desenvolvimento |
-
----
-
-**Akylla Gestão** — roadmap Akylla (Etapas 0–12) concluído.

@@ -31,7 +31,8 @@
     "db:deploy": "prisma migrate deploy --schema database/prisma/schema.prisma",
     "db:backup": "node scripts/db-backup.mjs backup",
     "db:restore": "node scripts/db-backup.mjs restore",
-    "db:restore:test": "node scripts/db-backup.mjs restore:test",
+    "db:restore-test": "node scripts/db-backup.mjs restore-test",
+    "db:restore:test": "node scripts/db-backup.mjs restore-test",
     "check:secrets": "node scripts/check-secrets.mjs",
     "check:migrations": "node scripts/check-migrations.mjs"
   },
