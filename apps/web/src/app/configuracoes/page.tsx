@@ -6,6 +6,7 @@ import { api, ApiError } from "../../lib/api";
 import type { CompanyModuleDto, OnboardingStatusDto } from "../../lib/types";
 import { Tabs } from "../../components/ui/Tabs";
 import { useToast } from "../../components/ui/Toast";
+import { CompanyForm } from "../../components/settings/CompanyForm";
 
 const segmentLabels: Record<string, string> = {
   COMERCIO: "Comércio",
@@ -14,14 +15,14 @@ const segmentLabels: Record<string, string> = {
   PERSONALIZADO: "Personalizado",
 };
 
-/** Configurações da empresa (Fase 4, ADMIN): perfil e módulos ligados. */
+/** Configurações da empresa (ADMIN): dados (Fase 7), módulos e perfil (Fase 4). */
 export default function ConfiguracoesPage() {
   const [modules, setModules] = useState<CompanyModuleDto[]>([]);
   const [status, setStatus] = useState<OnboardingStatusDto | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [changed, setChanged] = useState(false);
-  const [tab, setTab] = useState<"modulos" | "perfil">("modulos");
+  const [tab, setTab] = useState<"empresa" | "modulos" | "perfil">("empresa");
   const toast = useToast();
 
   useEffect(() => {
@@ -56,12 +57,15 @@ export default function ConfiguracoesPage() {
       <Tabs
         label="Configurações"
         items={[
+          { key: "empresa", label: "Empresa" },
           { key: "modulos", label: "Módulos" },
           { key: "perfil", label: "Perfil do negócio" },
         ]}
         value={tab}
         onChange={setTab}
       >
+      {tab === "empresa" && <CompanyForm />}
+
       {tab === "perfil" && (
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <h3 className="text-lg font-semibold text-slate-900">Perfil do negócio</h3>

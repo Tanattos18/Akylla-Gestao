@@ -179,6 +179,10 @@ export interface SessionCompanyDto {
   id: string;
   name: string;
   slug: string;
+  /** Fase 7: CNPJ/CPF (só dígitos), telefone e endereço para o comprovante */
+  document?: string | null;
+  phone?: string | null;
+  address?: string | null;
 }
 
 export interface MeResponse {
@@ -1400,6 +1404,83 @@ export const upsertCompanyModuleSchema = z.object({
   status: companyModuleStatusSchema,
 });
 export type UpsertCompanyModuleInput = z.infer<typeof upsertCompanyModuleSchema>;
+
+// ---------------------------------------------------------------------------
+// Dados da empresa (Fase 7 · 7.1)
+// ---------------------------------------------------------------------------
+
+/** CNPJ (14) ou CPF (11): aceita máscara, grava só os dígitos. */
+export const companyDocumentSchema = z
+  .string()
+  .trim()
+  .transform((value) => value.replace(/\D/g, ""))
+  .refine((value) => value.length === 11 || value.length === 14, "Informe um CPF (11 dígitos) ou CNPJ (14 dígitos)");
+
+const optionalNullableText = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .nullable()
+    .optional()
+    .transform((value) => (value === "" ? null : value));
+
+export const updateCompanySchema = z
+  .object({
+    name: z.string().trim().min(2, "Nome deve ter ao menos 2 caracteres").max(120),
+    document: z.union([companyDocumentSchema, z.literal("").transform(() => null), z.null()]),
+    phone: optionalNullableText(30),
+    address: optionalNullableText(200),
+  })
+  .partial()
+  .refine((value) => Object.keys(value).length > 0, "Nada para alterar");
+export type UpdateCompanyInput = z.infer<typeof updateCompanySchema>;
+
+export const updateCompanySlugSchema = z.object({
+  slug: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .min(3, "Use ao menos 3 caracteres")
+    .max(60, "Use no máximo 60 caracteres")
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Use só letras minúsculas, números e hífens (sem hífen no início ou fim)"),
+});
+export type UpdateCompanySlugInput = z.infer<typeof updateCompanySlugSchema>;
+
+export interface CompanyProfileDto {
+  id: string;
+  name: string;
+  slug: string;
+  document: string | null;
+  phone: string | null;
+  address: string | null;
+  segment: string | null;
+  createdAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Busca global (Fase 7 · 7.3)
+// ---------------------------------------------------------------------------
+
+export const globalSearchQuerySchema = z.object({
+  q: z.string().trim().min(2, "Digite ao menos 2 caracteres").max(80),
+});
+export type GlobalSearchQuery = z.infer<typeof globalSearchQuerySchema>;
+
+export type GlobalSearchKind = "client" | "product" | "sale" | "serviceOrder" | "service" | "pet";
+
+export interface GlobalSearchItem {
+  kind: GlobalSearchKind;
+  id: string;
+  title: string;
+  subtitle: string | null;
+  href: string;
+}
+
+export interface GlobalSearchResult {
+  query: string;
+  groups: Array<{ kind: GlobalSearchKind; label: string; items: GlobalSearchItem[] }>;
+}
 
 // ---------------------------------------------------------------------------
 // Onboarding por perfil (Fase 4)

@@ -119,6 +119,9 @@ export class AuthService {
         id: user.company.id,
         name: user.company.name,
         slug: user.company.slug,
+        document: user.company.document,
+        phone: user.company.phone,
+        address: user.company.address,
       },
     };
   }
@@ -249,7 +252,14 @@ export class AuthService {
     return {
       token,
       user: { id: user.id, name: user.name, email: user.email, role: user.role, status: user.status },
-      company: { id: user.company.id, name: user.company.name, slug: user.company.slug },
+      company: {
+        id: user.company.id,
+        name: user.company.name,
+        slug: user.company.slug,
+        document: user.company.document,
+        phone: user.company.phone,
+        address: user.company.address,
+      },
     };
   }
 
@@ -535,6 +545,9 @@ export class AuthService {
         id: user.company.id,
         name: user.company.name,
         slug: user.company.slug,
+        document: user.company.document,
+        phone: user.company.phone,
+        address: user.company.address,
       },
     };
   }
@@ -593,6 +606,9 @@ export class AuthService {
         id: user.company.id,
         name: user.company.name,
         slug: user.company.slug,
+        document: user.company.document,
+        phone: user.company.phone,
+        address: user.company.address,
       },
     };
   }

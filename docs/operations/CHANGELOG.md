@@ -6,6 +6,48 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-18 - Fase 7: Produto
+
+Última fase do roteiro do Prompt Mestre.
+
+### Adicionado
+
+- **Dados da empresa (7.1):**
+  - `GET/PATCH /api/company` (nome, CNPJ/CPF, telefone, endereço) e
+    `PATCH /api/company/slug` (único entre empresas → 409);
+  - aba "Empresa" em `/configuracoes`;
+  - o comprovante mostra CNPJ/CPF, endereço e telefone e passa a dizer
+    "sem valor fiscal";
+  - migration `20261019090000_company_profile`.
+- **Uso do plano (7.2):** as barras e o alerta de 80% já existiam em
+  `/faturamento`; entrou o link "Ver planos maiores".
+- **Busca global (7.3):**
+  - `GET /api/search?q=` devolve até 5 resultados por tipo: clientes
+    (nome, e-mail, telefone, CPF), produtos (nome, SKU, código de
+    barras), vendas (código), OS (número ou título), serviços e pets;
+  - só traz dados da empresa e respeita os módulos desligados;
+  - na barra do topo vira um combobox WAI-ARIA, com ↑ ↓ Enter Esc e
+    debounce de 300 ms. Uma chamada substitui as 5 de antes.
+- **Agenda (7.4):** abas Dia, Semana e Mês. A semana mostra colunas de
+  segunda a domingo; o mês, um calendário com pontos por situação. Clicar
+  no dia abre a visão Dia. Não houve mudança no backend.
+- **Seeds por segmento (7.5):** `--preset=comercio|servicos|alimentacao|pet`,
+  com as marcas Empório Central, Studio Beleza, Padaria Pão Quente e
+  Mundo Pet (`apps/api/src/cli/seed-datasets.ts`). O seed também marca o
+  perfil da empresa.
+- **Impressão de relatórios (7.6):** botão "Imprimir"; o filtro some e
+  entra um cabeçalho com período, aba e data.
+- **Testes:**
+  - `tests/integration/company-profile-search.test.ts` (8);
+  - E2E 6 (CNPJ no comprovante e busca pelo teclado) e 7 (agenda semana e
+    mês).
+
+### Corrigido
+
+- `useToast`/`useDialog` passaram a devolver objetos estáveis. Antes, uma
+  tela que usasse `toast` como dependência de efeito podia entrar em
+  repetição.
+
 ## [Akylla Gestão] - 2026-10-18 - Fase 6: Testes e qualidade
 
 ### Adicionado

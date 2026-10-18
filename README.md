@@ -159,7 +159,7 @@ anterior estão verdes. A especificação completa está em
 | **4** | Perfis | onboarding Comércio / Serviços / Híbrido, landing pages por segmento | ✅ |
 | **5** | Design e UX | componentes compartilhados, impressão de cupom, acessibilidade (axe: 0 violações em 36 telas) | ✅ |
 | **6** | Qualidade | cobertura na CI (93,7% das linhas), E2E com Playwright (5 fluxos), OpenAPI em `/api/docs`, teste de contrato | ✅ |
-| **7** | Produto | edição da empresa, busca global, agenda semana/mês, seeds por segmento | ⬜ |
+| **7** | Produto | dados da empresa no comprovante, uso do plano, busca global, agenda semana/mês, seeds por segmento, impressão de relatórios | ✅ |
 
 **Fora do escopo:** modo offline completo, emissor fiscal próprio,
 ERP contábil e RH/folha.
@@ -217,11 +217,17 @@ Documentação da API (fora de produção): `http://localhost:3001/api/docs`.
 ### Dados de demonstração
 
 ```bash
-npm run db:seed:demo -- --company=<slug|id|e-mail-do-admin>
+npm run db:seed:demo -- --company=<slug|id|e-mail-do-admin> --preset=comercio
 ```
 
-O seed ainda usa dados de pet shop. Seeds por segmento estão previstos
-para a Fase 7.
+Presets (empresa vazia):
+- `comercio` (padrão): Empório Central;
+- `servicos`: Studio Beleza;
+- `alimentacao`: Padaria Pão Quente;
+- `pet`: Mundo Pet.
+
+Cada um cria catálogo, clientes, 30 dias de vendas e caixa, agenda,
+assinaturas e WhatsApp de exemplo, e marca o perfil da empresa.
 
 ---
 

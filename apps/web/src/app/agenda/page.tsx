@@ -18,6 +18,8 @@ import {
   type Paginated,
 } from "../../lib/types";
 import { DataTable } from "../../components/ui/DataTable";
+import { Tabs } from "../../components/ui/Tabs";
+import { CalendarView, weekStart } from "../../components/agenda/CalendarView";
 
 const pageSize = 20;
 
@@ -42,6 +44,9 @@ export default function AgendaPage() {
   const [day, setDay] = useState(() => todayLocal());
   const [status, setStatus] = useState<"" | AppointmentStatus>("");
   const [search, setSearch] = useState("");
+  // Fase 7 · 7.4: visões dia / semana / mês
+  const [view, setView] = useState<"dia" | "semana" | "mes">("dia");
+  const [appliedSearch, setAppliedSearch] = useState("");
 
   useEffect(() => {
     fetchSession().then((value) => {
@@ -87,9 +92,29 @@ export default function AgendaPage() {
     setPage(1);
   }
 
+  /** Avança/volta um dia, uma semana ou um mês conforme a visão. */
+  function step(direction: 1 | -1) {
+    if (view === "dia") return changeDay(shiftDay(day, direction));
+    if (view === "semana") return changeDay(shiftDay(day, 7 * direction));
+    const [year, month] = day.split("-").map(Number);
+    const target = new Date(year!, month! - 1 + direction, 1, 12);
+    changeDay(`${target.getFullYear()}-${String(target.getMonth() + 1).padStart(2, "0")}-01`);
+  }
+
+  function periodTitle(): string {
+    if (view === "dia") return `${formatDayTitle(day)} · ${total} agendamento${total === 1 ? "" : "s"}`;
+    if (view === "semana") {
+      const start = weekStart(day);
+      return `Semana de ${formatDayTitle(start)}`;
+    }
+    const [year, month] = day.split("-").map(Number);
+    return new Date(year!, month! - 1, 1, 12).toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  }
+
   function handleFilter(event: FormEvent) {
     event.preventDefault();
     setPage(1);
+    setAppliedSearch(search);
     void loadAppointments();
   }
 
@@ -106,9 +131,7 @@ export default function AgendaPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-semibold text-slate-900">Agenda</h2>
-          <p className="text-sm text-slate-500">
-            {formatDayTitle(day)} · {total} agendamento{total === 1 ? "" : "s"}
-          </p>
+          <p className="text-sm text-slate-500 first-letter:uppercase">{periodTitle()}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
@@ -136,8 +159,8 @@ export default function AgendaPage() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => changeDay(shiftDay(day, -1))}
-            aria-label="Dia anterior"
+            onClick={() => step(-1)}
+            aria-label={view === "dia" ? "Dia anterior" : view === "semana" ? "Semana anterior" : "Mês anterior"}
             className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
           >
             ←
@@ -151,8 +174,8 @@ export default function AgendaPage() {
           </button>
           <button
             type="button"
-            onClick={() => changeDay(shiftDay(day, 1))}
-            aria-label="Próximo dia"
+            onClick={() => step(1)}
+            aria-label={view === "dia" ? "Próximo dia" : view === "semana" ? "Próxima semana" : "Próximo mês"}
             className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
           >
             →
@@ -210,6 +233,29 @@ export default function AgendaPage() {
         </form>
       </div>
 
+      <Tabs
+        label="Visão da agenda"
+        items={[
+          { key: "dia", label: "Dia" },
+          { key: "semana", label: "Semana" },
+          { key: "mes", label: "Mês" },
+        ]}
+        value={view}
+        onChange={setView}
+      >
+      {view !== "dia" ? (
+        <CalendarView
+          view={view}
+          day={day}
+          status={status}
+          search={appliedSearch}
+          onPickDay={(picked) => {
+            changeDay(picked);
+            setView("dia");
+          }}
+        />
+      ) : (
+      <>
       <DataTable
         rows={appointments}
         rowKey={(appointment) => appointment.id}
@@ -259,6 +305,9 @@ export default function AgendaPage() {
           </div>
         </div>
       )}
+      </>
+      )}
+      </Tabs>
     </div>
   );
 }

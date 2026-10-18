@@ -1,4 +1,6 @@
-import { Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { ConflictException, Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
+import type { CompanyProfileDto, UpdateCompanyInput, UpdateCompanySlugInput } from "@petflow/shared";
 import { PrismaService } from "../prisma/prisma.module";
 import type { AuthContext } from "../common/decorators/auth.decorator";
 
@@ -10,6 +12,70 @@ import type { AuthContext } from "../common/decorators/auth.decorator";
 @Injectable()
 export class CompanyService {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+
+  // --- Fase 7 · 7.1: dados da empresa -------------------------------------
+
+  private toProfile(company: {
+    id: string;
+    name: string;
+    slug: string;
+    document: string | null;
+    phone: string | null;
+    address: string | null;
+    segment: string | null;
+    createdAt: Date;
+  }): CompanyProfileDto {
+    return { ...company, createdAt: company.createdAt.toISOString() };
+  }
+
+  private readonly profileSelect = {
+    id: true,
+    name: true,
+    slug: true,
+    document: true,
+    phone: true,
+    address: true,
+    segment: true,
+    createdAt: true,
+  } as const;
+
+  async getProfile(auth: AuthContext): Promise<CompanyProfileDto> {
+    const company = await this.prisma.company.findUnique({
+      where: { id: auth.companyId },
+      select: this.profileSelect,
+    });
+    if (!company) throw new NotFoundException("Empresa não encontrada");
+    return this.toProfile(company);
+  }
+
+  async updateProfile(auth: AuthContext, input: UpdateCompanyInput): Promise<CompanyProfileDto> {
+    const company = await this.prisma.company.update({
+      where: { id: auth.companyId },
+      data: input,
+      select: this.profileSelect,
+    });
+    return this.toProfile(company);
+  }
+
+  /**
+   * Slug é único entre todas as empresas. Com RLS a empresa não enxerga as
+   * outras, então a unicidade vem do índice único (P2002 → 409).
+   */
+  async updateSlug(auth: AuthContext, input: UpdateCompanySlugInput): Promise<CompanyProfileDto> {
+    try {
+      const company = await this.prisma.company.update({
+        where: { id: auth.companyId },
+        data: { slug: input.slug },
+        select: this.profileSelect,
+      });
+      return this.toProfile(company);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        throw new ConflictException("Este endereço já está em uso por outra empresa");
+      }
+      throw error;
+    }
+  }
 
   async exportCompany(auth: AuthContext) {
     const companyId = auth.companyId;

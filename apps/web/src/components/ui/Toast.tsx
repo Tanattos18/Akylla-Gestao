@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
 import { CheckCircle2, AlertCircle, X } from "lucide-react";
 import { ApiError } from "../../lib/api";
 
@@ -41,10 +41,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     [dismiss],
   );
 
-  const api: ToastApi = {
-    success: useCallback((title: string) => push({ kind: "success", title }), [push]),
-    error: useCallback(
-      (error: unknown, fallback = "Não foi possível concluir a operação.") => {
+  // Objeto estável: telas podem usar `toast` em dependências de efeitos
+  const api = useMemo<ToastApi>(
+    () => ({
+      success: (title: string) => push({ kind: "success", title }),
+      error: (error: unknown, fallback = "Não foi possível concluir a operação.") => {
         if (error instanceof ApiError) {
           push({
             kind: "error",
@@ -55,9 +56,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           push({ kind: "error", title: typeof error === "string" ? error : fallback });
         }
       },
-      [push],
-    ),
-  };
+    }),
+    [push],
+  );
 
   return (
     <ToastContext.Provider value={api}>

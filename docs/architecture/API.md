@@ -645,7 +645,7 @@ Regras: [`docs/akylla/ONBOARDING.md`](../akylla/ONBOARDING.md).
 | GET | `/api/onboarding/status` | sessão | `{segment, completed, completedAt}` |
 | POST | `/api/onboarding/apply` | ADMIN | `{slug}` (`COMERCIO`, `SERVICOS`, `HIBRIDO`, `PERSONALIZADO`). Idempotente: módulos do perfil → ACTIVE, demais → DISABLED (Personalizado não altera). Retorna 200 com o status. Slug inválido → 400 |
 
-## LGPD e exportação da empresa (N3 · 9.x)
+## LGPD e dados da empresa (N3 · 9.x, Fase 7)
 
 | Método | Rota | Acesso | Descrição |
 |---|---|---|---|
@@ -654,6 +654,15 @@ Regras: [`docs/akylla/ONBOARDING.md`](../akylla/ONBOARDING.md).
 | GET | `/api/lgpd/clients/:id/data-export` | ADMIN | Todos os dados do cliente (portabilidade, art. 18) |
 | DELETE | `/api/lgpd/clients/:id/anonymize` | ADMIN | Anonimiza o cliente (mantém vendas e histórico financeiro) |
 | GET | `/api/company/export` | ADMIN | Exportação integral da empresa (portabilidade/encerramento) |
+| GET | `/api/company` | sessão | **Fase 7:** dados da empresa `{id, name, slug, document, phone, address, segment, createdAt}` |
+| PATCH | `/api/company` | ADMIN | `{name?, document?, phone?, address?}`; `document` é CPF (11) ou CNPJ (14), aceita máscara e grava só dígitos; `""`/`null` remove. Vazio → 400. Os dados saem no comprovante (`/api/auth/me` também os devolve) |
+| PATCH | `/api/company/slug` | ADMIN | `{slug}` (3–60, minúsculas, números e hífens). Único entre todas as empresas: em uso → 409 (pelo índice único, já que a RLS esconde as outras empresas) |
+
+## Busca global (Fase 7 · 7.3)
+
+| Método | Rota | Acesso | Descrição |
+|---|---|---|---|
+| GET | `/api/search` | sessão | `?q=` (2–80). Até 5 resultados por tipo (clientes por nome/e-mail/telefone/CPF, produtos por nome/SKU/código de barras, vendas pelo código, OS por número/título, serviços, pets), só da empresa da sessão e sem os tipos de módulos desligados. Resposta `{query, groups:[{kind, label, items:[{kind, id, title, subtitle, href}]}]}` |
 
 ## Documentação OpenAPI (Fase 6 · 6.3)
 

@@ -287,6 +287,11 @@ model Company {
   segment   String?
   /// Fase 4: quando o onboarding foi concluído (null = mostrar a escolha)
   onboardingCompletedAt DateTime?
+  /// Fase 7: CNPJ (14) ou CPF (11), só dígitos; sai no comprovante
+  document  String?
+  /// Fase 7: telefone e endereço de uma linha para o comprovante
+  phone     String?
+  address   String?
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
   users     User[]

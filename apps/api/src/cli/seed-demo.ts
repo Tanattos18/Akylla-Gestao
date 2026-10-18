@@ -2,6 +2,7 @@ import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
 import { systemDatabaseUrl } from "../common/tenant/rls.extension";
+import { ALIMENTACAO, COMERCIO, SERVICOS, type SeedDataset } from "./seed-datasets";
 
 // Processo de sistema: conexão com bypass da RLS (Fase 1 · 1E)
 const prisma = new PrismaClient({
@@ -11,13 +12,22 @@ const BCRYPT_ROUNDS = 12;
 const OFFSET_MIN = -180;
 const RECEIPT_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
-function parseArgs(): { company: string | null } {
+const PRESETS = ["comercio", "servicos", "alimentacao", "pet"] as const;
+type Preset = (typeof PRESETS)[number];
+
+function parseArgs(): { company: string | null; preset: Preset } {
   const args = process.argv.slice(2);
   let company: string | null = process.env.SEED_COMPANY ?? null;
+  let preset: string = process.env.SEED_PRESET ?? "comercio";
   for (const arg of args) {
     if (arg.startsWith("--company=")) company = arg.slice("--company=".length);
+    if (arg.startsWith("--preset=")) preset = arg.slice("--preset=".length);
   }
-  return { company };
+  if (!(PRESETS as readonly string[]).includes(preset)) {
+    console.error(`Preset inválido: ${preset}. Use: ${PRESETS.join(", ")}`);
+    process.exit(1);
+  }
+  return { company, preset: preset as Preset };
 }
 
 function key(name: string): string {
@@ -71,7 +81,7 @@ function randInt(min: number, max: number): number {
   return min + Math.floor(rnd() * (max - min + 1));
 }
 
-const CATEGORIES = [
+const PET_CATEGORIES = [
   { name: "Ração", description: "Rações secas e úmidas para cães e gatos" },
   { name: "Petiscos", description: "Bifinhos, ossos e recompensas" },
   { name: "Higiene e Cosméticos", description: "Shampoos, condicionadores e cuidados" },
@@ -80,7 +90,7 @@ const CATEGORIES = [
   { name: "Camas e Transportadoras", description: "Conforto e transporte" },
 ];
 
-const SUPPLIERS = [
+const PET_SUPPLIERS = [
   { name: "Distribuidora Pet Brasil", document: "12.345.678/0001-90", email: "vendas@petbrasil.com.br", phone: "(11) 3456-7890" },
   { name: "Nordeste Rações", document: "98.765.432/0001-11", email: "comercial@nordesteracoes.com", phone: "(11) 3555-1234" },
   { name: "Animal Care Cosméticos", document: "45.678.912/0001-05", email: "contato@animalcare.com.br", phone: "(21) 3333-4444" },
@@ -100,7 +110,7 @@ type ProductRow = {
   description: string | null;
 };
 
-const PRODUCTS: ProductRow[] = [
+const PET_PRODUCTS: ProductRow[] = [
   { name: "Ração Golden Cães Adultos 15kg", category: "Ração", supplier: "Nordeste Rações", unit: "UNIDADE", cost: 89.9, price: 129.9, final: 18, min: 6, description: "Fórmula completa para cães adultos, saco 15kg" },
   { name: "Ração Premier Gatos Frango 10kg", category: "Ração", supplier: "Nordeste Rações", unit: "UNIDADE", cost: 79.9, price: 119.9, final: 14, min: 5, description: "Alto teor proteico para gatos castrados" },
   { name: "Ração N&D Cães Cordeiro 2.5kg", category: "Ração", supplier: "Distribuidora Pet Brasil", unit: "UNIDADE", cost: 96, price: 139.9, final: 10, min: 4, description: "Grain free com cordeiro" },
@@ -135,7 +145,7 @@ const PRODUCTS: ProductRow[] = [
   { name: "Caixa de Areia Higiênica", category: "Camas e Transportadoras", supplier: "Distribuidora Pet Brasil", unit: "UNIDADE", cost: 18.9, price: 29.9, final: 10, min: 4, description: "Com tampa e pá de limpeza" },
 ];
 
-const SERVICES = [
+const PET_SERVICES = [
   { name: "Banho", durationMinutes: 30, price: 45, description: "Banho com secagem" },
   { name: "Banho e Tosa", durationMinutes: 60, price: 75, description: "Banho completa com tosa na máquina ou tesoura" },
   { name: "Tosa Higiênica", durationMinutes: 20, price: 35, description: "Região íntima, patas e barriga" },
@@ -186,7 +196,7 @@ type PetRow = {
   color: string;
 };
 
-const PETS: PetRow[] = [
+const PET_PETS: PetRow[] = [
   { clientIndex: 0, name: "Thor", species: "DOG", breed: "Golden Retriever", sex: "MALE", birthYear: 2022, weight: 32.5, color: "Dourado" },
   { clientIndex: 0, name: "Mel", species: "CAT", breed: "Persa", sex: "FEMALE", birthYear: 2021, weight: 4.2, color: "Branco" },
   { clientIndex: 1, name: "Bob", species: "DOG", breed: "Bulldog Francês", sex: "MALE", birthYear: 2023, weight: 12.4, color: "Malhado" },
@@ -215,12 +225,52 @@ const PETS: PetRow[] = [
   { clientIndex: 23, name: "Salsicha", species: "DOG", breed: "Dachshund", sex: "MALE", birthYear: 2018, weight: 7.9, color: "Preto" },
 ];
 
-const PLAN_ROWS = [
+const PET_PLANS = [
   { name: "Banho Mensal Ilimitado", price: 189.9, durationDays: 30, description: "Banhos ilimitados por 30 dias" },
   { name: "Banho e Tosa 2x por semana", price: 299.9, durationDays: 30, description: "Duas sessões semanais de banho e tosa" },
   { name: "Cat Care", price: 149.9, durationDays: 30, description: "Banho e cuidados essenciais para gatos" },
   { name: "Plano Sênior", price: 219.9, durationDays: 30, description: "Banho + hidratação mensal para pets idosos" },
 ];
+
+/** Dados da pet shop "Mundo Pet" (seed original, `--preset=pet`). */
+const PET: SeedDataset = {
+  brand: "Mundo Pet",
+  memberEmail: "atendente@mundopet.test",
+  segment: "HIBRIDO",
+  categories: PET_CATEGORIES,
+  suppliers: PET_SUPPLIERS,
+  products: PET_PRODUCTS,
+  services: PET_SERVICES,
+  plans: PET_PLANS,
+  pets: PET_PETS,
+  reminderBody: "Olá {{1}}! Lembramos da consulta de {{2}} amanhã. Até lá! — Mundo Pet",
+  promo: {
+    name: "promocao_banho",
+    body: "Olá {{1}}! Essa semana banho completo com 15% de desconto. Responda SAIR para não receber mais promoções.",
+  },
+  subscriptionCancelReason: "Tutor relatou mudança de rotina",
+};
+
+const DATASETS: Record<Preset, SeedDataset> = { comercio: COMERCIO, servicos: SERVICOS, alimentacao: ALIMENTACAO, pet: PET };
+
+// Dados ativos: definidos em main() pelo --preset (Fase 7 · 7.5)
+let DATA: SeedDataset = COMERCIO;
+let CATEGORIES = DATA.categories;
+let SUPPLIERS = DATA.suppliers;
+let PRODUCTS: ProductRow[] = DATA.products;
+let SERVICES = DATA.services;
+let PETS: PetRow[] = DATA.pets;
+let PLAN_ROWS = DATA.plans;
+
+function useDataset(preset: Preset): void {
+  DATA = DATASETS[preset];
+  CATEGORIES = DATA.categories;
+  SUPPLIERS = DATA.suppliers;
+  PRODUCTS = DATA.products;
+  SERVICES = DATA.services;
+  PETS = DATA.pets;
+  PLAN_ROWS = DATA.plans;
+}
 
 type SalePlan = {
   day: number;
@@ -297,10 +347,11 @@ const SESSION_PLANS: SessionPlan[] = [
 ];
 
 async function main() {
-  const { company: companyArg } = parseArgs();
+  const { company: companyArg, preset } = parseArgs();
+  useDataset(preset);
 
   if (!companyArg) {
-    console.error("Uso: npm run db:seed:demo -- --company=<slug|id|email-do-admin>");
+    console.error("Uso: npm run db:seed:demo -- --company=<slug|id|email-do-admin> [--preset=comercio|servicos|alimentacao|pet]");
     process.exit(1);
   }
 
@@ -352,8 +403,17 @@ async function main() {
 
   const usedReceipts = new Set<string>();
 
-  console.log(`Seed de demonstração → ${company.name} (${company.slug})`);
+  console.log(`Seed de demonstração (${preset}: ${DATA.brand}) → ${company.name} (${company.slug})`);
   console.log(`Administrador: ${admin.email}`);
+
+  // Fase 7 · 7.5: perfil do segmento e onboarding concluído (sem sobrescrever escolha já feita)
+  await prisma.company.update({
+    where: { id: companyId },
+    data: {
+      segment: company.segment ?? DATA.segment,
+      onboardingCompletedAt: company.onboardingCompletedAt ?? new Date(),
+    },
+  });
 
   const result = await prisma.$transaction(
     async (tx) => {
@@ -514,7 +574,7 @@ async function main() {
         data: {
           companyId,
           name: "Ana Atendente",
-          email: "atendente@mundopet.test",
+          email: DATA.memberEmail,
           passwordHash: memberPassword,
           role: "MEMBER",
         },
@@ -723,11 +783,11 @@ async function main() {
         cancelReason?: string;
       }> = [
         { day: -14, time: "09:00", clientIndex: 0, serviceIndex: 1, status: "COMPLETED" },
-        { day: -13, time: "10:30", clientIndex: 4, serviceIndex: 0, status: "COMPLETED", notes: "Tutor pediu tosa mais curta" },
+        { day: -13, time: "10:30", clientIndex: 4, serviceIndex: 0, status: "COMPLETED", notes: "Cliente pediu atenção especial" },
         { day: -12, time: "14:00", clientIndex: 7, serviceIndex: 4, status: "COMPLETED" },
         { day: -10, time: "11:00", clientIndex: 11, serviceIndex: 3, status: "COMPLETED" },
         { day: -8, time: "09:30", clientIndex: 14, serviceIndex: 0, status: "NO_SHOW" },
-        { day: -7, time: "15:00", clientIndex: 9, serviceIndex: 5, status: "CANCELLED", cancelReason: "Tutor adiado por viagem" },
+        { day: -7, time: "15:00", clientIndex: 9, serviceIndex: 5, status: "CANCELLED", cancelReason: "Cliente adiou por viagem" },
         { day: -5, time: "10:00", clientIndex: 19, serviceIndex: 6, status: "COMPLETED" },
         { day: -4, time: "13:30", clientIndex: 2, serviceIndex: 1, status: "COMPLETED" },
         { day: -2, time: "09:00", clientIndex: 5, serviceIndex: 2, status: "COMPLETED" },
@@ -735,7 +795,7 @@ async function main() {
         { day: 0, time: "17:00", clientIndex: 12, serviceIndex: 1, status: "CONFIRMED", notes: "Chegar 10 min antes" },
         { day: 1, time: "09:00", clientIndex: 1, serviceIndex: 0, status: "SCHEDULED" },
         { day: 1, time: "11:00", clientIndex: 16, serviceIndex: 3, status: "SCHEDULED" },
-        { day: 2, time: "10:00", clientIndex: 20, serviceIndex: 7, status: "CONFIRMED", notes: "Hotel — retirada às 18h" },
+        { day: 2, time: "10:00", clientIndex: 20, serviceIndex: 7, status: "CONFIRMED", notes: "Combinado por telefone" },
         { day: 3, time: "14:30", clientIndex: 3, serviceIndex: 1, status: "SCHEDULED" },
         { day: 4, time: "09:30", clientIndex: 6, serviceIndex: 0, status: "SCHEDULED" },
         { day: 5, time: "15:30", clientIndex: 23, serviceIndex: 4, status: "SCHEDULED" },
@@ -788,7 +848,7 @@ async function main() {
         { clientIndex: 16, planIndex: 0, startDay: -6, status: "ACTIVE", paymentDay: -6, renewalCount: 0 },
         { clientIndex: 21, planIndex: 1, startDay: -3, status: "ACTIVE", paymentDay: -3, renewalCount: 0 },
         { clientIndex: 14, planIndex: 0, startDay: -45, status: "EXPIRED", paymentDay: -26, renewalCount: 1 },
-        { clientIndex: 9, planIndex: 3, startDay: -24, status: "CANCELLED", paymentDay: -26, renewalCount: 0, cancelDay: -10, cancelReason: "Tutor relatou mudança de rotina" },
+        { clientIndex: 9, planIndex: 3, startDay: -24, status: "CANCELLED", paymentDay: -26, renewalCount: 0, cancelDay: -10, cancelReason: DATA.subscriptionCancelReason },
       ];
 
       let subscriptionCount = 0;
@@ -904,13 +964,13 @@ async function main() {
           name: "lembrete_de_consulta",
           category: "UTILITY" as const,
           approval: "APPROVED" as const,
-          body: "Olá {{1}}! Lembramos da consulta de {{2}} amanhã. Até lá! — Mundo Pet",
+          body: DATA.reminderBody,
         },
         {
-          name: "promocao_banho",
+          name: DATA.promo.name,
           category: "MARKETING" as const,
           approval: "APPROVED" as const,
-          body: "Olá {{1}}! Essa semana banho completo com 15% de desconto. Responda SAIR para não receber mais promoções.",
+          body: DATA.promo.body,
         },
         {
           name: "confirmacao_agendamento",
@@ -1049,7 +1109,7 @@ async function main() {
           status: "ACTIVE",
           phoneNumberId: "102938475610293",
           wabaId: "998877665544332211",
-          displayName: "Mundo Pet",
+          displayName: DATA.brand,
           reminderTemplateId: templateIds[0],
           reminderLeadMinutes: 1440,
           lastHealthAt: new Date(),
@@ -1069,7 +1129,7 @@ async function main() {
   console.log("");
   console.log("Contas de demonstração:");
   console.log(`  Admin:   ${admin.email} (senha: a já usada)`);
-  console.log("  Membro:  atendente@mundopet.test / SenhaForte123!");
+  console.log(`  Membro:  ${DATA.memberEmail} / SenhaForte123!`);
 }
 
 main()

@@ -29,6 +29,7 @@ import { CreditModule } from "./credit/credit.module";
 import { ServiceOrdersModule } from "./service-orders/service-orders.module";
 import { FiscalModule } from "./fiscal/fiscal.module";
 import { OnboardingModule } from "./onboarding/onboarding.module";
+import { SearchModule } from "./search/search.module";
 import { AuthGuard } from "./common/guards/auth.guard";
 import { ModuleGuard } from "./common/guards/module.guard";
 import { TenantContextInterceptor } from "./common/tenant/tenant-context.interceptor";
@@ -49,6 +50,7 @@ import { TenantContextInterceptor } from "./common/tenant/tenant-context.interce
     ServiceOrdersModule,
     FiscalModule,
     OnboardingModule,
+    SearchModule,
     CashModule,
     FinancialModule,
     ClientsModule,

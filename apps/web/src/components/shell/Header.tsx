@@ -2,9 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
-  Search,
   Bell,
   Menu,
   X,
@@ -41,17 +40,11 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { api } from "@/lib/api";
-import { formatBrl } from "@/lib/format";
+import { GlobalSearch } from "./GlobalSearch";
 import type {
   BusinessModule,
-  ClientDto,
   DashboardSummaryDto,
   FinancialSummaryDto,
-  Paginated,
-  PetDto,
-  ProductDto,
-  SaleDto,
-  ServiceDto,
 } from "@/lib/types";
 
 interface NavItem {
@@ -161,13 +154,6 @@ const routeLabels: Record<string, string> = {
   templates: "Templates",
 };
 
-interface SearchResults {
-  products: ProductDto[];
-  clients: ClientDto[];
-  pets: PetDto[];
-  services: ServiceDto[];
-  sales: SaleDto[];
-}
 
 interface Notifications {
   lowStock: number;
@@ -220,7 +206,6 @@ export function Header({
   disabledModules: Set<string>;
   onLogout: () => void;
 }) {
-  const router = useRouter();
   const pathname = usePathname();
   const segments = pathname.split("/").filter(Boolean);
   const isAdmin = userRole === "ADMIN";
@@ -229,10 +214,6 @@ export function Header({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileGroup, setMobileGroup] = useState<string | null>(null);
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [searchResults, setSearchResults] = useState<SearchResults | null>(null);
-  const [searching, setSearching] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const [notif, setNotif] = useState<Notifications>({
     lowStock: 0,
     outOfStock: 0,
@@ -244,11 +225,9 @@ export function Header({
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
-  const searchRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const groupRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const alertCount =
     notif.lowStock + notif.outOfStock + notif.overdueReceivables + notif.overduePayables;
@@ -280,61 +259,8 @@ export function Header({
     void loadNotifications();
   }, [loadNotifications]);
 
-  const runSearch = useCallback(async (term: string) => {
-    const q = term.trim();
-    if (q.length < 2) {
-      setSearchResults(null);
-      setSearching(false);
-      return;
-    }
-    setSearching(true);
-    const enc = encodeURIComponent(q);
-    const [products, clients, pets, services, sales] = await Promise.all([
-      api<Paginated<ProductDto>>(`/api/products?status=ACTIVE&pageSize=4&search=${enc}`, {
-        redirectOnUnauthorized: false,
-      }).catch(() => ({ items: [] as ProductDto[] })),
-      api<Paginated<ClientDto>>(`/api/clients?status=ACTIVE&pageSize=4&search=${enc}`, {
-        redirectOnUnauthorized: false,
-      }).catch(() => ({ items: [] as ClientDto[] })),
-      api<Paginated<PetDto>>(`/api/pets?status=ACTIVE&pageSize=4&search=${enc}`, {
-        redirectOnUnauthorized: false,
-      }).catch(() => ({ items: [] as PetDto[] })),
-      api<Paginated<ServiceDto>>(`/api/services?status=ACTIVE&pageSize=4&search=${enc}`, {
-        redirectOnUnauthorized: false,
-      }).catch(() => ({ items: [] as ServiceDto[] })),
-      api<Paginated<SaleDto>>(`/api/sales?pageSize=3&search=${enc}`, {
-        redirectOnUnauthorized: false,
-      }).catch(() => ({ items: [] as SaleDto[] })),
-    ]);
-    setSearchResults({
-      products: products.items,
-      clients: clients.items,
-      pets: pets.items,
-      services: services.items,
-      sales: sales.items,
-    });
-    setSearching(false);
-  }, []);
-
-  function handleSearchChange(value: string) {
-    setSearchTerm(value);
-    setSearchOpen(true);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      void runSearch(value);
-    }, 300);
-  }
-
-  useEffect(() => {
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, []);
-
   useEffect(() => {
     function onClick(e: MouseEvent) {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node))
-        setSearchOpen(false);
       if (notifRef.current && !notifRef.current.contains(e.target as Node))
         setNotifOpen(false);
       if (profileRef.current && !profileRef.current.contains(e.target as Node))
@@ -347,7 +273,6 @@ export function Header({
   }, []);
 
   useEffect(() => {
-    setSearchOpen(false);
     setNotifOpen(false);
     setProfileOpen(false);
     setOpenGroup(null);
@@ -360,20 +285,6 @@ export function Header({
     if (next) void loadNotifications();
   }
 
-  function goSearch() {
-    const q = searchTerm.trim();
-    if (!q) return;
-    setSearchOpen(false);
-    router.push(`/produtos?search=${encodeURIComponent(q)}`);
-  }
-
-  const hasResults =
-    searchResults &&
-    (searchResults.products.length > 0 ||
-      searchResults.clients.length > 0 ||
-      searchResults.pets.length > 0 ||
-      searchResults.services.length > 0 ||
-      searchResults.sales.length > 0);
 
   const searchInputClass =
     "w-40 rounded-lg border border-white/10 bg-white/10 py-1.5 pl-9 pr-3 text-sm text-white placeholder:text-slate-400 focus:border-primary-400/60 focus:bg-white/15 focus:outline-none focus:ring-2 focus:ring-primary-500/30 2xl:w-64";
@@ -480,143 +391,8 @@ export function Header({
 
           {/* Ações à direita */}
           <div className="ml-auto flex items-center gap-1.5">
-            {/* Busca */}
-            <div ref={searchRef} className="relative hidden sm:block">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                type="search"
-                value={searchTerm}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                onFocus={() => setSearchOpen(true)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") goSearch();
-                  if (e.key === "Escape") setSearchOpen(false);
-                }}
-                placeholder="Buscar…"
-                aria-label="Busca global"
-                className={searchInputClass}
-              />
-              {searchOpen && searchTerm.trim().length >= 2 && (
-                <div className="absolute right-0 top-full z-50 mt-2 w-[360px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
-                  {searching && (
-                    <p className="px-4 py-3 text-sm text-slate-400">Buscando…</p>
-                  )}
-                  {!searching && !hasResults && (
-                    <p className="px-4 py-3 text-sm text-slate-400">
-                      Nenhum resultado para “{searchTerm.trim()}”.
-                    </p>
-                  )}
-                  {!searching && hasResults && (
-                    <div className="max-h-96 overflow-y-auto py-1 text-slate-700">
-                      {searchResults!.products.length > 0 && (
-                        <div>
-                          <p className="px-4 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                            Produtos
-                          </p>
-                          {searchResults!.products.map((p) => (
-                            <Link
-                              key={p.id}
-                              href={`/produtos/${p.id}`}
-                              className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50"
-                            >
-                              <Package className="h-4 w-4 shrink-0 text-slate-400" />
-                              <span className="truncate">{p.name}</span>
-                              <span className="ml-auto shrink-0 text-xs text-slate-400">
-                                {formatBrl(p.salePrice)}
-                              </span>
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-                      {searchResults!.clients.length > 0 && (
-                        <div>
-                          <p className="px-4 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                            Clientes
-                          </p>
-                          {searchResults!.clients.map((c) => (
-                            <Link
-                              key={c.id}
-                              href={`/clientes/${c.id}`}
-                              className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50"
-                            >
-                              <Users className="h-4 w-4 shrink-0 text-slate-400" />
-                              <span className="truncate">{c.name}</span>
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-                      {searchResults!.pets.length > 0 && (
-                        <div>
-                          <p className="px-4 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                            Pets
-                          </p>
-                          {searchResults!.pets.map((pet) => (
-                            <Link
-                              key={pet.id}
-                              href="/pets"
-                              className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50"
-                            >
-                              <PawPrint className="h-4 w-4 shrink-0 text-slate-400" />
-                              <span className="truncate">
-                                {pet.name}
-                                {pet.client ? ` · ${pet.client.name}` : ""}
-                              </span>
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-                      {searchResults!.services.length > 0 && (
-                        <div>
-                          <p className="px-4 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                            Serviços
-                          </p>
-                          {searchResults!.services.map((s) => (
-                            <Link
-                              key={s.id}
-                              href="/servicos"
-                              className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50"
-                            >
-                              <Scissors className="h-4 w-4 shrink-0 text-slate-400" />
-                              <span className="truncate">{s.name}</span>
-                              <span className="ml-auto shrink-0 text-xs text-slate-400">
-                                {formatBrl(s.price)}
-                              </span>
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-                      {searchResults!.sales.length > 0 && (
-                        <div>
-                          <p className="px-4 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                            Vendas
-                          </p>
-                          {searchResults!.sales.map((s) => (
-                            <Link
-                              key={s.id}
-                              href={`/vendas/${s.id}`}
-                              className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50"
-                            >
-                              <Receipt className="h-4 w-4 shrink-0 text-slate-400" />
-                              <span className="font-mono text-xs">{s.receiptCode}</span>
-                              <span className="ml-auto shrink-0 text-xs text-slate-500">
-                                {formatBrl(s.total)}
-                              </span>
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={goSearch}
-                    className="block w-full border-t border-slate-100 px-4 py-2 text-left text-xs text-primary-700 hover:bg-primary-50"
-                  >
-                    Ver todos os resultados em Produtos →
-                  </button>
-                </div>
-              )}
-            </div>
+            {/* Busca global (Fase 7 · 7.3) */}
+            <GlobalSearch inputClassName={searchInputClass} />
 
             {/* Notificações */}
             <div ref={notifRef} className="relative">

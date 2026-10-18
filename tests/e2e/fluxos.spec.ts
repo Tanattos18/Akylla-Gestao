@@ -101,3 +101,32 @@ test("5. rotas protegidas sem sessão voltam ao login", async ({ page }) => {
   await page.goto("/vendas");
   await expect(page).toHaveURL(/\/login$/);
 });
+
+test("6. dados da empresa saem no comprovante e a busca global abre pelo teclado", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/configuracoes");
+  await page.getByLabel("CNPJ ou CPF").fill("11.222.333/0001-81");
+  await page.getByRole("button", { name: "Salvar dados" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Dados da empresa salvos." })).toBeVisible();
+
+  const sale = (await (await page.request.get("/api/sales?pageSize=1")).json()) as { items: Array<{ id: string }> };
+  await page.goto(`/vendas/${sale.items[0]!.id}`);
+  await expect(page.getByText("CNPJ 11.222.333/0001-81")).toBeVisible();
+
+  await page.getByRole("combobox", { name: "Busca global" }).fill("Maria E2E");
+  await expect(page.getByRole("option", { name: /Maria E2E/ })).toBeVisible();
+  await page.getByRole("combobox", { name: "Busca global" }).press("ArrowDown");
+  await page.getByRole("combobox", { name: "Busca global" }).press("Enter");
+  await expect(page).toHaveURL(/\/clientes\/[^/]+$/);
+});
+
+test("7. agenda nas visões de semana e mês", async ({ page }) => {
+  await signIn(page);
+  await page.goto("/agenda");
+  await page.getByRole("tab", { name: "Semana" }).click();
+  await expect(page.getByLabel("Agenda da semana")).toBeVisible();
+  await page.getByRole("tab", { name: "Mês" }).click();
+  await expect(page.getByRole("list", { name: /Agenda de/ })).toBeVisible();
+  await page.getByRole("button", { name: "Próximo mês" }).click();
+  await expect(page.getByRole("list", { name: /Agenda de/ })).toBeVisible();
+});

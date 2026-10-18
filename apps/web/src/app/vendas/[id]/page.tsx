@@ -287,7 +287,7 @@ export default function VendaDetalhePage() {
         </div>
 
         <div>
-          <Receipt sale={sale} companyName={session.company.name} />
+          <Receipt sale={sale} companyName={session.company.name} company={session.company} />
           {sale.status === "COMPLETED" && (
             <div className="mt-4">
               <EmitFiscalButton saleId={sale.id} types={sale.client ? ["NFCE", "NFE"] : ["NFCE"]} isAdmin={isAdmin} />

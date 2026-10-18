@@ -290,7 +290,7 @@ export default function PdvPage() {
             {printNotice}
           </div>
         )}
-        <Receipt sale={completedSale} companyName={session.company.name} />
+        <Receipt sale={completedSale} companyName={session.company.name} company={session.company} />
         <EmitFiscalButton saleId={completedSale.id} types={completedSale.client ? ["NFCE", "NFE"] : ["NFCE"]} isAdmin={session.user.role === "ADMIN"} />
         <div className="flex flex-wrap justify-center gap-2">
           <button

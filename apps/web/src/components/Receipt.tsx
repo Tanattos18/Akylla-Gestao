@@ -6,20 +6,30 @@ import {
   saleStatusLabels,
   type SaleDto,
 } from "../lib/types";
-import { formatBrl } from "../lib/format";
+import { formatBrl, formatDocument } from "../lib/format";
 
 export function Receipt({
   sale,
   companyName,
+  company,
 }: {
   sale: SaleDto;
   companyName?: string;
+  /** Fase 7: dados da empresa no cabeçalho do comprovante */
+  company?: { document?: string | null; phone?: string | null; address?: string | null };
 }) {
   return (
     <div className="mx-auto max-w-sm rounded-lg border border-slate-200 bg-white p-6 font-mono text-sm text-slate-800 shadow-sm">
       <div className="text-center">
         <p className="text-lg font-semibold text-slate-900">{companyName ?? "Akylla Gestão"}</p>
-        <p className="text-xs text-slate-500">Comprovante de venda</p>
+        {company?.document && (
+          <p className="text-xs text-slate-600">
+            {company.document.length === 11 ? "CPF" : "CNPJ"} {formatDocument(company.document)}
+          </p>
+        )}
+        {company?.address && <p className="text-xs text-slate-600">{company.address}</p>}
+        {company?.phone && <p className="text-xs text-slate-600">Tel. {company.phone}</p>}
+        <p className="mt-1 text-xs text-slate-500">Comprovante de venda — sem valor fiscal</p>
       </div>
 
       <div className="mt-3 space-y-1 border-t border-dashed border-slate-300 pt-3 text-xs">

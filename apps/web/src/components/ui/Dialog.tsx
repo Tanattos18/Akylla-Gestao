@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -128,6 +129,8 @@ export function DialogProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const contextValue = useMemo(() => ({ confirm, prompt }), [confirm, prompt]);
+
   function close(result: "ok" | "cancel") {
     if (!pending) return;
     if (pending.kind === "confirm") pending.resolve(result === "ok");
@@ -151,7 +154,7 @@ export function DialogProvider({ children }: { children: ReactNode }) {
   const options = pending?.options;
 
   return (
-    <DialogContext.Provider value={{ confirm, prompt }}>
+    <DialogContext.Provider value={contextValue}>
       {children}
       <Dialog
         open={pending !== null}

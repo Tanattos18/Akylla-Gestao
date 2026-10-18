@@ -84,3 +84,11 @@ export function formatLocalDateShort(startLocal: string): string {
 export function defaultStartLocal(): string {
   return `${localDayKey(new Date(Date.now() + 86_400_000))}T09:00`;
 }
+
+/** CNPJ (14) ou CPF (11) com máscara; outros tamanhos ficam como vieram. */
+export function formatDocument(digits: string): string {
+  const d = digits.replace(/\D/g, "");
+  if (d.length === 14) return d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
+  if (d.length === 11) return d.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
+  return digits;
+}

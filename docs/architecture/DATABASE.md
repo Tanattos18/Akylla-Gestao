@@ -1,5 +1,13 @@
 # Banco de dados — diretrizes e modelo atual
 
+## Modelos implementados (Fase 7 — Dados da empresa)
+
+Migration: `20261019090000_company_profile` (aditiva; `Company` já tem RLS).
+
+| Modelo | Campos novos | Regras |
+|---|---|---|
+| `Company` | `document?` (CNPJ 14 ou CPF 11, só dígitos), `phone?`, `address?` | saem no comprovante; `slug` continua único global (troca pela API → 409 se em uso) |
+
 ## Modelos implementados (Fase 4 — Onboarding por perfil)
 
 Migration: `20261018230000_onboarding_presets` (aditiva + dados de referência).

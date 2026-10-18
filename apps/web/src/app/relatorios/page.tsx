@@ -906,7 +906,14 @@ export default function RelatoriosPage() {
             inclusivas).
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 print:hidden">
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+          >
+            Imprimir
+          </button>
           <Link
             href="/dashboard"
             className="rounded-md bg-primary-700 px-3 py-2 text-sm font-medium text-white hover:bg-primary-800"
@@ -922,9 +929,18 @@ export default function RelatoriosPage() {
         </div>
       </div>
 
+      {/* Na impressão (Fase 7 · 7.6) o formulário some e fica só o período */}
+      <p className="hidden text-sm text-slate-700 print:block">
+        Período:{" "}
+        {applied.from || applied.to
+          ? `${applied.from || "(padrão)"} a ${applied.to || "(hoje)"}`
+          : "últimos 30 dias"}{" "}
+        · {tabs.find((item) => item.id === tab)?.label} · impresso em {new Date().toLocaleString("pt-BR")}
+      </p>
+
       <form
         onSubmit={handlePeriod}
-        className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-4"
+        className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-4 print:hidden"
       >
         <div>
           <label htmlFor="report-from" className="mb-1 block text-sm text-slate-700">

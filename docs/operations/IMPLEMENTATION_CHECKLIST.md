@@ -4,6 +4,17 @@
 > Este checklist cobre apenas a era do Akylla Gestão. O histórico
 > anterior à adaptação está preservado no Git.
 
+## Fase 7 — Produto (2026-10-18)
+
+- [x] 7.1 Dados da empresa (`/api/company`, slug único → 409) + aba Empresa + CNPJ/endereço/telefone no comprovante
+- [x] 7.2 Uso do plano com barras, alerta 80% e link para planos maiores
+- [x] 7.3 Busca global `GET /api/search` + combobox com teclado
+- [x] 7.4 Agenda Dia/Semana/Mês
+- [x] 7.5 Seeds por segmento (comercio, servicos, alimentacao, pet)
+- [x] 7.6 Impressão de relatórios
+- [x] 7.7 Variáveis no `.env.example` (Redis comentado: valor vazio ligaria o cliente)
+- [x] Testes: integração (8) + E2E 6 e 7
+
 ## Fase 6 — Testes e qualidade (2026-10-18)
 
 - [x] Cobertura na CI (`test:coverage`): 93,7% das linhas de services/controllers; mínimos contra regressão

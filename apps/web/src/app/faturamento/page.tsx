@@ -270,7 +270,10 @@ export default function FaturamentoPage() {
                     <p className="mt-1 text-xs text-amber-700">
                       {pct >= 100
                         ? `Limite de ${row.label.toLowerCase()} atingido no plano ${planUsage.subscription?.plan.name}.`
-                        : `Você já usou ${pct}% do limite de ${row.label.toLowerCase()}.`}
+                        : `Você já usou ${pct}% do limite de ${row.label.toLowerCase()}.`}{" "}
+                      <a href="#planos-disponiveis" className="font-medium underline">
+                        Ver planos maiores
+                      </a>
                     </p>
                   )}
                 </div>
@@ -290,7 +293,7 @@ export default function FaturamentoPage() {
       </div>
 
       <div>
-        <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">
+        <h3 id="planos-disponiveis" className="mb-4 scroll-mt-24 text-sm font-semibold uppercase tracking-wide text-slate-500">
           Planos disponíveis
         </h3>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

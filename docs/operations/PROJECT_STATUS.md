@@ -16,6 +16,14 @@ que o site akyllagestao.com.br promete. Fases em ordem rígida (1 → 7).
 | 1F · `npm audit --omit=dev` = 0 (next 16, vitest major) (§1.5.1) | ✅ 2026-10-18 (0 em produção) |
 | 1G · CD real com health check (§1.3) | 🟡 2026-10-18: pipeline e guia prontos, CI corrigida. **Ligar** depende de escolher o provedor e configurar os secrets (`docs/operations/DEPLOY.md`) |
 
+**Fase 7 (Produto)**: concluída em 2026-10-18. Inclui os dados da
+empresa no comprovante, a busca global, a agenda por semana e mês, os
+seeds por segmento e a impressão de relatórios. **Roteiro do Prompt
+Mestre completo (Fases 1–7).** O que falta depende do proprietário:
+hospedagem e segredos de deploy, SMTP, Redis, Turnstile, integradora
+fiscal e cadastro fiscal dos produtos, e o role de produção sem
+superusuário.
+
 **Fase 6 (Qualidade)**: concluída em 2026-10-18. Inclui a cobertura
 na CI (93,7% das linhas), 5 fluxos E2E com Playwright, o OpenAPI em
 `/api/docs` e o teste de contrato do `API.md`. Próxima: **Fase 7
