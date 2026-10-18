@@ -1,5 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
+import * as Sentry from "@sentry/nextjs";
+
 export default function Error({
   error,
   reset,
@@ -7,6 +10,11 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    // Fase 1 · 1B: no-op quando o Sentry está desligado (sem DSN)
+    Sentry.captureException(error);
+  }, [error]);
+
   const details =
     process.env.NODE_ENV !== "production" ? error.message : undefined;
 

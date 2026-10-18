@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { createWhatsAppProvider } from "@petflow/whatsapp";
 import { workerEnv } from "./env";
+import { captureWorkerError, flushWorkerMonitoring, initWorkerMonitoring } from "./monitoring";
 import { processDueMessages } from "./whatsapp/processor";
 
 const HEARTBEAT_INTERVAL_MS = 60_000;
@@ -10,6 +11,7 @@ function log(message: string) {
 }
 
 async function main() {
+  const monitoring = initWorkerMonitoring();
   const prisma = new PrismaClient();
 
   let provider;
@@ -23,11 +25,13 @@ async function main() {
     log(
       `falha ao criar o provedor: ${error instanceof Error ? error.message : "erro desconhecido"}`,
     );
+    captureWorkerError(error, "provider");
+    await flushWorkerMonitoring();
     process.exit(1);
   }
 
   log(
-    `worker iniciado (fila WhatsApp, provedor=${provider.name}, poll=${workerEnv.WORKER_POLL_INTERVAL_MS}ms, máx=${workerEnv.WHATSAPP_SEND_MAX_PER_CYCLE}/ciclo, intervalo=${workerEnv.WHATSAPP_SEND_INTERVAL_MS}ms)`,
+    `worker iniciado (fila WhatsApp, provedor=${provider.name}, poll=${workerEnv.WORKER_POLL_INTERVAL_MS}ms, máx=${workerEnv.WHATSAPP_SEND_MAX_PER_CYCLE}/ciclo, intervalo=${workerEnv.WHATSAPP_SEND_INTERVAL_MS}ms, monitoramento=${monitoring ? "sentry" : "desligado"})`,
   );
 
   let running = false;
@@ -49,6 +53,7 @@ async function main() {
       }
     } catch (error) {
       log(`erro no ciclo: ${error instanceof Error ? error.message : "erro desconhecido"}`);
+      captureWorkerError(error, "cycle");
     } finally {
       running = false;
     }
@@ -62,6 +67,7 @@ async function main() {
     clearInterval(poll);
     clearInterval(heartbeat);
     await prisma.$disconnect();
+    await flushWorkerMonitoring();
     process.exit(0);
   };
 
@@ -71,7 +77,9 @@ async function main() {
   await cycle();
 }
 
-main().catch((error) => {
+main().catch(async (error) => {
   log(`falha ao iniciar: ${error instanceof Error ? error.message : "erro desconhecido"}`);
+  captureWorkerError(error, "boot");
+  await flushWorkerMonitoring();
   process.exit(1);
 });

@@ -1,6 +1,6 @@
 # API — Akylla Gestão
 
-Prefixo global: `/api` (exceto `GET /health`). Autenticação por cookie
+Prefixo global: `/api` (exceto `GET /health` e `GET /health/ready`). Autenticação por cookie
 `petflow_session` (HttpOnly) — ver `ARCHITECTURE.md`. Todos os endpoints
 abaixo exigem sessão válida, exceto os marcados como públicos. Escopo de
 tenant sempre derivado da sessão (`companyId`); nenhum `companyId` é aceito
@@ -31,7 +31,8 @@ inclui `issues[]`).
 | GET | `/api/users` | ADMIN | Lista usuários da empresa |
 | POST | `/api/users` | ADMIN | Cria usuário na empresa |
 | PATCH | `/api/users/:id/status` | ADMIN | Ativa/inativa (revoga sessões) |
-| GET | `/health` | público | Health check técnico |
+| GET | `/health` | público | Liveness: processo respondendo (não toca no banco) |
+| GET | `/health/ready` | público | Readiness (Fase 1 · 1B): processo + banco (`SELECT 1`, limite de 2 s) → 200 `{status, database:"ok", databaseLatencyMs}` ou 503 `{status:"unavailable", database:"down"}`, sem detalhes internos. URL do UptimeRobot (`docs/operations/RUNBOOK.md`) |
 
 ## Categorias
 

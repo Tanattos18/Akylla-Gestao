@@ -6,6 +6,70 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-18 - Fase 1 · 1B: monitoramento (Sentry) + readiness + RUNBOOK
+
+Referência usada (`upgrade/REFERENCIAS_GIT.md`, Fase 1): guias oficiais do
+Sentry para Node/NestJS e Next.js (`getsentry/sentry-javascript`, MIT).
+Nenhum código de terceiros copiado.
+
+### Adicionado
+
+- **API:** `apps/api/src/monitoring/sentry.ts` + `instrument.ts` (primeiro
+  import do `main.ts`). Liga só com `SENTRY_DSN`. `AllExceptionsFilter`
+  reporta **apenas 5xx** com método, rota, `companyId` (tag) e id do
+  usuário. Falha de boot também é reportada. Profiling opcional
+  (`SENTRY_PROFILES_SAMPLE_RATE`, padrão 0).
+- **Privacidade:** `dataCollection` mínimo do SDK v11 (sem cookies, corpo,
+  query string, cabeçalhos além de user-agent/content-type/accept, sem
+  dados do usuário) + `scrubEvent` como segunda camada +
+  `includeLocalVariables: false`.
+- **Worker:** `apps/worker/src/monitoring.ts` (erros de ciclo, provedor e
+  boot com tag `stage`; flush no encerramento). O log de início mostra
+  `monitoramento=sentry|desligado`.
+- **Web:** `@sentry/nextjs` via `src/instrumentation.ts` (servidor/edge,
+  `onRequestError`), `src/instrumentation-client.ts` (navegador, sem
+  replay), captura em `error.tsx` e novo `global-error.tsx`. Remove a
+  query string de URLs e breadcrumbs (o link de redefinição leva o token
+  nela). Sem `withSentryConfig` por enquanto: o upload de source maps
+  fica para quando houver conta e token.
+- **`GET /health/ready`:** processo + banco (`SELECT 1`, limite de 2 s) →
+  200 ou 503 sem detalhes internos. É a URL do UptimeRobot. `/health`
+  continua igual (liveness).
+- **`npm run monitoring:test`** (`scripts/sentry-test.mjs`): envia um
+  erro "[TESTE]" para validar o alerta (critério de aceite da Fase 1).
+- **`docs/operations/RUNBOOK.md`:** serviços e saúde, Sentry (variáveis,
+  o que é reportado, alertas), UptimeRobot (keyword `"database":"ok"`,
+  1 min, alerta após 2 falhas), resposta a incidentes (S1–S3, LGPD art.
+  48), rollback (app, migrations com `prisma migrate resolve`, feature
+  flags), backup, restauração (RTO ≤ 4 h / RPO ≤ 24 h), rotina e
+  registro de testes de alerta.
+- **`tests/integration/monitoring.test.ts`** (8 testes): desligado sem DSN,
+  scrub de PII, 5xx reportado × 4xx não, envio real com transporte falso
+  (tags de tenant presentes; token da query e variáveis locais ausentes),
+  `/health/ready` 200 e 503 sem vazar host, `/health` inalterado.
+
+### Alterado
+
+- Dependências: `@sentry/node` e `@sentry/profiling-node` saíram da raiz
+  e foram para `apps/api` (e `@sentry/node` também para `apps/worker`);
+  `@sentry/nextjs@11.8.0` entrou em `apps/web`, que é o pacote oficial
+  para Next.js. Versões fixas em 11.8.0.
+- `.env.example`: `SENTRY_*` e `NEXT_PUBLIC_SENTRY_*` (vazios).
+- `docs/architecture/API.md`: `/health/ready`. `CHECKLIST_PRE_PRODUCAO`:
+  L8 e L9 marcados como parciais.
+
+### Verificação
+
+- `npm run validate` verde: lint · typecheck · **592/592** (31
+  arquivos) · build · db:validate.
+- API compilada iniciada de verdade: `/health/ready` → 200
+  (`database: ok`). Worker iniciado: `monitoramento=desligado`.
+
+### Pendente (depende do proprietário)
+
+- Criar as contas Sentry e UptimeRobot, configurar os DSNs no servidor e
+  registrar os alertas de teste em `RUNBOOK.md` §9.
+
 ## [Akylla Gestão] - 2026-10-18 - Referências no GitHub por módulo
 
 ### Adicionado

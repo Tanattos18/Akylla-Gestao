@@ -33,6 +33,7 @@
     "db:restore": "node scripts/db-backup.mjs restore",
     "db:restore-test": "node scripts/db-backup.mjs restore-test",
     "db:restore:test": "node scripts/db-backup.mjs restore-test",
+    "monitoring:test": "node scripts/sentry-test.mjs",
     "check:secrets": "node scripts/check-secrets.mjs",
     "check:migrations": "node scripts/check-migrations.mjs"
   },
@@ -49,8 +50,6 @@
     "vitest": "^2.1.2"
   },
   "dependencies": {
-    "@sentry/node": "11.8.0",
-    "@sentry/profiling-node": "11.8.0",
     "otplib": "13.5.0"
   }
 }

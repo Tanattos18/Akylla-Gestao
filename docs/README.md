@@ -42,6 +42,7 @@ Para começar, leia nesta ordem:
 | Documento | Conteúdo |
 |---|---|
 | [Desenvolvimento](operations/DEVELOPMENT.md) | ambiente e execução local |
+| [Runbook de operação](operations/RUNBOOK.md) | monitoramento (Sentry, UptimeRobot), incidentes, rollback, restauração |
 
 ## Roteiro de evolução e decisão de venda
 

@@ -20,6 +20,11 @@ const schema = z.object({
   WORKER_POLL_INTERVAL_MS: z.coerce.number().int().min(250).default(5000),
   WHATSAPP_SEND_MAX_PER_CYCLE: z.coerce.number().int().min(1).max(500).default(20),
   WHATSAPP_SEND_INTERVAL_MS: z.coerce.number().int().min(0).max(60_000).default(250),
+  // Monitoramento (Fase 1 · 1B) — desligado sem DSN
+  NODE_ENV: z.string().default("development"),
+  SENTRY_DSN: z.string().url().optional().or(z.literal("").transform(() => undefined)),
+  SENTRY_ENVIRONMENT: z.string().optional(),
+  SENTRY_RELEASE: z.string().optional(),
 });
 
 const parsed = schema.safeParse(process.env);

@@ -9,7 +9,7 @@ que o site akyllagestao.com.br promete. Fases em ordem rígida (1 → 7).
 | Item da Fase 1 | Status |
 |---|---|
 | 1A · Backup com restore testado (§1.1) + registro de N1–N4c nos docs | ✅ 2026-10-18 |
-| 1B · Sentry (API/Worker/Web) + `RUNBOOK.md` (uptime, rollback) (§1.2) | ⬜ |
+| 1B · Sentry (API/Worker/Web) + `RUNBOOK.md` (uptime, rollback) (§1.2) | ✅ 2026-10-18 (código); alertas de teste aguardam contas Sentry/UptimeRobot |
 | 1C · Rate limit com Redis + fallback em memória (§1.5.2) | ⬜ |
 | 1D · Verificação de e-mail no cadastro + Turnstile opcional (§1.5.5) | ⬜ |
 | 1E · RLS no PostgreSQL + `withTenantContext` (§1.5.4) | ⬜ |
@@ -291,7 +291,7 @@ parada obrigatória antes das Etapas 10, 11, 12 e de qualquer migration
 | Schema Prisma válido | `npm run db:validate` | OK |
 | Lint | `npm run lint` | OK (0 erros) |
 | Typecheck | `npm run typecheck` | OK (workspaces `apps/*`) |
-| Testes (PostgreSQL real) | `npm test` | **538/538 aprovados** (24 arquivos) |
+| Testes (PostgreSQL real) | `npm test` | **592/592 aprovados** (31 arquivos; 2026-10-18) |
 | Build | `npm run build` | OK (shared, whatsapp, api, web, worker) |
 | Varredura de segredos | grep de credenciais | sem achados reais |
 | Seed de demonstração | `db:seed:demo` + script de integridade | OK (INTEGRIDADE OK) |

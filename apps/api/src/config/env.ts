@@ -55,6 +55,13 @@ const schema = z.object({
   MERCADOPAGO_PUBLIC_KEY: z.string().optional(),
   MERCADOPAGO_WEBHOOK_SECRET: z.string().optional(),
   MERCADOPAGO_ENV: z.enum(["sandbox", "production"]).default("sandbox"),
+  // Monitoramento (Fase 1 · 1B) — Sentry desligado sem DSN. O DSN não é
+  // segredo forte, mas fica só no .env do servidor.
+  SENTRY_DSN: z.string().url().optional().or(z.literal("").transform(() => undefined)),
+  SENTRY_ENVIRONMENT: z.string().optional(),
+  SENTRY_RELEASE: z.string().optional(),
+  SENTRY_TRACES_SAMPLE_RATE: z.coerce.number().min(0).max(1).default(0.1),
+  SENTRY_PROFILES_SAMPLE_RATE: z.coerce.number().min(0).max(1).default(0),
 }).superRefine((value, ctx) => {
   if (value.NODE_ENV !== "production") return;
 

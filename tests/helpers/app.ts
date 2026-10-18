@@ -12,7 +12,7 @@ export async function createTestApp(): Promise<{
   prisma: PrismaService;
 }> {
   const app = await NestFactory.create(AppModule, { logger: false, rawBody: true });
-  app.setGlobalPrefix("api", { exclude: ["health"] });
+  app.setGlobalPrefix("api", { exclude: ["health", "health/ready"] });
   app.use(cookieParser());
   app.use(securityHeadersMiddleware);
   app.useGlobalFilters(new AllExceptionsFilter());

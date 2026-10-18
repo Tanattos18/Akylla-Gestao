@@ -135,10 +135,11 @@ billing) nunca pode ser desativado.
 | **LGPD** | consentimento registrado, exportação dos dados do cliente, anonimização (`/api/lgpd/...`) que preserva os registros financeiros, exportação completa da empresa (`GET /api/company/export`) |
 | **Pagamentos** | webhook do Mercado Pago com assinatura comparada em tempo constante, anti-replay e bloqueio total se o segredo não estiver configurado |
 | **Backup** | dump diário com **restauração testada automaticamente** em banco temporário (ver [Backup e restauração](#backup-e-restauração)) |
+| **Monitoramento** | Sentry em API, worker e web (só erros 5xx, sem dados pessoais); `GET /health/ready` (processo + banco) para o UptimeRobot; procedimentos em [`RUNBOOK.md`](docs/operations/RUNBOOK.md) |
 | **Segredos** | só em `.env`, que não vai para o Git. `.env.example` sem valores reais e varredura de segredos no repositório |
 
 **Verificação atual:** `npm run validate` verde, com lint 0, typecheck
-OK, **584/584 testes** em PostgreSQL real (30 arquivos), build OK e
+OK, **592/592 testes** em PostgreSQL real (31 arquivos), build OK e
 `db:validate` OK.
 
 ---
@@ -151,7 +152,7 @@ anterior estão verdes. A especificação completa está em
 
 | Fase | Tema | Conteúdo | Status |
 |---|---|---|---|
-| **1** | Confiabilidade | backup com restore testado ✅, Sentry + runbook, CD real, rate limit Redis, verificação de e-mail, RLS, `npm audit` = 0 | 🚧 em andamento |
+| **1** | Confiabilidade | backup com restore testado ✅, Sentry + runbook ✅, CD real, rate limit Redis, verificação de e-mail, RLS, `npm audit` = 0 | 🚧 em andamento |
 | **2** | Retenção | comissões, crediário, ordem de serviço com anexos | ⬜ |
 | **3** | Fiscal | NFC-e / NF-e / NFS-e via integração (provedor abstraído, credenciais criptografadas) | ⬜ |
 | **4** | Perfis | onboarding Comércio / Serviços / Híbrido, landing pages por segmento | ⬜ |

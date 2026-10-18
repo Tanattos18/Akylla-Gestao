@@ -62,8 +62,8 @@ Classificadas como **preexistentes** (não introduzidas pela adaptação):
 | # | Limitação | Severidade | Notas |
 |---|---|---|---|
 | L7 | CI presente, **CD/deploy ainda placeholder** | Média | `.github/workflows/ci.yml` roda lint/typecheck/test (Postgres 17)/build/db:validate em push e PR; `cd.yml` só executa migrations + `echo` — falta definir hosting e secrets |
-| L8 | Sem **backups automatizados** de banco | Alta | Antes de produção: agendar pg_dump diário + teste de restauração |
-| L9 | Sem monitoramento/aler-tificação (uptime, erros) | Média | Sentry ou similar para erros; UptimeRobot para availability |
+| L8 | Sem **backups automatizados** de banco | Alta | **Parcial (2026-10-18, Fase 1 · 1A):** `npm run db:backup` com restore testado (ver `backup/README.md`). Falta agendar no servidor de produção, com cópia externa e alerta |
+| L9 | Sem monitoramento/aler-tificação (uptime, erros) | Média | **Parcial (2026-10-18, Fase 1 · 1B):** Sentry em API/worker/web (liga com `SENTRY_DSN`), `GET /health/ready` e `docs/operations/RUNBOOK.md`. Falta criar as contas (Sentry/UptimeRobot) e registrar os alertas de teste |
 | L10 | Expiração de assinatura é **lazy** (na leitura), não por job | Baixa | Funcional; para precisão exata, agendar cron de expiração |
 
 ### 3.3 Produto

@@ -23,9 +23,21 @@
       da hospedagem)
 - [x] CHANGELOG/STATUS registram N1–N4c
 
+### 1B · Monitoramento (2026-10-18)
+
+- [x] Sentry na API (`instrument.ts` antes do Nest; 5xx via `AllExceptionsFilter`; falha de boot)
+- [x] Sentry no worker (erros de ciclo/provedor/boot, tag `stage`)
+- [x] Sentry no web (`instrumentation.ts`, `instrumentation-client.ts`, `error.tsx`, `global-error.tsx`)
+- [x] Sem PII: `dataCollection` mínimo + `scrubEvent` (cookies, corpo, query, headers, e-mail/IP, variáveis locais)
+- [x] Desligado sem DSN (dev/teste/CI)
+- [x] `GET /health/ready` (banco, 503 sem detalhes) para o UptimeRobot
+- [x] `npm run monitoring:test` (alerta de teste)
+- [x] `docs/operations/RUNBOOK.md` (Sentry, UptimeRobot, incidentes, rollback, restauração, rotina)
+- [x] `tests/integration/monitoring.test.ts` (8 testes)
+- [ ] Contas Sentry/UptimeRobot criadas e alertas de teste registrados (RUNBOOK §9)
+
 ### Pendentes da Fase 1
 
-- [ ] 1B · Sentry API/Worker/Web + `docs/operations/RUNBOOK.md`
 - [ ] 1C · Rate limit Redis + fallback em memória
 - [ ] 1D · Verificação de e-mail no cadastro + Turnstile opcional
 - [ ] 1E · RLS + `withTenantContext` + `rls.test.ts`

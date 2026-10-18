@@ -7,10 +7,16 @@ import {
   Logger,
 } from "@nestjs/common";
 import type { Request, Response } from "express";
+import { captureServerError, type ErrorRequestContext } from "../../monitoring/sentry";
+
+export type ServerErrorReporter = (exception: unknown, request: ErrorRequestContext) => void;
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger(AllExceptionsFilter.name);
+
+  /** `reporter` substituível nos testes; padrão: Sentry (no-op sem DSN). */
+  constructor(private readonly reporter: ServerErrorReporter = captureServerError) {}
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
@@ -45,6 +51,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
         `${request.method} ${request.url} -> ${status}`,
         exception instanceof Error ? exception.stack : String(exception),
       );
+      this.reporter(exception, {
+        method: request.method,
+        url: request.url,
+        auth: (request as Request & { auth?: ErrorRequestContext["auth"] }).auth,
+      });
     }
 
     response.status(status).json({
