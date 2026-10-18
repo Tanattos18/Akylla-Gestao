@@ -15,6 +15,7 @@
 | Web | `npm run start --workspace @petflow/web` (porta 3000) | `GET /` (200) |
 | Worker | `npm run start --workspace @petflow/worker` | log `heartbeat` a cada 60 s; erros no Sentry (`service: petflow-worker`) |
 | Banco | PostgreSQL 17 | `/health/ready` responde 503 se o banco não responder em 2 s |
+| E-mail (SMTP) | `SMTP_HOST`/`SMTP_*` | confirmação de cadastro e redefinição de senha. Falha de envio → o cadastro responde erro 500 (Sentry) e o usuário pode reenviar pela tela de login/cadastro |
 | Redis (opcional) | `REDIS_URL` | rate limit compartilhado. Fora do ar → log `Redis indisponível…; rate limit em memória até reconectar` e a API segue funcionando (limite vale por instância até voltar) |
 
 `/health/ready` responde **200** `{"status":"ok","database":"ok","databaseLatencyMs":N}`

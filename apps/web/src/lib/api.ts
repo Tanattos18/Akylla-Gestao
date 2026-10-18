@@ -3,6 +3,8 @@ export class ApiError extends Error {
     message: string,
     public readonly status: number,
     public readonly issues?: Array<{ path: string; message: string }>,
+    /** Código de erro de negócio da API (ex.: EMAIL_NOT_VERIFIED). */
+    public readonly code?: string,
   ) {
     super(message);
     this.name = "ApiError";
@@ -35,7 +37,12 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
   if (!response.ok) {
     const message =
       typeof body?.message === "string" ? body.message : "Erro ao processar a solicitação";
-    throw new ApiError(message, response.status, body?.issues);
+    throw new ApiError(
+      message,
+      response.status,
+      body?.issues,
+      typeof body?.code === "string" ? body.code : undefined,
+    );
   }
 
   return body as T;

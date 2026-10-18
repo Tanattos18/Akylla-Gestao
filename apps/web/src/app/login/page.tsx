@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "../../lib/api";
+import { ResendVerification } from "../../components/auth/ResendVerification";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,11 +15,14 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  // Fase 1 · 1D: conta criada pelo cadastro e ainda sem e-mail confirmado
+  const [pendingVerification, setPendingVerification] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
     setFieldErrors({});
+    setPendingVerification(false);
 
     const issues: Record<string, string> = {};
     if (!email.trim()) issues.email = "Informe o email";
@@ -52,6 +56,7 @@ export default function LoginPage() {
           setFieldErrors(mapped);
         }
         setError(err.message);
+        setPendingVerification(err.code === "EMAIL_NOT_VERIFIED");
       } else {
         setError("Não foi possível conectar ao servidor");
       }
@@ -164,6 +169,7 @@ export default function LoginPage() {
             {error}
           </div>
         )}
+        {pendingVerification && <ResendVerification email={email} />}
 
         <form onSubmit={handleSubmit} noValidate>
           <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="email">

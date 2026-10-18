@@ -15,7 +15,10 @@ import { PrismaService } from "../prisma/prisma.module";
 import { allowedOrigins, env } from "../config/env";
 import { MAIL_PROVIDER, type MailProvider } from "../mail/mail.module";
 import {
+  EMAIL_NOT_VERIFIED_CODE,
   PASSWORD_RESET_TOKEN_TTL_MS,
+  type ResendVerificationInput,
+  type VerifyEmailInput,
   type ConfirmPasswordResetInput,
   type DisableTwoFactorInput,
   type EnableTwoFactorInput,
@@ -76,6 +79,7 @@ export class AuthService {
     });
 
     if (candidates.length === 0) {
+      await this.rejectIfPendingVerification(input);
       throw new UnauthorizedException("Credenciais inválidas");
     }
 
@@ -119,10 +123,17 @@ export class AuthService {
     };
   }
 
-  async register(input: RegisterInput, request: Request) {
+  /**
+   * Cadastro aberto (Fase 1 · 1D): cria a empresa em `PENDING_VERIFICATION`
+   * + administrador + aceites e envia o link de confirmação. Não abre
+   * sessão: o login e o AuthGuard exigem empresa `ACTIVE`, então nada é
+   * acessível até `verifyEmail`. Retorna o token bruto só para o chamador
+   * interno (testes); o controller o descarta.
+   */
+  async register(input: RegisterInput): Promise<{ email: string; verificationToken: string }> {
     const email = input.email;
 
-    return this.prisma.$transaction(async (tx) => {
+    const created = await this.prisma.$transaction(async (tx) => {
       const existing = await tx.user.findFirst({ where: { email } });
       if (existing) {
         throw new ConflictException("Este email já está cadastrado");
@@ -130,7 +141,7 @@ export class AuthService {
 
       const slug = await this.generateUniqueSlug(tx, input.companyName);
       const company = await tx.company.create({
-        data: { name: input.companyName, slug },
+        data: { name: input.companyName, slug, status: "PENDING_VERIFICATION" },
       });
 
       const passwordHash = await bcrypt.hash(input.password, BCRYPT_ROUNDS);
@@ -163,26 +174,115 @@ export class AuthService {
         ],
       });
 
-      return { userId: user.id, user, company };
-    }).then(async (created) => {
-      const token = await this.createSession(created.userId, request);
-
-      return {
-        token,
-        user: {
-          id: created.user.id,
-          name: created.user.name,
-          email: created.user.email,
-          role: created.user.role,
-          status: created.user.status,
-        },
-        company: {
-          id: created.company.id,
-          name: created.company.name,
-          slug: created.company.slug,
-        },
-      };
+      return user;
     });
+
+    const verificationToken = await this.issueEmailVerification(created.id, created.email, created.name);
+    return { email: created.email, verificationToken };
+  }
+
+  /** Gera um token novo (invalida os anteriores) e envia o link. */
+  private async issueEmailVerification(userId: string, email: string, name: string): Promise<string> {
+    const token = randomBytes(32).toString("base64url");
+    const tokenHash = createHash("sha256").update(token).digest("hex");
+    const now = new Date();
+
+    await this.prisma.$transaction([
+      this.prisma.emailVerificationToken.updateMany({
+        where: { userId, usedAt: null },
+        data: { usedAt: now },
+      }),
+      this.prisma.emailVerificationToken.create({
+        data: {
+          userId,
+          tokenHash,
+          expiresAt: new Date(now.getTime() + env.EMAIL_VERIFICATION_TTL_HOURS * 3600_000),
+        },
+      }),
+    ]);
+
+    const base = allowedOrigins[0] ?? "http://localhost:3000";
+    await this.mail.sendEmailVerification(email, name, `${base}/confirmar-email?token=${token}`);
+    return token;
+  }
+
+  /**
+   * Confirma o e-mail (uso único, com expiração): ativa a empresa, marca o
+   * e-mail como confirmado e abre a sessão. O token é consumido com
+   * `updateMany` condicional: dois cliques simultâneos não ativam duas vezes.
+   */
+  async verifyEmail(input: VerifyEmailInput, request: Request) {
+    const tokenHash = createHash("sha256").update(input.token).digest("hex");
+    const record = await this.prisma.emailVerificationToken.findUnique({
+      where: { tokenHash },
+      select: { id: true, userId: true, expiresAt: true, usedAt: true },
+    });
+    if (!record || record.usedAt || record.expiresAt.getTime() <= Date.now()) {
+      throw new BadRequestException("Link de confirmação inválido ou expirado");
+    }
+
+    const user = await this.prisma.user.findFirst({
+      where: { id: record.userId, status: "ACTIVE" },
+      include: { company: true },
+    });
+    if (!user || user.company.status === "INACTIVE") {
+      throw new BadRequestException("Link de confirmação inválido ou expirado");
+    }
+
+    const now = new Date();
+    await this.prisma.$transaction(async (tx) => {
+      const used = await tx.emailVerificationToken.updateMany({
+        where: { id: record.id, usedAt: null },
+        data: { usedAt: now },
+      });
+      if (used.count === 0) {
+        throw new BadRequestException("Link de confirmação inválido ou expirado");
+      }
+      await tx.user.update({ where: { id: user.id }, data: { emailVerifiedAt: now } });
+      await tx.company.updateMany({
+        where: { id: user.companyId, status: "PENDING_VERIFICATION" },
+        data: { status: "ACTIVE" },
+      });
+    });
+
+    const token = await this.createSession(user.id, request);
+    return {
+      token,
+      user: { id: user.id, name: user.name, email: user.email, role: user.role, status: user.status },
+      company: { id: user.company.id, name: user.company.name, slug: user.company.slug },
+    };
+  }
+
+  /**
+   * Reenvia o link. Nunca revela se o e-mail existe ou se já foi
+   * confirmado: a resposta HTTP é sempre a mesma.
+   */
+  async resendEmailVerification(input: ResendVerificationInput): Promise<{ token: string | null }> {
+    const user = await this.prisma.user.findFirst({
+      where: { email: input.email, status: "ACTIVE", company: { status: "PENDING_VERIFICATION" } },
+      select: { id: true, email: true, name: true },
+    });
+    if (!user) return { token: null };
+    const token = await this.issueEmailVerification(user.id, user.email, user.name);
+    return { token };
+  }
+
+  /**
+   * Login de conta ainda não confirmada: com a senha certa, responde 403 com
+   * código próprio (a tela oferece reenviar o link). Senha errada segue como
+   * "Credenciais inválidas" para não revelar contas.
+   */
+  private async rejectIfPendingVerification(input: LoginInput): Promise<void> {
+    const pending = await this.prisma.user.findFirst({
+      where: { email: input.email, status: "ACTIVE", company: { status: "PENDING_VERIFICATION" } },
+      select: { passwordHash: true },
+    });
+    if (pending && (await bcrypt.compare(input.password, pending.passwordHash))) {
+      throw new ForbiddenException({
+        message: "Confirme seu e-mail para ativar a conta. Enviamos um link no cadastro.",
+        code: EMAIL_NOT_VERIFIED_CODE,
+      });
+    }
   }
 
   private async generateUniqueSlug(

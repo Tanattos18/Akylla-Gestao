@@ -4,6 +4,7 @@ import { AuthService } from "./auth.service";
 import { LoginRateLimiter, RegisterRateLimiter, RATE_LIMIT_STORE } from "./login-rate-limit";
 import { createRateLimitStore } from "../common/rate-limit/rate-limit-store";
 import { env } from "../config/env";
+import { CAPTCHA_VERIFIER, createCaptchaVerifier } from "./captcha";
 import { OriginCheckMiddleware } from "../common/middleware/origin-check.middleware";
 
 @Module({
@@ -14,6 +15,8 @@ import { OriginCheckMiddleware } from "../common/middleware/origin-check.middlew
     RegisterRateLimiter,
     // Fase 1 · 1C: Redis quando REDIS_URL existe; senão memória
     { provide: RATE_LIMIT_STORE, useFactory: () => createRateLimitStore(env.REDIS_URL) },
+    // Fase 1 · 1D: Turnstile quando TURNSTILE_SECRET_KEY existe
+    { provide: CAPTCHA_VERIFIER, useFactory: createCaptchaVerifier },
   ],
   exports: [AuthService],
 })

@@ -9,11 +9,14 @@ import {
 } from "../helpers/app";
 import type { PrismaService } from "../../apps/api/src/prisma/prisma.module";
 import { env } from "../../apps/api/src/config/env";
+import { MAIL_PROVIDER, type MailProvider } from "../../apps/api/src/mail/mail.module";
 
 const PASSWORD = "SenhaForte123!";
 
 let app: INestApplication;
 let prisma: PrismaService;
+/** Links de confirmação "enviados" (MailProvider de log, capturado). */
+const sentLinks = new Map<string, string>();
 
 function register(payload: {
   companyName: string;
@@ -30,6 +33,13 @@ beforeAll(async () => {
   const created = await createTestApp();
   app = created.app;
   prisma = created.prisma;
+
+  const mail = app.get<MailProvider>(MAIL_PROVIDER);
+  const original = mail.sendEmailVerification.bind(mail);
+  mail.sendEmailVerification = async (email, name, url) => {
+    sentLinks.set(email, url);
+    await original(email, name, url);
+  };
 
   await resetDatabase(prisma);
 
@@ -53,7 +63,7 @@ afterAll(async () => {
 });
 
 describe("POST /api/auth/register", () => {
-  it("cria empresa + administrador, loga e permite entrar depois", async () => {
+  it("cria empresa pendente + administrador, exige confirmar o e-mail e só então entra (Fase 1 · 1D)", async () => {
     const response = await register({
       companyName: "Pet Shop Registro",
       name: "Dono Registro",
@@ -62,12 +72,34 @@ describe("POST /api/auth/register", () => {
     });
 
     expect(response.status).toBe(201);
-    expect(response.body.user.email).toBe("dono@registro.test");
-    expect(response.body.user.role).toBe("ADMIN");
-    expect(response.body.company.name).toBe("Pet Shop Registro");
-    expect(response.body.company.slug).toBe("pet-shop-registro");
+    expect(response.body).toEqual({ status: "PENDING_VERIFICATION", email: "dono@registro.test" });
+    // Sem sessão antes da confirmação
+    expect(response.headers["set-cookie"]).toBeUndefined();
 
-    const cookie = sessionCookieFrom(response);
+    const company = await prisma.company.findFirst({ where: { slug: "pet-shop-registro" } });
+    expect(company?.status).toBe("PENDING_VERIFICATION");
+    const user = await prisma.user.findFirst({ where: { email: "dono@registro.test" } });
+    expect(user?.role).toBe("ADMIN");
+    expect(user?.emailVerifiedAt).toBeNull();
+
+    const blocked = await request(app.getHttpServer())
+      .post("/api/auth/login")
+      .send({ email: "dono@registro.test", password: PASSWORD });
+    expect(blocked.status).toBe(403);
+    expect(blocked.body.code).toBe("EMAIL_NOT_VERIFIED");
+
+    const link = sentLinks.get("dono@registro.test");
+    expect(link).toMatch(/\/confirmar-email\?token=/);
+    const token = new URL(link as string).searchParams.get("token");
+
+    const verified = await request(app.getHttpServer())
+      .post("/api/auth/verify-email")
+      .send({ token });
+    expect(verified.status).toBe(200);
+    expect(verified.body.user.email).toBe("dono@registro.test");
+    expect(verified.body.company.slug).toBe("pet-shop-registro");
+
+    const cookie = sessionCookieFrom(verified);
     const me = await request(app.getHttpServer())
       .get("/api/auth/me")
       .set("Cookie", cookie);
@@ -79,6 +111,9 @@ describe("POST /api/auth/register", () => {
       .send({ email: "dono@registro.test", password: PASSWORD });
     expect(login.status).toBe(200);
     expect(login.body.company.slug).toBe("pet-shop-registro");
+
+    const active = await prisma.company.findFirst({ where: { slug: "pet-shop-registro" } });
+    expect(active?.status).toBe("ACTIVE");
   });
 
   it("gera slug único quando já existe empresa com o mesmo nome", async () => {
@@ -90,7 +125,10 @@ describe("POST /api/auth/register", () => {
     });
 
     expect(response.status).toBe(201);
-    expect(response.body.company.slug).toBe("pet-shop-registro-2");
+    const company = await prisma.company.findFirst({
+      where: { users: { some: { email: "dono2@registro.test" } } },
+    });
+    expect(company?.slug).toBe("pet-shop-registro-2");
   });
 
   it("responde 409 para email já cadastrado", async () => {
@@ -136,7 +174,7 @@ describe("POST /api/auth/register", () => {
     }
   });
 
-  it("aplica rate limit de cadastro por IP (limite dedicado)", async () => {
+  it("aplica rate limit de cadastro por IP (limite dedicado; conta também os cadastros com sucesso)", async () => {
     const original = env.REGISTER_RATE_LIMIT_MAX;
     env.REGISTER_RATE_LIMIT_MAX = 2;
     try {

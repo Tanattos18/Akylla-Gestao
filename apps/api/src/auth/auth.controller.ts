@@ -20,6 +20,11 @@ import {
   enableTwoFactorSchema,
   verifyTwoFactorSchema,
   disableTwoFactorSchema,
+  verifyEmailSchema,
+  resendVerificationSchema,
+  type RegisterPendingResponse,
+  type ResendVerificationInput,
+  type VerifyEmailInput,
   type ConfirmPasswordResetInput,
   type DisableTwoFactorInput,
   type EnableTwoFactorInput,
@@ -36,6 +41,7 @@ import { ZodValidationPipe } from "../common/pipes/zod-validation.pipe";
 import { env } from "../config/env";
 import { AuthService } from "./auth.service";
 import { LoginRateLimiter, RegisterRateLimiter } from "./login-rate-limit";
+import { CAPTCHA_VERIFIER, type CaptchaVerifier } from "./captcha";
 
 @Controller("auth")
 export class AuthController {
@@ -43,6 +49,7 @@ export class AuthController {
     @Inject(AuthService) private readonly authService: AuthService,
     @Inject(LoginRateLimiter) private readonly rateLimiter: LoginRateLimiter,
     @Inject(RegisterRateLimiter) private readonly registerLimiter: RegisterRateLimiter,
+    @Inject(CAPTCHA_VERIFIER) private readonly captcha: CaptchaVerifier,
   ) {}
 
   @Public()
@@ -76,21 +83,53 @@ export class AuthController {
   async register(
     @Body(new ZodValidationPipe(registerSchema)) body: RegisterInput,
     @Ip() ip: string,
-    @Req() request: Request,
-    @Res({ passthrough: true }) response: Response,
   ) {
     if (!env.REGISTRATION_ENABLED) {
       throw new NotFoundException("Recurso indisponível");
     }
 
+    // Fase 1 · 1D: conta TODOS os cadastros do IP (não zera no sucesso) —
+    // REGISTER_RATE_LIMIT_MAX por janela (produção: 3/hora)
     const rateKey = `register|${ip}`;
     await this.registerLimiter.check(rateKey);
+    await this.captcha.verify(body.captchaToken, ip);
 
-    const result = await this.authService.register(body, request);
-    await this.registerLimiter.reset(rateKey);
+    const result = await this.authService.register(body);
+    return { status: "PENDING_VERIFICATION", email: result.email } satisfies RegisterPendingResponse;
+  }
+
+  @Public()
+  @Post("verify-email")
+  @HttpCode(200)
+  async verifyEmail(
+    @Body(new ZodValidationPipe(verifyEmailSchema)) body: VerifyEmailInput,
+    @Ip() ip: string,
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    // Tentativas com link inválido contam; a confirmação válida zera
+    const rateKey = `verify-email|${ip}`;
+    await this.rateLimiter.check(rateKey);
+    const result = await this.authService.verifyEmail(body, request);
+    await this.rateLimiter.reset(rateKey);
     this.authService.setSessionCookie(response, result.token);
-
     return { user: result.user, company: result.company } satisfies MeResponse;
+  }
+
+  @Public()
+  @Post("resend-verification")
+  @HttpCode(200)
+  async resendVerification(
+    @Body(new ZodValidationPipe(resendVerificationSchema)) body: ResendVerificationInput,
+    @Ip() ip: string,
+  ) {
+    if (!env.REGISTRATION_ENABLED) {
+      throw new NotFoundException("Recurso indisponível");
+    }
+    await this.registerLimiter.check(`resend|${ip}|${body.email}`);
+    await this.authService.resendEmailVerification(body);
+    // Resposta idêntica exista ou não a conta
+    return { ok: true };
   }
 
   @Public()

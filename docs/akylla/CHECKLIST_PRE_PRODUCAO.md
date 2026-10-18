@@ -55,7 +55,7 @@ Classificadas como **preexistentes** (não introduzidas pela adaptação):
 | L3 | Sem **RLS** no Postgres — isolamento de tenant é aplicado na camada de aplicação | Média | 500+ testes de isolamento; adicionar RLS como defesa em profundidade antes de produção multi-instância |
 | L4 | Sem fluxo de **exclusão LGPD** (direito ao esquecimento) | Alta (compliance) | Implementar endpoint de anonimização/exclusão com retenção legal |
 | L5 | `PASSWORD_RESET_ENABLED` redefine sem token de e-mail (apenas local) | Alta se habilitado em produção | Manter desabilitado em produção até implementar fluxo com token |
-| L6 | `REGISTRATION_ENABLED` cria empresa sem verificação anti-abuso | Alta se habilitado em produção | Manter desabilitado ou adicionar captcha/limite |
+| L6 | `REGISTRATION_ENABLED` cria empresa sem verificação anti-abuso | Alta se habilitado em produção | **Resolvido no código (2026-10-18, Fase 1 · 1D):** verificação de e-mail obrigatória (empresa só fica `ACTIVE` pelo link), limite por IP contando os sucessos e Turnstile opcional. Em produção a API exige `SMTP_HOST` para subir com o cadastro aberto. Falta contratar o SMTP e configurar `REGISTER_RATE_LIMIT_MAX=3` |
 
 ### 3.2 Operação
 

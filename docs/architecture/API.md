@@ -24,7 +24,10 @@ inclui `issues[]`).
 | Método | Rota | Acesso | Descrição |
 |---|---|---|---|
 | POST | `/api/auth/login` | público | Email+senha; retorna cookie HttpOnly |
-| POST | `/api/auth/register` | público (flag) | Cria empresa nova + administrador e loga (201); só responde quando `REGISTRATION_ENABLED=true` (senão 404), rate limit por IP (`register|ip`), email global único → 409, slug único gerado do nome da empresa |
+| POST | `/api/auth/register` | público (flag) | **Fase 1 · 1D:** cria empresa nova em `PENDING_VERIFICATION` + administrador e envia o link de confirmação; responde 201 `{status:"PENDING_VERIFICATION", email}` **sem sessão**. Só responde quando `REGISTRATION_ENABLED=true` (senão 404). Rate limit por IP (`register|ip`, conta também os cadastros com sucesso). Turnstile quando `TURNSTILE_SECRET_KEY` existe (`captchaToken`; sem token ou inválido → 400). E-mail global único → 409; slug único gerado do nome da empresa |
+| POST | `/api/auth/verify-email` | público | `{token}` do link: uso único, expira em `EMAIL_VERIFICATION_TTL_HOURS` (24 h). Ativa a empresa, marca `emailVerifiedAt`, abre a sessão e devolve `{user, company}` (200). Inválido, usado ou expirado → 400. Rate limit por IP |
+| POST | `/api/auth/resend-verification` | público (flag) | `{email}` → sempre 200 `{ok:true}` (não revela se a conta existe); se houver cadastro pendente, invalida os links anteriores e envia um novo. Rate limit `resend|ip|email` |
+| — | login de conta pendente | — | `POST /api/auth/login` com senha certa e e-mail não confirmado → **403** `{code:"EMAIL_NOT_VERIFIED"}`; senha errada continua 401 genérico |
 | POST | `/api/auth/reset-password` | público (flag) | Redefine a senha pelo email digitado; só responde quando `PASSWORD_RESET_ENABLED=true` (senão 404), com rate limit próprio (`reset|ip|email`); usuário inativo/inexistente → 404, email em múltiplas contas → 400; revoga as sessões abertas do usuário |
 | POST | `/api/auth/logout` | sessão | Revoga a sessão atual |
 | GET | `/api/auth/me` | sessão | Usuário + empresa autenticados |

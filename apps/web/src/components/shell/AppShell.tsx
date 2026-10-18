@@ -7,7 +7,7 @@ import { fetchSession, type Session } from "@/lib/session";
 import { api } from "@/lib/api";
 import type { CompanyModuleDto } from "@/lib/types";
 
-const AUTH_ROUTES = ["/login", "/cadastro", "/redefinir-senha"];
+const AUTH_ROUTES = ["/login", "/cadastro", "/redefinir-senha", "/confirmar-email"];
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();

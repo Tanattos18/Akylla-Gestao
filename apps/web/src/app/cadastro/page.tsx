@@ -1,12 +1,12 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useCallback, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { api, ApiError } from "../../lib/api";
+import { ResendVerification } from "../../components/auth/ResendVerification";
+import { Turnstile, turnstileSiteKey } from "../../components/auth/Turnstile";
 
 export default function CadastroPage() {
-  const router = useRouter();
   const [companyName, setCompanyName] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -16,6 +16,10 @@ export default function CadastroPage() {
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  // Fase 1 · 1D: e-mail para onde o link de confirmação foi enviado
+  const [sentTo, setSentTo] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const onCaptchaToken = useCallback((token: string | null) => setCaptchaToken(token), []);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -31,6 +35,7 @@ export default function CadastroPage() {
     else if (password.length > 72) issues.password = "Senha deve ter no máximo 72 caracteres";
     if (confirm !== password) issues.confirm = "As senhas não coincidem";
     if (!acceptTerms) issues.acceptTerms = "É necessário aceitar os Termos e a Política de Privacidade";
+    if (turnstileSiteKey && !captchaToken) issues.captcha = "Confirme que você não é um robô";
     if (Object.keys(issues).length > 0) {
       setFieldErrors(issues);
       return;
@@ -47,9 +52,10 @@ export default function CadastroPage() {
           password,
           acceptTerms,
           termsVersion: "1.0",
+          ...(captchaToken ? { captchaToken } : {}),
         }),
       });
-      router.push("/");
+      setSentTo(email.trim());
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.issues?.length) {
@@ -66,6 +72,28 @@ export default function CadastroPage() {
     }
   }
 
+  if (sentTo) {
+    return (
+      <div className="mx-auto max-w-md">
+        <div className="rounded-lg border border-slate-200 bg-white p-8 shadow-sm" aria-live="polite">
+          <h2 className="mb-2 text-xl font-semibold text-slate-900">Confirme seu e-mail</h2>
+          <p className="text-sm text-slate-600">
+            Enviamos um link de confirmação para <strong className="text-slate-900">{sentTo}</strong>. Abra o
+            e-mail e clique em <strong>Confirmar e-mail</strong> para ativar a sua empresa. O link vale por 24 horas.
+          </p>
+          <p className="mt-3 text-xs text-slate-600">Não chegou? Confira a caixa de spam ou reenvie:</p>
+          <ResendVerification email={sentTo} />
+          <p className="mt-6 text-center text-sm text-slate-500">
+            Já confirmou?{" "}
+            <Link href="/login" className="text-primary-700 hover:underline">
+              Entrar
+            </Link>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-md">
       <div className="rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
@@ -73,8 +101,8 @@ export default function CadastroPage() {
           Criar conta no Akylla Gestão
         </h2>
         <p className="mb-6 text-sm text-slate-500">
-          Crie a empresa e o usuário administrador. Você entra automaticamente
-          após o cadastro.
+          Crie a empresa e o usuário administrador. Depois, confirme o e-mail
+          pelo link que enviaremos para ativar a conta.
         </p>
 
         {error && (
@@ -198,6 +226,9 @@ export default function CadastroPage() {
               <p className="mt-1 text-xs text-red-600">{fieldErrors.acceptTerms}</p>
             )}
           </div>
+
+          <Turnstile onToken={onCaptchaToken} />
+          {fieldErrors.captcha && <p className="-mt-2 mb-3 text-xs text-red-600">{fieldErrors.captcha}</p>}
 
           <button
             type="submit"

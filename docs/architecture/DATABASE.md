@@ -1,5 +1,36 @@
 # Banco de dados — diretrizes e modelo atual
 
+## Modelos implementados (Fase 1 · 1D — verificação de e-mail)
+
+Migration: `database/prisma/migrations/20261018090000_email_verification`
+(aditiva: 1 valor de enum, 1 coluna opcional, 1 tabela nova).
+
+| Modelo | Campos principais | Restrições/índices |
+|---|---|---|
+| `EmailVerificationToken` | `userId` (FK `Cascade`), `tokenHash` (SHA-256 do token; o bruto nunca é gravado), `expiresAt`, `usedAt?`, `createdAt` | `tokenHash` único; índices `[userId]`, `[expiresAt]` |
+
+Alterações aditivas em modelos existentes:
+
+| Modelo | Alteração | Observação |
+|---|---|---|
+| `CompanyStatus` (enum) | novo valor `PENDING_VERIFICATION` | empresa do cadastro aberto até o e-mail ser confirmado. Login e `AuthGuard` exigem `ACTIVE`, então nada fica acessível antes |
+| `User` | `emailVerifiedAt DateTime?` | a migration preenche com `createdAt` os usuários existentes (criados por bootstrap/admin) |
+
+Regras derivadas:
+
+- Token de uso único, consumido com `updateMany` condicional (`usedAt IS
+  NULL`), o que evita ativação dupla em cliques simultâneos.
+- Reenviar o link marca os tokens anteriores como usados (só o último vale).
+- Mesmo padrão já usado em `PasswordResetToken` (N4).
+
+## Modelos de segurança e LGPD (N1–N4, 2026-10-15) — registro
+
+| Modelo/campo | Migration | Função |
+|---|---|---|
+| `LegalConsent` | `20261015120000_lgpd_consent` | aceite de termos/privacidade (usuário e cliente) com versão e data |
+| `PasswordResetToken` | `20261015140000_password_reset_token` | redefinição de senha por token de e-mail (hash SHA-256, 1 h, uso único) |
+| `User.twoFactorSecret`, `User.twoFactorEnabled` | `20261015160000_two_factor` | 2FA TOTP para ADMIN |
+
 ## Modelos implementados (Importação de planilhas — Akylla Gestão)
 
 Migration: `database/prisma/migrations/20261014114855_import_batch`

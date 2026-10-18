@@ -62,6 +62,20 @@ const schema = z.object({
   SENTRY_RELEASE: z.string().optional(),
   SENTRY_TRACES_SAMPLE_RATE: z.coerce.number().min(0).max(1).default(0.1),
   SENTRY_PROFILES_SAMPLE_RATE: z.coerce.number().min(0).max(1).default(0),
+  // E-mail transacional (Fase 1 · 1D) — SMTP via nodemailer. Sem SMTP_HOST,
+  // os e-mails vão só para o log (dev/teste).
+  SMTP_HOST: z.string().optional().transform((v) => v || undefined),
+  SMTP_PORT: z.coerce.number().int().positive().default(587),
+  SMTP_SECURE: z
+    .string()
+    .optional()
+    .transform((value) => value === "true"),
+  SMTP_USER: z.string().optional().transform((v) => v || undefined),
+  SMTP_PASS: z.string().optional().transform((v) => v || undefined),
+  MAIL_FROM: z.string().default("Akylla Gestão <no-reply@akyllagestao.com.br>"),
+  EMAIL_VERIFICATION_TTL_HOURS: z.coerce.number().int().min(1).max(168).default(24),
+  // Captcha opcional no cadastro (Fase 1 · 1D) — Cloudflare Turnstile
+  TURNSTILE_SECRET_KEY: z.string().optional().transform((v) => v || undefined),
 }).superRefine((value, ctx) => {
   if (value.NODE_ENV !== "production") return;
 
@@ -83,12 +97,14 @@ const schema = z.object({
     });
   }
 
-  if (value.REGISTRATION_ENABLED === true) {
+  // Fase 1 · 1D: o cadastro aberto exige verificação de e-mail, que só
+  // funciona com envio real — sem SMTP o link ficaria só no log.
+  if (value.REGISTRATION_ENABLED === true && !value.SMTP_HOST) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      path: ["REGISTRATION_ENABLED"],
+      path: ["SMTP_HOST"],
       message:
-        "Em produção, o cadastro aberto exige verificação de e-mail e controles anti-abuso. Mantenha desabilitado ou configure proteções.",
+        "Em produção, o cadastro aberto exige SMTP configurado (SMTP_HOST) para enviar a confirmação de e-mail.",
     });
   }
 });

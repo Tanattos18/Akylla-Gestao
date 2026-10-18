@@ -21,7 +21,7 @@ export type ApiError = z.infer<typeof apiErrorSchema>;
 
 export const userRoleSchema = z.enum(["ADMIN", "MEMBER"]);
 export const userStatusSchema = z.enum(["ACTIVE", "INACTIVE"]);
-export const companyStatusSchema = z.enum(["ACTIVE", "INACTIVE"]);
+export const companyStatusSchema = z.enum(["ACTIVE", "INACTIVE", "PENDING_VERIFICATION"]);
 
 export function normalizeEmail(value: string): string {
   return value.trim().toLowerCase();
@@ -120,9 +120,37 @@ export const registerSchema = z.object({
     .boolean()
     .refine((value) => value === true, "É necessário aceitar os Termos de Uso e a Política de Privacidade"),
   termsVersion: z.string().trim().min(1, "Versão dos termos é obrigatória").max(60).default("1.0"),
+  // Fase 1 · 1D: token do Cloudflare Turnstile (exigido só quando o servidor
+  // tem TURNSTILE_SECRET_KEY)
+  captchaToken: z.string().trim().max(4096).optional(),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
+
+// ---------------------------------------------------------------------------
+// Fase 1 · 1D — verificação de e-mail do cadastro aberto
+// ---------------------------------------------------------------------------
+
+export const verifyEmailSchema = z.object({
+  token: z.string().trim().min(16, "Token inválido").max(128, "Token inválido"),
+});
+
+export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
+
+export const resendVerificationSchema = z.object({
+  email: emailFieldSchema,
+});
+
+export type ResendVerificationInput = z.infer<typeof resendVerificationSchema>;
+
+/** Resposta do cadastro: a conta só é ativada após confirmar o e-mail. */
+export interface RegisterPendingResponse {
+  status: "PENDING_VERIFICATION";
+  email: string;
+}
+
+/** Código do 403 de login para conta com e-mail ainda não confirmado. */
+export const EMAIL_NOT_VERIFIED_CODE = "EMAIL_NOT_VERIFIED";
 
 export const createUserSchema = z.object({
   name: z.string().trim().min(2, "Nome deve ter ao menos 2 caracteres").max(120),

@@ -10,6 +10,8 @@ datasource db {
 enum CompanyStatus {
   ACTIVE
   INACTIVE
+  // Fase 1 · 1D: cadastro aberto aguardando confirmação do e-mail do admin
+  PENDING_VERIFICATION
 }
 
 enum UserStatus {
@@ -36,6 +38,21 @@ enum LegalConsentType {
 enum LegalConsentRole {
   USER
   CLIENT
+}
+
+/// Fase 1 · 1D: confirmação de e-mail do cadastro aberto. Mesmo padrão do
+/// PasswordResetToken: só o hash SHA-256 é guardado; uso único; expira.
+model EmailVerificationToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model PasswordResetToken {
@@ -309,6 +326,8 @@ model User {
   passwordHash String
   role         UserRole   @default(MEMBER)
   status       UserStatus @default(ACTIVE)
+  // Fase 1 · 1D: quando o e-mail foi confirmado (null = não confirmado)
+  emailVerifiedAt DateTime?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   sessions     Session[]
@@ -333,6 +352,7 @@ model User {
   importBatches ImportBatch[]
   legalConsents LegalConsent[]
   passwordResetTokens PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
   twoFactorSecret String?
   twoFactorEnabled Boolean @default(false)
 

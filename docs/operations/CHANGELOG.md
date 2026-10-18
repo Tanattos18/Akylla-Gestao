@@ -6,6 +6,63 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-18 - Fase 1 · 1D: cadastro anti-abuso (verificação de e-mail + Turnstile)
+
+Referências usadas (`upgrade/REFERENCIAS_GIT.md`, Fase 1 · 1D):
+`nodemailer` (MIT) como biblioteca de envio e a documentação de validação
+no servidor do Cloudflare Turnstile. Nenhum código de terceiros copiado.
+
+### Adicionado
+
+- **Verificação de e-mail obrigatória no cadastro aberto:**
+  - a empresa nasce `PENDING_VERIFICATION` e o cadastro não abre sessão;
+  - o link `/confirmar-email?token=…` (24 h, uso único) ativa a empresa e
+    entra no sistema;
+  - login com senha certa e conta pendente → 403 `EMAIL_NOT_VERIFIED`, e a
+    tela oferece reenviar o link.
+- **Endpoints:** `POST /api/auth/verify-email` e
+  `POST /api/auth/resend-verification` (este responde igual exista ou não a
+  conta).
+- **Modelo `EmailVerificationToken`** (hash SHA-256, mesmo padrão do
+  `PasswordResetToken`) e `User.emailVerifiedAt`. Migration aditiva
+  `20261018090000_email_verification`; usuários existentes ficam
+  confirmados na data de criação.
+- **E-mail real:** `SmtpMailProvider` (nodemailer), com HTML e texto em
+  pt-BR e nome escapado no HTML. Sem `SMTP_HOST`, segue o
+  `LogMailProvider`, que em produção não registra o link.
+- **Turnstile opcional:** liga com `TURNSTILE_SECRET_KEY` na API e
+  `NEXT_PUBLIC_TURNSTILE_SITE_KEY` no web. Sem token, ou com o serviço
+  fora do ar, responde 400 (falha fechada).
+- **Telas:** `/cadastro` mostra "Confirme seu e-mail" com reenvio;
+  `/confirmar-email` tira o token da barra de endereço assim que o lê;
+  `/login` mostra o reenvio quando a conta está pendente.
+- **Testes:** `tests/integration/email-verification.test.ts` (12) e
+  `register.test.ts` reescrito para o fluxo novo.
+
+### Alterado
+
+- O rate limit do cadastro **não zera mais no sucesso**: conta todos os
+  cadastros do IP (produção: `REGISTER_RATE_LIMIT_MAX=3` por hora).
+- Validação de produção: com `REGISTRATION_ENABLED=true`, a API exige
+  `SMTP_HOST`. Antes, o cadastro aberto era proibido em produção.
+- `ApiError` do web carrega `code`. `companyStatusSchema` inclui
+  `PENDING_VERIFICATION`.
+- Dependências fixas: `nodemailer@8.0.11` e `@types/nodemailer@8.0.2`
+  (dev) em `apps/api`.
+- Documentação: `.env.example` (`SMTP_*`, `MAIL_FROM`,
+  `EMAIL_VERIFICATION_TTL_HOURS`, `TURNSTILE_*`), `API.md`, `DATABASE.md`
+  (com registro dos modelos N1–N4), `RUNBOOK.md` e
+  `CHECKLIST_PRE_PRODUCAO` (L6 resolvido no código).
+
+### Verificação
+
+- `npm run validate` verde: lint · typecheck · **614/614** (33 arquivos)
+  · build · db:validate. Migration conferida com `prisma migrate diff`
+  (sem diferença) e aplicada no banco de dev.
+- Teste no navegador (API e web compilados): cadastro → tela
+  "Confirme seu e-mail" → link → painel logado como ADMIN da empresa
+  nova. Conta de teste `teste-ui@exemplo.test` criada no banco de dev.
+
 ## [Akylla Gestão] - 2026-10-18 - Fase 1 · 1C: rate limit distribuído (Redis) com fallback em memória
 
 Referência usada (`upgrade/REFERENCIAS_GIT.md`, Fase 1 · 1C):

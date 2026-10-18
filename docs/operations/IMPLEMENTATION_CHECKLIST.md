@@ -45,9 +45,24 @@
 - [x] `tests/integration/rate-limit.test.ts` (10 testes)
 - [ ] Redis provisionado em produção (Upstash/Railway/Render) — depende do 1G
 
+### 1D · Cadastro anti-abuso (2026-10-18)
+
+- [x] Empresa do cadastro nasce `PENDING_VERIFICATION`; sem sessão até confirmar
+- [x] `POST /api/auth/verify-email` (uso único, 24 h, ativa a empresa e abre a sessão)
+- [x] `POST /api/auth/resend-verification` (resposta idêntica; invalida links antigos)
+- [x] Login pendente → 403 `EMAIL_NOT_VERIFIED`; senha errada continua 401 genérico
+- [x] Rate limit do cadastro conta também os sucessos
+- [x] Turnstile opcional (falha fechada) — web + API
+- [x] SMTP via nodemailer (`SmtpMailProvider`); sem SMTP → log (link omitido em produção)
+- [x] Produção exige `SMTP_HOST` para subir com `REGISTRATION_ENABLED=true`
+- [x] Migration `20261018090000_email_verification` + `DATABASE.md`
+- [x] Telas: `/cadastro` (aguardando confirmação + reenviar), `/confirmar-email`, aviso no `/login`
+- [x] `tests/integration/email-verification.test.ts` (12) + `register.test.ts` atualizado
+- [x] Fluxo testado no navegador (cadastro → link → painel)
+- [ ] SMTP e Turnstile de produção configurados (contas do proprietário)
+
 ### Pendentes da Fase 1
 
-- [ ] 1D · Verificação de e-mail no cadastro + Turnstile opcional
 - [ ] 1E · RLS + `withTenantContext` + `rls.test.ts`
 - [ ] 1F · `npm audit --omit=dev` = 0 (next 16, vitest major)
 - [ ] 1G · CD real com health check e rollback documentado
