@@ -86,6 +86,12 @@ const schema = z.object({
     .transform((v) => v || undefined)
     .refine((v) => v === undefined || /^[0-9a-fA-F]{64}$/.test(v), "FISCAL_ENCRYPTION_KEY deve ter 64 caracteres hex (32 bytes)"),
   FISCAL_WEBHOOK_SECRET: z.string().optional().transform((v) => v || undefined),
+  // Fase 6 · 6.3 — documentação OpenAPI em /api/docs. Padrão: ligada fora de
+  // produção; em produção só com API_DOCS_ENABLED=true.
+  API_DOCS_ENABLED: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((v) => (v === undefined ? undefined : v === "true")),
 }).superRefine((value, ctx) => {
   if (value.NODE_ENV !== "production") return;
 

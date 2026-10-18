@@ -139,8 +139,9 @@ billing) nunca pode ser desativado.
 | **Segredos** | só em `.env`, que não vai para o Git. `.env.example` sem valores reais e varredura de segredos no repositório |
 
 **Verificação atual:** `npm run validate` verde, com lint 0, typecheck
-OK, **592/592 testes** em PostgreSQL real (31 arquivos), build OK e
-`db:validate` OK.
+OK, **711/711 testes** em PostgreSQL real (40 arquivos), build OK e
+`db:validate` OK. Cobertura de 93,7% das linhas dos services/controllers,
+5 fluxos E2E no navegador e 0 violações de acessibilidade em 36 telas.
 
 ---
 
@@ -157,7 +158,7 @@ anterior estão verdes. A especificação completa está em
 | **3** | Fiscal | NFC-e / NF-e / NFS-e via integração: provedor abstraído ✅, segredos cifrados ✅, webhook HMAC ✅, simulada ✅; integradora real 🟡 (contrato do proprietário) | ✅ código concluído |
 | **4** | Perfis | onboarding Comércio / Serviços / Híbrido, landing pages por segmento | ✅ |
 | **5** | Design e UX | componentes compartilhados, impressão de cupom, acessibilidade (axe: 0 violações em 36 telas) | ✅ |
-| **6** | Qualidade | cobertura na CI, E2E com Playwright, OpenAPI em `/api/docs` | ⬜ |
+| **6** | Qualidade | cobertura na CI (93,7% das linhas), E2E com Playwright (5 fluxos), OpenAPI em `/api/docs`, teste de contrato | ✅ |
 | **7** | Produto | edição da empresa, busca global, agenda semana/mês, seeds por segmento | ⬜ |
 
 **Fora do escopo:** modo offline completo, emissor fiscal próprio,
@@ -204,7 +205,14 @@ npm run dev:worker   # fila do WhatsApp
 
 ```bash
 npm run validate     # lint + typecheck + test + build + db:validate
+npm run test:coverage  # testes + cobertura (mínimos em config/vitest.config.ts)
+
+# Com API (3001) e web (3000) no ar:
+npm run test:e2e     # fluxos no navegador (Playwright)
+npm run test:a11y    # acessibilidade (axe, WCAG 2.1 AA)
 ```
+
+Documentação da API (fora de produção): `http://localhost:3001/api/docs`.
 
 ### Dados de demonstração
 

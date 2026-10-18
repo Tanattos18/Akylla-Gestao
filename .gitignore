@@ -18,3 +18,7 @@ coverage/
 
 # Anexos enviados (Fase 2 · 2.3) — dados de clientes, nunca no Git
 /uploads/
+
+# Playwright (Fase 6)
+/test-results/
+/playwright-report/

@@ -29,6 +29,12 @@ inclui `issues[]`).
 | POST | `/api/auth/resend-verification` | público (flag) | `{email}` → sempre 200 `{ok:true}` (não revela se a conta existe); se houver cadastro pendente, invalida os links anteriores e envia um novo. Rate limit `resend|ip|email` |
 | — | login de conta pendente | — | `POST /api/auth/login` com senha certa e e-mail não confirmado → **403** `{code:"EMAIL_NOT_VERIFIED"}`; senha errada continua 401 genérico |
 | POST | `/api/auth/reset-password` | público (flag) | Redefine a senha pelo email digitado; só responde quando `PASSWORD_RESET_ENABLED=true` (senão 404), com rate limit próprio (`reset|ip|email`); usuário inativo/inexistente → 404, email em múltiplas contas → 400; revoga as sessões abertas do usuário |
+| POST | `/api/auth/request-password-reset` | público | `{email}` → sempre 200 `{ok:true}` (não revela se a conta existe); gera token de redefinição de uso único. Rate limit `request-reset|ip|email` |
+| POST | `/api/auth/confirm-password-reset` | público | `{token, password}` → 200 `{ok:true}`; token inválido/expirado → 400. Rate limit `confirm-reset|ip` |
+| POST | `/api/auth/2fa/setup` | sessão (só ADMIN) | Gera o segredo TOTP e devolve os dados para o app autenticador (2FA ainda inativo); MEMBER → 403 |
+| POST | `/api/auth/2fa/enable` | sessão | `{token}` (código de 6 dígitos) confirma e ativa o 2FA |
+| POST | `/api/auth/2fa/disable` | sessão | `{password}` desativa o 2FA |
+| POST | `/api/auth/2fa/verify` | público | `{challengeId, token}`: segunda etapa do login com 2FA; abre a sessão (cookie). Rate limit por IP |
 | POST | `/api/auth/logout` | sessão | Revoga a sessão atual |
 | GET | `/api/auth/me` | sessão | Usuário + empresa autenticados |
 | GET | `/api/users` | ADMIN | Lista usuários da empresa |
@@ -438,6 +444,7 @@ Comportamentos importantes:
 |---|---|---|---|
 | GET | `/api/billing/plans` | sessão | Catálogo global ativo (`{ items }`), ordenado por preço; inclui `userLimit`/`clientLimit`/`productLimit` (`null` = ilimitado) |
 | GET | `/api/billing/subscription` | sessão | Assinatura da empresa (404 se ausente; expiração lazy) |
+| GET | `/api/billing/usage` | sessão | `{subscription, usage:{users, clients, products}}` para comparar com os limites do plano |
 | PUT | `/api/billing/subscription` | ADMIN | Upsert (troca de plano reinicia o período e reativa; plano inexistente → 404, inativo → 400) |
 | POST | `/api/billing/subscription/renew` | ADMIN | Renova (201): novo período a partir de `max(now, end)`; cancelada → 409 |
 | POST | `/api/billing/subscription/cancel` | ADMIN | Cancela (201): `reason?` ≤ 500; duplo → 409 |
@@ -637,6 +644,25 @@ Regras: [`docs/akylla/ONBOARDING.md`](../akylla/ONBOARDING.md).
 | GET | `/api/onboarding/presets` | sessão | perfis ativos em ordem (`slug`, `name`, `description`, `defaultModules`, `defaultFiscalEnabled`) |
 | GET | `/api/onboarding/status` | sessão | `{segment, completed, completedAt}` |
 | POST | `/api/onboarding/apply` | ADMIN | `{slug}` (`COMERCIO`, `SERVICOS`, `HIBRIDO`, `PERSONALIZADO`). Idempotente: módulos do perfil → ACTIVE, demais → DISABLED (Personalizado não altera). Retorna 200 com o status. Slug inválido → 400 |
+
+## LGPD e exportação da empresa (N3 · 9.x)
+
+| Método | Rota | Acesso | Descrição |
+|---|---|---|---|
+| POST | `/api/lgpd/consent` | sessão | Registra aceite `{type, version, role?, clientId?}` (termos/privacidade) |
+| GET | `/api/lgpd/consents` | sessão | Lista os aceites da empresa (`clientId` opcional) |
+| GET | `/api/lgpd/clients/:id/data-export` | ADMIN | Todos os dados do cliente (portabilidade, art. 18) |
+| DELETE | `/api/lgpd/clients/:id/anonymize` | ADMIN | Anonimiza o cliente (mantém vendas e histórico financeiro) |
+| GET | `/api/company/export` | ADMIN | Exportação integral da empresa (portabilidade/encerramento) |
+
+## Documentação OpenAPI (Fase 6 · 6.3)
+
+`GET /api/docs` (Swagger UI) e `GET /api/docs/openapi.json`, gerados do
+código: rotas pelo Nest, corpos e filtros pelos schemas Zod das rotas,
+sessão/ADMIN/módulo pelos decorators. Ligada fora de produção; em
+produção só com `API_DOCS_ENABLED=true`. O teste
+`tests/integration/contract.test.ts` falha se uma rota existir no código
+e não nesta página (ou o contrário).
 
 ## Padrão para módulos futuros
 

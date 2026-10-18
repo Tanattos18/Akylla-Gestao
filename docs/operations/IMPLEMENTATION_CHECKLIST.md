@@ -4,6 +4,15 @@
 > Este checklist cobre apenas a era do Akylla Gestão. O histórico
 > anterior à adaptação está preservado no Git.
 
+## Fase 6 — Testes e qualidade (2026-10-18)
+
+- [x] Cobertura na CI (`test:coverage`): 93,7% das linhas de services/controllers; mínimos contra regressão
+- [x] E2E Playwright (`test:e2e`): login, cliente, caixa+venda+NFC-e+fechamento, importação CSV, rota protegida
+- [x] OpenAPI em `/api/docs` gerado de rotas + schemas Zod + decorators
+- [x] Teste de contrato código × `API.md` (12 rotas não documentadas corrigidas)
+- [x] Job "Navegador" na CI (axe + E2E)
+- [ ] Validação das respostas contra schemas (hoje só entradas vêm do Zod; respostas não têm schema compartilhado)
+
 ## Fase 5 — Design e UX (2026-10-18)
 
 - [x] `DataTable` (31 tabelas; carrinho do PDV em lista), `Dialog`/`useDialog` (33 confirm/prompt), `Toast`, `Tabs`

@@ -8,6 +8,7 @@ import { AllExceptionsFilter } from "./common/filters/all-exceptions.filter";
 import { securityHeadersMiddleware } from "./common/middleware/security-headers.middleware";
 import { env, allowedOrigins } from "./config/env";
 import { captureServerError, flushSentry } from "./monitoring/sentry";
+import { setupOpenApi } from "./openapi/openapi";
 
 async function bootstrap() {
   // rawBody: necessário para validar a assinatura X-Hub-Signature-256
@@ -25,6 +26,12 @@ async function bootstrap() {
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
   });
   app.enableShutdownHooks();
+
+  // Fase 6 · 6.3: documentação OpenAPI (ligada fora de produção por padrão)
+  if (env.API_DOCS_ENABLED ?? env.NODE_ENV !== "production") {
+    setupOpenApi(app, env.AUTH_COOKIE_NAME);
+    logger.log("Documentação da API em /api/docs");
+  }
 
   await app.listen(env.API_PORT);
   logger.log(`Akylla Gestão API disponível em http://localhost:${env.API_PORT}`);

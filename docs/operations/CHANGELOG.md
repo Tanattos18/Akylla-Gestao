@@ -6,6 +6,51 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-18 - Fase 6: Testes e qualidade
+
+### Adicionado
+
+- **Cobertura na CI** (`npm run test:coverage`, `@vitest/coverage-v8`):
+  - 93,7% das linhas dos services e controllers da API (meta do roteiro:
+    70%);
+  - mínimos em `config/vitest.config.ts` logo abaixo do medido, que
+    travam regressão no lugar do diff-cover;
+  - relatório publicado como artefato da CI.
+- **E2E com Playwright** (`npm run test:e2e`, `config/playwright.config.ts`,
+  `tests/e2e/`). Cada execução cria uma empresa própria. São 5 fluxos:
+  - login → painel;
+  - criar cliente → aparece na lista;
+  - abrir caixa → vender no PDV → emitir NFC-e (simulada) → fechar caixa
+    sem diferença;
+  - importar CSV: simular → importar → produto na lista;
+  - rota protegida sem sessão → login.
+- **OpenAPI em `/api/docs`** (`@nestjs/swagger` + `zod-to-json-schema`):
+  - rotas descobertas pelo Nest;
+  - corpos e filtros gerados dos schemas Zod das próprias rotas;
+  - sessão, ADMIN e módulo vindos dos decorators;
+  - em produção, só com `API_DOCS_ENABLED=true`.
+- **Teste de contrato** (`tests/integration/contract.test.ts`): o código e
+  a tabela de rotas do `API.md` precisam bater nos dois sentidos.
+- **CI:** o job "Navegador" sobe API e web e roda a auditoria de
+  acessibilidade e o E2E.
+
+### Corrigido
+
+- `API.md` não documentava 12 rotas que existiam: 2FA (4), pedido e
+  confirmação de redefinição de senha, uso do plano, LGPD (4) e
+  exportação da empresa. O teste de contrato achou todas.
+
+### Dependências
+
+- **Novas:**
+  - `@nestjs/swagger` 11.4.7 (MIT);
+  - `zod-to-json-schema` 3.25.2 (ISC);
+  - `@playwright/test` 1.64.1 (Apache-2.0, dev);
+  - `@vitest/coverage-v8` 4.1.11 (MIT, dev).
+- **`overrides`:** `js-yaml` 5.4.1 dentro do `@nestjs/swagger`. A versão
+  fixada por ele (5.3.0) tem um alerta moderado (GHSA-r3ph-w7gj-g6xm), e
+  o swagger 12, que corrige, exige Nest 12.
+
 ## [Akylla Gestão] - 2026-10-18 - Fase 5: Design, UX e acessibilidade
 
 Padroniza tabelas, diálogos, avisos e abas, e leva o painel a **0

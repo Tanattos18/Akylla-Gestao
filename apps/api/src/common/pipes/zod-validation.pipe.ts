@@ -3,7 +3,8 @@ import type { ZodType } from "zod";
 
 @Injectable()
 export class ZodValidationPipe implements PipeTransform {
-  constructor(private readonly schema: ZodType) {}
+  // Público para a geração do OpenAPI (Fase 6 · 6.3) ler o schema
+  constructor(readonly schema: ZodType) {}
 
   transform(value: unknown) {
     const result = this.schema.safeParse(value);
