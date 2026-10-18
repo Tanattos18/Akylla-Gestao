@@ -9,12 +9,13 @@
 | Item | Valor |
 |---|---|
 | Provedor / plano | Hostinger **VPS KVM 1** (1 vCPU, 4 GB RAM, 50 GB NVMe). Upgrade para KVM 2 pelo painel, sem reinstalar, quando passar de ~20–30 empresas ativas ou ficar lento no pico |
-| Sistema | **Ubuntu 24.04 LTS** puro ("Apenas SO": sem painel, sem aplicativos, sem Docker) |
+| Sistema | **Ubuntu 26.04 LTS** puro ("Apenas SO": sem painel, sem aplicativos, sem Docker). O `install.sh` funciona nele: PGDG tem `resolute-pgdg`, NodeSource `nodistro` e Caddy genérico |
 | Extras | scanner Monarx (grátis); backup diário da Hostinger recomendado (cópia fora da VPS) |
 | IP | no painel da Hostinger (VPS › Visão geral). **Não versionado**: o repositório é público |
 | DNS | nameservers da Hostinger (`*.dns-parking.com`); registro **A** `app` → IP da VPS |
 | Endereço do sistema | `https://app.akyllagestao.com.br` (site de divulgação continua no plano Premium) |
-| Status | VPS criada; próximos passos: registro DNS `app`, `install.sh`, `create-admin.sh` |
+| Status | ✅ **No ar desde 2026-10-18**: `install.sh` e `create-admin.sh` executados; `https://app.akyllagestao.com.br` com HTTPS válido, `/health/ready` com `database: ok`, role `akylla_app` sem superuser/BYPASSRLS, `/api/docs` desligado em produção. Conta do dono criada (empresa isenta) |
+| Próximos | ativar 2FA do dono; reiniciar a VPS uma vez (kernel); SMTP para abrir o cadastro; UptimeRobot em `/health/ready`; backup da Hostinger |
 
 ## 1. Contratar e preparar
 

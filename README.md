@@ -207,8 +207,8 @@ Especificação completa em [`upgrade/Prompt_Mestre.md`](upgrade/Prompt_Mestre.m
 | **8** | Cobrança do SaaS | teste grátis de 14 dias, tolerância, somente leitura, painel do dono (`/plataforma`), 2FA em Configurações | ✅ (Mercado Pago em produção 🟡) |
 
 **Pendências do proprietário:**
-- VPS Hostinger KVM 1 (Ubuntu 24.04) **contratada**: falta apontar o
-  subdomínio `app` e rodar a instalação;
+- ✅ **sistema no ar** em `https://app.akyllagestao.com.br` (VPS
+  Hostinger KVM 1); falta ativar o 2FA do dono;
 - SMTP para os e-mails de confirmação;
 - Redis e Turnstile (opcionais);
 - integradora fiscal, cadastro fiscal dos produtos e certificado A1;

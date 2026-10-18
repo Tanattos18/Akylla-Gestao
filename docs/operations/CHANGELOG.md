@@ -6,6 +6,23 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-18 - Sistema no ar
+
+- **Endereço:** `https://app.akyllagestao.com.br`, na VPS Hostinger KVM 1
+  com Ubuntu 26.04 LTS, instalada pelo `install.sh` em cerca de 15
+  minutos.
+- **Verificado de fora:**
+  - HTTPS válido (Let's Encrypt via Caddy) e HTTP → HTTPS (308);
+  - HSTS ativo;
+  - `/health/ready` com `database: ok`;
+  - `/api/docs` desligado em produção (404).
+- **Banco:** role `akylla_app` com `superuser=false` e `bypassrls=false`
+  (RLS efetiva).
+- **Conta do dono:** criada pelo `create-admin.sh`, que preencheu
+  `PLATFORM_ADMIN_EMAILS`.
+- **Compatibilidade:** o `install.sh` funciona no Ubuntu 26.04
+  (`resolute-pgdg`).
+
 ## [Akylla Gestão] - 2026-10-18 - Fase 8: Cobrança do SaaS e painel do dono
 
 Decisões do proprietário:
