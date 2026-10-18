@@ -317,6 +317,8 @@ model Company {
   serviceOrders           ServiceOrder[]
   serviceOrderItems       ServiceOrderItem[]
   serviceOrderAttachments ServiceOrderAttachment[]
+  fiscalConfig            FiscalConfig?
+  fiscalDocuments         FiscalDocument[]
 }
 
 enum BusinessModule {
@@ -328,6 +330,28 @@ enum BusinessModule {
   COMMISSIONS
   CREDIT
   SERVICE_ORDERS
+  FISCAL
+}
+
+/// Fase 3 — ambiente da emissora fiscal
+enum FiscalEnvironment {
+  HOMOLOGATION
+  PRODUCTION
+}
+
+/// Fase 3 — tipo de documento fiscal
+enum FiscalDocumentType {
+  NFE
+  NFCE
+  NFSE
+}
+
+/// Fase 3 — situação do documento na emissora/SEFAZ
+enum FiscalDocumentStatus {
+  PENDING
+  AUTHORIZED
+  REJECTED
+  CANCELLED
 }
 
 enum ImportType {
@@ -416,6 +440,7 @@ model User {
   passwordResetTokens PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
   serviceOrdersCreated ServiceOrder[] @relation("ServiceOrderCreatedBy")
+  fiscalDocumentsRequested FiscalDocument[] @relation("FiscalDocumentRequestedBy")
   twoFactorSecret String?
   twoFactorEnabled Boolean @default(false)
 
@@ -691,6 +716,7 @@ model Sale {
   cashMovements     CashMovement[]
   commissions       Commission[]
   creditInstallments CreditInstallment[]
+  fiscalDocuments   FiscalDocument[]
 
   @@unique([companyId, receiptCode])
   @@unique([companyId, clientRequestId])
@@ -862,10 +888,70 @@ model ServiceOrder {
   items            ServiceOrderItem[]
   attachments      ServiceOrderAttachment[]
   commissions      Commission[]
+  fiscalDocuments  FiscalDocument[]
 
   @@unique([companyId, number])
   @@index([companyId, status, openedAt])
   @@index([companyId, clientId])
+}
+
+/// Fase 3 — configuração fiscal da empresa. Segredos (token da emissora,
+/// certificado A1 e senha) ficam CIFRADOS (AES-256-GCM, FISCAL_ENCRYPTION_KEY)
+/// e nunca são devolvidos pela API.
+model FiscalConfig {
+  id                           String            @id @default(cuid())
+  companyId                    String            @unique
+  company                      Company           @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  /// mock | mock-async | mock-reject | <integradora real>
+  provider                     String            @default("mock")
+  apiTokenEncrypted            String?
+  cnpj                         String?
+  certificateEncrypted         String?
+  certificatePasswordEncrypted String?
+  certificateSubject           String?
+  certificateValidTo           DateTime?
+  environment                  FiscalEnvironment @default(HOMOLOGATION)
+  active                       Boolean           @default(false)
+  nfceSeries                   Int               @default(1)
+  nfeSeries                    Int               @default(1)
+  createdAt                    DateTime          @default(now())
+  updatedAt                    DateTime          @updatedAt
+}
+
+/// Fase 3 — documento fiscal emitido por integração (sem emissor próprio).
+model FiscalDocument {
+  id                 String               @id @default(cuid())
+  companyId          String
+  company            Company              @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  saleId             String?
+  sale               Sale?                @relation(fields: [saleId], references: [id], onDelete: Restrict)
+  serviceOrderId     String?
+  serviceOrder       ServiceOrder?        @relation(fields: [serviceOrderId], references: [id], onDelete: Restrict)
+  type               FiscalDocumentType
+  status             FiscalDocumentStatus @default(PENDING)
+  environment        FiscalEnvironment
+  number             Int
+  series             Int
+  amount             Decimal              @db.Decimal(12, 2)
+  accessKey          String?
+  protocol           String?
+  xml                String?
+  danfeUrl           String?
+  issuedAt           DateTime?
+  cancelledAt        DateTime?
+  cancellationReason String?
+  rejectionReason    String?
+  /// id do documento na emissora (webhook); único entre todas as empresas
+  gatewayDocumentId  String?              @unique
+  requestedByUserId  String
+  requestedBy        User                 @relation("FiscalDocumentRequestedBy", fields: [requestedByUserId], references: [id], onDelete: Restrict)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  @@unique([companyId, type, series, number])
+  @@index([companyId, status, createdAt])
+  @@index([saleId])
+  @@index([serviceOrderId])
 }
 
 /// Fase 2 · 2.3 — item da OS: serviço ou produto do catálogo (preço do

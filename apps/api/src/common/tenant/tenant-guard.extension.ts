@@ -43,6 +43,9 @@ export const TENANT_MODELS: ReadonlySet<string> = new Set([
   "ServiceOrder",
   "ServiceOrderItem",
   "ServiceOrderAttachment",
+  // Fase 3
+  "FiscalConfig",
+  "FiscalDocument",
 ]);
 
 /** Operações cujo `where` aceita filtros (permite injeção via AND). */

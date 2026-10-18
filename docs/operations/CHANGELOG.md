@@ -6,6 +6,77 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-18 - Fase 3: Fiscal por integração (NFC-e / NF-e / NFS-e)
+
+Último item "em breve" do site. A emissão é feita por **integradora
+autorizada**, sem emissor próprio, como manda o roteiro. O módulo está
+pronto e funciona com a **emissora simulada**. A emissão real depende de
+contratar a integradora e de fazer o cadastro fiscal dos produtos (ver
+`docs/akylla/FISCAL.md`).
+
+### Referência avaliada
+
+- **FinOpenPOS** (MIT) é um emissor próprio, então **não foi integrado**.
+  A extração de certificado de lá **não foi reaproveitada**: ela chama
+  `openssl` com a senha do PFX na linha de comando (risco de injeção de
+  comando e senha exposta) e usa um caminho fixo em `/tmp`. Aqui o PFX é
+  validado com `tls.createSecureContext` do Node, sem processo externo.
+
+### Adicionado
+
+- **Modelos:** `FiscalConfig` e `FiscalDocument`, mais os enums de
+  ambiente, tipo e situação. `BusinessModule` ganhou `FISCAL`. Migration
+  aditiva `20261018210000_fiscal`, com RLS.
+- **`FiscalProvider`:** emissora simulada em três modos (autoriza,
+  assíncrona via webhook, rejeita). Gera chave de 44 dígitos no layout
+  oficial com **DV módulo 11** e XML "SEM VALOR FISCAL". Integradora não
+  implementada → erro explícito.
+- **Segredos AES-256-GCM** (`fiscal-crypto.ts`):
+  - token da API, certificado A1 e senha ficam cifrados e nunca são
+    devolvidos;
+  - sem `FISCAL_ENCRYPTION_KEY` → 503, nunca grava em claro;
+  - o certificado é validado pelo Node (senha, formato, validade) e a tela
+    mostra titular e validade.
+- **Emissão:**
+  - NFC-e e NF-e a partir da venda concluída (NF-e exige cliente com CPF);
+    NFS-e a partir da OS concluída;
+  - numeração sequencial por série, com `FOR UPDATE` na configuração;
+  - chamada à emissora fora da transação; falha → REJECTED com o motivo;
+  - duplicada ativa → 409; sem configuração ativa → 400 explícito.
+- **Cancelamento:** justificativa de 15 a 255 caracteres; a venda com nota
+  pendente ou autorizada **não pode ser cancelada** até cancelar a nota.
+- **Webhook** `/api/webhooks/fiscal`: HMAC-SHA256 de `timestamp.corpo`
+  comparado em tempo constante, janela anti-replay de 5 min, fail-closed
+  sem segredo e transições idempotentes.
+- **Telas:**
+  - `/fiscal`: configuração, certificado e notas com XML e cancelar;
+  - botão **Emitir NFC-e/NF-e** no comprovante do PDV e no detalhe da
+    venda, e **Emitir NFS-e** na OS concluída;
+  - selo "simulada — sem valor fiscal";
+  - menu e card da home.
+- **Testes:** `tests/integration/fiscal.test.ts` (17). A fixture
+  `tests/fixtures/fiscal/certificado-teste.pfx` é autoassinada, só para
+  testes, e está documentada no README da pasta.
+
+### Alterado
+
+- `SalesService.cancel` bloqueia venda com nota ativa (`FiscalService`).
+- `.env.example` e `DEPLOY.md`: `FISCAL_ENCRYPTION_KEY` e
+  `FISCAL_WEBHOOK_SECRET`. `tests/helpers/setup-env.ts` usa chaves de
+  teste.
+- `rls.test` cobre 35 tabelas; `company-modules.test` espera 9 módulos.
+
+### Verificação
+
+- `npm run validate` verde: lint · typecheck · **698/698** (38 arquivos)
+  · build · db:validate. `check:migrations` sem drift.
+- **Navegador (servidores reais, banco de dev):** com a emissora simulada
+  ativada, o botão "Emitir NFC-e" no detalhe da venda PF-ZYKW32WQ gerou a
+  NFC-e nº 1 autorizada, com chave e XML. Cancelar essa venda → 409
+  "Cancele antes a NFC-e autorizada desta venda". A página `/fiscal` foi
+  conferida. A empresa de teste do banco de dev ficou com a emissão
+  simulada ativa.
+
 ## [Akylla Gestão] - 2026-10-18 - Fase 2 · 2.3: Ordem de serviço — **Fase 2 concluída**
 
 Terceiro e último item "em breve" da Fase 2. As regras foram escritas

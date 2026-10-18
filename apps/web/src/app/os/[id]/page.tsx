@@ -9,6 +9,7 @@ import { formatBrl, formatDateTime } from "../../../lib/format";
 import { serviceOrderStatusLabels, type ServiceOrderDto, type ServiceOrderStatus } from "../../../lib/types";
 import { ItemsEditor, newItem, toPayload, type EditableItem } from "../../../components/os/ItemsEditor";
 import { serviceOrderStatusClass } from "../../../components/os/status";
+import { EmitFiscalButton } from "../../../components/fiscal/EmitFiscalButton";
 
 /** Fase 2 · 2.3 — detalhe da OS: etapas, itens, anexos e histórico de WhatsApp. */
 
@@ -197,6 +198,10 @@ export default function OsDetailPage() {
           Concluída em {formatDateTime(order.completedAt as string)}.{" "}
           {order.financialEntryId && <>Conta a receber gerada em <Link href="/financeiro" className="font-medium underline">Financeiro</Link>.</>}
         </p>
+      )}
+
+      {order.status === "COMPLETED" && (
+        <EmitFiscalButton serviceOrderId={order.id} types={["NFSE"]} isAdmin={session.user.role === "ADMIN"} />
       )}
 
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">

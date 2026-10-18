@@ -1,5 +1,18 @@
 # Banco de dados — diretrizes e modelo atual
 
+## Modelos implementados (Fase 3 — Fiscal por integração)
+
+Migration: `20261018210000_fiscal` (aditiva + RLS nas 2 tabelas novas).
+
+| Modelo | Campos principais | Restrições/índices |
+|---|---|---|
+| `FiscalConfig` | `companyId` (único), `provider`, `apiTokenEncrypted?`, `cnpj?`, `certificateEncrypted?`, `certificatePasswordEncrypted?`, `certificateSubject?`, `certificateValidTo?`, `environment`, `active`, `nfceSeries`, `nfeSeries` | segredos **cifrados** (AES-256-GCM, formato `v1:iv:tag:dado`) |
+| `FiscalDocument` | `companyId`, `saleId?`/`serviceOrderId?` (Restrict), `type`, `status`, `environment`, `number`, `series`, `amount`, `accessKey?`, `protocol?`, `xml?`, `danfeUrl?`, datas, motivos, `gatewayDocumentId?` (**único global**: chave do webhook), `requestedByUserId` | único `[companyId, type, series, number]`; índices `[companyId, status, createdAt]`, `[saleId]`, `[serviceOrderId]` |
+
+Enums novos: `FiscalEnvironment`, `FiscalDocumentType`,
+`FiscalDocumentStatus`. `BusinessModule` ganha `FISCAL`. O XML fica no
+banco (entra no backup); o certificado também, cifrado.
+
 ## Modelos implementados (Fase 2 · 2.3 — Ordem de serviço)
 
 Migration: `20261018190000_service_orders` (aditiva + RLS nas 3 tabelas novas).

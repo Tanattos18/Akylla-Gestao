@@ -31,6 +31,7 @@ Para começar, leia nesta ordem:
 | [Comissões](akylla/COMISSOES.md) | regras de cálculo, precedência, liberação, pagamento e estorno |
 | [Crediário](akylla/CREDIARIO.md) | venda a prazo: limite, parcelas, vencidas, recebimento e cancelamento |
 | [Ordem de serviço](akylla/ORDEM_DE_SERVICO.md) | estados, itens, conclusão (estoque/financeiro/comissão), anexos e WhatsApp |
+| [Nota fiscal](akylla/FISCAL.md) | emissão por integradora, segredos cifrados, webhook, cancelamento e o que falta para emitir de verdade |
 
 ## Arquitetura e dados
 

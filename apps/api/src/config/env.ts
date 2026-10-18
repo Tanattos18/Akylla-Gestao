@@ -77,6 +77,15 @@ const schema = z.object({
   EMAIL_VERIFICATION_TTL_HOURS: z.coerce.number().int().min(1).max(168).default(24),
   // Captcha opcional no cadastro (Fase 1 · 1D) — Cloudflare Turnstile
   TURNSTILE_SECRET_KEY: z.string().optional().transform((v) => v || undefined),
+  // Fase 3 — fiscal: chave de cifra dos segredos (32 bytes em hex = 64
+  // caracteres) e segredo do webhook da emissora (HMAC). Sem a chave, a
+  // API recusa gravar token/certificado (nunca grava em claro).
+  FISCAL_ENCRYPTION_KEY: z
+    .string()
+    .optional()
+    .transform((v) => v || undefined)
+    .refine((v) => v === undefined || /^[0-9a-fA-F]{64}$/.test(v), "FISCAL_ENCRYPTION_KEY deve ter 64 caracteres hex (32 bytes)"),
+  FISCAL_WEBHOOK_SECRET: z.string().optional().transform((v) => v || undefined),
 }).superRefine((value, ctx) => {
   if (value.NODE_ENV !== "production") return;
 

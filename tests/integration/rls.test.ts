@@ -34,6 +34,8 @@ const TENANT_TABLES = [
   "CreditAccount", "CreditInstallment",
   // Fase 2 · 2.3
   "ServiceOrder", "ServiceOrderItem", "ServiceOrderAttachment",
+  // Fase 3
+  "FiscalConfig", "FiscalDocument",
 ];
 
 /**

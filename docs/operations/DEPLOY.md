@@ -65,6 +65,8 @@ Git: use o painel de variáveis/segredos do provedor.
 | `PASSWORD_RESET_ENABLED` | ausente/`false` (o fluxo com token por e-mail é outro e já existe) |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` | dados do provedor de e-mail |
 | `TURNSTILE_SECRET_KEY` | chave secreta do Turnstile (opcional) |
+| `FISCAL_ENCRYPTION_KEY` | 64 caracteres hex (`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`). **Guarde fora do servidor também**: perder a chave = recadastrar token e certificado |
+| `FISCAL_WEBHOOK_SECRET` | segredo HMAC combinado com a integradora (webhook `/api/webhooks/fiscal`) |
 | `REDIS_URL` | `rediss://…` (obrigatório com mais de 1 instância) |
 | `SENTRY_DSN`, `SENTRY_ENVIRONMENT=production`, `SENTRY_RELEASE` | monitoramento |
 | `WHATSAPP_*`, `MERCADOPAGO_*` | conforme a ativação de cada integração |

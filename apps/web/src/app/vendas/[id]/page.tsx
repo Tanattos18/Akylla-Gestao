@@ -13,6 +13,7 @@ import {
   type SaleDto,
 } from "../../../lib/types";
 import { Receipt } from "../../../components/Receipt";
+import { EmitFiscalButton } from "../../../components/fiscal/EmitFiscalButton";
 
 export default function VendaDetalhePage() {
   const router = useRouter();
@@ -303,6 +304,11 @@ export default function VendaDetalhePage() {
 
         <div>
           <Receipt sale={sale} companyName={session.company.name} />
+          {sale.status === "COMPLETED" && (
+            <div className="mt-4">
+              <EmitFiscalButton saleId={sale.id} types={sale.client ? ["NFCE", "NFE"] : ["NFCE"]} isAdmin={isAdmin} />
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -16,6 +16,11 @@ que o site akyllagestao.com.br promete. Fases em ordem rígida (1 → 7).
 | 1F · `npm audit --omit=dev` = 0 (next 16, vitest major) (§1.5.1) | ✅ 2026-10-18 (0 em produção) |
 | 1G · CD real com health check (§1.3) | 🟡 2026-10-18: pipeline e guia prontos, CI corrigida. **Ligar** depende de escolher o provedor e configurar os secrets (`docs/operations/DEPLOY.md`) |
 
+**Fase 3 (Fiscal por integração)** — código concluído em 2026-10-18 com
+emissora **simulada**. A emissão real depende de contratar a integradora,
+implementar o adaptador e fazer o cadastro fiscal dos produtos
+(`docs/akylla/FISCAL.md`).
+
 **Fase 2 (Retenção)** — iniciada em 2026-10-18 com a autorização do
 proprietário para seguir sem parar entre itens. Os pendentes da Fase 1
 dependem só de contas e hospedagem.

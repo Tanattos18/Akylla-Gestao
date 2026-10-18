@@ -1350,6 +1350,7 @@ export const businessModuleSchema = z.enum([
   "COMMISSIONS",
   "CREDIT",
   "SERVICE_ORDERS",
+  "FISCAL",
 ]);
 export type BusinessModule = z.infer<typeof businessModuleSchema>;
 
@@ -1362,6 +1363,7 @@ export const BUSINESS_MODULES: readonly BusinessModule[] = [
   "COMMISSIONS",
   "CREDIT",
   "SERVICE_ORDERS",
+  "FISCAL",
 ];
 
 /** Valores literais para uso como identificadores (ex.: decorators). */
@@ -1374,6 +1376,7 @@ export const BusinessModules = {
   COMMISSIONS: "COMMISSIONS",
   CREDIT: "CREDIT",
   SERVICE_ORDERS: "SERVICE_ORDERS",
+  FISCAL: "FISCAL",
 } as const satisfies Record<BusinessModule, BusinessModule>;
 
 export const businessModuleLabels: Record<BusinessModule, string> = {
@@ -1385,6 +1388,7 @@ export const businessModuleLabels: Record<BusinessModule, string> = {
   COMMISSIONS: "Comissões",
   CREDIT: "Crediário",
   SERVICE_ORDERS: "Ordens de serviço",
+  FISCAL: "Nota fiscal",
 };
 
 export const companyModuleStatusSchema = z.enum(["ACTIVE", "DISABLED"]);
@@ -1810,3 +1814,87 @@ export type ListServiceOrdersQuery = z.infer<typeof listServiceOrdersQuerySchema
 /** Anexos da OS (Fase 2 · 2.3). */
 export const SERVICE_ORDER_ATTACHMENT_MAX_BYTES = 5 * 1024 * 1024;
 export const SERVICE_ORDER_MAX_ATTACHMENTS = 20;
+
+// ---------------------------------------------------------------------------
+// Fase 3 — Fiscal por integração (NFC-e / NF-e / NFS-e)
+// ---------------------------------------------------------------------------
+
+export const fiscalEnvironmentSchema = z.enum(["HOMOLOGATION", "PRODUCTION"]);
+export type FiscalEnvironment = z.infer<typeof fiscalEnvironmentSchema>;
+
+export const fiscalDocumentTypeSchema = z.enum(["NFE", "NFCE", "NFSE"]);
+export type FiscalDocumentType = z.infer<typeof fiscalDocumentTypeSchema>;
+
+export const fiscalDocumentStatusSchema = z.enum(["PENDING", "AUTHORIZED", "REJECTED", "CANCELLED"]);
+export type FiscalDocumentStatus = z.infer<typeof fiscalDocumentStatusSchema>;
+
+export const fiscalDocumentTypeLabels: Record<FiscalDocumentType, string> = {
+  NFE: "NF-e",
+  NFCE: "NFC-e",
+  NFSE: "NFS-e",
+};
+
+export const fiscalDocumentStatusLabels: Record<FiscalDocumentStatus, string> = {
+  PENDING: "Processando",
+  AUTHORIZED: "Autorizada",
+  REJECTED: "Rejeitada",
+  CANCELLED: "Cancelada",
+};
+
+/** Só dígitos; aceita CNPJ com máscara. */
+export const cnpjFieldSchema = z
+  .string()
+  .trim()
+  .transform((value) => value.replace(/\D/g, ""))
+  .refine((value) => value.length === 14, "CNPJ deve ter 14 dígitos");
+
+export const updateFiscalConfigSchema = z.object({
+  provider: z
+    .string()
+    .trim()
+    .regex(/^[a-z0-9-]{2,40}$/, "Provedor inválido")
+    .optional(),
+  environment: fiscalEnvironmentSchema.optional(),
+  active: z.boolean().optional(),
+  cnpj: cnpjFieldSchema.optional().nullable(),
+  /** string → grava (cifrado); "" ou null → remove */
+  apiToken: z.string().trim().max(500).optional().nullable(),
+  nfceSeries: z.coerce.number().int().min(1).max(999).optional(),
+  nfeSeries: z.coerce.number().int().min(1).max(999).optional(),
+});
+export type UpdateFiscalConfigInput = z.infer<typeof updateFiscalConfigSchema>;
+
+export const fiscalCertificateFormSchema = z.object({
+  password: z.string().min(1, "Informe a senha do certificado").max(200),
+});
+export type FiscalCertificateForm = z.infer<typeof fiscalCertificateFormSchema>;
+
+export const emitFiscalDocumentSchema = z
+  .object({
+    saleId: z.string().trim().min(1).max(60).optional(),
+    serviceOrderId: z.string().trim().min(1).max(60).optional(),
+    type: fiscalDocumentTypeSchema,
+  })
+  .refine((value) => Boolean(value.saleId) !== Boolean(value.serviceOrderId), {
+    message: "Informe a venda OU a ordem de serviço",
+  });
+export type EmitFiscalDocumentInput = z.infer<typeof emitFiscalDocumentSchema>;
+
+export const cancelFiscalDocumentSchema = z.object({
+  reason: z
+    .string()
+    .trim()
+    .min(15, "Justificativa deve ter ao menos 15 caracteres (exigência da SEFAZ)")
+    .max(255, "Justificativa deve ter no máximo 255 caracteres"),
+});
+export type CancelFiscalDocumentInput = z.infer<typeof cancelFiscalDocumentSchema>;
+
+export const listFiscalDocumentsQuerySchema = paginationQuerySchema.extend({
+  type: fiscalDocumentTypeSchema.optional(),
+  status: fiscalDocumentStatusSchema.optional(),
+  saleId: z.string().trim().max(60).optional(),
+  serviceOrderId: z.string().trim().max(60).optional(),
+  from: isoDateField.optional(),
+  to: isoDateField.optional(),
+});
+export type ListFiscalDocumentsQuery = z.infer<typeof listFiscalDocumentsQuerySchema>;

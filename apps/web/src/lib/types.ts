@@ -911,7 +911,8 @@ export type BusinessModule =
   | "SUBSCRIPTIONS"
   | "COMMISSIONS"
   | "CREDIT"
-  | "SERVICE_ORDERS";
+  | "SERVICE_ORDERS"
+  | "FISCAL";
 
 export type CompanyModuleStatus = "ACTIVE" | "DISABLED";
 
@@ -1124,4 +1125,54 @@ export interface ServiceOrderDto {
 
 export interface ServiceOrderListDto extends Paginated<ServiceOrderDto> {
   countsByStatus: Partial<Record<ServiceOrderStatus, number>>;
+}
+
+// Fase 3 — Fiscal
+
+export type FiscalDocumentType = "NFE" | "NFCE" | "NFSE";
+export type FiscalDocumentStatus = "PENDING" | "AUTHORIZED" | "REJECTED" | "CANCELLED";
+
+export const fiscalTypeLabels: Record<FiscalDocumentType, string> = { NFE: "NF-e", NFCE: "NFC-e", NFSE: "NFS-e" };
+export const fiscalStatusLabels: Record<FiscalDocumentStatus, string> = {
+  PENDING: "Processando",
+  AUTHORIZED: "Autorizada",
+  REJECTED: "Rejeitada",
+  CANCELLED: "Cancelada",
+};
+
+export interface FiscalDocumentDto {
+  id: string;
+  type: FiscalDocumentType;
+  status: FiscalDocumentStatus;
+  environment: "HOMOLOGATION" | "PRODUCTION";
+  number: number;
+  series: number;
+  amount: string;
+  accessKey: string | null;
+  protocol: string | null;
+  danfeUrl: string | null;
+  issuedAt: string | null;
+  cancelledAt: string | null;
+  cancellationReason: string | null;
+  rejectionReason: string | null;
+  createdAt: string;
+  hasXml?: boolean;
+  sale: { id: string; receiptCode: string } | null;
+  serviceOrder: { id: string; number: number } | null;
+  requestedBy: { id: string; name: string };
+}
+
+export interface FiscalStatusDto {
+  active: boolean;
+  environment: "HOMOLOGATION" | "PRODUCTION";
+  simulated: boolean;
+}
+
+export interface FiscalConfigDto extends FiscalStatusDto {
+  provider: string;
+  cnpj: string | null;
+  nfceSeries: number;
+  nfeSeries: number;
+  hasApiToken: boolean;
+  certificate: { uploaded: boolean; subject: string | null; validTo: string | null };
 }

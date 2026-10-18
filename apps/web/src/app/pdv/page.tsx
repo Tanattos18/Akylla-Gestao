@@ -19,6 +19,7 @@ import {
   type SaleDto,
 } from "../../lib/types";
 import { Receipt } from "../../components/Receipt";
+import { EmitFiscalButton } from "../../components/fiscal/EmitFiscalButton";
 
 interface CartItem {
   productId: string;
@@ -290,6 +291,7 @@ export default function PdvPage() {
           </div>
         )}
         <Receipt sale={completedSale} companyName={session.company.name} />
+        <EmitFiscalButton saleId={completedSale.id} types={completedSale.client ? ["NFCE", "NFE"] : ["NFCE"]} isAdmin={session.user.role === "ADMIN"} />
         <div className="flex flex-wrap justify-center gap-2">
           <button
             type="button"

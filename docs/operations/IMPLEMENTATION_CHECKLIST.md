@@ -4,6 +4,20 @@
 > Este checklist cobre apenas a era do Akylla Gestão. O histórico
 > anterior à adaptação está preservado no Git.
 
+## Fase 3 — Fiscal por integração (2026-10-18)
+
+- [x] Regras e pendências (`docs/akylla/FISCAL.md`); FinOpenPOS avaliado (emissor próprio, não integrado; extração de certificado insegura, não reaproveitada)
+- [x] `FiscalConfig`/`FiscalDocument` + enums; migration aditiva com RLS
+- [x] `FiscalProvider` abstrato; emissora simulada (autoriza/assíncrona/rejeita), chave 44 dígitos com DV mód. 11
+- [x] Segredos AES-256-GCM (token, certificado, senha); nunca devolvidos; 503 sem chave
+- [x] Certificado A1 validado pelo Node (senha, formato, validade), sem processo externo
+- [x] Emissão NFC-e/NF-e (venda) e NFS-e (OS); numeração por série com lock; 409 duplicada; 400 inativo
+- [x] Cancelamento com justificativa 15–255; venda com nota ativa não cancela
+- [x] Webhook HMAC + anti-replay (5 min) + fail-closed + idempotente
+- [x] Telas `/fiscal`, botões no PDV, venda e OS
+- [x] `tests/integration/fiscal.test.ts` (17)
+- [ ] Integradora real (contrato + adaptador + homologação) e cadastro fiscal dos produtos (proprietário + contador)
+
 ## Fase 2 — Retenção (`upgrade/Prompt_Mestre.md` §4) — em andamento
 
 ### 2.3 · Ordem de serviço (2026-10-18)

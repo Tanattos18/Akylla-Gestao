@@ -86,6 +86,13 @@ const plannedModules: Array<{
     module: "COMMISSIONS",
   },
   {
+    name: "Nota fiscal",
+    description: "NFC-e, NF-e e NFS-e por integradora autorizada, com XML e cancelamento",
+    href: "/fiscal",
+    available: true,
+    module: "FISCAL",
+  },
+  {
     name: "Ordens de serviço",
     description: "Orçamento, aprovação, execução e conclusão com fotos e anexos",
     href: "/os",

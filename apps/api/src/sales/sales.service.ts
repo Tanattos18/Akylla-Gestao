@@ -17,6 +17,7 @@ import type { AuthContext } from "../common/decorators/auth.decorator";
 import { lockOpenCashSession } from "../cash/cash-session.helpers";
 import { CommissionsService } from "../commissions/commissions.service";
 import { CreditService } from "../credit/credit.service";
+import { FiscalService } from "../fiscal/fiscal.service";
 
 const saleSelect = {
   id: true,
@@ -93,6 +94,7 @@ export class SalesService {
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(CommissionsService) private readonly commissions: CommissionsService,
     @Inject(CreditService) private readonly credit: CreditService,
+    @Inject(FiscalService) private readonly fiscal: FiscalService,
   ) {}
 
   async create(auth: AuthContext, input: CreateSaleInput) {
@@ -381,6 +383,8 @@ export class SalesService {
       if (sale.status === "CANCELLED") {
         throw new ConflictException("Venda já cancelada");
       }
+      // Fase 3: nota fiscal pendente/autorizada precisa ser cancelada antes
+      await this.fiscal.assertSaleCancellable(tx, auth.companyId, sale.id);
 
       const cashSession = await lockOpenCashSession(
         tx,

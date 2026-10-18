@@ -54,7 +54,7 @@ Site: [akyllagestao.com.br](https://akyllagestao.com.br/)
 | **Em breve:** comissões | ✅ **disponível** (`/comissoes`, `/profissionais`): regras por produto/categoria/profissional, cálculo automático no PDV, pagamento pelo caixa |
 | **Em breve:** crediário | ✅ **disponível** (`/crediario` + PDV): limite por cliente, parcelas mensais calculadas no servidor, vencidas, recebimento pelo caixa |
 | **Em breve:** ordem de serviço com fotos | ✅ **disponível** (`/os`): orçamento → aprovação → execução → conclusão, fotos/PDF, baixa de peças, conta a receber e comissão do técnico |
-| **Em breve:** nota fiscal (NFC-e, NF-e, NFS-e) por integração | 🔜 **Fase 3**, via emissor autorizado, sem emissor próprio |
+| **Em breve:** nota fiscal (NFC-e, NF-e, NFS-e) por integração | 🟡 **módulo pronto com emissora simulada** (`/fiscal`, botão no PDV/OS); emissão real depende de contratar a integradora e do cadastro fiscal dos produtos (`docs/akylla/FISCAL.md`) |
 
 ---
 
@@ -154,7 +154,7 @@ anterior estão verdes. A especificação completa está em
 |---|---|---|---|
 | **1** | Confiabilidade | backup ✅, Sentry + runbook ✅, rate limit Redis ✅, verificação de e-mail ✅, RLS ✅, `npm audit` = 0 ✅, CD pronto 🟡 (falta escolher a hospedagem) | ✅ código concluído |
 | **2** | Retenção | comissões ✅, crediário ✅, ordem de serviço com anexos ✅ | ✅ concluída |
-| **3** | Fiscal | NFC-e / NF-e / NFS-e via integração (provedor abstraído, credenciais criptografadas) | ⬜ |
+| **3** | Fiscal | NFC-e / NF-e / NFS-e via integração: provedor abstraído ✅, segredos cifrados ✅, webhook HMAC ✅, simulada ✅; integradora real 🟡 (contrato do proprietário) | ✅ código concluído |
 | **4** | Perfis | onboarding Comércio / Serviços / Híbrido, landing pages por segmento | ⬜ |
 | **5** | Design e UX | componentes compartilhados, impressão de cupom, acessibilidade | ⬜ |
 | **6** | Qualidade | cobertura na CI, E2E com Playwright, OpenAPI em `/api/docs` | ⬜ |

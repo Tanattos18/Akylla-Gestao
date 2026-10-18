@@ -608,6 +608,26 @@ do mesmo cliente; outra → 404/400) para vincular a mensagem.
 **Financeiro:** `origin: SERVICE_ORDER` não pode ser editado (409); ao
 receber, libera comissões `ON_PAYMENT` da OS.
 
+## Fiscal por integração (Fase 3)
+
+Módulo opcional `FISCAL`. Regras e pendências: [`docs/akylla/FISCAL.md`](../akylla/FISCAL.md).
+
+| Método | Rota | Acesso | Descrição |
+|---|---|---|---|
+| GET | `/api/fiscal/status` | sessão | `{active, environment, simulated}` (para PDV/OS) |
+| GET | `/api/fiscal/config` | ADMIN | configuração **sem segredos** (`hasApiToken`, dados do certificado) |
+| PUT | `/api/fiscal/config` | ADMIN | `{provider?, environment?, active?, cnpj?, apiToken?, nfceSeries?, nfeSeries?}`; ativar exige CNPJ (e token + certificado para integradora real) → 400; sem `FISCAL_ENCRYPTION_KEY` → 503 |
+| POST | `/api/fiscal/config/certificate` | ADMIN | multipart `file` (.pfx ≤ 64 KB) + `password`; senha errada, arquivo inválido ou vencido → 400 |
+| POST | `/api/fiscal/documents` | ADMIN | `{saleId\|serviceOrderId, type}`: venda → NFCE/NFE (NF-e exige cliente com CPF); OS concluída → NFSE. Inativo → 400; duplicada ativa → 409 |
+| GET | `/api/fiscal/documents` | sessão | lista (`type`, `status`, `saleId`, `serviceOrderId`, `from`/`to`) |
+| GET | `/api/fiscal/documents/:id` | sessão | detalhe (`hasXml`) |
+| GET | `/api/fiscal/documents/:id/xml` | sessão | download do XML |
+| POST | `/api/fiscal/documents/:id/cancel` | ADMIN | `{reason}` 15–255; só autorizada (senão 409) |
+| POST | `/api/webhooks/fiscal` | público + HMAC | `x-fiscal-timestamp` (±5 min) + `x-fiscal-signature: sha256=HMAC(ts.corpo)`; sem segredo → 403; idempotente |
+
+**Vendas:** cancelar venda com nota pendente ou autorizada → 409 (cancele a
+nota antes).
+
 ## Padrão para módulos futuros
 
 1. Modelo sempre com `companyId` + FK `Restrict` e índices por empresa.

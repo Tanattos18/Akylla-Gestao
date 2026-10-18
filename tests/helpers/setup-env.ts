@@ -27,3 +27,6 @@ process.env.WHATSAPP_PROVIDER = "mock";
 process.env.WHATSAPP_VERIFY_TOKEN = "petflow-test-verify-token";
 process.env.WHATSAPP_APP_SECRET = "petflow-test-app-secret";
 process.env.WHATSAPP_COUNTRY_CODE = "55";
+// Fiscal (Fase 3): chave de cifra e segredo de webhook só de TESTE
+process.env.FISCAL_ENCRYPTION_KEY = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+process.env.FISCAL_WEBHOOK_SECRET = "fiscal-test-webhook-secret";
