@@ -6,6 +6,58 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-18 - Fase 1 · 1C: rate limit distribuído (Redis) com fallback em memória
+
+Referência usada (`upgrade/REFERENCIAS_GIT.md`, Fase 1 · 1C):
+`animir/node-rate-limiter-flexible` (ISC), usado como biblioteca, não
+copiado. O `nestjs-throttler-storage-redis` foi descartado por estar
+descontinuado.
+
+### Adicionado
+
+- **`RedisRateLimitStore`** (`apps/api/src/common/rate-limit/rate-limit-store.ts`):
+  janela fixa por chave no Redis (`RateLimiterRedis`). As chaves são
+  `akylla:rl:<limite>:<janela>:<chave>`, com TTL igual à janela. Um
+  limitador por par (limite, janela), então login e cadastro não se
+  misturam.
+- **Fallback:** `insuranceLimiter` em memória com o mesmo limite. Com o
+  Redis fora do ar, o cliente (`enableOfflineQueue: false`) falha na hora
+  e a memória assume: sem erro 500 e sem esperar timeout. Um único aviso
+  vai para o log ("Redis indisponível…") e outro na reconexão.
+- **`createRateLimitStore(REDIS_URL)`:** sem URL → `InMemoryRateLimitStore`
+  (comportamento anterior); com URL → Redis. Encerra a conexão no
+  shutdown.
+- **`tests/integration/rate-limit.test.ts`** (10 testes): escolha do backend,
+  429 com `retryAfterSeconds`, chave prefixada e TTL no Redis, contador
+  compartilhado entre duas instâncias, reset, limites independentes,
+  limite 0 desliga e queda do Redis (porta fechada) mantendo o limite.
+
+### Alterado
+
+- Interface `RateLimitStore` agora **assíncrona** (`hit`/`reset` →
+  `Promise`); os chamadores em `auth.controller.ts` (login, cadastro,
+  reset de senha e 2FA) usam `await`.
+- Mensagem do 429 generalizada para "Muitas tentativas. Tente novamente
+  em alguns minutos." (antes dizia "de login" também no cadastro).
+- Dependências (versões publicadas há mais de 2 semanas, fixas):
+  `rate-limiter-flexible@11.2.1` e `ioredis@5.11.1` em `apps/api`;
+  `ioredis-mock@8.13.1` (dev, só testes, Redis simulado sem servidor).
+- `.env.example` (`REDIS_URL`), `RUNBOOK.md` (Redis em §1),
+  `CHECKLIST_PRE_PRODUCAO` (L2 resolvido no código).
+
+### Verificação
+
+- `npm run validate` verde: lint · typecheck · **602/602** (32 arquivos)
+  · build · db:validate.
+- API compilada com `REDIS_URL` apontando para um Redis desligado:
+  aviso no log, 5× 401 e 429 na 6ª tentativa de login (limite 5).
+
+### Observação para o 1D
+
+- O cadastro zera o contador quando o cadastro dá certo, então o limite
+  por IP só conta tentativas com falha. Para anti-abuso real (3
+  cadastros/hora), o 1D deve contar também os cadastros bem-sucedidos.
+
 ## [Akylla Gestão] - 2026-10-18 - Fase 1 · 1B: monitoramento (Sentry) + readiness + RUNBOOK
 
 Referência usada (`upgrade/REFERENCIAS_GIT.md`, Fase 1): guias oficiais do

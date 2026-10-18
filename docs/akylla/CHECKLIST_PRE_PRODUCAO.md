@@ -51,7 +51,7 @@ Classificadas como **preexistentes** (não introduzidas pela adaptação):
 | # | Limitação | Severidade | Notas |
 |---|---|---|---|
 | L1 | 8 vulnerabilidades `npm audit` — **6 em dependências de desenvolvimento** (vitest/esbuild/tinypool) e **2 em produção** (`postcss` transitivo do `next`, alta) | Críticas/altas | Correção das de dev exige upgrade do vitest (breaking change); a de `postcss` exige `next@16.4.1` (breaking) |
-| L2 | Rate limit de login é **in-memory** (reseta no restart; não compartilhado entre instâncias) | Média | Adequado para 1 instância; para multi-instância usar Redis |
+| L2 | Rate limit de login é **in-memory** (reseta no restart; não compartilhado entre instâncias) | Média | **Resolvido no código (2026-10-18, Fase 1 · 1C):** com `REDIS_URL` o contador fica no Redis (compartilhado) e cai para memória se o Redis sair do ar. Falta provisionar o Redis em produção |
 | L3 | Sem **RLS** no Postgres — isolamento de tenant é aplicado na camada de aplicação | Média | 500+ testes de isolamento; adicionar RLS como defesa em profundidade antes de produção multi-instância |
 | L4 | Sem fluxo de **exclusão LGPD** (direito ao esquecimento) | Alta (compliance) | Implementar endpoint de anonimização/exclusão com retenção legal |
 | L5 | `PASSWORD_RESET_ENABLED` redefine sem token de e-mail (apenas local) | Alta se habilitado em produção | Manter desabilitado em produção até implementar fluxo com token |

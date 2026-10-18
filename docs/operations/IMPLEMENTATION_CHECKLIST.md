@@ -36,9 +36,17 @@
 - [x] `tests/integration/monitoring.test.ts` (8 testes)
 - [ ] Contas Sentry/UptimeRobot criadas e alertas de teste registrados (RUNBOOK §9)
 
+### 1C · Rate limit distribuído (2026-10-18)
+
+- [x] `RedisRateLimitStore` (rate-limiter-flexible + ioredis), chave `akylla:rl:<limite>:<janela>:<chave>`
+- [x] `REDIS_URL` ausente → memória; presente → Redis (`createRateLimitStore`)
+- [x] Redis fora do ar → limitador em memória assume (insurance), sem 500 e sem esperar timeout
+- [x] Interface assíncrona; login, cadastro, reset e 2FA com `await`
+- [x] `tests/integration/rate-limit.test.ts` (10 testes)
+- [ ] Redis provisionado em produção (Upstash/Railway/Render) — depende do 1G
+
 ### Pendentes da Fase 1
 
-- [ ] 1C · Rate limit Redis + fallback em memória
 - [ ] 1D · Verificação de e-mail no cadastro + Turnstile opcional
 - [ ] 1E · RLS + `withTenantContext` + `rls.test.ts`
 - [ ] 1F · `npm audit --omit=dev` = 0 (next 16, vitest major)

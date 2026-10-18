@@ -9,8 +9,8 @@ export const RATE_LIMIT_STORE = "RATE_LIMIT_STORE";
 
 /**
  * Guarda de rate limit de login/cadastro/reset (N4 · 1.3).
- * Delega ao `RateLimitStore` (memória hoje; Redis em produção
- * multi-instância). Comportamento idêntico ao anterior.
+ * Delega ao `RateLimitStore` (memória sem REDIS_URL; Redis com
+ * REDIS_URL — Fase 1 · 1C).
  */
 @Injectable()
 export class LoginRateLimiter {
@@ -19,12 +19,12 @@ export class LoginRateLimiter {
     private readonly store: RateLimitStore = new InMemoryRateLimitStore(),
   ) {}
 
-  check(key: string): void {
-    this.store.hit(key, env.AUTH_RATE_LIMIT_MAX, env.AUTH_RATE_LIMIT_WINDOW_MS);
+  check(key: string): Promise<void> {
+    return this.store.hit(key, env.AUTH_RATE_LIMIT_MAX, env.AUTH_RATE_LIMIT_WINDOW_MS);
   }
 
-  reset(key: string): void {
-    this.store.reset(key);
+  reset(key: string): Promise<void> {
+    return this.store.reset(key);
   }
 }
 
@@ -36,15 +36,15 @@ export class RegisterRateLimiter {
     private readonly store: RateLimitStore = new InMemoryRateLimitStore(),
   ) {}
 
-  check(key: string): void {
-    this.store.hit(
+  check(key: string): Promise<void> {
+    return this.store.hit(
       key,
       env.REGISTER_RATE_LIMIT_MAX,
       env.REGISTER_RATE_LIMIT_WINDOW_MS,
     );
   }
 
-  reset(key: string): void {
-    this.store.reset(key);
+  reset(key: string): Promise<void> {
+    return this.store.reset(key);
   }
 }

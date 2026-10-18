@@ -55,10 +55,10 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ) {
     const rateKey = `${ip}|${body.email}`;
-    this.rateLimiter.check(rateKey);
+    await this.rateLimiter.check(rateKey);
 
     const result = await this.authService.login(body, request);
-    this.rateLimiter.reset(rateKey);
+    await this.rateLimiter.reset(rateKey);
 
     if ("requiresTwoFactor" in result) {
       response.status(202);
@@ -84,10 +84,10 @@ export class AuthController {
     }
 
     const rateKey = `register|${ip}`;
-    this.registerLimiter.check(rateKey);
+    await this.registerLimiter.check(rateKey);
 
     const result = await this.authService.register(body, request);
-    this.registerLimiter.reset(rateKey);
+    await this.registerLimiter.reset(rateKey);
     this.authService.setSessionCookie(response, result.token);
 
     return { user: result.user, company: result.company } satisfies MeResponse;
@@ -105,9 +105,9 @@ export class AuthController {
     }
 
     const rateKey = `reset|${ip}|${body.email}`;
-    this.rateLimiter.check(rateKey);
+    await this.rateLimiter.check(rateKey);
     await this.authService.resetPassword(body);
-    this.rateLimiter.reset(rateKey);
+    await this.rateLimiter.reset(rateKey);
 
     return { ok: true };
   }
@@ -121,9 +121,9 @@ export class AuthController {
     @Ip() ip: string,
   ) {
     const rateKey = `request-reset|${ip}|${body.email}`;
-    this.rateLimiter.check(rateKey);
+    await this.rateLimiter.check(rateKey);
     await this.authService.requestPasswordReset(body);
-    this.rateLimiter.reset(rateKey);
+    await this.rateLimiter.reset(rateKey);
 
     return { ok: true };
   }
@@ -137,9 +137,9 @@ export class AuthController {
     @Ip() ip: string,
   ) {
     const rateKey = `confirm-reset|${ip}`;
-    this.rateLimiter.check(rateKey);
+    await this.rateLimiter.check(rateKey);
     await this.authService.confirmPasswordReset(body);
-    this.rateLimiter.reset(rateKey);
+    await this.rateLimiter.reset(rateKey);
 
     return { ok: true };
   }
@@ -180,7 +180,7 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ) {
     const rateKey = `2fa|${ip}|${body.challengeId}`;
-    this.rateLimiter.check(rateKey);
+    await this.rateLimiter.check(rateKey);
 
     const result = await this.authService.verifyTwoFactorChallenge(body, request);
     this.authService.setSessionCookie(response, result.token);

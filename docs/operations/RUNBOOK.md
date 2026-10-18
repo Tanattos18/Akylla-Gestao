@@ -15,6 +15,7 @@
 | Web | `npm run start --workspace @petflow/web` (porta 3000) | `GET /` (200) |
 | Worker | `npm run start --workspace @petflow/worker` | log `heartbeat` a cada 60 s; erros no Sentry (`service: petflow-worker`) |
 | Banco | PostgreSQL 17 | `/health/ready` responde 503 se o banco não responder em 2 s |
+| Redis (opcional) | `REDIS_URL` | rate limit compartilhado. Fora do ar → log `Redis indisponível…; rate limit em memória até reconectar` e a API segue funcionando (limite vale por instância até voltar) |
 
 `/health/ready` responde **200** `{"status":"ok","database":"ok","databaseLatencyMs":N}`
 ou **503** `{"status":"unavailable","database":"down"}`. A resposta não traz

@@ -10,7 +10,7 @@ que o site akyllagestao.com.br promete. Fases em ordem rígida (1 → 7).
 |---|---|
 | 1A · Backup com restore testado (§1.1) + registro de N1–N4c nos docs | ✅ 2026-10-18 |
 | 1B · Sentry (API/Worker/Web) + `RUNBOOK.md` (uptime, rollback) (§1.2) | ✅ 2026-10-18 (código); alertas de teste aguardam contas Sentry/UptimeRobot |
-| 1C · Rate limit com Redis + fallback em memória (§1.5.2) | ⬜ |
+| 1C · Rate limit com Redis + fallback em memória (§1.5.2) | ✅ 2026-10-18 (código); Redis de produção a provisionar |
 | 1D · Verificação de e-mail no cadastro + Turnstile opcional (§1.5.5) | ⬜ |
 | 1E · RLS no PostgreSQL + `withTenantContext` (§1.5.4) | ⬜ |
 | 1F · `npm audit --omit=dev` = 0 (next 16, vitest major) (§1.5.1) | ⬜ |
