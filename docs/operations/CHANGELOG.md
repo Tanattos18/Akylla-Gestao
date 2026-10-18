@@ -6,6 +6,26 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-18 - Fase 1 · 1F: `npm audit --omit=dev` = 0
+
+Três upgrades, um por commit, com `npm run validate` verde depois de
+cada um:
+
+| Pacote | De → para | Corrige | Observação |
+|---|---|---|---|
+| `nodemailer` | 8.0.11 → **10.0.16** | GHSA-p6gq-j5cr-w38f (alta) | a versão vulnerável tinha entrado no 1D; a 10.x traz tipos próprios (saiu `@types/nodemailer`) |
+| `next` | 15.5.28 → **16.4.2** | `postcss` GHSA-qx2v-qp2m-jg93 e GHSA-6g55-p6wh-862q (alta) | build com Turbopack sem avisos e sem mudança de código; páginas, 404 e o proxy `/api` testados com servidor real; login + `/clientes` testados no navegador |
+| `vitest` | 2.1.x → **4.1.11** | `tinypool` (crítica), `vite`/`esbuild`/`@vitest/mocker` | o `vite` 8 também satisfaz o peer do `@sentry/nextjs`, que estava puxando o `vite` 5 vulnerável para a árvore de produção; `config/vitest.config.ts` sem mudanças |
+
+- **Resultado:** `npm audit --omit=dev` → **0 vulnerabilidades**.
+- **Risco aceito:** 1 moderada só de teste (`sprintf-js` ← `fengari` ←
+  `ioredis-mock`), sem versão corrigida publicada. O npm propõe rebaixar
+  o `ioredis-mock` para 4.7.0, que não executa os scripts Lua do
+  `rate-limiter-flexible` e quebraria os testes do 1C. Não vai para
+  produção e roda com entradas fixas.
+- **Verificação:** `npm run validate` verde (630/630) depois de cada
+  upgrade.
+
 ## [Akylla Gestão] - 2026-10-18 - Fase 1 · 1E: RLS nativa do PostgreSQL (defesa em profundidade)
 
 Referência usada (`upgrade/REFERENCIAS_GIT.md`, Fase 1 · 1E):

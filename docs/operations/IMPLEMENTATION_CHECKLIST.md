@@ -71,9 +71,16 @@
 - [x] ADR-0001, DATABASE.md, RUNBOOK e AGENTS.md (regra permanente)
 - [ ] Produção: role da aplicação sem SUPERUSER/BYPASSRLS (conferir ao provisionar, junto com o 1G)
 
+### 1F · Vulnerabilidades (2026-10-18)
+
+- [x] nodemailer 8.0.11 → 10.0.16 (alta, introduzida no 1D) — commit próprio
+- [x] Next 15.5.28 → 16.4.2 (postcss, alta) — build Turbopack sem avisos; testado em execução real
+- [x] vitest 2 → 4.1.11 (tinypool crítica, vite/esbuild/mocker) — config sem mudanças
+- [x] `npm audit --omit=dev` = **0**
+- [x] Risco aceito registrado: `sprintf-js` (moderada, só teste, via `ioredis-mock`, sem correção)
+
 ### Pendentes da Fase 1
 
-- [ ] 1F · `npm audit --omit=dev` = 0 (next 16, vitest major)
 - [ ] 1G · CD real com health check e rollback documentado
 
 ## Fora do roteiro — Débitos de design D-1 a D-7 (2026-10-15)

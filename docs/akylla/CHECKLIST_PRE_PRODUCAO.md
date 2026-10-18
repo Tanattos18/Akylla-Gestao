@@ -50,7 +50,7 @@ Classificadas como **preexistentes** (não introduzidas pela adaptação):
 
 | # | Limitação | Severidade | Notas |
 |---|---|---|---|
-| L1 | 8 vulnerabilidades `npm audit` — **6 em dependências de desenvolvimento** (vitest/esbuild/tinypool) e **2 em produção** (`postcss` transitivo do `next`, alta) | Críticas/altas | Correção das de dev exige upgrade do vitest (breaking change); a de `postcss` exige `next@16.4.1` (breaking) |
+| L1 | 8 vulnerabilidades `npm audit` — **6 em dependências de desenvolvimento** (vitest/esbuild/tinypool) e **2 em produção** (`postcss` transitivo do `next`, alta) | Críticas/altas | **Resolvido (2026-10-18, Fase 1 · 1F):** `npm audit --omit=dev` = **0** (Next 16.4.2, nodemailer 10.0.16, vitest 4.1.11). Resta 1 moderada **só de teste** (`sprintf-js` via `ioredis-mock`), sem correção publicada: risco aceito (entrada fixa dos testes, nunca vai para produção) |
 | L2 | Rate limit de login é **in-memory** (reseta no restart; não compartilhado entre instâncias) | Média | **Resolvido no código (2026-10-18, Fase 1 · 1C):** com `REDIS_URL` o contador fica no Redis (compartilhado) e cai para memória se o Redis sair do ar. Falta provisionar o Redis em produção |
 | L3 | Sem **RLS** no Postgres — isolamento de tenant é aplicado na camada de aplicação | Média | **Resolvido (2026-10-18, Fase 1 · 1E):** RLS + FORCE em 25 tabelas, com contexto por transação (ADR-0001). A suíte inteira roda com a RLS ativa. Em produção, o role da aplicação não pode ser superusuário nem ter `BYPASSRLS` |
 | L4 | Sem fluxo de **exclusão LGPD** (direito ao esquecimento) | Alta (compliance) | Implementar endpoint de anonimização/exclusão com retenção legal |

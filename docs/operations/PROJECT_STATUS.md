@@ -13,7 +13,7 @@ que o site akyllagestao.com.br promete. Fases em ordem rígida (1 → 7).
 | 1C · Rate limit com Redis + fallback em memória (§1.5.2) | ✅ 2026-10-18 (código); Redis de produção a provisionar |
 | 1D · Verificação de e-mail no cadastro + Turnstile opcional (§1.5.5) | ✅ 2026-10-18 (código); SMTP de produção a contratar |
 | 1E · RLS no PostgreSQL + `withTenantContext` (§1.5.4) | ✅ 2026-10-18 (25 tabelas; suíte inteira com RLS ativa) |
-| 1F · `npm audit --omit=dev` = 0 (next 16, vitest major) (§1.5.1) | ⬜ |
+| 1F · `npm audit --omit=dev` = 0 (next 16, vitest major) (§1.5.1) | ✅ 2026-10-18 (0 em produção) |
 | 1G · CD real com health check (§1.3) — depende da escolha de hospedagem | ⬜ |
 
 Já existentes antes da Fase 1 (N1–N4c, 2026-10-15): LGPD
