@@ -48,6 +48,7 @@ Para começar, leia nesta ordem:
 | Documento | Conteúdo |
 |---|---|
 | [Desenvolvimento](operations/DEVELOPMENT.md) | ambiente e execução local |
+| [Deploy em VPS (Hostinger)](operations/DEPLOY_VPS.md) | instalação automatizada (Ubuntu 24.04, PostgreSQL 17, Caddy, systemd, backup), atualização e app instalável (PWA) |
 | [Deploy em produção](operations/DEPLOY.md) | peças, role do banco (RLS), comandos por serviço, variáveis e GitHub Actions |
 | [Runbook de operação](operations/RUNBOOK.md) | monitoramento (Sentry, UptimeRobot), incidentes, rollback, restauração |
 
