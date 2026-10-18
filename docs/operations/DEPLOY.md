@@ -4,6 +4,9 @@
 > comandos de build/start e ofereça "deploy hook" (Render, Railway, Koyeb,
 > Fly.io, VPS com webhook). A escolha do provedor é decisão do
 > proprietário. Operação e rollback: [`RUNBOOK.md`](RUNBOOK.md).
+>
+> **Caminho escolhido (2026-10-18): VPS da Hostinger**, com instalação
+> automatizada em [`DEPLOY_VPS.md`](DEPLOY_VPS.md).
 
 ## 1. Peças
 
