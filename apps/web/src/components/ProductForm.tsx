@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { parseDecimalInput } from "@petflow/shared";
 import { api, ApiError } from "../lib/api";
 import {
   productUnitLabels,
@@ -56,9 +57,12 @@ export function ProductForm({ initial, onSubmit, submitLabel }: ProductFormProps
 
     const issues: Record<string, string> = {};
     if (name.trim().length < 2) issues.name = "Nome deve ter ao menos 2 caracteres";
-    if (Number(costPrice) < 0) issues.costPrice = "Custo não pode ser negativo";
-    if (Number(salePrice) < 0) issues.salePrice = "Preço não pode ser negativo";
-    if (Number(minimumStock) < 0) issues.minimumStock = "Estoque mínimo não pode ser negativo";
+    const cost = parseDecimalInput(costPrice || "0");
+    const sale = parseDecimalInput(salePrice || "0");
+    const minimum = parseDecimalInput(minimumStock || "0");
+    if (!Number.isFinite(cost) || cost < 0) issues.costPrice = "Custo inválido (ex.: 12,50)";
+    if (!Number.isFinite(sale) || sale < 0) issues.salePrice = "Preço inválido (ex.: 19,90)";
+    if (!Number.isFinite(minimum) || minimum < 0) issues.minimumStock = "Estoque mínimo inválido";
     if (Object.keys(issues).length > 0) {
       setFieldErrors(issues);
       return;

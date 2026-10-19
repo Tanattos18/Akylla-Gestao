@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { api, ApiError } from "../../../lib/api";
 import { fetchSession, type Session } from "../../../lib/session";
 import type { CashSessionDto } from "../../../lib/types";
+import { formatBrl } from "../../../lib/format";
 
 interface CloseResult {
   expectedBalance: string;
@@ -100,13 +101,13 @@ export default function FecharCaixaPage() {
           <div className="flex justify-between text-slate-600">
             <span>Saldo esperado (calculado pelo sistema)</span>
             <span className="font-medium text-slate-900">
-              R$ {Number(result.expectedBalance).toFixed(2)}
+              {formatBrl(result.expectedBalance)}
             </span>
           </div>
           <div className="flex justify-between text-slate-600">
             <span>Valor contado</span>
             <span className="font-medium text-slate-900">
-              R$ {Number(result.countedAmount).toFixed(2)}
+              {formatBrl(result.countedAmount)}
             </span>
           </div>
           <div className="flex justify-between border-t border-slate-100 pt-2 text-slate-600">
@@ -114,7 +115,7 @@ export default function FecharCaixaPage() {
             <span
               className={`font-semibold ${difference === 0 ? "text-primary-700" : "text-red-700"}`}
             >
-              R$ {difference.toFixed(2)}
+              {formatBrl(difference)}
             </span>
           </div>
         </div>
@@ -157,25 +158,25 @@ export default function FecharCaixaPage() {
             <div className="flex justify-between text-slate-600">
               <span>Valor inicial de troco</span>
               <span className="font-medium text-slate-900">
-                R$ {Number(cash.initialAmount).toFixed(2)}
+                {formatBrl(cash.initialAmount)}
               </span>
             </div>
             <div className="flex justify-between text-slate-600">
               <span>Entradas (dinheiro)</span>
               <span className="font-medium text-primary-700">
-                + R$ {Number(cash.entriesTotal).toFixed(2)}
+                + {formatBrl(cash.entriesTotal)}
               </span>
             </div>
             <div className="flex justify-between text-slate-600">
               <span>Saídas (dinheiro)</span>
               <span className="font-medium text-red-700">
-                - R$ {Number(cash.exitsTotal).toFixed(2)}
+                - {formatBrl(cash.exitsTotal)}
               </span>
             </div>
             <div className="flex justify-between border-t border-slate-100 pt-2 text-slate-600">
               <span className="font-medium text-slate-800">Saldo esperado</span>
               <span className="font-semibold text-slate-900">
-                R$ {Number(cash.expectedBalance).toFixed(2)}
+                {formatBrl(cash.expectedBalance)}
               </span>
             </div>
           </div>

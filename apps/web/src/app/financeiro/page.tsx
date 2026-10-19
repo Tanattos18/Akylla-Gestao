@@ -7,6 +7,7 @@ import { api } from "../../lib/api";
 import { fetchSession, type Session } from "../../lib/session";
 import type { CashSummaryDto, FinancialSummaryDto } from "../../lib/types";
 import FinancialEntries from "../../components/FinancialEntries";
+import { formatBrl } from "../../lib/format";
 
 type Tab = "resumo" | "payables" | "receivables";
 
@@ -210,7 +211,7 @@ export default function FinanceiroPage() {
                     card.tone === "green" ? "text-primary-800" : "text-red-700"
                   }`}
                 >
-                  R$ {Number(card.value).toFixed(2)}
+                  {formatBrl(card.value)}
                 </p>
               </div>
             ))}
@@ -222,7 +223,7 @@ export default function FinanceiroPage() {
                 A receber em aberto ({titlesSummary?.openReceivablesCount ?? 0})
               </p>
               <p className="mt-1 text-2xl font-semibold text-sky-900">
-                R$ {Number(titlesSummary?.openReceivablesTotal ?? "0").toFixed(2)}
+                {formatBrl(titlesSummary?.openReceivablesTotal ?? "0")}
               </p>
             </div>
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
@@ -230,7 +231,7 @@ export default function FinanceiroPage() {
                 A pagar em aberto ({titlesSummary?.openPayablesCount ?? 0})
               </p>
               <p className="mt-1 text-2xl font-semibold text-amber-900">
-                R$ {Number(titlesSummary?.openPayablesTotal ?? "0").toFixed(2)}
+                {formatBrl(titlesSummary?.openPayablesTotal ?? "0")}
               </p>
             </div>
             <div className="rounded-lg border border-red-200 bg-red-50 p-4">
@@ -238,16 +239,16 @@ export default function FinanceiroPage() {
                 Vencidos a receber ({titlesSummary?.overdueReceivablesCount ?? 0})
               </p>
               <p className="mt-1 text-2xl font-semibold text-red-900">
-                R$ {Number(titlesSummary?.overdueReceivablesTotal ?? "0").toFixed(2)}
+                {formatBrl(titlesSummary?.overdueReceivablesTotal ?? "0")}
               </p>
             </div>
             <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-xs uppercase text-slate-500">Liquidado no período</p>
               <p className="mt-1 text-sm text-slate-700">
-                Entradas: <strong>R$ {Number(titlesSummary?.paidInTotal ?? "0").toFixed(2)}</strong>
+                Entradas: <strong>{formatBrl(titlesSummary?.paidInTotal ?? "0")}</strong>
               </p>
               <p className="text-sm text-slate-700">
-                Saídas: <strong>R$ {Number(titlesSummary?.paidOutTotal ?? "0").toFixed(2)}</strong>
+                Saídas: <strong>{formatBrl(titlesSummary?.paidOutTotal ?? "0")}</strong>
               </p>
             </div>
           </section>
@@ -255,7 +256,7 @@ export default function FinanceiroPage() {
           <section className="grid gap-4 sm:grid-cols-3">
             <div className="rounded-lg border border-primary-200 bg-primary-50 p-4">
               <p className="text-xs uppercase text-primary-700">Líquido (entradas - saídas)</p>
-              <p className="mt-1 text-3xl font-semibold text-primary-900">R$ {net.toFixed(2)}</p>
+              <p className="mt-1 text-3xl font-semibold text-primary-900">{formatBrl(net)}</p>
             </div>
             <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-xs uppercase text-slate-500">Período</p>
@@ -268,7 +269,7 @@ export default function FinanceiroPage() {
             <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-xs uppercase text-slate-500">Estornos (saldo)</p>
               <p className="mt-1 text-2xl font-semibold text-slate-900">
-                R$ {Number(summary?.reversalsNetTotal ?? "0").toFixed(2)}
+                {formatBrl(summary?.reversalsNetTotal ?? "0")}
               </p>
             </div>
           </section>

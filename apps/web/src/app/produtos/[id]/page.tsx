@@ -14,6 +14,7 @@ import {
 } from "../../../lib/types";
 import { useDialog } from "../../../components/ui/Dialog";
 import { DataTable } from "../../../components/ui/DataTable";
+import { formatBrl } from "../../../lib/format";
 
 const movementPageSize = 10;
 
@@ -247,7 +248,7 @@ export default function ProdutoDetalhePage() {
         <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
           <p className="text-xs uppercase text-slate-500">Preço de venda</p>
           <p className="mt-1 text-2xl font-semibold text-slate-900">
-            R$ {Number(product.salePrice).toFixed(2)}
+            {formatBrl(product.salePrice)}
           </p>
         </div>
       </div>

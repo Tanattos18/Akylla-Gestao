@@ -20,6 +20,8 @@ import {
 } from "../../lib/types";
 import { Receipt } from "../../components/Receipt";
 import { EmitFiscalButton } from "../../components/fiscal/EmitFiscalButton";
+import { formatBrl } from "../../lib/format";
+import { parseDecimalInput } from "@petflow/shared";
 
 interface CartItem {
   productId: string;
@@ -196,7 +198,7 @@ export default function PdvPage() {
     (sum, item) => sum + Number(item.unitPrice) * item.quantity,
     0,
   );
-  const discountValue = Number(discount || 0);
+  const discountValue = discount.trim() ? parseDecimalInput(discount) : 0;
   const total = Math.max(0, subtotal - (Number.isFinite(discountValue) ? discountValue : 0));
 
   async function handleFinish(event: FormEvent) {
@@ -283,7 +285,7 @@ export default function PdvPage() {
     return (
       <div className="space-y-6">
         <div className="rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-sm text-primary-800">
-          Venda registrada com sucesso! Total R$ {Number(completedSale.total).toFixed(2)}.
+          Venda registrada com sucesso! Total {formatBrl(completedSale.total)}.
         </div>
         {printNotice && (
           <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
@@ -391,8 +393,7 @@ export default function PdvPage() {
                     <p className="truncate text-sm font-medium text-slate-800">{product.name}</p>
                     <p className="text-xs text-slate-500">
                       {product.sku ? `SKU ${product.sku}` : "Sem SKU"} · saldo{" "}
-                      {Number(product.stockQuantity)} {productUnitLabels[product.unit]} · R${" "}
-                      {Number(product.salePrice).toFixed(2)}
+                      {Number(product.stockQuantity)} {productUnitLabels[product.unit]} · {formatBrl(product.salePrice)}
                     </p>
                   </div>
                   <button
@@ -426,7 +427,7 @@ export default function PdvPage() {
                     <div className="min-w-0 flex-1">
                       <p className="font-medium text-slate-800">{item.name}</p>
                       <p className="text-xs text-slate-600">
-                        R$ {Number(item.unitPrice).toFixed(2)} × {productUnitLabels[item.unit]}
+                        {formatBrl(item.unitPrice)} × {productUnitLabels[item.unit]}
                       </p>
                     </div>
                     <input
@@ -439,7 +440,7 @@ export default function PdvPage() {
                       className="w-20 rounded-md border border-slate-300 px-2 py-1 text-sm"
                     />
                     <span className="w-24 text-right font-medium tabular-nums text-slate-800">
-                      R$ {(Number(item.unitPrice) * item.quantity).toFixed(2)}
+                      {formatBrl((Number(item.unitPrice) * item.quantity))}
                     </span>
                     <button
                       type="button"
@@ -541,7 +542,7 @@ export default function PdvPage() {
                   >
                     {Array.from({ length: 24 }, (_, i) => i + 1).map((n) => (
                       <option key={n} value={n}>
-                        {n}x de R$ {(Math.floor((total / n) * 100) / 100).toFixed(2)}
+                        {n}x de {formatBrl((Math.floor((total / n) * 100) / 100))}
                       </option>
                     ))}
                   </select>
@@ -583,15 +584,15 @@ export default function PdvPage() {
           <div className="space-y-1 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm">
             <div className="flex justify-between text-slate-600">
               <span>Subtotal</span>
-              <span>R$ {subtotal.toFixed(2)}</span>
+              <span>{formatBrl(subtotal)}</span>
             </div>
             <div className="flex justify-between text-slate-600">
               <span>Desconto</span>
-              <span>- R$ {(Number.isFinite(discountValue) ? discountValue : 0).toFixed(2)}</span>
+              <span>- {formatBrl((Number.isFinite(discountValue) ? discountValue : 0))}</span>
             </div>
             <div className="flex justify-between text-lg font-semibold text-slate-900">
               <span>Total</span>
-              <span>R$ {total.toFixed(2)}</span>
+              <span>{formatBrl(total)}</span>
             </div>
           </div>
 

@@ -8,6 +8,7 @@ import { fetchSession, type Session } from "../../lib/session";
 import type { Paginated, SubscriptionPlanDto } from "../../lib/types";
 import { useDialog } from "../../components/ui/Dialog";
 import { DataTable } from "../../components/ui/DataTable";
+import { formatBrl } from "../../lib/format";
 
 const emptyForm = {
   name: "",
@@ -309,7 +310,7 @@ export default function PlanosPage() {
                     <p className="text-xs text-slate-500">{plan.description}</p>
                   )}</> },
           { key: "c1", header: "Duração", cell: (plan) => <>{plan.durationDays} dias</> },
-          { key: "c2", header: "Preço", cell: (plan) => <>R$ {Number(plan.price).toFixed(2)}</>, className: "font-medium" },
+          { key: "c2", header: "Preço", cell: (plan) => <>{formatBrl(plan.price)}</>, className: "font-medium" },
           { key: "c3", header: "Status", cell: (plan) => <><span
                     className={
                       plan.status === "ACTIVE"

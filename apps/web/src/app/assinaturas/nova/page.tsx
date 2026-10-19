@@ -10,6 +10,7 @@ import type {
   Paginated,
   SubscriptionPlanDto,
 } from "../../../lib/types";
+import { formatBrl } from "../../../lib/format";
 
 export default function NovaAssinaturaPage() {
   const router = useRouter();
@@ -170,7 +171,7 @@ export default function NovaAssinaturaPage() {
               <option value="">Selecione...</option>
               {plans.map((plan) => (
                 <option key={plan.id} value={plan.id}>
-                  {plan.name} — R$ {Number(plan.price).toFixed(2)} · {plan.durationDays} dias
+                  {plan.name} — {formatBrl(plan.price)} · {plan.durationDays} dias
                 </option>
               ))}
             </select>

@@ -13,8 +13,7 @@ import {
   type PlatformCompanyDto,
   type PlatformCreateCompanyResult,
   type PlatformPaymentDto,
-  type PlatformPaymentMethod,
-} from "@petflow/shared";
+  type PlatformPaymentMethod, normalizeDecimalInput } from "@petflow/shared";
 import { api } from "../../lib/api";
 import { fetchSession } from "../../lib/session";
 import { formatBrl, formatDate, formatDateTime } from "../../lib/format";
@@ -252,7 +251,7 @@ export default function PlataformaPage() {
           cycle: payForm.cycle,
           method: payForm.method,
           extraModules: payForm.extraModules.filter((m) => !selectedPlan?.includedModules.includes(m)),
-          ...(payForm.amount.trim() ? { amount: payForm.amount.trim().replace(",", ".") } : {}),
+          ...(payForm.amount.trim() ? { amount: normalizeDecimalInput(payForm.amount) } : {}),
           ...(payForm.note.trim() ? { note: payForm.note.trim() } : {}),
         }),
       }),

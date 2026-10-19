@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { api } from "../../../lib/api";
 import { fetchSession, type Session } from "../../../lib/session";
-import { formatLocalDateShort, formatLocalTime } from "../../../lib/format";
+import { formatLocalDateShort, formatLocalTime, formatBrl } from "../../../lib/format";
 import {
   appointmentStatusLabels,
   type AppointmentActionStatus,
@@ -195,7 +195,7 @@ export default function AgendamentoDetalhePage() {
         <div>
           <p className="text-xs uppercase text-slate-500">Serviço</p>
           <p className="mt-1 text-sm text-slate-800">
-            {appointment.service.name} · R$ {Number(appointment.service.price).toFixed(2)}
+            {appointment.service.name} · {formatBrl(appointment.service.price)}
           </p>
         </div>
         <div>

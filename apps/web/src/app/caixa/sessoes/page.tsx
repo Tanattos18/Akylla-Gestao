@@ -11,6 +11,7 @@ import {
   type Paginated,
 } from "../../../lib/types";
 import { DataTable } from "../../../components/ui/DataTable";
+import { formatBrl } from "../../../lib/format";
 
 export default function SessoesCaixaPage() {
   const router = useRouter();
@@ -102,9 +103,9 @@ export default function SessoesCaixaPage() {
                   </span></> },
           { key: "c3", header: "Aberto por", cell: (item) => item.openedBy.name },
           { key: "c4", header: "Fechado por", cell: (item) => item.closedBy?.name ?? "—" },
-          { key: "c5", header: "Inicial", cell: (item) => <>R$ {Number(item.initialAmount).toFixed(2)}</> },
-          { key: "c6", header: "Saldo esperado", cell: (item) => <>R$ {Number(item.expectedBalance).toFixed(2)}</>, className: "font-medium" },
-          { key: "c7", header: "Contado", cell: (item) => <>{item.countedAmount ? `R$ ${Number(item.countedAmount).toFixed(2)}` : "—"}</> },
+          { key: "c5", header: "Inicial", cell: (item) => <>{formatBrl(item.initialAmount)}</> },
+          { key: "c6", header: "Saldo esperado", cell: (item) => <>{formatBrl(item.expectedBalance)}</>, className: "font-medium" },
+          { key: "c7", header: "Contado", cell: (item) => <>{item.countedAmount ? `${formatBrl(item.countedAmount)}` : "—"}</> },
           { key: "c8", header: "Diferença", cell: (item) => <>{item.difference ? (
                     <span
                       className={
@@ -113,7 +114,7 @@ export default function SessoesCaixaPage() {
                           : "font-medium text-red-700"
                       }
                     >
-                      R$ {Number(item.difference).toFixed(2)}
+                      {formatBrl(item.difference)}
                     </span>
                   ) : (
                     "—"

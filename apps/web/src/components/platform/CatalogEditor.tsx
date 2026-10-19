@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import type { BusinessModule, ModuleOfferDto } from "@petflow/shared";
+import { normalizeDecimalInput, type BusinessModule, type ModuleOfferDto } from "@petflow/shared";
 import { api } from "../../lib/api";
 import type { TenantPlanDto } from "../../lib/types";
 import { useToast } from "../ui/Toast";
@@ -13,7 +13,7 @@ export interface PlatformCatalog {
 }
 
 const inputClass = "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none";
-const money = (value: string) => value.trim().replace(",", ".");
+const money = (value: string) => normalizeDecimalInput(value);
 const limit = (value: string) => (value.trim() === "" ? null : Number(value));
 
 /**

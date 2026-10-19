@@ -1,5 +1,6 @@
 "use client";
 
+import { normalizeDecimalInput } from "@petflow/shared";
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -57,7 +58,7 @@ export default function NovaOsPage() {
           professionalId: professionalId || null,
           title: title.trim(),
           notes: notes.trim() || null,
-          discount: discount.trim().replace(",", ".") || "0",
+          discount: normalizeDecimalInput(discount) || "0",
           items: toPayload(filled),
         }),
       });

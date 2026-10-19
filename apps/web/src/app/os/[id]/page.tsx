@@ -1,5 +1,6 @@
 "use client";
 
+import { normalizeDecimalInput } from "@petflow/shared";
 import { ChangeEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -118,7 +119,7 @@ export default function OsDetailPage() {
     const filled = items.filter((i) => (i.kind === "FREE" ? i.description.trim() : i.refId));
     void run(async () => {
       await api(`/api/service-orders/${id}/items`, { method: "PUT", body: JSON.stringify({ items: toPayload(filled) }) });
-      await api(`/api/service-orders/${id}`, { method: "PATCH", body: JSON.stringify({ discount: discount.trim().replace(",", ".") || "0" }) });
+      await api(`/api/service-orders/${id}`, { method: "PATCH", body: JSON.stringify({ discount: normalizeDecimalInput(discount) || "0" }) });
     }, "Itens e desconto salvos.");
   }
 

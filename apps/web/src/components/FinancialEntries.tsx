@@ -1,7 +1,9 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import { normalizeDecimalInput, parseDecimalInput } from "@petflow/shared";
 import { api } from "../lib/api";
+import { formatBrl } from "../lib/format";
 import type {
   FinancialDirection,
   FinancialEntryDto,
@@ -117,14 +119,15 @@ export default function FinancialEntries({ direction, isAdmin }: Props) {
       setFormError("Descrição e vencimento são obrigatórios.");
       return;
     }
-    if (!form.amount || Number(form.amount) <= 0) {
+    const amountValue = parseDecimalInput(form.amount);
+    if (!form.amount.trim() || !Number.isFinite(amountValue) || amountValue <= 0) {
       setFormError("Informe um valor maior que zero.");
       return;
     }
 
     const payload = {
       description: form.description.trim(),
-      amount: Number(form.amount).toFixed(2),
+      amount: normalizeDecimalInput(form.amount),
       dueDate: form.dueDate,
       ...(direction === "RECEIVABLE"
         ? { clientId: form.counterpartyId || null }
@@ -153,7 +156,7 @@ export default function FinancialEntries({ direction, isAdmin }: Props) {
   }
 
   async function handlePay(entry: FinancialEntryDto) {
-    if (!await dialog.confirm(`Confirmar liquidação de "${entry.description}" (R$ ${entry.amount})?`)) {
+    if (!await dialog.confirm(`Confirmar liquidação de "${entry.description}" (${formatBrl(entry.amount)})?`)) {
       return;
     }
     try {
@@ -230,9 +233,8 @@ export default function FinancialEntries({ direction, isAdmin }: Props) {
             </label>
             <input
               id="fin-amount"
-              type="number"
-              min="0.01"
-              step="0.01"
+              inputMode="decimal"
+              placeholder="0,00"
               value={form.amount}
               onChange={(event) => setForm({ ...form, amount: event.target.value })}
               className={inputClass}
@@ -322,7 +324,7 @@ export default function FinancialEntries({ direction, isAdmin }: Props) {
         columns={[
           { key: "c0", header: "Descrição", cell: (entry) => entry.description, className: "font-medium" },
           { key: "c1", header: counterpartyLabel, cell: (entry) => entry.client?.name ?? entry.supplier?.name ?? "â€”" },
-          { key: "c2", header: "Valor", cell: (entry) => <>R$ {entry.amount}</> },
+          { key: "c2", header: "Valor", cell: (entry) => <>{formatBrl(entry.amount)}</> },
           { key: "c3", header: "Vencimento", cell: (entry) => new Date(entry.dueDate).toLocaleDateString("pt-BR") },
           { key: "c4", header: "Status", cell: (entry) => <><span
                     className={

@@ -15,6 +15,7 @@ import {
   type Paginated,
 } from "../../../lib/types";
 import { DataTable } from "../../../components/ui/DataTable";
+import { formatBrl } from "../../../lib/format";
 
 const pageSize = 20;
 
@@ -264,8 +265,7 @@ export default function MovimentosCaixaPage() {
           className="rounded-lg border border-amber-200 bg-amber-50 p-4"
         >
           <p className="text-sm font-medium text-amber-900">
-            Estornar: {reversalTarget.description} — R${" "}
-            {Number(reversalTarget.amount).toFixed(2)}
+            Estornar: {reversalTarget.description} — {formatBrl(reversalTarget.amount)}
           </p>
           <p className="mt-1 text-xs text-amber-800">
             Um lançamento compensatório do tipo oposto será criado e este lançamento ficará
@@ -357,7 +357,7 @@ export default function MovimentosCaixaPage() {
                       Ativo
                     </span>
                   )}</> },
-          { key: "c6", header: "Valor", cell: (movement) => <>{movement.type === "IN" ? "+" : "-"} R$ {Number(movement.amount).toFixed(2)}</>, numeric: true, className: "font-medium" },
+          { key: "c6", header: "Valor", cell: (movement) => <>{movement.type === "IN" ? "+" : "-"} {formatBrl(movement.amount)}</>, numeric: true, className: "font-medium" },
           { key: "c7", header: "Ação", cell: (movement) => <>{movement.origin === "MANUAL" && !movement.reversedAt ? (
                       <button
                         type="button"

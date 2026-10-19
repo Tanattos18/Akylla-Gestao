@@ -239,10 +239,29 @@ export const stockMovementTypeLabels: Record<StockMovementType, string> = {
   ADJUST_NEGATIVE: "Ajuste negativo",
 };
 
+/**
+ * Normaliza número digitado no padrão brasileiro para o formato da API
+ * ("1234.56"): aceita "150,00", "1.234,56", "R$ 12,50" e também "150.00".
+ * Com vírgula, os pontos são separadores de milhar; sem vírgula, o ponto é
+ * o separador decimal (ex.: "1.5" kg).
+ */
+export function normalizeDecimalInput(value: string | number): string {
+  if (typeof value === "number") return String(value);
+  let text = value.trim().replace(/^R\$\s*/i, "").replace(/\s+/g, "");
+  if (text.includes(",")) text = text.replace(/\./g, "").replace(",", ".");
+  return text;
+}
+
+/** Valor digitado → número (NaN se inválido). Uso na web. */
+export function parseDecimalInput(value: string | number): number {
+  const text = normalizeDecimalInput(value);
+  return /^-?\d+(\.\d+)?$/.test(text) ? Number(text) : Number.NaN;
+}
+
 function decimalField(places: number, minInclusive: number) {
   return z
     .union([z.number(), z.string()])
-    .transform((value) => (typeof value === "number" ? String(value) : value.trim()))
+    .transform((value) => normalizeDecimalInput(value))
     .refine(
       (value) =>
         new RegExp(`^\\d+(\\.\\d{1,${places}})?$`).test(value) &&
@@ -1467,8 +1486,8 @@ export const platformActivateSchema = z.object({
   /** Valor recebido; padrão = preço do plano no ciclo */
   amount: z
     .string()
-    .trim()
-    .regex(/^\d{1,9}(\.\d{1,2})?$/, "Valor inválido")
+    .transform((value) => normalizeDecimalInput(value))
+    .pipe(z.string().regex(/^\d{1,9}(\.\d{1,2})?$/, "Valor inválido (ex.: 99,90)"))
     .optional(),
   note: z.string().trim().max(500).optional(),
 });
@@ -1483,8 +1502,8 @@ export type PlatformModulesInput = z.infer<typeof platformModulesSchema>;
 
 const moneyString = z
   .string()
-  .trim()
-  .regex(/^\d{1,9}(\.\d{1,2})?$/, "Valor inválido (use 99.90)");
+  .transform((value) => normalizeDecimalInput(value))
+  .pipe(z.string().regex(/^\d{1,9}(\.\d{1,2})?$/, "Valor inválido (ex.: 99,90)"));
 const limitField = z.number().int().min(1).max(1_000_000).nullable();
 
 /** Kits (Fase 8b): o dono edita preço, módulos e limites de cada kit. */

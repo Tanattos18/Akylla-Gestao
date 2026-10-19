@@ -14,6 +14,7 @@ import {
   type Paginated,
 } from "../../lib/types";
 import { DataTable } from "../../components/ui/DataTable";
+import { formatBrl } from "../../lib/format";
 
 export default function CaixaPage() {
   const router = useRouter();
@@ -261,25 +262,25 @@ export default function CaixaPage() {
             <div className="rounded-lg border border-primary-200 bg-primary-50 p-4">
               <p className="text-xs uppercase text-primary-700">Saldo esperado</p>
               <p className="mt-1 text-2xl font-semibold text-primary-900">
-                R$ {Number(cash.expectedBalance).toFixed(2)}
+                {formatBrl(cash.expectedBalance)}
               </p>
             </div>
             <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-xs uppercase text-slate-500">Entradas (dinheiro)</p>
               <p className="mt-1 text-2xl font-semibold text-slate-900">
-                R$ {Number(cash.entriesTotal).toFixed(2)}
+                {formatBrl(cash.entriesTotal)}
               </p>
             </div>
             <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-xs uppercase text-slate-500">Saídas (dinheiro)</p>
               <p className="mt-1 text-2xl font-semibold text-slate-900">
-                R$ {Number(cash.exitsTotal).toFixed(2)}
+                {formatBrl(cash.exitsTotal)}
               </p>
             </div>
             <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-xs uppercase text-slate-500">Vendas na sessão</p>
               <p className="mt-1 text-2xl font-semibold text-slate-900">
-                R$ {Number(cash.salesTotal).toFixed(2)}
+                {formatBrl(cash.salesTotal)}
               </p>
             </div>
           </section>
@@ -288,7 +289,7 @@ export default function CaixaPage() {
             <div className="text-sm text-slate-600">
               Valor inicial de troco:{" "}
               <strong className="text-slate-900">
-                R$ {Number(cash.initialAmount).toFixed(2)}
+                {formatBrl(cash.initialAmount)}
               </strong>
               {cash.openingNotes && <span className="text-slate-500"> — {cash.openingNotes}</span>}
             </div>
@@ -405,8 +406,7 @@ export default function CaixaPage() {
                         </span>
                       )}</> },
                 { key: "c3", header: "Descrição", cell: (movement) => movement.description, className: "max-w-xs truncate" },
-                { key: "c4", header: "Valor", cell: (movement) => <>{movement.type === "IN" ? "+" : "-"} R${" "}
-                      {Number(movement.amount).toFixed(2)}</>, numeric: true, className: "font-medium" },
+                { key: "c4", header: "Valor", cell: (movement) => <>{movement.type === "IN" ? "+" : "-"} {formatBrl(movement.amount)}</>, numeric: true, className: "font-medium" },
               ]}
             />
           </section>

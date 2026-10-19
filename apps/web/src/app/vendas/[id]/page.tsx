@@ -15,6 +15,7 @@ import {
 import { Receipt } from "../../../components/Receipt";
 import { EmitFiscalButton } from "../../../components/fiscal/EmitFiscalButton";
 import { DataTable } from "../../../components/ui/DataTable";
+import { formatBrl } from "../../../lib/format";
 
 export default function VendaDetalhePage() {
   const router = useRouter();
@@ -247,23 +248,23 @@ export default function VendaDetalhePage() {
                       <span className="ml-1 text-xs text-slate-500">({item.productSku})</span>
                     )}</> },
               { key: "c1", header: "Qtd", cell: (item) => <>{Number(item.quantity)} {productUnitLabels[item.unit]}</>, numeric: true },
-              { key: "c2", header: "Unitário", cell: (item) => <>R$ {Number(item.unitPrice).toFixed(2)}</>, numeric: true },
-              { key: "c3", header: "Subtotal", cell: (item) => <>R$ {Number(item.subtotal).toFixed(2)}</>, numeric: true, className: "font-medium" },
+              { key: "c2", header: "Unitário", cell: (item) => <>{formatBrl(item.unitPrice)}</>, numeric: true },
+              { key: "c3", header: "Subtotal", cell: (item) => <>{formatBrl(item.subtotal)}</>, numeric: true, className: "font-medium" },
             ]}
           />
 
           <div className="mt-4 space-y-1 border-t border-slate-200 pt-3 text-sm">
             <div className="flex justify-between text-slate-600">
               <span>Subtotal</span>
-              <span>R$ {Number(sale.subtotal).toFixed(2)}</span>
+              <span>{formatBrl(sale.subtotal)}</span>
             </div>
             <div className="flex justify-between text-slate-600">
               <span>Desconto</span>
-              <span>- R$ {Number(sale.discount).toFixed(2)}</span>
+              <span>- {formatBrl(sale.discount)}</span>
             </div>
             <div className="flex justify-between text-lg font-semibold text-slate-900">
               <span>Total</span>
-              <span>R$ {Number(sale.total).toFixed(2)}</span>
+              <span>{formatBrl(sale.total)}</span>
             </div>
             <div className="flex justify-between text-slate-600">
               <span>Pagamento</span>

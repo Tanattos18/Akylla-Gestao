@@ -1,5 +1,6 @@
 "use client";
 
+import { normalizeDecimalInput } from "@petflow/shared";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -96,7 +97,7 @@ export default function RegrasComissaoPage() {
           professionalId: form.professionalId || null,
           productId: form.target === "PRODUCT" ? form.productId || null : null,
           categoryId: form.target === "CATEGORY" ? form.categoryId || null : null,
-          percentage: form.percentage.trim().replace(",", "."),
+          percentage: normalizeDecimalInput(form.percentage),
           releasePolicy: form.releasePolicy,
         }),
       });

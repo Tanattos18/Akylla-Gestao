@@ -1,5 +1,6 @@
 "use client";
 
+import { normalizeDecimalInput, parseDecimalInput } from "@petflow/shared";
 import { useEffect, useState } from "react";
 import { api } from "../../lib/api";
 import { formatBrl } from "../../lib/format";
@@ -31,8 +32,8 @@ export function toPayload(items: EditableItem[]) {
     serviceId: item.kind === "SERVICE" ? item.refId || null : null,
     productId: item.kind === "PRODUCT" ? item.refId || null : null,
     description: item.kind === "FREE" ? item.description.trim() : item.description.trim() || null,
-    quantity: item.quantity.trim().replace(",", ".") || "1",
-    unitPrice: item.kind === "FREE" ? item.unitPrice.trim().replace(",", ".") || null : null,
+    quantity: normalizeDecimalInput(item.quantity) || "1",
+    unitPrice: item.kind === "FREE" ? normalizeDecimalInput(item.unitPrice) || null : null,
   }));
 }
 
@@ -56,11 +57,11 @@ export function ItemsEditor({ items, onChange }: { items: EditableItem[]; onChan
   function priceOf(item: EditableItem): number {
     if (item.kind === "SERVICE") return Number(services.find((s) => s.id === item.refId)?.price ?? 0);
     if (item.kind === "PRODUCT") return Number(products.find((p) => p.id === item.refId)?.salePrice ?? 0);
-    return Number(item.unitPrice.replace(",", ".") || 0);
+    return (parseDecimalInput(item.unitPrice || "0") || 0);
   }
 
   const inputClass = "w-full rounded-md border border-slate-300 px-2 py-1.5 text-sm focus:border-primary-500 focus:outline-none";
-  const subtotal = items.reduce((acc, item) => acc + priceOf(item) * Number(item.quantity.replace(",", ".") || 0), 0);
+  const subtotal = items.reduce((acc, item) => acc + priceOf(item) * (parseDecimalInput(item.quantity || "0") || 0), 0);
 
   return (
     <div className="space-y-2">

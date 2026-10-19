@@ -1,5 +1,6 @@
 "use client";
 
+import { normalizeDecimalInput } from "@petflow/shared";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -82,7 +83,7 @@ export default function ProfissionaisPage() {
       const payload = {
         name: form.name.trim(),
         document: form.document.trim() || null,
-        commissionDefault: form.commissionDefault.trim().replace(",", ".") || null,
+        commissionDefault: normalizeDecimalInput(form.commissionDefault) || null,
       };
       if (editingId) {
         await api(`/api/professionals/${editingId}`, { method: "PATCH", body: JSON.stringify(payload) });

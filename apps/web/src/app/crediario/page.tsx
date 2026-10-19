@@ -1,5 +1,6 @@
 "use client";
 
+import { normalizeDecimalInput } from "@petflow/shared";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -108,7 +109,7 @@ function CrediarioContent() {
       await api(`/api/credit-accounts/${selected}`, {
         method: "PATCH",
         body: JSON.stringify({
-          ...(limit.trim() ? { creditLimit: limit.trim().replace(",", ".") } : {}),
+          ...(limit.trim() ? { creditLimit: normalizeDecimalInput(limit) } : {}),
           ...(status ? { status } : {}),
         }),
       });

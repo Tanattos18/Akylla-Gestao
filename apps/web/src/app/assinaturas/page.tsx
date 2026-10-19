@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "../../lib/api";
 import { fetchSession, type Session } from "../../lib/session";
-import { formatDate } from "../../lib/format";
+import { formatDate, formatBrl } from "../../lib/format";
 import {
   subscriptionStatusLabels,
   type Paginated,
@@ -154,7 +154,7 @@ export default function AssinaturasPage() {
                   </Link></> },
           { key: "c1", header: "Plano", cell: (subscription) => <>{subscription.plan.name}
                   <span className="ml-2 text-xs text-slate-500">
-                    R$ {Number(subscription.plan.price).toFixed(2)}
+                    {formatBrl(subscription.plan.price)}
                   </span></> },
           { key: "c2", header: "Período", cell: (subscription) => <>{formatDate(subscription.startAt)} — {formatDate(subscription.endAt)}</> },
           { key: "c3", header: "Renovações", cell: (subscription) => subscription.renewalCount },

@@ -8,6 +8,7 @@ import { fetchSession, type Session } from "../../lib/session";
 import type { Paginated, ServiceDto } from "../../lib/types";
 import { useDialog } from "../../components/ui/Dialog";
 import { DataTable } from "../../components/ui/DataTable";
+import { formatBrl } from "../../lib/format";
 
 const emptyForm = {
   name: "",
@@ -309,7 +310,7 @@ export default function ServicosPage() {
                     <p className="text-xs text-slate-500">{service.description}</p>
                   )}</> },
           { key: "c1", header: "Duração", cell: (service) => <>{service.durationMinutes ? `${service.durationMinutes} min` : "—"}</> },
-          { key: "c2", header: "Preço", cell: (service) => <>R$ {Number(service.price).toFixed(2)}</>, className: "font-medium" },
+          { key: "c2", header: "Preço", cell: (service) => <>{formatBrl(service.price)}</>, className: "font-medium" },
           { key: "c3", header: "Status", cell: (service) => <><span
                     className={
                       service.status === "ACTIVE"
