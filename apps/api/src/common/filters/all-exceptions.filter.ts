@@ -28,16 +28,26 @@ export class AllExceptionsFilter implements ExceptionFilter {
         ? (exception as { code?: unknown }).code
         : undefined;
     const isMulterSizeLimit = exceptionCode === "LIMIT_FILE_SIZE";
+    // Auditoria (bloco 2): violação de índice único do Prisma vira 409, não 500
+    const isUniqueViolation =
+      exceptionCode === "P2002" &&
+      typeof exception === "object" &&
+      exception !== null &&
+      (exception as { name?: unknown }).name === "PrismaClientKnownRequestError";
 
     const status = isMulterSizeLimit
       ? HttpStatus.PAYLOAD_TOO_LARGE
-      : exception instanceof HttpException
+      : isUniqueViolation
+        ? HttpStatus.CONFLICT
+        : exception instanceof HttpException
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
     const detail = isMulterSizeLimit
       ? "Arquivo maior que 5 MB"
-      : exception instanceof HttpException
+      : isUniqueViolation
+        ? "Registro duplicado: já existe um cadastro com estes dados"
+        : exception instanceof HttpException
         ? exception.getResponse()
         : "Erro interno não tratado";
 

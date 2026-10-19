@@ -105,9 +105,16 @@ dono: ISENTAR (sem cobrança) · SUSPENDER (bloqueia login) · REATIVAR
 
 ## Painel do dono (`/plataforma`)
 
-- **Acesso:** só e-mails em `PLATFORM_ADMIN_EMAILS` (o `create-admin.sh`
-  preenche com a primeira conta), com papel ADMIN e, **em produção, com a
-  verificação em duas etapas ativa** (Configurações › Segurança).
+- **Acesso:** só entra quem cumpre todas as condições abaixo.
+  - O e-mail está em `PLATFORM_ADMIN_EMAILS`; o `create-admin.sh` preenche
+    com a primeira conta. O e-mail é único no sistema, então ninguém
+    consegue criar outra conta com ele.
+  - O e-mail está **verificado**.
+  - O papel é ADMIN.
+  - **Em produção, a verificação em duas etapas está ativa**
+    (Configurações › Segurança).
+  - Opcional: com `PLATFORM_COMPANY_SLUG=<slug da sua empresa>` no
+    `/etc/akylla/akylla.env`, só usuários da empresa dona entram.
 - **Contadores por situação**, com filtro e busca por empresa,
   identificador, CNPJ ou e-mail do admin.
 - **Por empresa:**

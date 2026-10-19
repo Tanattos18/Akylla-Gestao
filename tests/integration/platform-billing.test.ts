@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { createTestApp, resetDatabase, sessionCookieFrom } from "../helpers/app";
 import type { PrismaService } from "../../apps/api/src/prisma/prisma.module";
 import { computeAccess } from "../../apps/api/src/billing/access";
+import { env } from "../../apps/api/src/config/env";
 
 /**
  * Fase 8 — cobrança do SaaS: teste grátis, tolerância, somente leitura,
@@ -55,6 +56,7 @@ beforeAll(async () => {
       companyId: ownerCompany.id,
       name: "Dono",
       email: OWNER_EMAIL,
+      emailVerifiedAt: new Date(),
       passwordHash: await bcrypt.hash(PASSWORD, 4),
       role: "ADMIN",
     },
@@ -163,6 +165,32 @@ describe("painel do dono da plataforma", () => {
     expect(me.body.user.isPlatformAdmin).toBe(true);
     const meAdmin = await http().get("/api/auth/me").set("Cookie", admin);
     expect(meAdmin.body.user.isPlatformAdmin).toBe(false);
+  });
+
+  it("ninguém se passa pelo dono: e-mail é único no sistema (409) e o painel exige e-mail verificado e a empresa dona", async () => {
+    await company("impostor");
+    const impostor = await login("admin@impostor.test");
+    const clone = await http()
+      .post("/api/users")
+      .set("Cookie", impostor)
+      .send({ name: "Falso dono", email: OWNER_EMAIL, password: PASSWORD, role: "ADMIN" });
+    expect(clone.status).toBe(409);
+    expect(clone.body.message).toContain("já está em uso");
+
+    const owner = await prisma.user.findFirstOrThrow({ where: { email: OWNER_EMAIL } });
+    await prisma.user.update({ where: { id: owner.id }, data: { emailVerifiedAt: null } });
+    expect((await http().get("/api/platform/companies").set("Cookie", ownerCookie)).status).toBe(403);
+    await prisma.user.update({ where: { id: owner.id }, data: { emailVerifiedAt: new Date() } });
+
+    const previous = env.PLATFORM_COMPANY_SLUG;
+    try {
+      (env as { PLATFORM_COMPANY_SLUG?: string }).PLATFORM_COMPANY_SLUG = "outra-empresa";
+      expect((await http().get("/api/platform/companies").set("Cookie", ownerCookie)).status).toBe(403);
+      (env as { PLATFORM_COMPANY_SLUG?: string }).PLATFORM_COMPANY_SLUG = "akylla";
+      expect((await http().get("/api/platform/companies").set("Cookie", ownerCookie)).status).toBe(200);
+    } finally {
+      (env as { PLATFORM_COMPANY_SLUG?: string }).PLATFORM_COMPANY_SLUG = previous;
+    }
   });
 
   it("lista todas as empresas (atravessa a RLS) com situação e uso", async () => {

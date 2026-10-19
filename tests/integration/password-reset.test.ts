@@ -73,11 +73,10 @@ beforeAll(async () => {
     name: "Duplicado A",
     email: "dup@reset.test",
   });
-  await createUser({
-    companyId: other.id,
-    name: "Duplicado B",
-    email: "dup@reset.test",
-  });
+  // Auditoria (bloco 2): o banco não aceita o mesmo e-mail em outra empresa
+  await expect(
+    createUser({ companyId: other.id, name: "Duplicado B", email: "dup@reset.test" }),
+  ).rejects.toMatchObject({ code: "P2002" });
 });
 
 afterAll(async () => {
@@ -138,13 +137,12 @@ describe("POST /api/auth/reset-password", () => {
     expect(response.status).toBe(404);
   });
 
-  it("responde 400 quando o email pertence a mais de uma conta", async () => {
+  it("e-mail é único: o mesmo e-mail em outra empresa nunca existe (reset atinge uma conta só)", async () => {
     const response = await reset({
       email: "dup@reset.test",
       password: NEW_PASSWORD,
     });
-    expect(response.status).toBe(400);
-    expect(response.body.message).toContain("mais de uma conta");
+    expect(response.status).toBe(200);
   });
 
   it("valida a política de senha (mínimo de 8 caracteres)", async () => {

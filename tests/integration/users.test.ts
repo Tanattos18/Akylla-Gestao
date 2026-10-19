@@ -164,7 +164,7 @@ describe("POST /api/users", () => {
     expect(response.status).toBe(409);
   });
 
-  it("permite o mesmo email em outra empresa", async () => {
+  it("e-mail é único no sistema: o mesmo e-mail em outra empresa → 409 (auditoria bloco 2)", async () => {
     const response = await request(app.getHttpServer())
       .post("/api/users")
       .set("Cookie", adminBCookie)
@@ -174,8 +174,8 @@ describe("POST /api/users", () => {
         password: "OutraSenha123!",
       });
 
-    expect(response.status).toBe(201);
-    expect(response.body.email).toBe("membro@a.test");
+    expect(response.status).toBe(409);
+    expect(response.body.message).toBe("Este e-mail já está em uso no Akylla Gestão");
   });
 
   it("rejeita criação sem permissão administrativa", async () => {

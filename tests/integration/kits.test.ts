@@ -49,6 +49,7 @@ beforeAll(async () => {
       companyId: ownerCompany.id,
       name: "Dono",
       email: OWNER_EMAIL,
+      emailVerifiedAt: new Date(),
       passwordHash: await bcrypt.hash(PASSWORD, 4),
       role: "ADMIN",
     },

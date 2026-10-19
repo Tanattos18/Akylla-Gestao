@@ -99,6 +99,8 @@ Exemplo de execução (PowerShell):
         email: BOOTSTRAP_ADMIN_EMAIL,
         passwordHash,
         role: "ADMIN",
+        // Conta criada pelo dono no servidor: e-mail tido como verificado
+        emailVerifiedAt: new Date(),
       },
     });
 

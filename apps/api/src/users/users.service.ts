@@ -6,6 +6,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import bcrypt from "bcryptjs";
+import { Prisma } from "@prisma/client";
 import { randomBytes } from "node:crypto";
 import { PrismaService } from "../prisma/prisma.module";
 import { TenantLimitsService } from "../tenant-limits/tenant-limits.service";
@@ -42,30 +43,35 @@ export class UsersService {
   async create(auth: AuthContext, input: CreateUserInput) {
     await this.limits.assertCanCreate(auth.companyId, "user");
 
-    const existing = await this.prisma.user.findUnique({
-      where: {
-        companyId_email: { companyId: auth.companyId, email: input.email },
-      },
-    });
-
-    if (existing) {
-      throw new ConflictException("Já existe um usuário com este email nesta empresa");
+    // E-mail é único em TODO o sistema (auditoria bloco 2). A RLS esconde as
+    // outras empresas desta conexão, então a checagem global usa a função
+    // `user_email_in_use` (SECURITY DEFINER, só devolve sim/não) e o índice
+    // único `User_email_key` garante contra corrida (P2002 → 409).
+    const [{ in_use: inUse }] = await this.prisma.$queryRaw<Array<{ in_use: boolean }>>`
+      SELECT user_email_in_use(${input.email}) AS in_use`;
+    if (inUse) {
+      throw new ConflictException("Este e-mail já está em uso no Akylla Gestão");
     }
 
     const passwordHash = await bcrypt.hash(input.password, BCRYPT_ROUNDS);
 
-    const user = await this.prisma.user.create({
-      data: {
-        companyId: auth.companyId,
-        name: input.name,
-        email: input.email,
-        passwordHash,
-        role: input.role,
-      },
-      select: userSelect,
-    });
-
-    return user;
+    try {
+      return await this.prisma.user.create({
+        data: {
+          companyId: auth.companyId,
+          name: input.name,
+          email: input.email,
+          passwordHash,
+          role: input.role,
+        },
+        select: userSelect,
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        throw new ConflictException("Este e-mail já está em uso no Akylla Gestão");
+      }
+      throw error;
+    }
   }
 
   async updateStatus(auth: AuthContext, userId: string, input: UpdateUserStatusInput) {

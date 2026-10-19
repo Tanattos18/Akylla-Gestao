@@ -95,6 +95,11 @@ const schema = z.object({
     .string()
     .optional()
     .transform((v) => (v ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean)),
+  /** Auditoria (bloco 2): slug da empresa dona; com ele, só essa empresa entra no painel */
+  PLATFORM_COMPANY_SLUG: z
+    .string()
+    .optional()
+    .transform((v) => (v && v.trim() ? v.trim().toLowerCase() : undefined)),
   API_DOCS_ENABLED: z
     .enum(["true", "false"])
     .optional()

@@ -1,5 +1,20 @@
 # Banco de dados — diretrizes e modelo atual
 
+## E-mail único (2026-10-19, auditoria bloco 2)
+
+Migration: `20261019200000_user_email_unique`.
+
+- **Índice:** `User.email` passa a ter índice único `User_email_key`, válido
+  para o sistema todo. Antes era único só por empresa.
+- **Duplicados:** a migration para com mensagem se já houver e-mails
+  repetidos; nada é apagado.
+- **Normalização:** os e-mails são gravados em minúsculas.
+- **Função `user_email_in_use(text)`:** é `SECURITY DEFINER`, responde só
+  sim ou não e liga o bypass da RLS apenas durante a consulta. As rotas
+  autenticadas a usam para checar o e-mail em todas as empresas.
+- **Usuários de empresas isentas** (criados pela linha de comando) passam
+  a contar como e-mail verificado.
+
 ## Módulo Pets removido (2026-10-19)
 
 Migration: `20261019180000_remove_pets_module`. O Akylla Gestão é gestão

@@ -12,8 +12,9 @@ import { PrismaService } from "../prisma/prisma.module";
 
 /**
  * Fase 8: só o dono da plataforma entra em /api/platform/*. Regras:
- * e-mail em PLATFORM_ADMIN_EMAILS, papel ADMIN e, em produção, 2FA ativo
- * (o painel enxerga todas as empresas). Qualquer falha → 403 genérico.
+ * e-mail em PLATFORM_ADMIN_EMAILS (único no sistema), e-mail verificado,
+ * empresa dona (PLATFORM_COMPANY_SLUG, quando definido), papel ADMIN e, em
+ * produção, 2FA ativo (o painel enxerga todas as empresas). Falha → 403.
  */
 @Injectable()
 export class PlatformGuard implements CanActivate {
@@ -27,9 +28,11 @@ export class PlatformGuard implements CanActivate {
 
     const user = await this.prisma.user.findFirst({
       where: { id: auth.userId, companyId: auth.companyId },
-      select: { email: true, twoFactorEnabled: true },
+      select: { email: true, twoFactorEnabled: true, emailVerifiedAt: true, company: { select: { slug: true } } },
     });
     if (!user || !env.PLATFORM_ADMIN_EMAILS.includes(user.email.trim().toLowerCase())) throw denied;
+    if (!user.emailVerifiedAt) throw denied;
+    if (env.PLATFORM_COMPANY_SLUG && user.company.slug !== env.PLATFORM_COMPANY_SLUG) throw denied;
     if (env.NODE_ENV === "production" && !user.twoFactorEnabled) {
       throw new ForbiddenException("Ative a verificação em duas etapas (Configurações › Segurança) para usar o painel da plataforma");
     }

@@ -40,7 +40,7 @@ inclui `issues[]`).
 | POST | `/api/auth/logout` | sessão | Revoga a sessão atual |
 | GET | `/api/auth/me` | sessão | Usuário + empresa autenticados |
 | GET | `/api/users` | ADMIN | Lista usuários da empresa |
-| POST | `/api/users` | ADMIN | Cria usuário na empresa |
+| POST | `/api/users` | ADMIN | Cria usuário na empresa. E-mail é **único em todo o sistema** (auditoria bloco 2): já usado em qualquer empresa → **409**. Toda violação de índice único (P2002) responde 409 |
 | POST | `/api/users/:id/reset-password` | ADMIN | **Fase 8:** senha provisória para alguém da equipe (`{temporaryPassword}`), sem depender de e-mail; derruba as sessões. A própria senha → 403 (use `change-password`) |
 | PATCH | `/api/users/:id/status` | ADMIN | Ativa/inativa (revoga sessões) |
 | GET | `/health` | público | Liveness: processo respondendo (não toca no banco) |
