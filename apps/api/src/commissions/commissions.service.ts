@@ -17,6 +17,7 @@ import type {
   UpdateCommissionRuleInput,
   UpdateProfessionalInput,
   UpdateRecordStatusInput,
+  PayFinancialEntryInput,
 } from "@petflow/shared";
 import { PrismaService } from "../prisma/prisma.module";
 import type { AuthContext } from "../common/decorators/auth.decorator";
@@ -591,7 +592,7 @@ export class CommissionsService {
   }
 
   /** Paga a comissão liquidando a conta a pagar (exige caixa aberto). */
-  async pay(auth: AuthContext, id: string) {
+  async pay(auth: AuthContext, id: string, input?: PayFinancialEntryInput) {
     const commission = await this.prisma.commission.findFirst({
       where: { id, companyId: auth.companyId },
       select: { status: true, financialEntryId: true },
@@ -601,7 +602,7 @@ export class CommissionsService {
       throw new ConflictException("Apenas comissões liberadas podem ser pagas");
     }
     // FinancialService.pay sincroniza a comissão para PAID na mesma transação
-    await this.financial.pay(auth, commission.financialEntryId);
+    await this.financial.pay(auth, commission.financialEntryId, input);
     return this.get(auth, id);
   }
 }

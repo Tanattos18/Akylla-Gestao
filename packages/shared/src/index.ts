@@ -584,6 +584,26 @@ export const createFinancialEntrySchema = z.object({
 });
 export type CreateFinancialEntryInput = z.infer<typeof createFinancialEntrySchema>;
 
+/**
+ * Auditoria (bloco 3): forma da liquidação. Só DINHEIRO mexe na gaveta do
+ * caixa (inCash); Pix, cartão, boleto e transferência ficam registrados no
+ * caixa, mas fora do saldo esperado da gaveta.
+ */
+export const settlementMethodSchema = z.enum(["CASH", "PIX", "CARD", "BOLETO", "TRANSFER", "OTHER"]);
+export type SettlementMethod = z.infer<typeof settlementMethodSchema>;
+export const settlementMethodLabels: Record<SettlementMethod, string> = {
+  CASH: "Dinheiro",
+  PIX: "Pix",
+  CARD: "Cartão",
+  BOLETO: "Boleto",
+  TRANSFER: "Transferência",
+  OTHER: "Outro",
+};
+export const payFinancialEntrySchema = z
+  .object({ paymentMethod: settlementMethodSchema.default("CASH") })
+  .default({ paymentMethod: "CASH" });
+export type PayFinancialEntryInput = z.infer<typeof payFinancialEntrySchema>;
+
 export const updateFinancialEntrySchema = createFinancialEntrySchema
   .omit({ direction: true, clientRequestId: true })
   .partial();

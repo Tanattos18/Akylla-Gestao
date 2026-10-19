@@ -194,12 +194,12 @@ Título independente do caixa: a **liquidação** (`POST /:id/pay`) cria um
 
 | Método | Rota | Acesso | Descrição |
 |---|---|---|---|
-| POST | `/api/financial` | sessão | Cria título (`direction` `PAYABLE`/`RECEIVABLE`, `reason`, `dueDate`, `amount`, opcional `clientId`/`supplierId`/`notes`) |
+| POST | `/api/financial` | ADMIN | Cria título (`direction` `PAYABLE`/`RECEIVABLE`, `reason`, `dueDate`, `amount`, opcional `clientId`/`supplierId`/`notes`) |
 | GET | `/api/financial` | sessão | Lista paginada; filtros `direction`, `status`, `search`, `from`, `to`, `page`, `pageSize` |
 | GET | `/api/financial/summary` | sessão | Totais por `direction` e `status` + vencidos; filtros `from`, `to` |
 | GET | `/api/financial/:id` | sessão | Detalhe; outra empresa → **404** |
 | PATCH | `/api/financial/:id` | sessão | Edita campos não críticos (`description`, `dueDate`, `notes`); título `PAID`/`CANCELLED` → 409 |
-| POST | `/api/financial/:id/pay` | sessão | Liquida: `OPEN` → `PAID` e lança no caixa; exige sessão de caixa aberta; já liquidado → 409 |
+| POST | `/api/financial/:id/pay` | ADMIN | `{paymentMethod?: CASH\|PIX\|CARD\|BOLETO\|TRANSFER\|OTHER}` (padrão `CASH`). Liquida: `OPEN` → `PAID` e lança no caixa; só `CASH` entra na gaveta (`inCash`); exige sessão de caixa aberta; já liquidado → 409 |
 | POST | `/api/financial/:id/reverse` | ADMIN | Estorna liquidação auditável (exige `reason` ≥ 3) via movimento compensatório |
 | POST | `/api/financial/:id/cancel` | ADMIN | Cancela título `OPEN` (`reason` ≥ 3); nunca apaga registro |
 
@@ -550,7 +550,7 @@ de negócio: [`docs/akylla/COMISSOES.md`](../akylla/COMISSOES.md).
 | GET | `/api/commissions/summary` | sessão | fechamento por profissional no período: `pending`, `released` (`toPay`), `paid`, `cancelled` |
 | GET | `/api/commissions/:id` | sessão | detalhe com `lines` (base/%/valor/regra por item) |
 | POST | `/api/commissions/:id/release` | ADMIN | `PENDING → RELEASED` + conta a pagar; outro status → 409 |
-| POST | `/api/commissions/:id/pay` | ADMIN | liquida a conta a pagar (exige **caixa aberto**, senão 409) → `PAID` |
+| POST | `/api/commissions/:id/pay` | ADMIN | `{paymentMethod?}` como em `/api/financial/:id/pay`; liquida a conta a pagar (exige **caixa aberto**, senão 409) → `PAID` |
 
 **Integração com vendas:** `POST /api/sales` aceita `professionalId?`
 (ativo, da empresa, senão 400; módulo desativado → 403). A comissão é
@@ -573,7 +573,7 @@ Módulo opcional `CREDIT`. Regras: [`docs/akylla/CREDIARIO.md`](../akylla/CREDIA
 | GET | `/api/credit-accounts/:clientId` | sessão | conta + parcelas (sem conta → 404) |
 | PATCH | `/api/credit-accounts/:clientId` | ADMIN | `{creditLimit?, status?}`: aprova (cria) ou ajusta; criar sem limite → 400; cliente de outra empresa → 404 |
 | GET | `/api/credit-installments` | sessão | parcelas (`status`, `clientId`, `from`/`to` de vencimento) + `totals.amount` |
-| POST | `/api/credit-installments/:id/pay` | ADMIN | recebe a parcela (caixa aberto, senão 409); paga/cancelada → 409 |
+| POST | `/api/credit-installments/:id/pay` | ADMIN | `{paymentMethod?}` (só dinheiro vai para a gaveta); recebe a parcela (caixa aberto, senão 409); paga/cancelada → 409 |
 
 **Venda:** `POST /api/sales` com `paymentMethod: "CREDIARIO"` exige
 `clientId` e `credit {installments 1–24, firstDueDate}` (400 se faltar;

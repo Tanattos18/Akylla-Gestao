@@ -14,11 +14,13 @@ import {
   financialReasonSchema,
   financialSummaryQuerySchema,
   listFinancialQuerySchema,
+  payFinancialEntrySchema,
   updateFinancialEntrySchema,
   type CreateFinancialEntryInput,
   type FinancialReasonInput,
   type FinancialSummaryQuery,
   type ListFinancialQuery,
+  type PayFinancialEntryInput,
   type UpdateFinancialEntryInput,
 } from "@petflow/shared";
 import { AdminGuard } from "../common/guards/admin.guard";
@@ -33,7 +35,9 @@ const summaryPipe = new ZodValidationPipe(financialSummaryQuerySchema);
 export class FinancialController {
   constructor(@Inject(FinancialService) private readonly financial: FinancialService) {}
 
+  /** Auditoria (bloco 3): lançar e liquidar títulos é do administrador */
   @Post()
+  @UseGuards(AdminGuard)
   create(
     @Auth() auth: AuthContext,
     @Body(new ZodValidationPipe(createFinancialEntrySchema)) body: CreateFinancialEntryInput,
@@ -66,8 +70,13 @@ export class FinancialController {
   }
 
   @Post(":id/pay")
-  pay(@Auth() auth: AuthContext, @Param("id") id: string) {
-    return this.financial.pay(auth, id);
+  @UseGuards(AdminGuard)
+  pay(
+    @Auth() auth: AuthContext,
+    @Param("id") id: string,
+    @Body(new ZodValidationPipe(payFinancialEntrySchema)) body: PayFinancialEntryInput,
+  ) {
+    return this.financial.pay(auth, id, body);
   }
 
   @Post(":id/reverse")

@@ -340,20 +340,64 @@ describe("Liquidação e saldos", () => {
     expect(movement?.type).toBe("OUT");
   });
 
-  it("membro comum pode liquidar títulos", async () => {
-    const { body: entry } = await createEntry(memberACookie, {
+  it("membro comum não lança nem liquida títulos (auditoria bloco 3)", async () => {
+    const created = await request(app.getHttpServer())
+      .post("/api/financial")
+      .set("Cookie", memberACookie)
+      .send({ direction: "PAYABLE", description: "Pagamento por membro", amount: "10.00", dueDate: "2026-10-18" });
+    expect(created.status).toBe(403);
+
+    const { body: entry } = await createEntry(adminACookie, {
       direction: "RECEIVABLE",
       description: "Liquidação por membro",
       amount: "10.00",
       dueDate: "2026-10-18",
     });
-
     const pay = await request(app.getHttpServer())
       .post(`/api/financial/${entry.id}/pay`)
       .set("Cookie", memberACookie)
       .send({});
-    expect(pay.status).toBe(201);
-    expect(pay.body.status).toBe("PAID");
+    expect(pay.status).toBe(403);
+  });
+
+  it("Pix e boleto não entram na gaveta; dinheiro entra (inCash pela forma)", async () => {
+    const balance = async () =>
+      Number(
+        (await request(app.getHttpServer()).get("/api/cash/sessions/current").set("Cookie", adminACookie)).body
+          .expectedBalance,
+      );
+    const before = await balance();
+
+    const { body: pix } = await createEntry(adminACookie, {
+      direction: "RECEIVABLE",
+      description: "Recebido por Pix",
+      amount: "50,00",
+      dueDate: "2026-10-18",
+    });
+    const paidPix = await request(app.getHttpServer())
+      .post(`/api/financial/${pix.id}/pay`)
+      .set("Cookie", adminACookie)
+      .send({ paymentMethod: "PIX" });
+    expect(paidPix.status).toBe(201);
+    const pixMovement = await prisma.cashMovement.findFirstOrThrow({ where: { id: paidPix.body.cashMovementId } });
+    expect(pixMovement.inCash).toBe(false);
+    expect(pixMovement.description).toContain("Pix");
+    expect(await balance()).toBe(before);
+
+    const { body: cash } = await createEntry(adminACookie, {
+      direction: "RECEIVABLE",
+      description: "Recebido em dinheiro",
+      amount: "20,00",
+      dueDate: "2026-10-18",
+    });
+    await request(app.getHttpServer()).post(`/api/financial/${cash.id}/pay`).set("Cookie", adminACookie).send({}).expect(201);
+    expect(await balance()).toBe(before + 20);
+
+    const bad = await request(app.getHttpServer())
+      .post(`/api/financial/${cash.id}/pay`)
+      .set("Cookie", adminACookie)
+      .send({ paymentMethod: "CHEQUE" });
+    expect(bad.status).toBe(400);
   });
 
   it("segunda liquidação do mesmo título retorna 409", async () => {

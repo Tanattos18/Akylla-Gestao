@@ -89,6 +89,8 @@ interface PromptOptions extends ConfirmOptions {
   /** Campo opcional: aceita vazio (devolve ""). */
   optional?: boolean;
   multiline?: boolean;
+  /** Lista de opções: vira um seletor (a primeira é a padrão). */
+  choices?: Array<{ value: string; label: string }>;
 }
 
 type Pending =
@@ -122,7 +124,7 @@ export function DialogProvider({ children }: { children: ReactNode }) {
   const prompt = useCallback(
     (options: PromptOptions) =>
       new Promise<string | null>((resolve) => {
-        setText("");
+        setText(options.choices?.[0]?.value ?? "");
         setTouched(false);
         setPending({ kind: "prompt", options, resolve });
       }),
@@ -174,7 +176,21 @@ export function DialogProvider({ children }: { children: ReactNode }) {
             <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium text-slate-700">
               {pending.options.label}
             </label>
-            {pending.options.multiline ? (
+            {pending.options.choices ? (
+              <select
+                id={inputId}
+                autoFocus
+                value={text}
+                onChange={(event) => setText(event.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              >
+                {pending.options.choices.map((choice) => (
+                  <option key={choice.value} value={choice.value}>
+                    {choice.label}
+                  </option>
+                ))}
+              </select>
+            ) : pending.options.multiline ? (
               <textarea
                 id={inputId}
                 autoFocus

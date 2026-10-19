@@ -12,11 +12,13 @@ import {
   releasePendingCommissionsForSale,
   releasePendingCommissionsForServiceOrder,
 } from "../commissions/commission-release";
-import type {
-  CreateFinancialEntryInput,
-  FinancialReasonInput,
-  ListFinancialQuery,
-  UpdateFinancialEntryInput,
+import {
+  settlementMethodLabels,
+  type CreateFinancialEntryInput,
+  type FinancialReasonInput,
+  type ListFinancialQuery,
+  type PayFinancialEntryInput,
+  type UpdateFinancialEntryInput,
 } from "@petflow/shared";
 import type { AuthContext } from "../common/decorators/auth.decorator";
 
@@ -202,7 +204,7 @@ export class FinancialService {
     return formatEntry(updated);
   }
 
-  async pay(auth: AuthContext, id: string) {
+  async pay(auth: AuthContext, id: string, input: PayFinancialEntryInput = { paymentMethod: "CASH" }) {
     return this.prisma.$transaction(async (tx) => {
       const entry = await tx.financialEntry.findFirst({
         where: { id, companyId: auth.companyId },
@@ -277,9 +279,10 @@ export class FinancialService {
           cashSessionId: cashSession.id,
           type: entry.direction === "PAYABLE" ? "OUT" : "IN",
           origin: "ACCOUNT",
-          inCash: true,
+          // Só dinheiro entra/sai da gaveta; Pix/cartão/boleto ficam fora do saldo físico
+          inCash: input.paymentMethod === "CASH",
           amount: entry.amount,
-          description: `Liquidação: ${entry.description}`,
+          description: `Liquidação (${settlementMethodLabels[input.paymentMethod]}): ${entry.description}`,
           createdByUserId: auth.userId,
         },
         select: { id: true },

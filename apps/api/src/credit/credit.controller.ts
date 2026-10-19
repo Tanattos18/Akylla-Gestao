@@ -7,6 +7,8 @@ import {
   type ListCreditAccountsQuery,
   type ListCreditInstallmentsQuery,
   type UpdateCreditAccountInput,
+  payFinancialEntrySchema,
+  type PayFinancialEntryInput,
 } from "@petflow/shared";
 import { AdminGuard } from "../common/guards/admin.guard";
 import { Auth, type AuthContext } from "../common/decorators/auth.decorator";
@@ -55,7 +57,11 @@ export class CreditInstallmentsController {
   @Post(":id/pay")
   @HttpCode(200)
   @UseGuards(AdminGuard)
-  pay(@Auth() auth: AuthContext, @Param("id") id: string) {
-    return this.service.payInstallment(auth, id);
+  pay(
+    @Auth() auth: AuthContext,
+    @Param("id") id: string,
+    @Body(new ZodValidationPipe(payFinancialEntrySchema)) body: PayFinancialEntryInput,
+  ) {
+    return this.service.payInstallment(auth, id, body);
   }
 }

@@ -12,6 +12,7 @@ import type {
   ListCreditInstallmentsQuery,
   SaleCreditInput,
   UpdateCreditAccountInput,
+  PayFinancialEntryInput,
 } from "@petflow/shared";
 import { PrismaService } from "../prisma/prisma.module";
 import type { AuthContext } from "../common/decorators/auth.decorator";
@@ -354,7 +355,7 @@ export class CreditService {
   }
 
   /** Baixa da parcela pelo financeiro (caixa aberto; sincroniza a parcela). */
-  async payInstallment(auth: AuthContext, id: string) {
+  async payInstallment(auth: AuthContext, id: string, input?: PayFinancialEntryInput) {
     await this.markOverdue(this.prisma, auth.companyId);
     const installment = await this.prisma.creditInstallment.findFirst({
       where: { id, companyId: auth.companyId },
@@ -364,7 +365,7 @@ export class CreditService {
     if ((installment.status !== "OPEN" && installment.status !== "OVERDUE") || !installment.financialEntryId) {
       throw new ConflictException("Apenas parcelas em aberto ou vencidas podem ser pagas");
     }
-    await this.financial.pay(auth, installment.financialEntryId);
+    await this.financial.pay(auth, installment.financialEntryId, input);
     const paid = await this.prisma.creditInstallment.findFirstOrThrow({
       where: { id, companyId: auth.companyId },
       select: installmentSelect,

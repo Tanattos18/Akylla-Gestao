@@ -1,6 +1,6 @@
 "use client";
 
-import { normalizeDecimalInput } from "@petflow/shared";
+import { normalizeDecimalInput, settlementMethodLabels } from "@petflow/shared";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -123,14 +123,18 @@ function CrediarioContent() {
   }
 
   async function receive(installment: CreditInstallmentDto) {
-    const ok = await dialog.confirm(
-      `Receber a parcela ${installment.number}/${installment.totalInstallments} de ${installment.client.name} (${formatBrl(installment.amount)})? Entra no caixa aberto agora.`,
-    );
-    if (!ok) return;
+    const paymentMethod = await dialog.prompt({
+      title: `Receber a parcela ${installment.number}/${installment.totalInstallments} de ${installment.client.name} (${formatBrl(installment.amount)})`,
+      description: "Entra no caixa aberto agora. Só dinheiro vai para a gaveta; Pix e cartão ficam registrados fora do saldo da gaveta.",
+      label: "Forma de recebimento",
+      choices: Object.entries(settlementMethodLabels).map(([value, label]) => ({ value, label })),
+      confirmLabel: "Receber",
+    });
+    if (!paymentMethod) return;
     setBusy(true);
     setError(null);
     try {
-      await api(`/api/credit-installments/${installment.id}/pay`, { method: "POST" });
+      await api(`/api/credit-installments/${installment.id}/pay`, { method: "POST", body: JSON.stringify({ paymentMethod }) });
       setNotice("Parcela recebida.");
       await Promise.all([loadDetail(selected), loadList()]);
     } catch (err) {

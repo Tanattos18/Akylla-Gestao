@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { normalizeDecimalInput, parseDecimalInput } from "@petflow/shared";
+import { normalizeDecimalInput, parseDecimalInput, settlementMethodLabels } from "@petflow/shared";
 import { api } from "../lib/api";
 import { formatBrl } from "../lib/format";
 import type {
@@ -156,11 +156,16 @@ export default function FinancialEntries({ direction, isAdmin }: Props) {
   }
 
   async function handlePay(entry: FinancialEntryDto) {
-    if (!await dialog.confirm(`Confirmar liquidação de "${entry.description}" (${formatBrl(entry.amount)})?`)) {
-      return;
-    }
+    const paymentMethod = await dialog.prompt({
+      title: `Liquidar "${entry.description}" (${formatBrl(entry.amount)})`,
+      description: "Só dinheiro entra ou sai da gaveta do caixa. Pix, cartão, boleto e transferência ficam registrados, mas fora do saldo da gaveta.",
+      label: entry.direction === "PAYABLE" ? "Forma de pagamento" : "Forma de recebimento",
+      choices: Object.entries(settlementMethodLabels).map(([value, label]) => ({ value, label })),
+      confirmLabel: "Liquidar",
+    });
+    if (!paymentMethod) return;
     try {
-      await api(`/api/financial/${entry.id}/pay`, { method: "POST" });
+      await api(`/api/financial/${entry.id}/pay`, { method: "POST", body: JSON.stringify({ paymentMethod }) });
       toast.success("Título liquidado e lançado no caixa.");
       await load();
     } catch (err) {
@@ -211,6 +216,8 @@ export default function FinancialEntries({ direction, isAdmin }: Props) {
         </div>
       )}
 
+      {/* Auditoria (bloco 3): lançar e liquidar títulos é do administrador */}
+      {(isAdmin || editingId) && (
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">
           {editingId ? "Editar título" : "Novo título"}
@@ -295,6 +302,7 @@ export default function FinancialEntries({ direction, isAdmin }: Props) {
           </div>
         </form>
       </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-3">
         <label htmlFor="fin-status" className="text-sm text-slate-600">
@@ -349,13 +357,15 @@ export default function FinancialEntries({ direction, isAdmin }: Props) {
                         >
                           Editar
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => void handlePay(entry)}
-                          className="text-primary-700 hover:underline"
-                        >
-                          Liquidar
-                        </button>
+                        {isAdmin && (
+                          <button
+                            type="button"
+                            onClick={() => void handlePay(entry)}
+                            className="text-primary-700 hover:underline"
+                          >
+                            Liquidar
+                          </button>
+                        )}
                         {isAdmin && (
                           <button
                             type="button"
