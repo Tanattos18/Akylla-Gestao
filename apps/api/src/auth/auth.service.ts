@@ -22,6 +22,7 @@ import {
   type ChangePasswordInput,
   type ConfirmPasswordResetInput,
   type DisableTwoFactorInput,
+  type SetupTwoFactorInput,
   type EnableTwoFactorInput,
   type LoginInput,
   type RegisterInput,
@@ -475,9 +476,18 @@ export class AuthService {
    * (exibido uma vez via QR); `enable` ativa após prova de posse; o login
    * passa a exigir o desafio; `disable` exige a senha atual.
    */
-  async setupTwoFactor(auth: AuthContext): Promise<TwoFactorSetupDto> {
+  async setupTwoFactor(auth: AuthContext, input: SetupTwoFactorInput): Promise<TwoFactorSetupDto> {
     if (auth.role !== "ADMIN") {
       throw new ForbiddenException("Segundo fator disponível apenas para administradores");
+    }
+    // Auditoria (bloco 6): sem a senha, quem pegasse a sessão aberta poderia
+    // trocar o segredo (e desligar o 2FA). Senha errada → 400 (não derruba a sessão)
+    const owner = await this.prisma.user.findFirst({
+      where: { id: auth.userId, companyId: auth.companyId },
+      select: { passwordHash: true },
+    });
+    if (!owner || !(await bcrypt.compare(input.password, owner.passwordHash))) {
+      throw new BadRequestException("Senha inválida");
     }
 
     const secret = generateSecret();
@@ -510,7 +520,8 @@ export class AuthService {
     }
     const checked = await verify({ secret: user.twoFactorSecret, token: input.token });
     if (!checked.valid) {
-      throw new UnauthorizedException("Código inválido");
+      // 400, não 401: código errado não é sessão inválida (não manda ao login)
+      throw new BadRequestException("Código inválido. Confira o horário do celular e tente de novo.");
     }
 
     await this.prisma.user.update({
@@ -525,7 +536,7 @@ export class AuthService {
       select: { passwordHash: true },
     });
     if (!user || !(await bcrypt.compare(input.password, user.passwordHash))) {
-      throw new UnauthorizedException("Senha inválida");
+      throw new BadRequestException("Senha inválida");
     }
 
     await this.prisma.user.update({

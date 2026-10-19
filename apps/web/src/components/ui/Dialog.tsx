@@ -89,6 +89,8 @@ interface PromptOptions extends ConfirmOptions {
   /** Campo opcional: aceita vazio (devolve ""). */
   optional?: boolean;
   multiline?: boolean;
+  /** Campo de senha (texto oculto). */
+  password?: boolean;
   /** Lista de opções: vira um seletor (a primeira é a padrão). */
   choices?: Array<{ value: string; label: string }>;
 }
@@ -206,6 +208,8 @@ export function DialogProvider({ children }: { children: ReactNode }) {
               <input
                 id={inputId}
                 autoFocus
+                type={pending.options.password ? "password" : "text"}
+                autoComplete={pending.options.password ? "current-password" : undefined}
                 value={text}
                 maxLength={pending.options.maxLength}
                 aria-invalid={touched && error ? true : undefined}

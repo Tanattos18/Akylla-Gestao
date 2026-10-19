@@ -55,10 +55,22 @@ afterAll(async () => {
 });
 
 describe("2FA/TOTP para ADMIN (N4)", () => {
+  it("setup exige a senha atual (auditoria bloco 6): sem senha ou errada → 400, sessão continua", async () => {
+    const missing = await request(app.getHttpServer()).post("/api/auth/2fa/setup").set("Cookie", adminCookie).send({});
+    expect(missing.status).toBe(400);
+    const wrong = await request(app.getHttpServer())
+      .post("/api/auth/2fa/setup")
+      .set("Cookie", adminCookie)
+      .send({ password: "senha-errada" });
+    expect(wrong.status).toBe(400);
+    expect((await request(app.getHttpServer()).get("/api/auth/me").set("Cookie", adminCookie)).status).toBe(200);
+  });
+
   it("setup gera segredo + otpauth; enable ativa com código válido", async () => {
     const setup = await request(app.getHttpServer())
       .post("/api/auth/2fa/setup")
-      .set("Cookie", adminCookie);
+      .set("Cookie", adminCookie)
+      .send({ password: PASSWORD });
     expect(setup.status).toBe(200);
     expect(setup.body.secret).toBeTruthy();
     expect(setup.body.otpauthUrl).toContain("otpauth://");
@@ -71,17 +83,19 @@ describe("2FA/TOTP para ADMIN (N4)", () => {
     expect(enabled.status).toBe(200);
   });
 
-  it("enable com código errado é rejeitado", async () => {
+  it("enable com código errado é rejeitado com 400 (não derruba a sessão)", async () => {
     const setup = await request(app.getHttpServer())
       .post("/api/auth/2fa/setup")
-      .set("Cookie", adminCookie);
+      .set("Cookie", adminCookie)
+      .send({ password: PASSWORD });
     expect(setup.status).toBe(200);
 
     const enabled = await request(app.getHttpServer())
       .post("/api/auth/2fa/enable")
       .set("Cookie", adminCookie)
       .send({ token: "000000" });
-    expect(enabled.status).toBe(401);
+    expect(enabled.status).toBe(400);
+    expect((await request(app.getHttpServer()).get("/api/auth/me").set("Cookie", adminCookie)).status).toBe(200);
 
     // Reativa para os próximos testes (setup desliga até o enable)
     const reenabled = await request(app.getHttpServer())
@@ -132,7 +146,8 @@ describe("2FA/TOTP para ADMIN (N4)", () => {
 
     const setup = await request(app.getHttpServer())
       .post("/api/auth/2fa/setup")
-      .set("Cookie", memberCookie);
+      .set("Cookie", memberCookie)
+      .send({ password: PASSWORD });
     expect(setup.status).toBe(403);
   });
 
@@ -153,6 +168,6 @@ describe("2FA/TOTP para ADMIN (N4)", () => {
       .post("/api/auth/2fa/disable")
       .set("Cookie", adminCookie)
       .send({ password: "senha-errada" });
-    expect(disabled.status).toBe(401);
+    expect(disabled.status).toBe(400);
   });
 });

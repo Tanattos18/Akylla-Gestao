@@ -37,9 +37,26 @@ export function SecurityForm() {
   }, [setup]);
 
   async function start() {
+    const password = await dialog.prompt({
+      title: "Confirme sua senha",
+      description: "Para gerar o código QR da verificação em duas etapas, confirme a senha atual.",
+      label: "Senha atual",
+      password: true,
+      minLength: 1,
+      maxLength: 200,
+      confirmLabel: "Continuar",
+    });
+    if (!password) return;
     setBusy(true);
     try {
-      setSetup(await api<TwoFactorSetupDto>("/api/auth/2fa/setup", { method: "POST" }));
+      // redirectOnUnauthorized: false — senha/código errados nunca levam ao login
+      setSetup(
+        await api<TwoFactorSetupDto>("/api/auth/2fa/setup", {
+          method: "POST",
+          body: JSON.stringify({ password }),
+          redirectOnUnauthorized: false,
+        }),
+      );
       setCode("");
     } catch (err) {
       toast.error(err);
@@ -52,7 +69,11 @@ export function SecurityForm() {
     event.preventDefault();
     setBusy(true);
     try {
-      await api("/api/auth/2fa/enable", { method: "POST", body: JSON.stringify({ token: code.trim() }) });
+      await api("/api/auth/2fa/enable", {
+        method: "POST",
+        body: JSON.stringify({ token: code.trim() }),
+        redirectOnUnauthorized: false,
+      });
       setEnabled(true);
       setSetup(null);
       toast.success("Verificação em duas etapas ativada. No próximo login o código será pedido.");
@@ -68,6 +89,7 @@ export function SecurityForm() {
       title: "Desativar a verificação em duas etapas",
       description: "Sua conta fica protegida só pela senha.",
       label: "Sua senha",
+      password: true,
       minLength: 1,
       maxLength: 200,
       danger: true,
@@ -76,7 +98,11 @@ export function SecurityForm() {
     if (!password) return;
     setBusy(true);
     try {
-      await api("/api/auth/2fa/disable", { method: "POST", body: JSON.stringify({ password }) });
+      await api("/api/auth/2fa/disable", {
+        method: "POST",
+        body: JSON.stringify({ password }),
+        redirectOnUnauthorized: false,
+      });
       setEnabled(false);
       toast.success("Verificação em duas etapas desativada.");
     } catch (err) {

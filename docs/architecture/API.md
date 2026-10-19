@@ -32,9 +32,9 @@ inclui `issues[]`).
 | POST | `/api/auth/reset-password` | público (flag) | Redefine a senha pelo email digitado; só responde quando `PASSWORD_RESET_ENABLED=true` (senão 404), com rate limit próprio (`reset|ip|email`); usuário inativo/inexistente → 404, email em múltiplas contas → 400; revoga as sessões abertas do usuário |
 | POST | `/api/auth/request-password-reset` | público | `{email}` → sempre 200 `{ok:true}` (não revela se a conta existe); gera token de redefinição de uso único. Rate limit `request-reset|ip|email` |
 | POST | `/api/auth/confirm-password-reset` | público | `{token, password}` → 200 `{ok:true}`; token inválido/expirado → 400. Rate limit `confirm-reset|ip` |
-| POST | `/api/auth/2fa/setup` | sessão (só ADMIN) | Gera o segredo TOTP e devolve os dados para o app autenticador (2FA ainda inativo); MEMBER → 403 |
-| POST | `/api/auth/2fa/enable` | sessão | `{token}` (código de 6 dígitos) confirma e ativa o 2FA |
-| POST | `/api/auth/2fa/disable` | sessão | `{password}` desativa o 2FA |
+| POST | `/api/auth/2fa/setup` | sessão (só ADMIN) | `{password}` (senha atual; errada → **400**). Gera o segredo TOTP e devolve os dados para o app autenticador (2FA ainda inativo); MEMBER → 403 |
+| POST | `/api/auth/2fa/enable` | sessão | `{token}` (código de 6 dígitos) confirma e ativa o 2FA; código errado → **400** (nunca 401: não derruba a sessão) |
+| POST | `/api/auth/2fa/disable` | sessão | `{password}` desativa o 2FA; senha errada → **400** |
 | POST | `/api/auth/2fa/verify` | público | `{challengeId, token}`: segunda etapa do login com 2FA; abre a sessão (cookie). Rate limit por IP |
 | POST | `/api/auth/change-password` | sessão | **Fase 8:** `{currentPassword, newPassword}` (8–72): troca a própria senha e encerra as outras sessões do usuário (a atual continua). Senha atual errada ou igual → 400. Rate limit por usuário |
 | POST | `/api/auth/logout` | sessão | Revoga a sessão atual |

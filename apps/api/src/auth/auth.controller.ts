@@ -20,6 +20,7 @@ import {
   enableTwoFactorSchema,
   verifyTwoFactorSchema,
   disableTwoFactorSchema,
+  setupTwoFactorSchema,
   verifyEmailSchema,
   resendVerificationSchema,
   type RegisterPendingResponse,
@@ -27,6 +28,7 @@ import {
   type VerifyEmailInput,
   type ConfirmPasswordResetInput,
   type DisableTwoFactorInput,
+  type SetupTwoFactorInput,
   type EnableTwoFactorInput,
   type LoginInput,
   type MeResponse,
@@ -200,8 +202,11 @@ export class AuthController {
 
   @Post("2fa/setup")
   @HttpCode(200)
-  setupTwoFactor(@Auth() auth: AuthContext) {
-    return this.authService.setupTwoFactor(auth);
+  setupTwoFactor(
+    @Auth() auth: AuthContext,
+    @Body(new ZodValidationPipe(setupTwoFactorSchema)) body: SetupTwoFactorInput,
+  ) {
+    return this.authService.setupTwoFactor(auth, body);
   }
 
   @Post("2fa/enable")

@@ -100,6 +100,12 @@ export const disableTwoFactorSchema = z.object({
 
 export type DisableTwoFactorInput = z.infer<typeof disableTwoFactorSchema>;
 
+/** Auditoria (bloco 6): gerar/trocar o segredo do 2FA exige a senha atual. */
+export const setupTwoFactorSchema = z.object({
+  password: z.string().min(1, "Senha é obrigatória").max(200),
+});
+export type SetupTwoFactorInput = z.infer<typeof setupTwoFactorSchema>;
+
 export const twoFactorSetupSchema = z.object({
   secret: z.string(),
   otpauthUrl: z.string(),
