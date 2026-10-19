@@ -29,14 +29,14 @@ while true; do
   echo "Senhas diferentes ou curtas demais. Tente de novo."
 done
 
-sudo -u "$APP_USER" \
+runuser -u "$APP_USER" -- env \
   BOOTSTRAP_COMPANY_NAME="$NAME" BOOTSTRAP_COMPANY_SLUG="demo-$PRESET" \
   BOOTSTRAP_ADMIN_NAME="Demonstração" BOOTSTRAP_ADMIN_EMAIL="$EMAIL" BOOTSTRAP_ADMIN_PASSWORD="$PASS" \
   bash -c "cd '$APP_DIR' && set -a && source '$ENV_FILE' && set +a && npm run bootstrap:admin"
 unset PASS PASS2
 
 echo "==> Populando com dados fictícios ($PRESET)…"
-sudo -u "$APP_USER" bash -c "cd '$APP_DIR' && set -a && source '$ENV_FILE' && set +a && npm run db:seed:demo -- --company=demo-$PRESET --preset=$PRESET"
+runuser -u "$APP_USER" -- bash -c "cd '$APP_DIR' && set -a && source '$ENV_FILE' && set +a && npm run db:seed:demo -- --company=demo-$PRESET --preset=$PRESET"
 
 cat <<FIM
 

@@ -11,7 +11,7 @@
 #   - gera TODAS as senhas e chaves aqui mesmo (nada passa por chat/e-mail)
 #   - compila API, web e worker, aplica as migrations
 #   - serviços systemd: akylla-api, akylla-web, akylla-worker
-#   - firewall (22, 80, 443) e backup diário às 02:00
+#   - firewall (22, 80, 443), 2 GB de swap e backup diário às 02:00 (com trava)
 #
 # Segredos ficam em /etc/akylla/akylla.env (só root e o usuário akylla leem).
 set -euo pipefail
@@ -42,6 +42,20 @@ log "1/9 Pacotes do sistema"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
 apt-get install -y curl git ca-certificates gnupg ufw openssl build-essential debian-keyring debian-archive-keyring apt-transport-https
+
+# Auditoria (bloco 9): 2 GB de swap — o build do Next numa VPS de 4 GB pode
+# estourar a memória; sem swap o processo é morto no meio da atualização
+if ! swapon --show | grep -q .; then
+  if [[ ! -f /swapfile ]]; then
+    fallocate -l 2G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=2048
+    chmod 600 /swapfile
+    mkswap /swapfile
+  fi
+  swapon /swapfile
+  grep -q '^/swapfile ' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
+  sysctl -w vm.swappiness=10 >/dev/null
+  echo 'vm.swappiness=10' > /etc/sysctl.d/99-akylla-swap.conf
+fi
 
 log "2/9 Node.js 22"
 if ! command -v node >/dev/null || [[ "$(node -v)" != v22* ]]; then
@@ -74,16 +88,16 @@ id "$APP_USER" >/dev/null 2>&1 || useradd --system --create-home --home-dir "/ho
 install -d -o "$APP_USER" -g "$APP_USER" -m 750 "$APP_DIR" "$DATA_DIR" "$DATA_DIR/uploads" "$BACKUP_DIR"
 install -d -o root -g "$APP_USER" -m 750 "$ENV_DIR"
 if [[ -d "$APP_DIR/.git" ]]; then
-  sudo -u "$APP_USER" git -C "$APP_DIR" fetch origin "$BRANCH"
-  sudo -u "$APP_USER" git -C "$APP_DIR" checkout -B "$BRANCH" "origin/$BRANCH"
+  runuser -u "$APP_USER" -- git -C "$APP_DIR" fetch origin "$BRANCH"
+  runuser -u "$APP_USER" -- git -C "$APP_DIR" checkout -B "$BRANCH" "origin/$BRANCH"
 else
-  sudo -u "$APP_USER" git clone --branch "$BRANCH" "$REPO_URL" "$APP_DIR"
+  runuser -u "$APP_USER" -- git clone --branch "$BRANCH" "$REPO_URL" "$APP_DIR"
 fi
 
 log "6/9 Banco e segredos"
 if [[ ! -f "$ENV_FILE" ]]; then
   DB_PASS="$(rand 32)"
-  sudo -u postgres psql -v ON_ERROR_STOP=1 <<SQL
+  runuser -u postgres -- psql -v ON_ERROR_STOP=1 <<SQL
 DO \$\$ BEGIN
   IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '$DB_ROLE') THEN
     -- CREATEDB: o backup diário testa o restore num banco temporário
@@ -93,14 +107,15 @@ DO \$\$ BEGIN
   END IF;
 END \$\$;
 SQL
-  sudo -u postgres psql -tc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME'" | grep -q 1 \
-    || sudo -u postgres createdb -O "$DB_ROLE" "$DB_NAME"
-  sudo -u postgres psql -v ON_ERROR_STOP=1 -d "$DB_NAME" -c "ALTER SCHEMA public OWNER TO $DB_ROLE;"
+  runuser -u postgres -- psql -tc "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME'" | grep -q 1 \
+    || runuser -u postgres -- createdb -O "$DB_ROLE" "$DB_NAME"
+  runuser -u postgres -- psql -v ON_ERROR_STOP=1 -d "$DB_NAME" -c "ALTER SCHEMA public OWNER TO $DB_ROLE;"
 
   umask 027
   cat > "$ENV_FILE" <<ENV
 # Gerado por scripts/deploy/vps/install.sh em $(date -Iseconds). NÃO versionar.
 NODE_ENV=production
+API_HOST=127.0.0.1
 API_PORT=3001
 DATABASE_URL=postgresql://$DB_ROLE:$DB_PASS@127.0.0.1:5432/$DB_NAME
 APP_ORIGINS=https://$DOMAIN
@@ -147,12 +162,12 @@ else
   echo "$ENV_FILE já existe: mantido (senhas e chaves não mudam)."
 fi
 # Backup testa o restore num banco temporário: o role precisa de CREATEDB
-sudo -u postgres psql -v ON_ERROR_STOP=1 -c "ALTER ROLE $DB_ROLE CREATEDB;" >/dev/null
+runuser -u postgres -- psql -v ON_ERROR_STOP=1 -c "ALTER ROLE $DB_ROLE CREATEDB;" >/dev/null
 # O código lê .env da raiz: link para o arquivo protegido
 ln -sf "$ENV_FILE" "$APP_DIR/.env"
 
 log "7/9 Dependências, build e migrations (pode levar alguns minutos)"
-sudo -u "$APP_USER" bash -c "
+runuser -u "$APP_USER" -- bash -c "
   set -euo pipefail
   cd '$APP_DIR'
   set -a; source '$ENV_FILE'; set +a
@@ -221,17 +236,20 @@ ufw --force enable >/dev/null
 
 log "9/9 Backup diário (02:00) e verificação"
 cat > /etc/cron.d/akylla-backup <<CRON
-# Backup diário do Akylla (dump + verificação + retenção). Log em $BACKUP_DIR/backup.log
-0 2 * * * $APP_USER cd $APP_DIR && /usr/bin/npm run db:backup >> $BACKUP_DIR/cron.log 2>&1
+# Backup diário do Akylla (dump + verificação + retenção), com trava contra execução dupla. Log em $BACKUP_DIR/backup.log
+0 2 * * * $APP_USER cd $APP_DIR && /usr/bin/flock -n /var/lock/akylla-backup.lock /usr/bin/npm run db:backup >> $BACKUP_DIR/cron.log 2>&1
 CRON
 chmod 644 /etc/cron.d/akylla-backup
+touch /var/lock/akylla-backup.lock && chown "$APP_USER" /var/lock/akylla-backup.lock
 
 for i in $(seq 1 60); do
-  if curl -fsS http://127.0.0.1:3001/health/ready 2>/dev/null | grep -q '"database":"ok"'; then break; fi
+  if curl -fsS http://127.0.0.1:3001/health/ready 2>/dev/null | grep -q '"database":"ok"' \
+    && curl -fsS -o /dev/null http://127.0.0.1:3000/login 2>/dev/null; then break; fi
   sleep 2
 done
 curl -fsS http://127.0.0.1:3001/health/ready && echo
-sudo -u postgres psql -tAc "SELECT 'role akylla_app: superuser=' || rolsuper || ' bypassrls=' || rolbypassrls FROM pg_roles WHERE rolname='$DB_ROLE'"
+curl -fsS -o /dev/null -w "web (3000): HTTP %{http_code}\n" http://127.0.0.1:3000/login || echo "web (3000) ainda não respondeu: journalctl -u akylla-web -n 50"
+runuser -u postgres -- psql -tAc "SELECT 'role akylla_app: superuser=' || rolsuper || ' bypassrls=' || rolbypassrls FROM pg_roles WHERE rolname='$DB_ROLE'"
 
 cat <<FIM
 

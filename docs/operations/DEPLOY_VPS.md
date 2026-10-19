@@ -71,9 +71,29 @@ fictícias de `docs/demo/`.
 sudo bash /opt/akylla/scripts/deploy/vps/update.sh
 ```
 
-O script faz backup, baixa a `main`, compila, aplica as migrations,
-reinicia e confere o `/health/ready`. Se a API não responder em 2 minutos,
-ele mostra o comando para voltar à versão anterior.
+O script segue estes passos:
+
+1. Faz backup do banco, com a mesma trava do backup das 02:00, para os dois
+   nunca rodarem juntos.
+2. Baixa a `main`, compila e aplica as migrations.
+3. Reinicia e confere a **API (3001)** e a **web (3000)**.
+4. **Se algo falhar, volta sozinho para a versão anterior** e avisa. As
+   migrations que já rodaram ficam no banco; para voltar o banco também, use
+   o backup do passo 1 (`/var/backups/akylla`).
+
+Versão específica (também serve para voltar manualmente):
+
+```bash
+sudo bash /opt/akylla/scripts/deploy/vps/update.sh 9601d85   # commit, tag ou branch
+```
+
+Outros pontos da instalação:
+- **Memória:** o `install.sh` cria 2 GB de swap, para o build do Next não
+  ficar sem memória numa KVM 1.
+- **Rede:** a API escuta só em `127.0.0.1` (`API_HOST`) e confia no
+  `X-Forwarded-For` só quando a conexão vem da própria máquina (Caddy e
+  Next). Assim, o IP real do cliente vale para os limites de tentativas, e
+  ninguém de fora consegue forjá-lo.
 
 ## 4. Operação
 
@@ -82,7 +102,7 @@ ele mostra o comando para voltar à versão anterior.
 | Situação | `systemctl status akylla-api akylla-web akylla-worker` |
 | Logs | `journalctl -u akylla-api -f` |
 | Editar configuração | `sudo nano /etc/akylla/akylla.env` e depois `sudo systemctl restart akylla-api akylla-web akylla-worker` (as variáveis `NEXT_PUBLIC_*` exigem rodar o `update.sh`) |
-| Backup manual | `sudo -u akylla bash -c 'cd /opt/akylla && npm run db:backup'` |
+| Backup manual | `sudo flock -w 600 /var/lock/akylla-backup.lock runuser -u akylla -- bash -c 'cd /opt/akylla && npm run db:backup'` |
 | Saúde | `curl http://127.0.0.1:3001/health/ready` |
 
 Monitoramento externo: UptimeRobot em

@@ -2,10 +2,8 @@ import "reflect-metadata";
 import "./instrument";
 import { NestFactory } from "@nestjs/core";
 import { Logger } from "@nestjs/common";
-import cookieParser from "cookie-parser";
 import { AppModule } from "./app.module";
-import { AllExceptionsFilter } from "./common/filters/all-exceptions.filter";
-import { securityHeadersMiddleware } from "./common/middleware/security-headers.middleware";
+import { configureHttp } from "./common/bootstrap/configure-http";
 import { env, allowedOrigins } from "./config/env";
 import { captureServerError, flushSentry } from "./monitoring/sentry";
 import { setupOpenApi } from "./openapi/openapi";
@@ -16,12 +14,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
   const logger = new Logger("Bootstrap");
 
-  app.setGlobalPrefix("api", { exclude: ["health", "health/ready"] });
-  // Não anunciar a tecnologia do servidor (auditoria pós-Fase 8)
-  app.getHttpAdapter().getInstance().disable("x-powered-by");
-  app.use(cookieParser());
-  app.use(securityHeadersMiddleware);
-  app.useGlobalFilters(new AllExceptionsFilter());
+  configureHttp(app);
   app.enableCors({
     origin: allowedOrigins,
     credentials: true,
@@ -35,8 +28,10 @@ async function bootstrap() {
     logger.log("Documentação da API em /api/docs");
   }
 
-  await app.listen(env.API_PORT);
-  logger.log(`Akylla Gestão API disponível em http://localhost:${env.API_PORT}`);
+  // Auditoria (bloco 9): escuta só na própria máquina (o Caddy publica);
+  // API_HOST=0.0.0.0 só se a API rodar em outro servidor/contêiner
+  await app.listen(env.API_PORT, env.API_HOST);
+  logger.log(`Akylla Gestão API disponível em http://${env.API_HOST}:${env.API_PORT}`);
 }
 
 bootstrap().catch(async (error) => {

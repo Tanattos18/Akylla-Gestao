@@ -6,7 +6,7 @@ import type { NextConfig } from "next";
  * (URL interna/privada da API, sem barra final) no **build** do web — o
  * Next grava os rewrites no manifesto durante o `next build`.
  */
-const apiUrl = (process.env.API_INTERNAL_URL || "http://localhost:3001").replace(/\/+$/, "");
+const apiUrl = (process.env.API_INTERNAL_URL || "http://127.0.0.1:3001").replace(/\/+$/, "");
 
 /**
  * Cabeçalhos de segurança das páginas (auditoria pós-Fase 8). A política de

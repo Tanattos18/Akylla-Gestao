@@ -1,10 +1,8 @@
 ﻿import { INestApplication } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
-import cookieParser from "cookie-parser";
 import type request from "supertest";
 import { AppModule } from "../../apps/api/src/app.module";
-import { AllExceptionsFilter } from "../../apps/api/src/common/filters/all-exceptions.filter";
-import { securityHeadersMiddleware } from "../../apps/api/src/common/middleware/security-headers.middleware";
+import { configureHttp } from "../../apps/api/src/common/bootstrap/configure-http";
 import { PrismaService } from "../../apps/api/src/prisma/prisma.module";
 
 export async function createTestApp(): Promise<{
@@ -12,11 +10,7 @@ export async function createTestApp(): Promise<{
   prisma: PrismaService;
 }> {
   const app = await NestFactory.create(AppModule, { logger: false, rawBody: true });
-  app.setGlobalPrefix("api", { exclude: ["health", "health/ready"] });
-  app.getHttpAdapter().getInstance().disable("x-powered-by");
-  app.use(cookieParser());
-  app.use(securityHeadersMiddleware);
-  app.useGlobalFilters(new AllExceptionsFilter());
+  configureHttp(app);
   await app.init();
 
   const prisma = app.get(PrismaService);
