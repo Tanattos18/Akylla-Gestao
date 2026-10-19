@@ -10,7 +10,7 @@
 
 | Conceito | No Akylla |
 |---|---|
-| **Profissional** | quem recebe comissão (vendedor, tosador, cabeleireiro). Não precisa ser usuário do sistema. Nunca é apagado, só inativado |
+| **Profissional** | quem recebe comissão (vendedor, técnico, cabeleireiro). Não precisa ser usuário do sistema. Nunca é apagado, só inativado |
 | **Regra** | percentual com alvo opcional: profissional e/ou produto **ou** categoria. Tem política de liberação e pode ser ativada/desativada |
 | **Comissão** | uma por (venda × profissional), com o detalhamento por item em `lines` |
 

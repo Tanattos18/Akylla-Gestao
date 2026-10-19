@@ -765,7 +765,7 @@ model Sale {
   @@index([companyId, professionalId])
 }
 
-/// Fase 2 · 2.1 — profissional que recebe comissão (vendedor, tosador,
+/// Fase 2 · 2.1 — profissional que recebe comissão (vendedor, técnico,
 /// cabeleireiro…). Não é usuário do sistema; nunca é apagado (status).
 model Professional {
   id                String           @id @default(cuid())
