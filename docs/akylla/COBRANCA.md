@@ -96,7 +96,10 @@ dono: ISENTAR (sem cobrança) · SUSPENDER (bloqueia login) · REATIVAR
    `create-admin.sh` ou indica o formulário do site.
 2. Em **Faturamento**, os botões "Contratar mensal/anual" abrem o
    WhatsApp de vendas (`NEXT_PUBLIC_SALES_WHATSAPP`) com o plano escolhido.
-3. O cliente paga por Pix ou boleto.
+3. O cliente paga por Pix ou boleto. **Faturamento › Pagar com Pix** mostra
+   a chave Pix da Akylla (Mercado Pago), o favorecido, o botão "Copiar chave
+   Pix" e "Enviar comprovante" (WhatsApp). Trocar a chave:
+   `NEXT_PUBLIC_PIX_KEY` / `NEXT_PUBLIC_PIX_RECEIVER` (exige rebuild da web).
 4. O dono abre **Administração › Plataforma** e usa **Registrar pagamento**
    (plano, ciclo, forma, valor e observação). A empresa fica ativa na hora
    e o pagamento entra no histórico.

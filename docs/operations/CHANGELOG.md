@@ -6,6 +6,15 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-19 - Pagamento por Pix no Faturamento
+
+### Adicionado
+
+- **Faturamento › Pagar com Pix:** chave Pix de recebimento da Akylla
+  (Mercado Pago), favorecido, "Copiar chave Pix" e "Enviar comprovante"
+  pelo WhatsApp; atalho "Pagar com Pix" no aviso de vencido/somente leitura.
+  Configurável por `NEXT_PUBLIC_PIX_KEY` / `NEXT_PUBLIC_PIX_RECEIVER`.
+
 ## [Akylla Gestão] - 2026-10-18 - Fase 8b: kits de acesso e módulos avulsos
 
 ### Adicionado

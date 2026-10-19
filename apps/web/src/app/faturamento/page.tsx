@@ -15,6 +15,7 @@ import {
 import { useDialog } from "../../components/ui/Dialog";
 import { accessStatusLabels, businessModuleLabels, type AccessSummaryDto, type ModuleOfferDto } from "@petflow/shared";
 import { ComboBuilder } from "../../components/billing/ComboBuilder";
+import { PixCard } from "../../components/billing/PixCard";
 
 /** WhatsApp de vendas (Fase 8): contratação por proposta até o Mercado Pago entrar em produção */
 const SALES_WHATSAPP = process.env.NEXT_PUBLIC_SALES_WHATSAPP || "5562981517002";
@@ -183,6 +184,11 @@ export default function FaturamentoPage() {
                 className="ml-auto rounded-md bg-primary-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-800"
               >
                 Contratar / regularizar
+              </a>
+            )}
+            {(access.status === "GRACE" || access.status === "READ_ONLY") && (
+              <a href="#pagar-com-pix" className="text-xs font-medium text-primary-700 hover:underline">
+                Pagar com Pix
               </a>
             )}
           </div>
@@ -416,6 +422,12 @@ export default function FaturamentoPage() {
           contactLink={(text) => whatsappText(`${text} Empresa: ${session.company.name}.`)}
         />
       )}
+
+      <PixCard
+        receiptLink={whatsappText(
+          `Olá! Paguei o Akylla Gestão por Pix para a empresa ${session.company.name}. Segue o comprovante.`,
+        )}
+      />
     </div>
   );
 }
