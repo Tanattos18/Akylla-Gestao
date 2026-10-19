@@ -6,6 +6,7 @@ import { createTestApp, resetDatabase, sessionCookieFrom } from "../helpers/app"
 import type { PrismaService } from "../../apps/api/src/prisma/prisma.module";
 import { computeAccess } from "../../apps/api/src/billing/access";
 import { env } from "../../apps/api/src/config/env";
+import { addCalendarMonths } from "../../apps/api/src/platform/platform.service";
 
 /**
  * Fase 8 — cobrança do SaaS: teste grátis, tolerância, somente leitura,
@@ -221,7 +222,7 @@ describe("painel do dono da plataforma", () => {
     expect(payments.body.items[0]).toMatchObject({ amount: "79.90", method: "PIX", recordedBy: OWNER_EMAIL, note: "Pix 18/10" });
   });
 
-  it("renovação antecipada soma ao fim do período; anual vale 365 dias pelo preço anual", async () => {
+  it("renovação antecipada soma ao fim do período; anual vale 12 meses de calendário pelo preço anual", async () => {
     const id = (await prisma.company.findFirstOrThrow({ where: { slug: "vencida" } })).id;
     const before = await prisma.tenantSubscription.findUniqueOrThrow({ where: { companyId: id } });
     await http()
@@ -231,13 +232,49 @@ describe("painel do dono da plataforma", () => {
       .expect(200);
     const after = await prisma.tenantSubscription.findUniqueOrThrow({ where: { companyId: id } });
     expect(after.currentPeriodStart.getTime()).toBe(before.currentPeriodEnd.getTime());
-    expect(after.currentPeriodEnd.getTime() - after.currentPeriodStart.getTime()).toBe(365 * DAY_MS);
+    expect(after.currentPeriodEnd.getTime()).toBe(addCalendarMonths(after.currentPeriodStart, 12).getTime());
     expect(after.billingCycle).toBe("YEARLY");
     const payments = await http().get(`/api/platform/companies/${id}/payments`).set("Cookie", ownerCookie);
     expect(payments.body.items[0]).toMatchObject({ amount: "799.00", cycle: "YEARLY" });
     expect(
       (await http().post(`/api/platform/companies/${id}/activate`).set("Cookie", ownerCookie).send({ planId: "x", method: "PIX" })).status,
     ).toBe(404);
+  });
+
+  it("pagamento durante o teste começa no fim do teste (cliente não perde dias) e mensal = 1 mês de calendário", async () => {
+    const trialEnd = new Date(Date.now() + 6 * DAY_MS);
+    const id = await company("pagou-no-teste", { trialEndsAt: trialEnd });
+    await http()
+      .post(`/api/platform/companies/${id}/activate`)
+      .set("Cookie", ownerCookie)
+      .send({ planId: "tenantplan_essencial", cycle: "MONTHLY", method: "PIX" })
+      .expect(200);
+    const sub = await prisma.tenantSubscription.findUniqueOrThrow({ where: { companyId: id } });
+    expect(sub.currentPeriodStart.getTime()).toBe(trialEnd.getTime());
+    expect(sub.currentPeriodEnd.getTime()).toBe(addCalendarMonths(trialEnd, 1).getTime());
+  });
+
+  it("dois pagamentos ao mesmo tempo somam os dois períodos (trava da empresa)", async () => {
+    const id = await company("simultaneo", { trialEndsAt: null });
+    const send = () =>
+      http()
+        .post(`/api/platform/companies/${id}/activate`)
+        .set("Cookie", ownerCookie)
+        .send({ planId: "tenantplan_essencial", cycle: "MONTHLY", method: "PIX" });
+    const [a, b] = await Promise.all([send(), send()]);
+    expect([a.status, b.status]).toEqual([200, 200]);
+    const payments = await prisma.platformPayment.findMany({ where: { companyId: id }, orderBy: { periodStart: "asc" } });
+    expect(payments).toHaveLength(2);
+    expect(payments[1]!.periodStart.getTime()).toBe(payments[0]!.periodEnd.getTime());
+    const sub = await prisma.tenantSubscription.findUniqueOrThrow({ where: { companyId: id } });
+    expect(sub.currentPeriodEnd.getTime()).toBe(payments[1]!.periodEnd.getTime());
+  });
+
+  it("meses de calendário: 31/01 + 1 = 28/02 (29 em bissexto); 15/03 + 12 = 15/03", () => {
+    expect(addCalendarMonths(new Date("2026-01-31T12:00:00Z"), 1).toISOString()).toBe("2026-02-28T12:00:00.000Z");
+    expect(addCalendarMonths(new Date("2028-01-31T12:00:00Z"), 1).toISOString()).toBe("2028-02-29T12:00:00.000Z");
+    expect(addCalendarMonths(new Date("2026-03-15T09:30:00Z"), 12).toISOString()).toBe("2027-03-15T09:30:00.000Z");
+    expect(addCalendarMonths(new Date("2026-12-10T00:00:00Z"), 1).toISOString()).toBe("2027-01-10T00:00:00.000Z");
   });
 
   it("estende o teste e concede/remove isenção", async () => {

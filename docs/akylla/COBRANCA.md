@@ -82,8 +82,11 @@ dono: ISENTAR (sem cobrança) · SUSPENDER (bloqueia login) · REATIVAR
    combo). Libera na hora só o que foi contratado.
    - Trocar kit ou avulsos sem cobrar agora (upgrade combinado, cortesia,
      correção): botão **Módulos** da empresa. Vale na hora.
-4. **Renovação:** a cada pagamento, **Registrar pagamento** de novo. O
-   período soma ao final do atual, sem perder dias pagos.
+4. **Renovação:** a cada pagamento, **Registrar pagamento** de novo.
+   - O período soma ao final do atual, sem perder dias pagos.
+   - Se o cliente pagar ainda no teste grátis, o período começa quando o
+     teste acaba.
+   - O mensal vale 1 mês de calendário (de 10/03 a 10/04) e o anual, 12 meses.
 5. **Não pagou:** o sistema avisa sozinho, dá 5 dias de tolerância e
    depois fica em somente leitura. Pagou, **Registrar pagamento** e volta
    na hora. Casos extremos: **Suspender**.

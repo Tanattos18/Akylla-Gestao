@@ -33,7 +33,19 @@ import { systemDatabaseUrl } from "../common/tenant/rls.extension";
 import { env } from "../config/env";
 
 const DAY_MS = 86_400_000;
-const YEAR_DAYS = 365;
+/**
+ * Soma meses de calendário (auditoria bloco 8): 31/01 + 1 mês = 28/02 (ou
+ * 29/02); 15/03 + 12 meses = 15/03 do ano seguinte. Mantém a hora.
+ */
+export function addCalendarMonths(date: Date, months: number): Date {
+  const result = new Date(date.getTime());
+  const day = result.getUTCDate();
+  result.setUTCDate(1);
+  result.setUTCMonth(result.getUTCMonth() + months);
+  const lastDay = new Date(Date.UTC(result.getUTCFullYear(), result.getUTCMonth() + 1, 0)).getUTCDate();
+  result.setUTCDate(Math.min(day, lastDay));
+  return result;
+}
 
 function slugify(value: string): string {
   return value
@@ -213,7 +225,7 @@ export class PlatformService implements OnModuleDestroy {
     if (input.cycle === "YEARLY" && !plan.priceYearly) {
       throw new BadRequestException("Este plano não tem opção anual");
     }
-    const days = input.cycle === "YEARLY" ? YEAR_DAYS : plan.durationDays;
+    const months = input.cycle === "YEARLY" ? 12 : 1;
     // Kits (Fase 8b): avulsos que o kit já inclui não entram nem são cobrados
     const extraModules = input.extraModules.filter((module) => !plan.includedModules.includes(module));
     const offers = await this.db.moduleOffer.findMany({ select: { module: true, priceMonthly: true } });
@@ -231,15 +243,24 @@ export class PlatformService implements OnModuleDestroy {
       });
 
     await this.db.$transaction(async (tx) => {
-      const company = await tx.company.findUnique({ where: { id: companyId }, select: { id: true } });
+      // Auditoria (bloco 8): trava a empresa — dois registros de pagamento ao
+      // mesmo tempo não calculam o período em cima do mesmo "fim atual"
+      const locked = await tx.$queryRaw<Array<{ id: string; trialEndsAt: Date | null }>>`
+        SELECT id, "trialEndsAt" FROM "Company" WHERE id = ${companyId} FOR UPDATE`;
+      const company = locked[0];
       if (!company) throw new NotFoundException("Empresa não encontrada");
       const current = await tx.tenantSubscription.findUnique({ where: { companyId } });
       const now = new Date();
-      // Período ainda pago (ativa ou cancelada que vale até o fim) é preservado;
-      // checkout pendente (EXPIRED com data futura) não conta.
-      const start =
-        current && current.status !== "EXPIRED" && current.currentPeriodEnd > now ? current.currentPeriodEnd : now;
-      const end = new Date(start.getTime() + days * DAY_MS);
+      // Começa no que vier por último: agora, fim do período ainda pago (ativa
+      // ou cancelada que vale até o fim; checkout pendente EXPIRED não conta)
+      // ou fim do teste grátis — o cliente não perde dias.
+      const candidates = [now.getTime()];
+      if (current && current.status !== "EXPIRED" && current.currentPeriodEnd > now) {
+        candidates.push(current.currentPeriodEnd.getTime());
+      }
+      if (company.trialEndsAt && company.trialEndsAt > now) candidates.push(company.trialEndsAt.getTime());
+      const start = new Date(Math.max(...candidates));
+      const end = addCalendarMonths(start, months);
       await tx.tenantSubscription.upsert({
         where: { companyId },
         create: {
