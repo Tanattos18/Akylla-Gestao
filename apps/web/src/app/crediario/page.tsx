@@ -26,6 +26,7 @@ const statusLabels: Record<CreditInstallmentStatus, string> = {
   PAID: "Paga",
   OVERDUE: "Vencida",
   CANCELLED: "Cancelada",
+  REFUNDED: "Devolvida (venda cancelada)",
 };
 
 const statusClass: Record<CreditInstallmentStatus, string> = {
@@ -33,6 +34,7 @@ const statusClass: Record<CreditInstallmentStatus, string> = {
   PAID: "bg-emerald-50 text-emerald-800",
   OVERDUE: "bg-red-50 text-red-800",
   CANCELLED: "bg-slate-100 text-slate-700",
+  REFUNDED: "bg-violet-50 text-violet-700",
 };
 
 function CrediarioContent() {

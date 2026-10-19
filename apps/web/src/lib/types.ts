@@ -1007,7 +1007,7 @@ export interface CommissionSummaryDto {
 
 // Fase 2 · 2.2 — Crediário
 
-export type CreditInstallmentStatus = "OPEN" | "PAID" | "OVERDUE" | "CANCELLED";
+export type CreditInstallmentStatus = "OPEN" | "PAID" | "OVERDUE" | "CANCELLED" | "REFUNDED";
 
 export interface CreditInstallmentDto {
   id: string;

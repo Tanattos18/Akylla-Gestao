@@ -28,20 +28,67 @@ export async function releaseCommissionInTx(
     where: { id: commissionId },
     select: { amount: true },
   });
-  const entry = await tx.financialEntry.create({
-    data: {
-      companyId: auth.companyId,
-      direction: "PAYABLE",
-      description: `Comissão: ${label}`,
-      amount: commission.amount,
-      dueDate: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
-      origin: "COMMISSION",
-      originId: commissionId,
-      createdByUserId: auth.userId,
-    },
+  const dueDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  // Liberada de novo depois de um estorno (auditoria bloco 4): reabre a conta
+  // a pagar cancelada desta comissão (uma conta por comissão, índice único)
+  const previous = await tx.financialEntry.findFirst({
+    where: { companyId: auth.companyId, origin: "COMMISSION", originId: commissionId, status: "CANCELLED" },
     select: { id: true },
   });
+  const entry = previous
+    ? await tx.financialEntry.update({
+        where: { id: previous.id },
+        data: { status: "OPEN", cancelReason: null, amount: commission.amount, dueDate },
+        select: { id: true },
+      })
+    : await tx.financialEntry.create({
+        data: {
+          companyId: auth.companyId,
+          direction: "PAYABLE",
+          description: `Comissão: ${label}`,
+          amount: commission.amount,
+          dueDate,
+          origin: "COMMISSION",
+          originId: commissionId,
+          createdByUserId: auth.userId,
+        },
+        select: { id: true },
+      });
   await tx.commission.update({ where: { id: commissionId }, data: { financialEntryId: entry.id } });
+}
+
+/**
+ * Auditoria (bloco 4): a venda a prazo deixou de estar quitada (estorno do
+ * recebimento de uma parcela). Comissões RELEASED cuja conta a pagar ainda
+ * está em aberto voltam a PENDING e a conta é cancelada; as já pagas ficam
+ * como estão (o estorno delas é manual, pelo financeiro).
+ */
+export async function revertReleasedCommissionsForSale(
+  tx: Tx,
+  auth: AuthContext,
+  saleId: string,
+  reason: string,
+): Promise<number> {
+  const released = await tx.commission.findMany({
+    where: { saleId, companyId: auth.companyId, status: "RELEASED" },
+    select: { id: true, financialEntryId: true },
+  });
+  let reverted = 0;
+  for (const c of released) {
+    if (c.financialEntryId) {
+      const cancelled = await tx.financialEntry.updateMany({
+        where: { id: c.financialEntryId, status: "OPEN" },
+        data: { status: "CANCELLED", cancelReason: reason },
+      });
+      if (cancelled.count === 0) continue; // conta já paga: não mexe
+    }
+    await tx.commission.update({
+      where: { id: c.id },
+      data: { status: "PENDING", releasedAt: null, financialEntryId: null },
+    });
+    reverted += 1;
+  }
+  return reverted;
 }
 
 /**

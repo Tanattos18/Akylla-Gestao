@@ -205,7 +205,10 @@ export class CreditService {
     const now = new Date();
     for (const i of installments) {
       if (i.status === "PAID") {
+        // Devolvida agora no cancelamento: marca como estornada para que o
+        // recebimento não possa ser estornado de novo (devolução em dobro)
         paid = paid.plus(i.amount);
+        await tx.creditInstallment.update({ where: { id: i.id }, data: { status: "REFUNDED", refundedAt: now } });
         continue;
       }
       if (i.status === "CANCELLED") continue;

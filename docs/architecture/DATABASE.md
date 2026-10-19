@@ -1,5 +1,19 @@
 # Banco de dados — diretrizes e modelo atual
 
+## Parcela devolvida (2026-10-19, auditoria bloco 4)
+
+Migration: `20261019210000_credit_installment_refunded`.
+
+- **Novo estado `REFUNDED`** em `CreditInstallmentStatus`, com o campo
+  `refundedAt`. Uma parcela paga e devolvida no cancelamento da venda passa
+  para esse estado. O estorno do recebimento dela responde 409, para evitar
+  devolver o dinheiro duas vezes.
+- **Estorno de parcela de venda quitada:** as comissões liberadas e ainda
+  não pagas voltam a pendente e a conta a pagar delas é cancelada.
+- **Nova liberação:** quando a comissão é liberada de novo, a mesma conta é
+  reaberta, porque o índice único `(companyId, origin, originId)` permite só
+  uma por comissão.
+
 ## E-mail único (2026-10-19, auditoria bloco 2)
 
 Migration: `20261019200000_user_email_unique`.

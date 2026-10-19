@@ -10,6 +10,7 @@ import { PrismaService } from "../prisma/prisma.module";
 import { lockOpenCashSession } from "../cash/cash-session.helpers";
 import {
   releasePendingCommissionsForSale,
+  revertReleasedCommissionsForSale,
   releasePendingCommissionsForServiceOrder,
 } from "../commissions/commission-release";
 import {
@@ -318,6 +319,17 @@ export class FinancialService {
       if (!entry.cashMovementId) {
         throw new ConflictException("Título liquidado sem vínculo de caixa");
       }
+      // Auditoria (bloco 4): parcela já devolvida no cancelamento da venda
+      if (entry.origin === "CREDIT_SALE" && entry.originId) {
+        const refunded = await tx.creditInstallment.count({
+          where: { id: entry.originId, companyId: auth.companyId, status: "REFUNDED" },
+        });
+        if (refunded > 0) {
+          throw new ConflictException(
+            "Esta parcela já foi devolvida ao cliente no cancelamento da venda; não pode ser estornada de novo",
+          );
+        }
+      }
 
       const movement = await tx.cashMovement.findFirst({
         where: { id: entry.cashMovementId, companyId: auth.companyId },
@@ -369,6 +381,13 @@ export class FinancialService {
             where: { id: installment.creditAccountId },
             data: { balance: { increment: installment.amount } },
           });
+          // Auditoria (bloco 4): a venda deixou de estar quitada → comissões
+          // liberadas (ainda não pagas) voltam a aguardar o pagamento
+          const sale = await tx.creditInstallment.findFirstOrThrow({
+            where: { id: installment.id },
+            select: { saleId: true },
+          });
+          await revertReleasedCommissionsForSale(tx, auth, sale.saleId, "Recebimento de parcela estornado");
         }
       }
 

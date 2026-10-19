@@ -165,6 +165,8 @@ enum CreditInstallmentStatus {
   PAID
   OVERDUE
   CANCELLED
+  /// Paga e devolvida ao cliente no cancelamento da venda (auditoria bloco 4)
+  REFUNDED
 }
 
 /// Fase 2 · 2.1 — quando a comissão fica devida
@@ -883,6 +885,7 @@ model CreditInstallment {
   status            CreditInstallmentStatus @default(OPEN)
   paidAt            DateTime?
   cancelledAt       DateTime?
+  refundedAt        DateTime?
   financialEntryId  String?                 @unique
   createdAt         DateTime                @default(now())
   updatedAt         DateTime                @updatedAt

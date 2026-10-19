@@ -209,13 +209,22 @@ describe("Venda no crediário", () => {
     const response = await http().post(`/api/sales/${saleId}/cancel`).set("Cookie", adminA).send({ reason: "cliente devolveu" });
     expect(response.status).toBe(201);
     const installments = await prisma.creditInstallment.findMany({ where: { saleId }, orderBy: { number: "asc" } });
-    expect(installments.map((i) => i.status)).toEqual(["PAID", "CANCELLED", "CANCELLED"]);
+    // Auditoria (bloco 4): a parcela paga foi devolvida → REFUNDED
+    expect(installments.map((i) => i.status)).toEqual(["REFUNDED", "CANCELLED", "CANCELLED"]);
+    expect(installments[0]!.refundedAt).not.toBeNull();
     const entries = await prisma.financialEntry.findMany({ where: { id: { in: installments.slice(1).map((i) => i.financialEntryId as string) } } });
     expect(entries.every((e) => e.status === "CANCELLED")).toBe(true);
     expect((await account(clientAna)).balance.toFixed(2)).toBe("0.00");
     const refund = await prisma.cashMovement.findFirstOrThrow({ where: { saleId, origin: "SALE_CANCELMENT" } });
     expect(refund).toMatchObject({ type: "OUT" });
     expect(refund.amount.toFixed(2)).toBe("33.33");
+
+    // Estornar depois o recebimento da parcela devolvida seria devolver em dobro → 409
+    const refundedEntry = installments[0]!.financialEntryId as string;
+    const again = await http().post(`/api/financial/${refundedEntry}/reverse`).set("Cookie", adminA).send({ reason: "estorno em dobro" });
+    expect(again.status).toBe(409);
+    expect(again.body.message).toContain("já foi devolvida");
+    expect((await prisma.financialEntry.findUniqueOrThrow({ where: { id: refundedEntry } })).status).toBe("PAID");
   });
 });
 
@@ -239,6 +248,33 @@ describe("Comissão na venda a prazo", () => {
     expect(released.amount.toFixed(2)).toBe("20.00");
     const payable = await prisma.financialEntry.findFirstOrThrow({ where: { origin: "COMMISSION", originId: commission.id } });
     expect(payable.direction).toBe("PAYABLE");
+  });
+
+  it("estornar o recebimento de uma parcela da venda quitada devolve a comissão liberada para pendente (auditoria bloco 4)", async () => {
+    const prof = await http().post("/api/professionals").set("Cookie", adminA).send({ name: "Vendedor Estorno" });
+    await http().post("/api/commission-rules").set("Cookie", adminA)
+      .send({ professionalId: prof.body.id, percentage: "10", releasePolicy: "ON_PAYMENT" });
+    const sale = await creditSale(clientAna, "1", 2, { professionalId: prof.body.id });
+    const installments = await prisma.creditInstallment.findMany({ where: { saleId: sale.body.id }, orderBy: { number: "asc" } });
+    for (const i of installments) await http().post(`/api/credit-installments/${i.id}/pay`).set("Cookie", adminA);
+    const commission = await prisma.commission.findFirstOrThrow({ where: { saleId: sale.body.id } });
+    expect(commission.status).toBe("RELEASED");
+    const payableId = commission.financialEntryId as string;
+
+    const last = await prisma.creditInstallment.findUniqueOrThrow({ where: { id: installments[1]!.id } });
+    const reversed = await http()
+      .post(`/api/financial/${last.financialEntryId}/reverse`)
+      .set("Cookie", adminA)
+      .send({ reason: "pagamento devolvido pelo banco" });
+    expect(reversed.status).toBe(201);
+    const back = await prisma.commission.findUniqueOrThrow({ where: { id: commission.id } });
+    expect(back).toMatchObject({ status: "PENDING", financialEntryId: null, releasedAt: null });
+    expect((await prisma.financialEntry.findUniqueOrThrow({ where: { id: payableId } })).status).toBe("CANCELLED");
+
+    // recebendo de novo, libera outra vez
+    const repaid = await http().post(`/api/credit-installments/${last.id}/pay`).set("Cookie", adminA);
+    expect(repaid.status).toBe(200);
+    expect((await prisma.commission.findUniqueOrThrow({ where: { id: commission.id } })).status).toBe("RELEASED");
   });
 });
 

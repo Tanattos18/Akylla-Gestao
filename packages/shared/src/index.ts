@@ -1945,7 +1945,7 @@ export type CommissionSummaryQuery = z.infer<typeof commissionSummaryQuerySchema
 export const creditAccountStatusSchema = z.enum(["ACTIVE", "BLOCKED"]);
 export type CreditAccountStatus = z.infer<typeof creditAccountStatusSchema>;
 
-export const creditInstallmentStatusSchema = z.enum(["OPEN", "PAID", "OVERDUE", "CANCELLED"]);
+export const creditInstallmentStatusSchema = z.enum(["OPEN", "PAID", "OVERDUE", "CANCELLED", "REFUNDED"]);
 export type CreditInstallmentStatus = z.infer<typeof creditInstallmentStatusSchema>;
 
 export const creditInstallmentStatusLabels: Record<CreditInstallmentStatus, string> = {
@@ -1953,6 +1953,7 @@ export const creditInstallmentStatusLabels: Record<CreditInstallmentStatus, stri
   PAID: "Paga",
   OVERDUE: "Vencida",
   CANCELLED: "Cancelada",
+  REFUNDED: "Devolvida (venda cancelada)",
 };
 
 /** ADMIN aprova/ajusta o crediário do cliente (cria se não existir). */
