@@ -8,7 +8,7 @@ export default function PrivacidadePage() {
       <h1 className="mb-2 text-2xl font-semibold text-slate-900">Política de Privacidade</h1>
       <p className="mb-8 text-sm text-slate-500">
         Versão 1.0 · Documento de rascunho — sujeito a revisão jurídica antes da
-        comercialização. Contato: dpo@akylla.com.br (Encarregado de Dados).
+        comercialização. Contato: contato@akyllagestao.com.br (Encarregado de Dados).
       </p>
 
       <section className="mb-8">
@@ -46,7 +46,7 @@ export default function PrivacidadePage() {
           O titular pode solicitar acesso, correção, portabilidade e
           anonimização/exclusão dos seus dados, observadas as hipóteses legais
           de retenção. Solicitações podem ser feitas pelo canal{" "}
-          <span className="font-medium">dpo@akylla.com.br</span>.
+          <span className="font-medium">contato@akyllagestao.com.br</span>.
         </p>
       </section>
 
