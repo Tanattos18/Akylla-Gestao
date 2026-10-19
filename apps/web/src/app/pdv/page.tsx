@@ -21,7 +21,7 @@ import {
 import { Receipt } from "../../components/Receipt";
 import { EmitFiscalButton } from "../../components/fiscal/EmitFiscalButton";
 import { formatBrl } from "../../lib/format";
-import { parseDecimalInput } from "@petflow/shared";
+import { isFractionalUnit, parseDecimalInput } from "@petflow/shared";
 import { SearchSelect } from "../../components/ui/SearchSelect";
 
 interface CartItem {
@@ -173,13 +173,17 @@ export default function PdvPage() {
   }
 
   function changeQuantity(productId: string, value: string) {
-    const parsed = Number(value);
+    const parsed = parseDecimalInput(value);
     setCart((current) =>
       current.map((item) => {
         if (item.productId !== productId) return item;
-        if (!Number.isFinite(parsed)) return { ...item, quantity: 1 };
+        // Auditoria (bloco 7): KG/L aceitam fração (até 3 casas); o resto é inteiro
+        const fractional = isFractionalUnit(item.unit);
+        const minimum = fractional ? 0.001 : 1;
+        if (!Number.isFinite(parsed)) return { ...item, quantity: minimum };
         const max = Number(item.stock);
-        const quantity = Math.min(Math.max(1, Math.floor(parsed)), Math.max(1, max));
+        const rounded = fractional ? Math.round(parsed * 1000) / 1000 : Math.floor(parsed);
+        const quantity = Math.min(Math.max(minimum, rounded), Math.max(minimum, max));
         return { ...item, quantity };
       }),
     );
@@ -190,7 +194,8 @@ export default function PdvPage() {
   }
 
   const subtotal = cart.reduce(
-    (sum, item) => sum + Number(item.unitPrice) * item.quantity,
+    // Cada linha arredondada ao centavo, igual ao servidor
+    (sum, item) => sum + Math.round(Number(item.unitPrice) * item.quantity * 100) / 100,
     0,
   );
   const discountValue = discount.trim() ? parseDecimalInput(discount) : 0;
@@ -229,7 +234,7 @@ export default function PdvPage() {
         body: JSON.stringify({
           items: cart.map((item) => ({
             productId: item.productId,
-            quantity: String(item.quantity),
+            quantity: isFractionalUnit(item.unit) ? item.quantity.toFixed(3) : String(item.quantity),
           })),
           discount: discountValue > 0 ? discountValue.toFixed(2) : "0",
           paymentMethod,
@@ -427,7 +432,8 @@ export default function PdvPage() {
                     </div>
                     <input
                       type="number"
-                      min={1}
+                      min={isFractionalUnit(item.unit) ? 0.001 : 1}
+                      step={isFractionalUnit(item.unit) ? 0.001 : 1}
                       max={Number(item.stock)}
                       value={item.quantity}
                       onChange={(event) => changeQuantity(item.productId, event.target.value)}
@@ -435,7 +441,7 @@ export default function PdvPage() {
                       className="w-20 rounded-md border border-slate-300 px-2 py-1 text-sm"
                     />
                     <span className="w-24 text-right font-medium tabular-nums text-slate-800">
-                      {formatBrl((Number(item.unitPrice) * item.quantity))}
+                      {formatBrl(Math.round(Number(item.unitPrice) * item.quantity * 100) / 100)}
                     </span>
                     <button
                       type="button"

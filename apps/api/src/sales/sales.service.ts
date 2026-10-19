@@ -8,10 +8,11 @@ import {
 import { Prisma, ProductUnit } from "@prisma/client";
 import { randomInt } from "node:crypto";
 import { PrismaService } from "../prisma/prisma.module";
-import type {
-  CancelSaleInput,
-  CreateSaleInput,
-  ListSalesQuery,
+import {
+  isFractionalUnit,
+  type CancelSaleInput,
+  type CreateSaleInput,
+  type ListSalesQuery,
 } from "@petflow/shared";
 import type { AuthContext } from "../common/decorators/auth.decorator";
 import { lockOpenCashSession } from "../cash/cash-session.helpers";
@@ -170,6 +171,12 @@ export class SalesService {
           }
 
           const quantity = quantities.get(productId) ?? new Prisma.Decimal(0);
+          // Auditoria (bloco 7): fração só para KG/L; o resto é inteiro
+          if (!isFractionalUnit(product.unit) && !quantity.isInteger()) {
+            throw new BadRequestException(
+              `Quantidade de "${product.name}" deve ser inteira (só produtos em KG ou L aceitam fração)`,
+            );
+          }
           if (product.stockQuantity.lt(quantity)) {
             throw new BadRequestException(
               `Estoque insuficiente para "${product.name}" (disponível: ${product.stockQuantity.toFixed(3)})`,
@@ -177,7 +184,8 @@ export class SalesService {
           }
 
           const unitPrice = new Prisma.Decimal(product.salePrice);
-          const lineSubtotal = unitPrice.times(quantity);
+          // Quantidade fracionada (1,250 kg) → subtotal arredondado ao centavo
+          const lineSubtotal = unitPrice.times(quantity).toDecimalPlaces(2, Prisma.Decimal.ROUND_HALF_UP);
           subtotal = subtotal.plus(lineSubtotal);
           lines.push({ product, quantity, unitPrice, lineSubtotal });
         }

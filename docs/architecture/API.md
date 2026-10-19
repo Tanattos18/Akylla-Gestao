@@ -112,7 +112,7 @@ servidor, dentro da transação com lock.
 
 | Método | Rota | Acesso | Descrição |
 |---|---|---|---|
-| POST | `/api/sales` | sessão | Cria venda; recalcula tudo no servidor |
+| POST | `/api/sales` | sessão | Cria venda; recalcula tudo no servidor. Quantidade fracionada (até 3 casas, aceita "1,250") só para produtos em **KG** ou **L**; nas demais unidades fração → 400. Subtotal de cada item arredondado ao centavo |
 | GET | `/api/sales` | sessão | Histórico paginado; filtros `status`, `search` (código), `from`/`to` (`YYYY-MM-DD`, UTC) |
 | GET | `/api/sales/:id` | sessão | Detalhe com itens (snapshots) |
 | POST | `/api/sales/:id/cancel` | ADMIN | Cancela com `reason`; devolve estoque |

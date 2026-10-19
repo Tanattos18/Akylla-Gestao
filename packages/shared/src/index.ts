@@ -415,6 +415,15 @@ export const saleStatusLabels: Record<SaleStatus, string> = {
   CANCELLED: "Cancelada",
 };
 
+/**
+ * Auditoria (bloco 7): unidades vendidas a granel aceitam quantidade
+ * fracionada (até 3 casas: 1,250 kg); as demais só quantidade inteira.
+ */
+export const FRACTIONAL_UNITS = ["KG", "L"] as const;
+export function isFractionalUnit(unit: string): boolean {
+  return (FRACTIONAL_UNITS as readonly string[]).includes(unit);
+}
+
 export const createSaleItemSchema = z.object({
   productId: z.string().trim().min(1, "Produto é obrigatório").max(60),
   quantity: positiveQuantityFieldSchema,

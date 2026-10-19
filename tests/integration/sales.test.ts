@@ -405,6 +405,38 @@ describe("Criação de vendas", () => {
   });
 });
 
+describe("Quantidade fracionada (auditoria bloco 7)", () => {
+  it("KG aceita 1,250 com subtotal arredondado; UNIDADE recusa fração", async () => {
+    const queijo = await prisma.product.create({
+      data: { companyId: companyAId, name: "Queijo a granel", unit: "KG", salePrice: "39.90", stockQuantity: "5" },
+    });
+    const sale = await request(app.getHttpServer())
+      .post("/api/sales")
+      .set("Cookie", adminACookie)
+      .send({ items: [{ productId: queijo.id, quantity: "1,250" }], paymentMethod: "CASH", clientRequestId: "frac-kg-0001" });
+    expect(sale.status).toBe(201);
+    expect(sale.body.total).toBe("49.88"); // 39,90 × 1,250 = 49,875 → 49,88
+    const stock = await prisma.product.findUniqueOrThrow({ where: { id: queijo.id } });
+    expect(stock.stockQuantity.toFixed(3)).toBe("3.750");
+
+    const caneta = await prisma.product.create({
+      data: { companyId: companyAId, name: "Caneta unidade", unit: "UNIDADE", salePrice: "2.00", stockQuantity: "10" },
+    });
+    const fraction = await request(app.getHttpServer())
+      .post("/api/sales")
+      .set("Cookie", adminACookie)
+      .send({ items: [{ productId: caneta.id, quantity: "1.5" }], paymentMethod: "CASH", clientRequestId: "frac-un-0001" });
+    expect(fraction.status).toBe(400);
+    expect(fraction.body.message).toContain("deve ser inteira");
+
+    const tooManyDecimals = await request(app.getHttpServer())
+      .post("/api/sales")
+      .set("Cookie", adminACookie)
+      .send({ items: [{ productId: queijo.id, quantity: "0.0005" }], paymentMethod: "CASH", clientRequestId: "frac-kg-0002" });
+    expect(tooManyDecimals.status).toBe(400);
+  });
+});
+
 describe("Prevenção de reenvio (duplo clique)", () => {
   it("mesmo clientRequestId não cria duas vendas", async () => {
     const payload = {
