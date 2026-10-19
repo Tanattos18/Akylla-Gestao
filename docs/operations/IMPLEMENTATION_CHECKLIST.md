@@ -4,6 +4,21 @@
 > Este checklist cobre apenas a era do Akylla Gestão. O histórico
 > anterior à adaptação está preservado no Git.
 
+## Correções da auditoria (2026-10-19)
+
+- [x] 1 Dinheiro com vírgula + formatBrl
+- [x] 2 E-mail único global (índice, 409) e PlatformGuard com e-mail verificado/empresa dona
+- [x] 3 Financeiro só ADMIN; inCash pela forma de pagamento
+- [x] 4 Crediário: parcela devolvida REFUNDED (sem estorno em dobro); comissão liberada revertida
+- [x] 5 Listas paginadas com total; seletores com busca por digitação
+- [x] 6 2FA: erros 400 (sem ir ao login); setup exige senha
+- [x] 7 PDV fracionado para KG/L
+- [x] 8 Ativação com FOR UPDATE, max(agora, fim pago, fim do teste), meses de calendário
+- [x] 9 Servidor: trust proxy loopback, API em 127.0.0.1, runuser, swap 2 GB, checa web, flock, rollback com REF
+- [x] 10 Privacidade: contato@akyllagestao.com.br
+- [x] 11 Profissionais: "técnicos"
+- [ ] Aplicar na VPS (`update.sh`)
+
 ## Visual e WhatsApp (2026-10-19)
 
 - [x] Modo claro/escuro (botão no topo, preferência salva, segue o sistema)

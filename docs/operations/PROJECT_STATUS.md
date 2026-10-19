@@ -21,6 +21,11 @@ que o site akyllagestao.com.br promete. Fases em ordem rígida (1 → 7).
 instalado com `scripts/deploy/vps/install.sh`. Pendências do proprietário:
 2FA do dono, SMTP (cadastro aberto), UptimeRobot, Mercado Pago com CNPJ.
 
+**Auditoria corrigida (2026-10-19)**: os 11 blocos da auditoria (dinheiro
+com vírgula, e-mail único, financeiro, crediário, listas, 2FA, PDV
+fracionado, ativação, servidor e textos) estão no Git, com testes. Para
+entrar em produção, falta rodar o `update.sh` na VPS.
+
 **Visual e WhatsApp (2026-10-19)**:
 - modo claro/escuro no app e nova tela Início;
 - modelos prontos e edição de templates de WhatsApp;

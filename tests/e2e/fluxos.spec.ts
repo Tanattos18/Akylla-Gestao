@@ -69,12 +69,12 @@ test("3. abrir caixa, vender, emitir NFC-e (simulada) e fechar sem diferença", 
 
   // Fechar caixa: esperado 100 + 25 = 125
   await page.goto("/caixa/fechar");
-  await expect(page.getByText("R$ 125.00")).toBeVisible();
+  await expect(page.getByText(/R\$\s125,00/).first()).toBeVisible();
   await page.locator("#counted").fill("125");
   await page.getByRole("button", { name: "Confirmar fechamento" }).click();
   await expect(page.getByRole("heading", { name: "Caixa fechado" })).toBeVisible();
   const difference = page.getByText("Diferença").locator("..");
-  await expect(difference).toContainText("R$ 0.00");
+  await expect(difference).toContainText(/R\$\s0,00/);
 });
 
 test("4. importar CSV: simular, importar e ver o produto", async ({ page }) => {

@@ -6,6 +6,56 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-19 - Correções da auditoria (blocos 1 a 11)
+
+### Corrigido
+
+1. **Dinheiro com vírgula:**
+   - caixa, fechamento, desconto do PDV, financeiro, produto, serviço, OS,
+     crediário e comissões aceitam "150,00", "1.234,56" e "R$ 12,50";
+   - as telas mostram sempre "R$ 12,50" (`formatBrl`, nunca `toFixed`).
+2. **E-mail único em todo o sistema:**
+   - índice único, checagem global no cadastro de usuário e P2002 → 409;
+   - o painel da plataforma exige e-mail verificado e, opcionalmente, a
+     empresa dona (`PLATFORM_COMPANY_SLUG`).
+3. **Financeiro:**
+   - lançar e liquidar títulos é só do ADMIN;
+   - a forma de pagamento (dinheiro, Pix, cartão, boleto, transferência)
+     define se o valor entra na gaveta do caixa.
+4. **Crediário:**
+   - parcela paga e devolvida no cancelamento da venda fica `REFUNDED` e
+     não pode ser estornada de novo (antes devolvia o dinheiro duas vezes);
+   - o estorno de uma parcela de venda quitada devolve a comissão liberada
+     para pendente.
+5. **Listas e seletores:**
+   - listas de clientes, fornecedores, serviços e categorias paginadas, com
+     total;
+   - seletores de cliente com busca por digitação no PDV, Agenda, OS,
+     Assinaturas, Financeiro, Crediário e WhatsApp (antes paravam em 100).
+6. **2FA:**
+   - código ou senha errados respondem 400 e não levam mais ao login;
+   - gerar o QR exige a senha atual.
+7. **PDV:** quantidade fracionada (até 3 casas) para produtos em KG/L; nas
+   demais unidades, só inteira; subtotal arredondado ao centavo.
+8. **Ativação no painel:**
+   - trava da empresa (`FOR UPDATE`);
+   - início no que vier por último entre agora, o fim pago e o fim do teste;
+   - meses de calendário.
+9. **Servidor:**
+   - a API escuta só em 127.0.0.1, com `trust proxy` apenas local;
+   - scripts com `runuser`;
+   - 2 GB de swap;
+   - `update.sh` confere API e web, trava o backup (`flock`) e volta sozinho
+     para a versão anterior se falhar (aceita `update.sh <REF>`).
+10. **Política de privacidade:** contato `contato@akyllagestao.com.br`.
+11. **Profissionais:** "tosadores" → "técnicos".
+
+Testes novos:
+- **Arquivos novos:** `money-input`, `pagination` e `proxy-ip`.
+- **Arquivos ampliados:** financeiro, crediário, 2FA, vendas, plataforma
+  e usuários.
+- **E2E:** atualizado para "R$ 125,00".
+
 ## [Akylla Gestão] - 2026-10-19 - WhatsApp, modelos prontos, nova tela inicial e modo escuro
 
 ### Adicionado
