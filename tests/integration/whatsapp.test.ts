@@ -449,7 +449,7 @@ describe("Teste de saúde — credenciais e credenciais ausentes", () => {
     expect(response.status).toBe(201);
     expect(response.body.ok).toBe(true);
     expect(response.body.status).toBe("ACTIVE");
-    expect(response.body.verifiedName).toBe("PetFlow Mock");
+    expect(response.body.verifiedName).toBe("Akylla (simulação)");
 
     const config = await prisma.whatsAppConfig.findFirst({
       where: { phoneNumberId: PHONE_NUMBER_ID },
@@ -574,6 +574,39 @@ describe("Templates — validação, aprovação e permissões", () => {
       .get("/api/whatsapp/templates")
       .set("Cookie", adminBCookie);
     expect(listB.body.total).toBe(0);
+  });
+
+  it("editar o texto de um template aprovado volta para aguardando aprovação", async () => {
+    const created = await request(app.getHttpServer())
+      .post("/api/whatsapp/templates")
+      .set("Cookie", adminACookie)
+      .send({ name: "aviso_editavel", body: "Olá {{1}}, seu pedido saiu para entrega." });
+    const id = created.body.id as string;
+    await request(app.getHttpServer())
+      .patch(`/api/whatsapp/templates/${id}`)
+      .set("Cookie", adminACookie)
+      .send({ approval: "APPROVED" })
+      .expect(200);
+
+    const sameText = await request(app.getHttpServer())
+      .patch(`/api/whatsapp/templates/${id}`)
+      .set("Cookie", adminACookie)
+      .send({ body: "Olá {{1}}, seu pedido saiu para entrega." });
+    expect(sameText.body.approval).toBe("APPROVED");
+
+    const edited = await request(app.getHttpServer())
+      .patch(`/api/whatsapp/templates/${id}`)
+      .set("Cookie", adminACookie)
+      .send({ body: "Olá {{1}}, seu pedido {{2}} saiu para entrega." });
+    expect(edited.status).toBe(200);
+    expect(edited.body.approval).toBe("PENDING_APPROVAL");
+    expect(edited.body.variableCount).toBe(2);
+
+    await request(app.getHttpServer())
+      .patch(`/api/whatsapp/templates/${id}/status`)
+      .set("Cookie", adminACookie)
+      .send({ status: "INACTIVE" })
+      .expect(200);
   });
 });
 

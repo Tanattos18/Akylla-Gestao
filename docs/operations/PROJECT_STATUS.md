@@ -21,6 +21,14 @@ que o site akyllagestao.com.br promete. Fases em ordem rígida (1 → 7).
 instalado com `scripts/deploy/vps/install.sh`. Pendências do proprietário:
 2FA do dono, SMTP (cadastro aberto), UptimeRobot, Mercado Pago com CNPJ.
 
+**Visual e WhatsApp (2026-10-19)**:
+- modo claro/escuro no app e nova tela Início;
+- modelos prontos e edição de templates de WhatsApp;
+- aviso de modo simulação.
+
+Envio e recebimento reais dependem de configurar a API oficial da Meta na
+VPS (`docs/akylla/WHATSAPP.md`).
+
 **Módulo Pets retirado (2026-10-19)**: o Akylla Gestão é só gestão
 empresarial. Telas, rotas, módulo vendável, preset de demonstração e textos
 de pet shop removidos (migration `20261019180000_remove_pets_module`);

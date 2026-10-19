@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { GlobalSearch } from "./GlobalSearch";
+import { ThemeToggle } from "./ThemeToggle";
 import type {
   BusinessModule,
   DashboardSummaryDto,
@@ -399,6 +400,9 @@ export function Header({
           <div className="ml-auto flex items-center gap-1.5">
             {/* Busca global (Fase 7 · 7.3) */}
             <GlobalSearch inputClassName={searchInputClass} />
+
+            {/* Visualização clara/noturna */}
+            <ThemeToggle />
 
             {/* Notificações */}
             <div ref={notifRef} className="relative">

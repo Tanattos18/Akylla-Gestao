@@ -272,7 +272,7 @@ export class MockWhatsAppProvider implements WhatsAppProvider {
       );
     }
     return {
-      verifiedName: "PetFlow Mock",
+      verifiedName: "Akylla (simulação)",
       displayPhoneNumber: "5511999990000",
       status: "VERIFIED",
     };

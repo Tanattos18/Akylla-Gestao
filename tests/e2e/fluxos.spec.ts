@@ -20,7 +20,9 @@ test("1. login pelo formulário leva ao painel", async ({ page }) => {
   await page.getByLabel("Email").fill(email());
   await page.getByLabel("Senha").fill(password());
   await page.getByRole("button", { name: "Entrar" }).click();
-  await expect(page.getByRole("heading", { name: process.env.E2E_COMPANY })).toBeVisible();
+  // Início (2026-10-19): saudação + nome da empresa no topo
+  await expect(page.getByRole("heading", { name: /^(Bom dia|Boa tarde|Boa noite),/ })).toBeVisible();
+  await expect(page.getByText(process.env.E2E_COMPANY!, { exact: false }).first()).toBeVisible();
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/\/dashboard$/);
 });

@@ -121,7 +121,7 @@ PDV, estoque, caixa, financeiro, clientes e relatórios. Regras em
 | **Nota fiscal** | NFC-e/NF-e na venda e NFS-e na OS por integradora, token e certificado A1 **cifrados**, webhook assinado, cancelamento com justificativa ([regras](docs/akylla/FISCAL.md)) |
 | **Serviços** | catálogo com preço e duração |
 | **Agendamentos** | agenda por dia, semana e mês, conflito de horário, status e lembretes |
-| **WhatsApp** | Cloud API oficial da Meta: templates, consentimento, fila com retentativas e webhook assinado |
+| **WhatsApp** | Cloud API oficial da Meta: modelos prontos editáveis, consentimento, fila com retentativas e webhook assinado ([como ligar](docs/akylla/WHATSAPP.md)) |
 | **Assinaturas de clientes** | planos recorrentes pagos no caixa, com renovação e cancelamento auditados |
 
 ---
@@ -383,6 +383,7 @@ Arquivos Sem USO/  arquivo local de itens fora de uso (ignorado pelo Git)
 | [API](docs/architecture/API.md) · [Banco](docs/architecture/DATABASE.md) · [Arquitetura](docs/architecture/ARCHITECTURE.md) | referência técnica |
 | [Cobrança do SaaS](docs/akylla/COBRANCA.md) · [Comissões](docs/akylla/COMISSOES.md) · [Crediário](docs/akylla/CREDIARIO.md) · [OS](docs/akylla/ORDEM_DE_SERVICO.md) · [Fiscal](docs/akylla/FISCAL.md) · [Onboarding](docs/akylla/ONBOARDING.md) | regras de negócio dos módulos |
 | [Componentes e acessibilidade](docs/akylla/DESIGN_SYSTEM.md) | padrão visual e auditoria |
+| [WhatsApp](docs/akylla/WHATSAPP.md) | ligar a API oficial da Meta e templates |
 | [Go/No-go para venda](docs/akylla/GO_NO_GO.md) · [Checklist pré-produção](docs/akylla/CHECKLIST_PRE_PRODUCAO.md) | critérios para o primeiro cliente pagante |
 | [Roteiro de evolução](upgrade/Prompt_Mestre.md) · [Referências no GitHub](upgrade/REFERENCIAS_GIT.md) | as 7 fases e repositórios de apoio |
 | [AGENTS.md](AGENTS.md) | regras para agentes de desenvolvimento |

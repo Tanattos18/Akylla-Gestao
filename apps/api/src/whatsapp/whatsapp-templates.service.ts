@@ -120,6 +120,16 @@ export class WhatsAppTemplatesService {
     const nameKey = clientNameKey(name);
     await this.assertNotDuplicated(auth, nameKey, existing.id);
 
+    // Mudou o conteúdo (nome, texto, idioma ou categoria) de um template já
+    // aprovado: a Meta exige nova aprovação, então volta para "aguardando".
+    const contentChanged =
+      (input.name !== undefined && input.name !== existing.name) ||
+      (input.body !== undefined && input.body !== existing.body) ||
+      (input.language !== undefined && input.language !== existing.language) ||
+      (input.category !== undefined && input.category !== existing.category);
+    const approval =
+      input.approval ?? (contentChanged && existing.approval !== "PENDING_APPROVAL" ? "PENDING_APPROVAL" : undefined);
+
     const updated = await this.prisma.whatsAppTemplate.update({
       where: { id: existing.id },
       data: {
@@ -130,7 +140,7 @@ export class WhatsAppTemplatesService {
         ...(input.providerReference !== undefined
           ? { providerReference: input.providerReference || null }
           : {}),
-        ...(input.approval !== undefined ? { approval: input.approval } : {}),
+        ...(approval !== undefined ? { approval } : {}),
         ...(input.status !== undefined ? { status: input.status } : {}),
       },
       select: templateSelect,

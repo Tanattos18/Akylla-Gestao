@@ -15,6 +15,7 @@ import {
   type WhatsAppTemplateDto,
 } from "../../../lib/types";
 import { useDialog } from "../../../components/ui/Dialog";
+import { WHATSAPP_TEMPLATE_PRESETS, type WhatsAppTemplatePreset } from "../../../lib/whatsapp-presets";
 
 const emptyForm = {
   name: "",
@@ -41,6 +42,9 @@ export default function WhatsAppTemplatesPage() {
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [listError, setListError] = useState<string | null>(null);
+  /** Edição de template existente (null = criando um novo) */
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [addingPresets, setAddingPresets] = useState(false);
 
   const isAdmin = session?.user.role === "ADMIN";
 
@@ -78,17 +82,21 @@ export default function WhatsAppTemplatesPage() {
 
     setSaving(true);
     try {
-      await api("/api/whatsapp/templates", {
-        method: "POST",
-        body: JSON.stringify({
-          name: form.name.trim(),
-          language: form.language.trim(),
-          category: form.category,
-          body: form.body.trim(),
-        }),
+      const payload = JSON.stringify({
+        name: form.name.trim(),
+        language: form.language.trim(),
+        category: form.category,
+        body: form.body.trim(),
       });
-      setNotice("Template criado — aguardando aprovação do provedor.");
+      if (editingId) {
+        await api(`/api/whatsapp/templates/${editingId}`, { method: "PATCH", body: payload });
+        setNotice("Template salvo. Se o texto mudou, ele volta para “aguardando aprovação” — aprove de novo na Meta.");
+      } else {
+        await api("/api/whatsapp/templates", { method: "POST", body: payload });
+        setNotice("Template criado — aguardando aprovação do provedor.");
+      }
       setForm(emptyForm);
+      setEditingId(null);
       await loadTemplates();
     } catch (err) {
       if (err instanceof ApiError) {
@@ -103,6 +111,56 @@ export default function WhatsAppTemplatesPage() {
       }
     } finally {
       setSaving(false);
+    }
+  }
+
+  function startEdit(template: WhatsAppTemplateDto) {
+    setEditingId(template.id);
+    setForm({ name: template.name, language: template.language, category: template.category, body: template.body });
+    setFieldErrors({});
+    setFormError(null);
+    document.getElementById("tpl-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function applyPreset(preset: WhatsAppTemplatePreset) {
+    setEditingId(null);
+    setForm({ name: preset.name, language: "pt_BR", category: preset.category, body: preset.body });
+    setFieldErrors({});
+    setFormError(null);
+    document.getElementById("tpl-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setForm(emptyForm);
+    setFieldErrors({});
+    setFormError(null);
+  }
+
+  const existingNames = new Set(templates.map((template) => template.name));
+  const missingPresets = WHATSAPP_TEMPLATE_PRESETS.filter((preset) => !existingNames.has(preset.name));
+
+  async function addAllPresets() {
+    if (missingPresets.length === 0) return;
+    if (!(await dialog.confirm(`Adicionar ${missingPresets.length} modelo(s) pronto(s) à sua lista? Você pode editar cada um depois.`))) return;
+    setAddingPresets(true);
+    setNotice(null);
+    setListError(null);
+    let added = 0;
+    try {
+      for (const preset of missingPresets) {
+        await api("/api/whatsapp/templates", {
+          method: "POST",
+          body: JSON.stringify({ name: preset.name, language: "pt_BR", category: preset.category, body: preset.body }),
+        });
+        added += 1;
+      }
+      setNotice(`${added} modelo(s) adicionado(s). Edite se quiser e cadastre na Meta com o mesmo nome e texto.`);
+    } catch (err) {
+      setListError(err instanceof ApiError ? err.message : "Falha ao adicionar os modelos.");
+    } finally {
+      setAddingPresets(false);
+      await loadTemplates();
     }
   }
 
@@ -193,10 +251,56 @@ export default function WhatsAppTemplatesPage() {
         </div>
       )}
 
+      {isAdmin && missingPresets.length > 0 && (
+        <section aria-labelledby="tpl-presets" className="rounded-lg border border-primary-200 bg-primary-50/50 p-6 shadow-sm">
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 id="tpl-presets" className="text-sm font-semibold uppercase tracking-wide text-primary-800">
+                Modelos prontos
+              </h3>
+              <p className="mt-1 text-sm text-slate-600">
+                Textos já no padrão da Meta. Clique em “Usar e editar” para ajustar antes de criar, ou adicione todos.
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled={addingPresets}
+              onClick={() => void addAllPresets()}
+              className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60"
+            >
+              {addingPresets ? "Adicionando..." : `Adicionar todos (${missingPresets.length})`}
+            </button>
+          </div>
+          <ul className="grid gap-3 md:grid-cols-2">
+            {missingPresets.map((preset) => (
+              <li key={preset.name} className="flex flex-col rounded-md border border-slate-200 bg-white p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium text-slate-900">{preset.title}</span>
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
+                    {whatsappTemplateCategoryLabels[preset.category]}
+                  </span>
+                </div>
+                <p className="mt-2 flex-1 text-sm text-slate-600">{preset.body}</p>
+                <p className="mt-2 text-xs text-slate-500">
+                  {preset.variables.map((variable, index) => `{{${index + 1}}} ${variable}`).join(" · ")}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => applyPreset(preset)}
+                  className="mt-3 self-start text-sm font-medium text-primary-700 hover:underline"
+                >
+                  Usar e editar
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {isAdmin && (
-        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <div id="tpl-form" className="scroll-mt-24 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">
-            Novo template
+            {editingId ? "Editar template" : "Novo template"}
           </h3>
           <form onSubmit={handleSubmit} noValidate className="grid gap-4 sm:grid-cols-2">
             <div>
@@ -207,7 +311,7 @@ export default function WhatsAppTemplatesPage() {
                 id="tpl-name"
                 value={form.name}
                 onChange={(event) => setForm({ ...form, name: event.target.value })}
-                placeholder="lembrete_pet"
+                placeholder="lembrete_agendamento"
                 className={inputClass}
               />
               {fieldErrors.name && (
@@ -279,8 +383,17 @@ export default function WhatsAppTemplatesPage() {
                 disabled={saving}
                 className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60"
               >
-                {saving ? "Criando..." : "Criar template"}
+                {saving ? "Salvando..." : editingId ? "Salvar alterações" : "Criar template"}
               </button>
+              {editingId && (
+                <button
+                  type="button"
+                  onClick={cancelEdit}
+                  className="ml-2 rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                >
+                  Cancelar edição
+                </button>
+              )}
             </div>
           </form>
         </div>
@@ -310,6 +423,13 @@ export default function WhatsAppTemplatesPage() {
               </div>
               {isAdmin && (
                 <div className="flex gap-3 text-xs font-medium">
+                  <button
+                    type="button"
+                    onClick={() => startEdit(template)}
+                    className="text-slate-700 hover:underline"
+                  >
+                    Editar
+                  </button>
                   {template.approval !== "APPROVED" && (
                     <button
                       type="button"
@@ -359,7 +479,7 @@ export default function WhatsAppTemplatesPage() {
         ))}
         {templates.length === 0 && (
           <p className="rounded-lg border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500">
-            Nenhum template cadastrado.
+            Nenhum template cadastrado. Use os modelos prontos acima para começar.
           </p>
         )}
       </div>

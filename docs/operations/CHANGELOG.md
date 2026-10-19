@@ -6,6 +6,38 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-19 - WhatsApp, modelos prontos, nova tela inicial e modo escuro
+
+### Adicionado
+
+- **Visualização clara/noturna:** botão sol/lua no topo, como no site. A
+  escolha fica salva no navegador; sem escolha, segue o tema do sistema.
+  Implementado remapeando os tokens de cor em `globals.css`, então vale
+  para todas as telas, sem flash ao carregar.
+- **Modelos prontos de WhatsApp:** 10 textos no padrão da Meta (lembrete de
+  agendamento, pedido, OS pronta, orçamento, parcelas, assinatura,
+  pós-venda, aniversário e promoção). Opções "Usar e editar" e "Adicionar
+  todos".
+- **Edição de templates:** botão "Editar". Mudar o texto de um template
+  aprovado volta ele para "aguardando aprovação", como a Meta exige.
+- `docs/akylla/WHATSAPP.md`: passo a passo para ligar a API oficial da Meta
+  na VPS e solução de problemas. `install.sh` passa a gravar
+  `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_APP_SECRET` e `WHATSAPP_VERIFY_TOKEN`.
+
+### Alterado
+
+- **Nova tela Início:**
+  - saudação com data;
+  - atalhos rápidos;
+  - módulos agrupados por objetivo (Vender e controlar, Atender e
+    fidelizar, Prestar serviços, Acompanhar resultados), com ícones;
+  - módulos fora do plano aparecem com cadeado e levam para contratar.
+- **WhatsApp:** aviso claro de **modo simulação**. Antes a tela mostrava
+  "Ativo" sem enviar nada de verdade.
+  - O campo "Phone Number ID" explica que é o ID da Meta, não o telefone,
+    e alerta se for digitado um telefone.
+  - O provedor simulado deixou de se chamar "PetFlow Mock".
+
 ## [Akylla Gestão] - 2026-10-19 - Módulo Pets retirado (gestão empresarial genérica)
 
 ### Removido

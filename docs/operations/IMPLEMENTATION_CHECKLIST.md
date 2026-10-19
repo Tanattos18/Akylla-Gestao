@@ -4,6 +4,14 @@
 > Este checklist cobre apenas a era do Akylla Gestão. O histórico
 > anterior à adaptação está preservado no Git.
 
+## Visual e WhatsApp (2026-10-19)
+
+- [x] Modo claro/escuro (botão no topo, preferência salva, segue o sistema)
+- [x] Nova tela Início (saudação, atalhos, módulos por grupo, bloqueio do não contratado)
+- [x] WhatsApp: aviso de modo simulação, ajuda do Phone Number ID, guia `docs/akylla/WHATSAPP.md`
+- [x] Modelos prontos de templates + edição (texto alterado → nova aprovação) + teste
+- [ ] Ligar a API oficial da Meta na VPS (credenciais do proprietário)
+
 ## Retirada do módulo Pets (2026-10-19)
 
 - [x] Web: `/pets`, menu, ficha na tela do cliente, coluna da lista, campo da agenda, busca e painel

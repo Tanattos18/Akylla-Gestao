@@ -5,6 +5,7 @@ import { AppShell } from "@/components/shell";
 import { DialogProvider } from "@/components/ui/Dialog";
 import { ToastProvider } from "@/components/ui/Toast";
 import { ServiceWorker } from "@/components/shell/ServiceWorker";
+import { themeBootScript } from "@/components/shell/ThemeToggle";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -28,7 +29,11 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className={inter.variable}>
+    // suppressHydrationWarning: o script abaixo pode pôr a classe "dark" antes do React
+    <html lang="pt-BR" className={inter.variable} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+      </head>
       <body className="min-h-screen antialiased">
         <a
           href="#conteudo"

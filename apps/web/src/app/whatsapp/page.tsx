@@ -201,6 +201,17 @@ export default function WhatsAppConfigPage() {
         </div>
       )}
 
+      {config && config.provider.provider !== "meta" && (
+        <div role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+          <p className="font-semibold">Modo simulação: nenhuma mensagem real é enviada ou recebida.</p>
+          <p className="mt-1">
+            O servidor ainda não está ligado à API oficial do WhatsApp (Meta). Os testes de conexão e os envios
+            aparecem como concluídos, mas são simulados. Para ativar de verdade, a Akylla configura as credenciais
+            da Meta no servidor ({isAdmin ? "passo a passo em docs/akylla/WHATSAPP.md" : "fale com o administrador"}).
+          </p>
+        </div>
+      )}
+
       {config && (
         <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -215,10 +226,12 @@ export default function WhatsAppConfigPage() {
             <div>
               <dt className="text-xs uppercase text-slate-500">Provedor</dt>
               <dd className="text-slate-700">
-                {config.provider.provider === "meta" ? "Meta Cloud API" : "Mock (dev/teste)"}
-                {config.provider.credentialsConfigured
-                  ? " · credenciais configuradas"
-                  : " · sem credenciais no servidor"}
+                {config.provider.provider === "meta" ? "Meta Cloud API (oficial)" : "Simulação (sem envio real)"}
+                {config.provider.provider === "meta"
+                  ? config.provider.credentialsConfigured
+                    ? " · credenciais configuradas"
+                    : " · falta o token no servidor"
+                  : ""}
               </dd>
             </div>
             <div>
@@ -315,19 +328,29 @@ export default function WhatsAppConfigPage() {
           <form onSubmit={handleSubmit} noValidate className="grid gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="wa-phone-id" className="mb-1 block text-sm text-slate-700">
-                Phone Number ID *
+                Phone Number ID * (ID do número na Meta)
               </label>
               <input
                 id="wa-phone-id"
                 value={form.phoneNumberId}
                 onChange={(event) => setForm({ ...form, phoneNumberId: event.target.value })}
-                placeholder="123456789012345"
+                placeholder="Ex.: 109876543210987"
+                aria-describedby="wa-phone-id-help"
                 className={inputClass}
               />
+              <p id="wa-phone-id-help" className="mt-1 text-xs text-slate-500">
+                Não é o número de telefone. Copie o “Phone number ID” em Meta for Developers › WhatsApp ›
+                Configuração da API.
+              </p>
+              {/^55\d{10,11}$/.test(form.phoneNumberId.trim()) && (
+                <p className="mt-1 text-xs text-amber-800">
+                  Isso parece um telefone (começa com 55). O ID da Meta é outro número, mostrado no painel da Meta.
+                </p>
+              )}
             </div>
             <div>
               <label htmlFor="wa-waba-id" className="mb-1 block text-sm text-slate-700">
-                WABA ID
+                WABA ID (conta do WhatsApp Business na Meta)
               </label>
               <input
                 id="wa-waba-id"
