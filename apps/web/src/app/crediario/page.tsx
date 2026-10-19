@@ -14,10 +14,10 @@ import type {
   CreditAccountListDto,
   CreditInstallmentDto,
   CreditInstallmentStatus,
-  Paginated,
 } from "../../lib/types";
 import { useDialog } from "../../components/ui/Dialog";
 import { DataTable } from "../../components/ui/DataTable";
+import { SearchSelect } from "../../components/ui/SearchSelect";
 
 /** Fase 2 · 2.2 — crediário: carteira, aprovação de limite e recebimento de parcelas. */
 
@@ -43,7 +43,6 @@ function CrediarioContent() {
   const params = useSearchParams();
   const [session, setSession] = useState<Session | null>(null);
   const [list, setList] = useState<CreditAccountListDto | null>(null);
-  const [clients, setClients] = useState<ClientDto[]>([]);
   const [selected, setSelected] = useState<string>(params.get("cliente") ?? "");
   const [detail, setDetail] = useState<CreditAccountDetailDto | null>(null);
   const [limit, setLimit] = useState("");
@@ -93,9 +92,6 @@ function CrediarioContent() {
   useEffect(() => {
     if (!session) return;
     void loadList();
-    api<Paginated<ClientDto>>("/api/clients?status=ACTIVE&pageSize=100")
-      .then((data) => setClients(data.items))
-      .catch(() => setClients([]));
   }, [session, loadList]);
 
   useEffect(() => {
@@ -187,10 +183,17 @@ function CrediarioContent() {
 
       <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
         <label htmlFor="cred-client" className="mb-1 block text-sm text-slate-700">Cliente</label>
-        <select id="cred-client" value={selected} onChange={(e) => setSelected(e.target.value)} className={`${inputClass} w-full max-w-md`}>
-          <option value="">Selecione um cliente…</option>
-          {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
+        <SearchSelect<ClientDto>
+          id="cred-client"
+          endpoint="/api/clients?status=ACTIVE"
+          value={selected}
+          selectedLabel={detail?.client.name}
+          labelUrl={(id) => `/api/clients/${id}`}
+          onChange={(id) => setSelected(id)}
+          placeholder="Digite o nome do cliente"
+          className="w-full max-w-md"
+          describe={(client) => client.mobile ?? client.phone ?? null}
+        />
 
         {selected && (
           <div className="mt-4 space-y-4">

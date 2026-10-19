@@ -9,6 +9,9 @@ import type { Paginated, ServiceDto } from "../../lib/types";
 import { useDialog } from "../../components/ui/Dialog";
 import { DataTable } from "../../components/ui/DataTable";
 import { formatBrl } from "../../lib/format";
+import { Pagination } from "../../components/ui/Pagination";
+
+const PAGE_SIZE = 20;
 
 const emptyForm = {
   name: "",
@@ -23,6 +26,9 @@ export default function ServicosPage() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [services, setServices] = useState<ServiceDto[]>([]);
+  // Auditoria (bloco 5): lista paginada com total
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -35,11 +41,12 @@ export default function ServicosPage() {
 
   const isAdmin = session?.user.role === "ADMIN";
 
-  const loadServices = useCallback(async (term: string) => {
+  const loadServices = useCallback(async (term: string, pageNumber = 1) => {
     try {
       const query = term.trim() ? `&search=${encodeURIComponent(term.trim())}` : "";
-      const data = await api<Paginated<ServiceDto>>(`/api/services?pageSize=100${query}`);
+      const data = await api<Paginated<ServiceDto>>(`/api/services?pageSize=${PAGE_SIZE}&page=${pageNumber}${query}`);
       setServices(data.items);
+      setTotal(data.total);
       setListError(null);
     } catch (err) {
       setListError(err instanceof ApiError ? err.message : "Falha ao carregar serviços.");
@@ -58,8 +65,12 @@ export default function ServicosPage() {
   }, [router]);
 
   useEffect(() => {
-    if (session) void loadServices(search);
-  }, [session, loadServices, search]);
+    if (session) void loadServices(search, page);
+  }, [session, loadServices, search, page]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
   function startEdit(service: ServiceDto) {
     setEditingId(service.id);
@@ -116,7 +127,7 @@ export default function ServicosPage() {
         setNotice("Serviço criado.");
       }
       resetForm();
-      await loadServices(search);
+      await loadServices(search, page);
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.issues?.length) {
@@ -143,7 +154,7 @@ export default function ServicosPage() {
         body: JSON.stringify({ status }),
       });
       setNotice(`Serviço ${status === "INACTIVE" ? "inativado" : "reativado"}.`);
-      await loadServices(search);
+      await loadServices(search, page);
     } catch (err) {
       setListError(err instanceof ApiError ? err.message : "Falha ao atualizar status.");
     }
@@ -348,6 +359,7 @@ export default function ServicosPage() {
                     </div></>, hidden: !(isAdmin) },
         ]}
       />
+      <Pagination page={page} pageSize={PAGE_SIZE} total={total} onChange={setPage} label="serviços" />
     </div>
   );
 }

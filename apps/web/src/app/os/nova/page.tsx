@@ -8,13 +8,13 @@ import { api, ApiError } from "../../../lib/api";
 import { fetchSession, type Session } from "../../../lib/session";
 import type { ClientDto, Paginated, ProfessionalDto, ServiceOrderDto } from "../../../lib/types";
 import { ItemsEditor, newItem, toPayload, type EditableItem } from "../../../components/os/ItemsEditor";
+import { SearchSelect } from "../../../components/ui/SearchSelect";
 
 /** Fase 2 · 2.3 — abertura de ordem de serviço. */
 
 export default function NovaOsPage() {
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
-  const [clients, setClients] = useState<ClientDto[]>([]);
   const [professionals, setProfessionals] = useState<ProfessionalDto[]>([]);
   const [clientId, setClientId] = useState("");
   const [professionalId, setProfessionalId] = useState("");
@@ -37,7 +37,6 @@ export default function NovaOsPage() {
 
   useEffect(() => {
     if (!session) return;
-    api<Paginated<ClientDto>>("/api/clients?status=ACTIVE&pageSize=100").then((d) => setClients(d.items)).catch(() => setClients([]));
     api<Paginated<ProfessionalDto>>("/api/professionals?status=ACTIVE&pageSize=100", { redirectOnUnauthorized: false })
       .then((d) => setProfessionals(d.items))
       .catch(() => setProfessionals([]));
@@ -87,10 +86,14 @@ export default function NovaOsPage() {
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor="os-client" className="mb-1 block text-sm text-slate-700">Cliente *</label>
-            <select id="os-client" value={clientId} onChange={(e) => setClientId(e.target.value)} className={inputClass}>
-              <option value="">Selecione…</option>
-              {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+            <SearchSelect<ClientDto>
+              id="os-client"
+              endpoint="/api/clients?status=ACTIVE"
+              value={clientId}
+              onChange={(id) => setClientId(id)}
+              placeholder="Digite o nome do cliente"
+              describe={(client) => client.mobile ?? client.phone ?? null}
+            />
           </div>
           {professionals.length > 0 && (
             <div>

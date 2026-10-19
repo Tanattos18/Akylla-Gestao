@@ -22,6 +22,7 @@ import { Receipt } from "../../components/Receipt";
 import { EmitFiscalButton } from "../../components/fiscal/EmitFiscalButton";
 import { formatBrl } from "../../lib/format";
 import { parseDecimalInput } from "@petflow/shared";
+import { SearchSelect } from "../../components/ui/SearchSelect";
 
 interface CartItem {
   productId: string;
@@ -53,7 +54,6 @@ export default function PdvPage() {
   const [discount, setDiscount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("CASH");
   const [paymentNote, setPaymentNote] = useState("");
-  const [clients, setClients] = useState<ClientDto[]>([]);
   const [clientId, setClientId] = useState("");
   // Fase 2 · 2.1: profissional da venda (lista vazia = módulo desativado ou sem cadastro)
   const [professionals, setProfessionals] = useState<ProfessionalDto[]>([]);
@@ -90,11 +90,6 @@ export default function PdvPage() {
     api<CashSessionDto>("/api/cash/sessions/current", { redirectOnUnauthorized: false })
       .then(() => setCashOpen(true))
       .catch((err) => setCashOpen(err instanceof ApiError && err.status === 404 ? false : true));
-    api<Paginated<ClientDto>>("/api/clients?status=ACTIVE&pageSize=100", {
-      redirectOnUnauthorized: false,
-    })
-      .then((data) => setClients(data.items))
-      .catch(() => setClients([]));
     api<Paginated<ProfessionalDto>>("/api/professionals?status=ACTIVE&pageSize=100", {
       redirectOnUnauthorized: false,
     })
@@ -462,19 +457,14 @@ export default function PdvPage() {
               <label htmlFor="pdv-client" className="mb-1 block text-sm text-slate-700">
                 Cliente (opcional)
               </label>
-              <select
+              <SearchSelect<ClientDto>
                 id="pdv-client"
+                endpoint="/api/clients?status=ACTIVE"
                 value={clientId}
-                onChange={(event) => setClientId(event.target.value)}
-                className={inputClass}
-              >
-                <option value="">Venda rápida sem cliente</option>
-                {clients.map((client) => (
-                  <option key={client.id} value={client.id}>
-                    {client.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(id) => setClientId(id)}
+                emptyOptionLabel="Venda rápida sem cliente"
+                describe={(client) => client.mobile ?? client.phone ?? null}
+              />
             </div>
             {professionals.length > 0 && (
               <div className="sm:col-span-2">

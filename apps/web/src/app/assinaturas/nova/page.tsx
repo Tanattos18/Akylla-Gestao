@@ -11,12 +11,12 @@ import type {
   SubscriptionPlanDto,
 } from "../../../lib/types";
 import { formatBrl } from "../../../lib/format";
+import { SearchSelect } from "../../../components/ui/SearchSelect";
 
 export default function NovaAssinaturaPage() {
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [clients, setClients] = useState<ClientDto[]>([]);
   const [plans, setPlans] = useState<SubscriptionPlanDto[]>([]);
 
   const [clientId, setClientId] = useState("");
@@ -44,13 +44,9 @@ export default function NovaAssinaturaPage() {
     if (!session) return;
     void (async () => {
       try {
-        const [clientData, planData] = await Promise.all([
-          api<Paginated<ClientDto>>("/api/clients?status=ACTIVE&pageSize=100&direction=asc"),
-          api<Paginated<SubscriptionPlanDto>>(
-            "/api/subscription-plans?status=ACTIVE&pageSize=100&direction=asc",
-          ),
-        ]);
-        setClients(clientData.items);
+        const planData = await api<Paginated<SubscriptionPlanDto>>(
+          "/api/subscription-plans?status=ACTIVE&pageSize=100&direction=asc",
+        );
         setPlans(planData.items);
       } catch (err) {
         setFormError(
@@ -135,26 +131,17 @@ export default function NovaAssinaturaPage() {
             <label htmlFor="client" className="mb-1 block text-sm text-slate-700">
               Cliente *
             </label>
-            <select
+            <SearchSelect<ClientDto>
               id="client"
+              endpoint="/api/clients?status=ACTIVE"
               value={clientId}
-              onChange={(event) => setClientId(event.target.value)}
-              className={inputClass}
-            >
-              <option value="">Selecione...</option>
-              {clients.map((client) => (
-                <option key={client.id} value={client.id}>
-                  {client.name}
-                </option>
-              ))}
-            </select>
+              onChange={(id) => setClientId(id)}
+              placeholder="Digite o nome do cliente"
+              invalid={Boolean(fieldErrors.clientId)}
+              describe={(client) => client.mobile ?? client.phone ?? null}
+            />
             {fieldErrors.clientId && (
               <p className="mt-1 text-xs text-red-700">{fieldErrors.clientId}</p>
-            )}
-            {clients.length === 0 && (
-              <p className="mt-1 text-xs text-amber-700">
-                Nenhum cliente ativo cadastrado.
-              </p>
             )}
           </div>
 

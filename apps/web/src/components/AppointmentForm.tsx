@@ -8,6 +8,7 @@ import {
   type Paginated,
   type ServiceDto,
 } from "../lib/types";
+import { SearchSelect } from "./ui/SearchSelect";
 
 interface AppointmentFormProps {
   initial?: AppointmentDto;
@@ -26,7 +27,6 @@ export function AppointmentForm({ initial, onSubmit, submitLabel }: AppointmentF
   );
   const [notes, setNotes] = useState(initial?.notes ?? "");
 
-  const [clients, setClients] = useState<ClientDto[]>([]);
   const [services, setServices] = useState<ServiceDto[]>([]);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -34,15 +34,13 @@ export function AppointmentForm({ initial, onSubmit, submitLabel }: AppointmentF
 
   useEffect(() => {
     void Promise.all([
-      api<Paginated<ClientDto>>("/api/clients?status=ACTIVE&pageSize=100"),
       api<Paginated<ServiceDto>>("/api/services?status=ACTIVE&pageSize=100"),
     ])
-      .then(([clientPage, servicePage]) => {
-        setClients(clientPage.items);
+      .then(([servicePage]) => {
         setServices(servicePage.items);
       })
       .catch(() => {
-        setFormError("Não foi possível carregar clientes e serviços.");
+        setFormError("Não foi possível carregar os serviços.");
       });
   }, []);
 
@@ -119,21 +117,16 @@ export function AppointmentForm({ initial, onSubmit, submitLabel }: AppointmentF
         <label htmlFor="appointment-client" className="mb-1 block text-sm text-slate-700">
           Cliente *
         </label>
-        <select
+        <SearchSelect<ClientDto>
           id="appointment-client"
+          endpoint="/api/clients?status=ACTIVE"
           value={clientId}
-          onChange={(event) => setClientId(event.target.value)}
-          className={inputClass}
-        >
-          <option value="">Selecione...</option>
-          {clients
-            .filter((client) => client.status === "ACTIVE" || client.id === clientId)
-            .map((client) => (
-              <option key={client.id} value={client.id}>
-                {client.name}
-              </option>
-            ))}
-        </select>
+          selectedLabel={initial?.client.name}
+          onChange={(id) => setClientId(id)}
+          placeholder="Digite o nome do cliente"
+          invalid={Boolean(fieldErrors.clientId)}
+          describe={(client) => client.mobile ?? client.phone ?? null}
+        />
         {fieldErrors.clientId && (
           <p className="mt-1 text-xs text-red-700">{fieldErrors.clientId}</p>
         )}

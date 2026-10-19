@@ -8,6 +8,9 @@ import { fetchSession, type Session } from "../../lib/session";
 import type { CategoryDto, Paginated } from "../../lib/types";
 import { useDialog } from "../../components/ui/Dialog";
 import { DataTable } from "../../components/ui/DataTable";
+import { Pagination } from "../../components/ui/Pagination";
+
+const PAGE_SIZE = 20;
 
 export default function CategoriasPage() {
   const dialog = useDialog();
@@ -15,6 +18,9 @@ export default function CategoriasPage() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<CategoryDto[]>([]);
+  // Auditoria (bloco 5): lista paginada com total
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
@@ -27,10 +33,11 @@ export default function CategoriasPage() {
 
   const isAdmin = session?.user.role === "ADMIN";
 
-  const loadCategories = useCallback(async () => {
+  const loadCategories = useCallback(async (pageNumber = 1) => {
     try {
-      const data = await api<Paginated<CategoryDto>>("/api/categories?pageSize=100");
+      const data = await api<Paginated<CategoryDto>>(`/api/categories?pageSize=${PAGE_SIZE}&page=${pageNumber}`);
       setCategories(data.items);
+      setTotal(data.total);
       setListError(null);
     } catch (err) {
       setListError(err instanceof ApiError ? err.message : "Falha ao carregar categorias.");
@@ -49,8 +56,8 @@ export default function CategoriasPage() {
   }, [router]);
 
   useEffect(() => {
-    if (session) void loadCategories();
-  }, [session, loadCategories]);
+    if (session) void loadCategories(page);
+  }, [session, loadCategories, page]);
 
   function startEdit(category: CategoryDto) {
     setEditingId(category.id);
@@ -92,7 +99,7 @@ export default function CategoriasPage() {
         setNotice("Categoria criada.");
       }
       resetForm();
-      await loadCategories();
+      await loadCategories(page);
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.issues?.length) {
@@ -119,7 +126,7 @@ export default function CategoriasPage() {
         body: JSON.stringify({ status }),
       });
       setNotice(`Categoria ${status === "INACTIVE" ? "inativada" : "reativada"}.`);
-      await loadCategories();
+      await loadCategories(page);
     } catch (err) {
       setListError(err instanceof ApiError ? err.message : "Falha ao atualizar status.");
     }
@@ -260,6 +267,7 @@ export default function CategoriasPage() {
                     </div></>, hidden: !(isAdmin) },
         ]}
       />
+      <Pagination page={page} pageSize={PAGE_SIZE} total={total} onChange={setPage} label="categorias" />
     </div>
   );
 }

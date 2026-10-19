@@ -8,6 +8,9 @@ import { fetchSession, type Session } from "../../lib/session";
 import type { Paginated, SupplierDto } from "../../lib/types";
 import { useDialog } from "../../components/ui/Dialog";
 import { DataTable } from "../../components/ui/DataTable";
+import { Pagination } from "../../components/ui/Pagination";
+
+const PAGE_SIZE = 20;
 
 const emptyForm = {
   name: "",
@@ -23,6 +26,9 @@ export default function FornecedoresPage() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [suppliers, setSuppliers] = useState<SupplierDto[]>([]);
+  // Auditoria (bloco 5): lista paginada com total
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -34,10 +40,11 @@ export default function FornecedoresPage() {
 
   const isAdmin = session?.user.role === "ADMIN";
 
-  const loadSuppliers = useCallback(async () => {
+  const loadSuppliers = useCallback(async (pageNumber = 1) => {
     try {
-      const data = await api<Paginated<SupplierDto>>("/api/suppliers?pageSize=100");
+      const data = await api<Paginated<SupplierDto>>(`/api/suppliers?pageSize=${PAGE_SIZE}&page=${pageNumber}`);
       setSuppliers(data.items);
+      setTotal(data.total);
       setListError(null);
     } catch (err) {
       setListError(err instanceof ApiError ? err.message : "Falha ao carregar fornecedores.");
@@ -56,8 +63,8 @@ export default function FornecedoresPage() {
   }, [router]);
 
   useEffect(() => {
-    if (session) void loadSuppliers();
-  }, [session, loadSuppliers]);
+    if (session) void loadSuppliers(page);
+  }, [session, loadSuppliers, page]);
 
   function startEdit(supplier: SupplierDto) {
     setEditingId(supplier.id);
@@ -109,7 +116,7 @@ export default function FornecedoresPage() {
         setNotice("Fornecedor criado.");
       }
       resetForm();
-      await loadSuppliers();
+      await loadSuppliers(page);
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.issues?.length) {
@@ -136,7 +143,7 @@ export default function FornecedoresPage() {
         body: JSON.stringify({ status }),
       });
       setNotice(`Fornecedor ${status === "INACTIVE" ? "inativado" : "reativado"}.`);
-      await loadSuppliers();
+      await loadSuppliers(page);
     } catch (err) {
       setListError(err instanceof ApiError ? err.message : "Falha ao atualizar status.");
     }
@@ -316,6 +323,7 @@ export default function FornecedoresPage() {
                     </div></>, hidden: !(isAdmin) },
         ]}
       />
+      <Pagination page={page} pageSize={PAGE_SIZE} total={total} onChange={setPage} label="fornecedores" />
     </div>
   );
 }

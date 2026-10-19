@@ -13,6 +13,7 @@ import type {
 import { useDialog } from "./ui/Dialog";
 import { DataTable } from "./ui/DataTable";
 import { useToast } from "./ui/Toast";
+import { SearchSelect } from "./ui/SearchSelect";
 
 interface Option {
   id: string;
@@ -38,6 +39,7 @@ function isOverdue(entry: FinancialEntryDto): boolean {
 export default function FinancialEntries({ direction, isAdmin }: Props) {
   const toast = useToast();
   const dialog = useDialog();
+  const [editingCounterpartyName, setEditingCounterpartyName] = useState<string | null>(null);
   const counterpartyLabel = direction === "RECEIVABLE" ? "Cliente" : "Fornecedor";
 
   const [items, setItems] = useState<FinancialEntryDto[]>([]);
@@ -47,7 +49,6 @@ export default function FinancialEntries({ direction, isAdmin }: Props) {
   const [loading, setLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
 
-  const [options, setOptions] = useState<Option[]>([]);
   const [form, setForm] = useState({
     description: "",
     amount: "",
@@ -84,18 +85,9 @@ export default function FinancialEntries({ direction, isAdmin }: Props) {
     void load();
   }, [load]);
 
-  useEffect(() => {
-    const path =
-      direction === "RECEIVABLE"
-        ? "/api/clients?pageSize=100&status=ACTIVE"
-        : "/api/suppliers?pageSize=100&status=ACTIVE";
-    api<{ items: Option[] }>(path)
-      .then((data) => setOptions(data.items))
-      .catch(() => setOptions([]));
-  }, [direction]);
-
   function resetForm() {
     setForm({ description: "", amount: "", dueDate: "", counterpartyId: "" });
+    setEditingCounterpartyName(null);
     setEditingId(null);
     setFormError(null);
   }
@@ -107,6 +99,7 @@ export default function FinancialEntries({ direction, isAdmin }: Props) {
       dueDate: entry.dueDate.slice(0, 10),
       counterpartyId: entry.clientId ?? entry.supplierId ?? "",
     });
+    setEditingCounterpartyName(entry.client?.name ?? entry.supplier?.name ?? null);
     setEditingId(entry.id);
     setFormError(null);
   }
@@ -263,19 +256,14 @@ export default function FinancialEntries({ direction, isAdmin }: Props) {
             <label htmlFor="fin-counterparty" className="mb-1 block text-sm text-slate-700">
               {counterpartyLabel} (opcional)
             </label>
-            <select
+            <SearchSelect<Option>
               id="fin-counterparty"
+              endpoint={direction === "RECEIVABLE" ? "/api/clients?status=ACTIVE" : "/api/suppliers?status=ACTIVE"}
               value={form.counterpartyId}
-              onChange={(event) => setForm({ ...form, counterpartyId: event.target.value })}
-              className={inputClass}
-            >
-              <option value="">Sem vínculo</option>
-              {options.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.name}
-                </option>
-              ))}
-            </select>
+              selectedLabel={editingCounterpartyName}
+              onChange={(id) => setForm({ ...form, counterpartyId: id })}
+              emptyOptionLabel="Sem vínculo"
+            />
           </div>
           {formError && (
             <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 sm:col-span-2 lg:col-span-4">
@@ -331,7 +319,7 @@ export default function FinancialEntries({ direction, isAdmin }: Props) {
         empty={loading ? "Carregando..." : "Nenhum título encontrado."}
         columns={[
           { key: "c0", header: "Descrição", cell: (entry) => entry.description, className: "font-medium" },
-          { key: "c1", header: counterpartyLabel, cell: (entry) => entry.client?.name ?? entry.supplier?.name ?? "â€”" },
+          { key: "c1", header: counterpartyLabel, cell: (entry) => entry.client?.name ?? entry.supplier?.name ?? "—" },
           { key: "c2", header: "Valor", cell: (entry) => <>{formatBrl(entry.amount)}</> },
           { key: "c3", header: "Vencimento", cell: (entry) => new Date(entry.dueDate).toLocaleDateString("pt-BR") },
           { key: "c4", header: "Status", cell: (entry) => <><span

@@ -17,6 +17,7 @@ import {
 import { useDialog } from "../../../components/ui/Dialog";
 import { DataTable } from "../../../components/ui/DataTable";
 import { useToast } from "../../../components/ui/Toast";
+import { SearchSelect } from "../../../components/ui/SearchSelect";
 
 const statusFilterOptions: Array<WhatsAppMessageStatus | ""> = [
   "",
@@ -57,7 +58,6 @@ export default function WhatsAppMensagensPage() {
   const [search, setSearch] = useState("");
   const [listError, setListError] = useState<string | null>(null);
 
-  const [clients, setClients] = useState<ClientDto[]>([]);
   const [templates, setTemplates] = useState<WhatsAppTemplateDto[]>([]);
   const [form, setForm] = useState({ clientId: "", templateId: "", variables: "" });
   const [formError, setFormError] = useState<string | null>(null);
@@ -110,15 +110,13 @@ export default function WhatsAppMensagensPage() {
   useEffect(() => {
     if (!session || !isAdmin) return;
     Promise.all([
-      api<Paginated<ClientDto>>("/api/clients?pageSize=100"),
       api<Paginated<WhatsAppTemplateDto>>(
         // Todos os ativos: os aprovados podem ser enviados; os demais aparecem
         // desabilitados, explicando por que (aguardando aprovação na Meta).
         "/api/whatsapp/templates?pageSize=100&status=ACTIVE",
       ),
     ])
-      .then(([clientsData, templatesData]) => {
-        setClients(clientsData.items);
+      .then(([templatesData]) => {
         setTemplates(templatesData.items);
       })
       .catch(() => {
@@ -240,20 +238,14 @@ export default function WhatsAppMensagensPage() {
               <label htmlFor="msg-client" className="mb-1 block text-sm text-slate-700">
                 Cliente *
               </label>
-              <select
+              <SearchSelect<ClientDto>
                 id="msg-client"
+                endpoint="/api/clients?status=ACTIVE"
                 value={form.clientId}
-                onChange={(event) => setForm({ ...form, clientId: event.target.value })}
-                className={inputClass}
-              >
-                <option value="">Selecione...</option>
-                {clients.map((client) => (
-                  <option key={client.id} value={client.id}>
-                    {client.name}
-                    {client.phone || client.mobile ? ` — ${client.phone ?? client.mobile}` : ""}
-                  </option>
-                ))}
-              </select>
+                onChange={(id) => setForm({ ...form, clientId: id })}
+                placeholder="Digite o nome do cliente"
+                describe={(client) => client.mobile ?? client.phone ?? null}
+              />
             </div>
             <div>
               <label htmlFor="msg-template" className="mb-1 block text-sm text-slate-700">

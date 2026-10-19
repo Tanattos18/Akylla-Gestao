@@ -9,6 +9,9 @@ import type { ClientDto, Paginated } from "../../lib/types";
 import { useDialog } from "../../components/ui/Dialog";
 import { DataTable } from "../../components/ui/DataTable";
 import { useToast } from "../../components/ui/Toast";
+import { Pagination } from "../../components/ui/Pagination";
+
+const PAGE_SIZE = 20;
 
 const emptyForm = {
   name: "",
@@ -33,6 +36,9 @@ export default function ClientesPage() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [clients, setClients] = useState<ClientDto[]>([]);
+  // Auditoria (bloco 5): lista paginada com total
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -42,13 +48,14 @@ export default function ClientesPage() {
   const [saving, setSaving] = useState(false);
   const [listError, setListError] = useState<string | null>(null);
 
-  const loadClients = useCallback(async (term: string) => {
+  const loadClients = useCallback(async (term: string, pageNumber = 1) => {
     try {
       const query = term.trim()
         ? `&search=${encodeURIComponent(term.trim())}`
         : "";
-      const data = await api<Paginated<ClientDto>>(`/api/clients?pageSize=100${query}`);
+      const data = await api<Paginated<ClientDto>>(`/api/clients?pageSize=${PAGE_SIZE}&page=${pageNumber}${query}`);
       setClients(data.items);
+      setTotal(data.total);
       setListError(null);
     } catch (err) {
       setListError(err instanceof ApiError ? err.message : "Falha ao carregar clientes.");
@@ -73,8 +80,12 @@ export default function ClientesPage() {
   }, []);
 
   useEffect(() => {
-    if (session) void loadClients(search);
-  }, [session, loadClients, search]);
+    if (session) void loadClients(search, page);
+  }, [session, loadClients, search, page]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
   function startEdit(client: ClientDto) {
     setEditingId(client.id);
@@ -143,7 +154,7 @@ export default function ClientesPage() {
         toast.success("Cliente criado.");
       }
       resetForm();
-      await loadClients(search);
+      await loadClients(search, page);
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.issues?.length) {
@@ -169,7 +180,7 @@ export default function ClientesPage() {
         body: JSON.stringify({ status }),
       });
       toast.success(`Cliente ${status === "INACTIVE" ? "inativado" : "reativado"}.`);
-      await loadClients(search);
+      await loadClients(search, page);
     } catch (err) {
       toast.error(err, "Falha ao atualizar status.");
     }
@@ -467,6 +478,7 @@ export default function ClientesPage() {
                   </div></> },
         ]}
       />
+      <Pagination page={page} pageSize={PAGE_SIZE} total={total} onChange={setPage} label="clientes" />
     </div>
   );
 }
