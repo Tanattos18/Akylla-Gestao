@@ -26,6 +26,9 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ### Alterado
 
+- **Enviar mensagem:** a lista de templates mostra também os que aguardam
+  aprovação, desabilitados e com a explicação, e exibe o texto do template
+  escolhido. Antes eles simplesmente não apareciam.
 - **Nova tela Início:**
   - saudação com data;
   - atalhos rápidos;

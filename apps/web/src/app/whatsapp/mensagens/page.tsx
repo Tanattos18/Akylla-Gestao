@@ -67,6 +67,8 @@ export default function WhatsAppMensagensPage() {
   const pageSize = 20;
 
   const selectedTemplate = templates.find((template) => template.id === form.templateId);
+  const approvedTemplates = templates.filter((template) => template.approval === "APPROVED");
+  const pendingTemplates = templates.filter((template) => template.approval !== "APPROVED");
   const variableCount = selectedTemplate
     ? templateVariableCount(selectedTemplate.body)
     : 0;
@@ -110,7 +112,9 @@ export default function WhatsAppMensagensPage() {
     Promise.all([
       api<Paginated<ClientDto>>("/api/clients?pageSize=100"),
       api<Paginated<WhatsAppTemplateDto>>(
-        "/api/whatsapp/templates?pageSize=100&status=ACTIVE&approval=APPROVED",
+        // Todos os ativos: os aprovados podem ser enviados; os demais aparecem
+        // desabilitados, explicando por que (aguardando aprovação na Meta).
+        "/api/whatsapp/templates?pageSize=100&status=ACTIVE",
       ),
     ])
       .then(([clientsData, templatesData]) => {
@@ -262,13 +266,38 @@ export default function WhatsAppMensagensPage() {
                 className={inputClass}
               >
                 <option value="">Selecione...</option>
-                {templates.map((template) => (
+                {approvedTemplates.map((template) => (
                   <option key={template.id} value={template.id}>
                     {template.name} ({template.language})
                   </option>
                 ))}
+                {pendingTemplates.length > 0 && (
+                  <optgroup label="Aguardando aprovação (ainda não podem ser enviados)">
+                    {pendingTemplates.map((template) => (
+                      <option key={template.id} value={template.id} disabled>
+                        {template.name} — {template.approval === "REJECTED" ? "reprovado" : "aguardando aprovação"}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
               </select>
+              {approvedTemplates.length === 0 && (
+                <p className="mt-1 text-xs text-amber-800">
+                  Nenhum template aprovado ainda. O WhatsApp só permite enviar modelos aprovados pela Meta: cadastre-os
+                  na Meta com o mesmo nome e texto e, quando aprovar, clique em “Marcar aprovado” em{" "}
+                  <Link href="/whatsapp/templates" className="font-medium underline">
+                    Templates
+                  </Link>
+                  .
+                </p>
+              )}
             </div>
+            {selectedTemplate && (
+              <div className="sm:col-span-2 rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                <span className="text-xs uppercase text-slate-500">Texto do template</span>
+                <p className="mt-1 whitespace-pre-wrap">{selectedTemplate.body}</p>
+              </div>
+            )}
             <div className="sm:col-span-2">
               <label htmlFor="msg-variables" className="mb-1 block text-sm text-slate-700">
                 Variáveis {variableCount > 0 ? `(${variableCount} — uma por linha)` : "(nenhuma)"}
@@ -278,7 +307,7 @@ export default function WhatsAppMensagensPage() {
                 value={form.variables}
                 onChange={(event) => setForm({ ...form, variables: event.target.value })}
                 rows={Math.max(2, variableCount)}
-                placeholder={variableCount > 0 ? "Ana\nRex" : ""}
+                placeholder={variableCount > 0 ? "Maria\nPedido 123\n18/10 às 14:00" : ""}
                 className={inputClass}
               />
             </div>
