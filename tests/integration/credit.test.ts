@@ -148,9 +148,10 @@ describe("Venda no crediário", () => {
     expect(await prisma.cashMovement.count({ where: { saleId } })).toBe(0);
   });
 
-  it("limite excedido (100 em aberto + 450 > 500) → 403 e estoque intacto", async () => {
+  it("limite excedido (100 em aberto + 500 > 500) → 403 e estoque intacto", async () => {
     const stockBefore = (await prisma.product.findUniqueOrThrow({ where: { id: product } })).stockQuantity.toFixed(3);
-    const response = await creditSale(clientAna, "4.5", 1);
+    // produto em UNIDADE: quantidade inteira (auditoria bloco 7)
+    const response = await creditSale(clientAna, "5", 1);
     expect(response.status).toBe(403);
     expect(response.body.message).toContain("Limite de crédito excedido");
     expect((await prisma.product.findUniqueOrThrow({ where: { id: product } })).stockQuantity.toFixed(3)).toBe(stockBefore);
