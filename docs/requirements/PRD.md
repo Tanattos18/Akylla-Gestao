@@ -30,7 +30,7 @@ controle de quem fez o quê.
 - Não é um ERP completo: operações fiscais, contábeis, de frota ou de
   produção estão fora do escopo inicial.
 - Prioriza processos comuns de comércio e prestação de serviços
-  (lojas, mercadinhos, papelarias, oficinas, pet shops, salões,
+  (lojas, mercadinhos, papelarias, oficinas, salões,
   clínicas).
 
 ## 2. Objetivos
@@ -50,8 +50,8 @@ controle de quem fez o quê.
 - **Usuários internos:** administrador (configura tudo) e membro
   (opera o dia a dia).
 - **Segmentos priorizados:** varejo (roupas, calçados, presentes),
-  mercados/adegas, papelarias, assistências técnicas, pet shops,
-  salões e clínicas (com módulos de pets e agenda).
+  mercados/adegas, papelarias, assistências técnicas,
+  salões e clínicas (com agenda e ordem de serviço).
 
 ## 4. Escopo (MVP entregue)
 
@@ -83,13 +83,13 @@ controle de quem fez o quê.
 
 | Módulo | Requisitos resumidos |
 |---|---|
-| Pets | Ficha de animais vinculada ao cliente (espécie, raça, sexo, peso); desativável e fora da navegação inicial |
 
 ## 5. Fora de escopo
 
 - Emissão fiscal (NFC-e/NFe), conciliação de adquirente e maquininha;
 - Módulos contábeis, de frota, de produção ou de RH;
-- Marketplace, IA e recursos de clínica veterinária completa;
+- Marketplace, IA e funções de nicho (ex.: pet shop, veterinária) — o
+  módulo Pets foi retirado em 2026-10-19;
 - Entrega offline do PDV;
 - Recorrência automática de cobrança (hoje: renovação manual +
   checkout sandbox).

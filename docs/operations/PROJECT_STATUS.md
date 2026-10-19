@@ -21,6 +21,11 @@ que o site akyllagestao.com.br promete. Fases em ordem rígida (1 → 7).
 instalado com `scripts/deploy/vps/install.sh`. Pendências do proprietário:
 2FA do dono, SMTP (cadastro aberto), UptimeRobot, Mercado Pago com CNPJ.
 
+**Módulo Pets retirado (2026-10-19)**: o Akylla Gestão é só gestão
+empresarial. Telas, rotas, módulo vendável, preset de demonstração e textos
+de pet shop removidos (migration `20261019180000_remove_pets_module`);
+tabela `Pet` mantida só como legado. Produção: rodar `update.sh` na VPS.
+
 **Fase 8b (Kits de acesso)**: concluída em 2026-10-18. Kits Básico,
 Intermediário e Avançado com módulos incluídos, preço por módulo avulso
 (combos), acesso restrito ao contratado (403 `MODULE_NOT_CONTRACTED`;

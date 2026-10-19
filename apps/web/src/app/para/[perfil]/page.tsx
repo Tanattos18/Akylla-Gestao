@@ -27,7 +27,7 @@ const perfis = {
   },
   hibrido: {
     title: "Akylla para comércio e serviços",
-    lead: "Para pet shops, oficinas com loja e estúdios que também vendem produtos.",
+    lead: "Para oficinas com loja, estúdios, clínicas e assistências que também vendem produtos.",
     items: [
       "Tudo do perfil de serviços: agenda, OS e comissões",
       "PDV e estoque para a parte de loja",

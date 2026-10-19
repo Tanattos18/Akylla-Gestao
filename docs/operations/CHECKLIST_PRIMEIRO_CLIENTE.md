@@ -187,13 +187,10 @@ pagamento **real do sandbox**, não pelo `MockMercadoPagoProvider`.
 
 ### 3.2 Seed neutro por segmento — **obrigatório para demo**
 
-- [ ] Hoje `seed-demo.ts` é 100% "Mundo Pet" (ração, petiscos,
-      brinquedos) — limitação L11.
-- [ ] Adicionar variação por segmento (ex.: papelaria, oficina) ou
-      genérica, mantendo a verificação de integridade existente.
+- [x] Seeds por segmento (comercio, servicos, alimentacao); o preset
+      "Mundo Pet" e o módulo Pets foram retirados em 2026-10-19.
 
-**Aceite:** o demo usado na venda não parece exclusivo de pet shop,
-a menos que o cliente seja pet shop.
+**Aceite:** o demo usado na venda não parece de nicho.
 
 ### 3.3 Argumento comercial de migração — **obrigatório**
 

@@ -207,14 +207,6 @@ export default function AgendamentoDetalhePage() {
             {phone ? <span className="text-slate-500"> · {phone}</span> : null}
           </p>
         </div>
-        <div>
-          <p className="text-xs uppercase text-slate-500">Pet</p>
-          <p className="mt-1 text-sm text-slate-800">
-            {appointment.pet
-              ? `${appointment.pet.name} (${appointment.pet.species === "DOG" ? "Cachorro" : appointment.pet.species === "CAT" ? "Gato" : "Outro"})`
-              : "—"}
-          </p>
-        </div>
         <div className="sm:col-span-2">
           <p className="text-xs uppercase text-slate-500">Observações</p>
           <p className="mt-1 whitespace-pre-wrap text-sm text-slate-800">

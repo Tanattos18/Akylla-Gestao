@@ -4,7 +4,7 @@
 # assinaturas e WhatsApp de exemplo. A empresa fica isenta de cobrança e
 # separada das empresas reais.
 #
-# Uso: sudo bash /opt/akylla/scripts/deploy/vps/create-demo.sh [comercio|servicos|alimentacao|pet]
+# Uso: sudo bash /opt/akylla/scripts/deploy/vps/create-demo.sh [comercio|servicos|alimentacao]
 set -euo pipefail
 APP_USER="akylla"
 APP_DIR="/opt/akylla"
@@ -16,8 +16,7 @@ case "$PRESET" in
   comercio) NAME="Demonstração - Empório Central" ;;
   servicos) NAME="Demonstração - Studio Beleza" ;;
   alimentacao) NAME="Demonstração - Padaria Pão Quente" ;;
-  pet) NAME="Demonstração - Mundo Pet" ;;
-  *) echo "preset inválido: use comercio, servicos, alimentacao ou pet" >&2; exit 1 ;;
+  *) echo "preset inválido: use comercio, servicos ou alimentacao" >&2; exit 1 ;;
 esac
 EMAIL="demo-${PRESET}@akyllagestao.com.br"
 

@@ -6,6 +6,30 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-19 - Módulo Pets retirado (gestão empresarial genérica)
+
+### Removido
+
+- **Pets** (pedido do proprietário: o produto é só gestão empresarial):
+  - tela `/pets`, item do menu, ficha de pets na tela do cliente, coluna
+    "Pets" na lista de clientes, campo "Pet" na agenda/agendamento, pets
+    na busca global e no painel;
+  - rotas `/api/pets*` e `GET /api/clients/:id/pets`; `petId` sai do
+    agendamento (o lembrete de WhatsApp usa o nome do cliente);
+  - módulo `PETS` dos kits, dos preços avulsos e do enum `BusinessModule`
+    (migration `20261019180000_remove_pets_module`); o kit Avançado passa
+    a ter 8 módulos;
+  - preset de demonstração "Mundo Pet" (`seed-demo`, `create-demo.sh`);
+  - textos de pet shop (perfil Comércio e serviços, modelo de importação
+    de serviços, PRD, README) e dados de teste com vocabulário de pet shop.
+- Arquivos retirados foram para `Arquivos Sem USO/modulo-pets-removido-2026-10-19/`
+  (fora do Git), sem apagar nada.
+
+### Preservado
+
+- Tabela `Pet` e `Appointment.petId` no banco, como **legado** (dados
+  antigos não são apagados; entram na exportação e na anonimização LGPD).
+
 ## [Akylla Gestão] - 2026-10-19 - Pagamento por Pix no Faturamento
 
 ### Adicionado

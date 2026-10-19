@@ -172,8 +172,8 @@ const TEMPLATE_EXAMPLES: Record<ImportType, string[][]> = {
     ],
   ],
   SERVICE: [
-    ["Banho e Tosa", "Higiene completa", "60", "80,00"],
-    ["Corte de unhas", "", "15", "25,00"],
+    ["Consultoria", "Diagnóstico inicial", "60", "150,00"],
+    ["Instalação", "", "90", "120,00"],
   ],
 };
 

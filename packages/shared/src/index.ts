@@ -642,38 +642,8 @@ export const cashSummaryQuerySchema = z.object({
 export type CashSummaryQuery = z.infer<typeof cashSummaryQuerySchema>;
 
 // ---------------------------------------------------------------------------
-// Etapa 5 — clientes, pets e serviços
+// Etapa 5 — clientes e serviços
 // ---------------------------------------------------------------------------
-
-export const petSpeciesSchema = z.enum([
-  "DOG",
-  "CAT",
-  "BIRD",
-  "RODENT",
-  "REPTILE",
-  "FISH",
-  "OTHER",
-]);
-export type PetSpecies = z.infer<typeof petSpeciesSchema>;
-
-export const petSexSchema = z.enum(["MALE", "FEMALE", "UNKNOWN"]);
-export type PetSex = z.infer<typeof petSexSchema>;
-
-export const petSpeciesLabels: Record<PetSpecies, string> = {
-  DOG: "Cachorro",
-  CAT: "Gato",
-  BIRD: "Ave",
-  RODENT: "Roedor",
-  REPTILE: "Réptil",
-  FISH: "Peixe",
-  OTHER: "Outro",
-};
-
-export const petSexLabels: Record<PetSex, string> = {
-  MALE: "Macho",
-  FEMALE: "Fêmea",
-  UNKNOWN: "Não informado",
-};
 
 export function normalizePhone(value: string): string {
   return value.replace(/\D+/g, "");
@@ -723,56 +693,6 @@ export const listClientsQuerySchema = paginationQuerySchema.extend({
   direction: z.enum(["asc", "desc"]).default("asc"),
 });
 export type ListClientsQuery = z.infer<typeof listClientsQuerySchema>;
-
-const weightField = z
-  .union([z.number(), z.string()])
-  .transform((value) => (typeof value === "number" ? String(value) : value.trim()))
-  .refine(
-    (value) =>
-      /^\d+(\.\d{1,2})?$/.test(value) && Number(value) > 0 && Number(value) <= 999.99,
-    "Peso inválido (máximo 999,99)",
-  );
-
-const petBaseSchema = z.object({
-  clientId: z.string().trim().min(1, "Responsável é obrigatório").max(60),
-  name: nameField,
-  species: petSpeciesSchema,
-  breed: optionalText(80),
-  sex: petSexSchema.default("UNKNOWN"),
-  birthDate: dateField.optional().nullable(),
-  weight: weightField.optional().nullable(),
-  color: optionalText(60),
-  notes: optionalText(500),
-});
-
-function checkPetBirthDate(
-  value: { birthDate?: string | null },
-  ctx: z.RefinementCtx,
-) {
-  if (value.birthDate && value.birthDate > new Date().toISOString().slice(0, 10)) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["birthDate"],
-      message: "Data de nascimento não pode ser no futuro",
-    });
-  }
-}
-
-export const createPetSchema = petBaseSchema.superRefine(checkPetBirthDate);
-export type CreatePetInput = z.infer<typeof createPetSchema>;
-
-export const updatePetSchema = petBaseSchema.partial().superRefine(checkPetBirthDate);
-export type UpdatePetInput = z.infer<typeof updatePetSchema>;
-
-export const listPetsQuerySchema = paginationQuerySchema.extend({
-  search: z.string().trim().max(120).optional(),
-  clientId: z.string().trim().max(60).optional(),
-  species: petSpeciesSchema.optional(),
-  status: recordStatusSchema.optional(),
-  orderBy: z.enum(["name", "createdAt"]).default("name"),
-  direction: z.enum(["asc", "desc"]).default("asc"),
-});
-export type ListPetsQuery = z.infer<typeof listPetsQuerySchema>;
 
 export const createServiceSchema = z.object({
   name: nameField,
@@ -1176,7 +1096,6 @@ const localDateTimeField = z
 
 export const createAppointmentSchema = z.object({
   clientId: z.string().trim().min(1, "Cliente é obrigatório").max(60),
-  petId: z.string().trim().max(60).optional().nullable(),
   serviceId: z.string().trim().min(1, "Serviço é obrigatório").max(60),
   startLocal: localDateTimeField,
   utcOffsetMinutes: z.coerce
@@ -1218,7 +1137,6 @@ export const listAppointmentsQuerySchema = paginationQuerySchema
     to: reportDateField.optional(),
     status: appointmentStatusSchema.optional(),
     clientId: z.string().trim().max(60).optional(),
-    petId: z.string().trim().max(60).optional(),
     serviceId: z.string().trim().max(60).optional(),
     search: z.string().trim().max(120).optional(),
   })
@@ -1347,10 +1265,10 @@ export type CreateCheckoutInput = z.infer<typeof createCheckoutSchema>;
 /**
  * Módulos de negócio desativáveis por empresa. O núcleo (clientes,
  * produtos, vendas, caixa, financeiro, relatórios, billing) não consta:
- * nunca é desativável.
+ * nunca é desativável. (O antigo módulo PETS foi retirado do produto em
+ * 2026-10-19 — migration `20261019180000_remove_pets_module`.)
  */
 export const businessModuleSchema = z.enum([
-  "PETS",
   "APPOINTMENTS",
   "SERVICES",
   "WHATSAPP",
@@ -1363,7 +1281,6 @@ export const businessModuleSchema = z.enum([
 export type BusinessModule = z.infer<typeof businessModuleSchema>;
 
 export const BUSINESS_MODULES: readonly BusinessModule[] = [
-  "PETS",
   "APPOINTMENTS",
   "SERVICES",
   "WHATSAPP",
@@ -1376,7 +1293,6 @@ export const BUSINESS_MODULES: readonly BusinessModule[] = [
 
 /** Valores literais para uso como identificadores (ex.: decorators). */
 export const BusinessModules = {
-  PETS: "PETS",
   APPOINTMENTS: "APPOINTMENTS",
   SERVICES: "SERVICES",
   WHATSAPP: "WHATSAPP",
@@ -1388,7 +1304,6 @@ export const BusinessModules = {
 } as const satisfies Record<BusinessModule, BusinessModule>;
 
 export const businessModuleLabels: Record<BusinessModule, string> = {
-  PETS: "Pets",
   APPOINTMENTS: "Agendamentos",
   SERVICES: "Serviços",
   WHATSAPP: "Automação WhatsApp",
@@ -1693,7 +1608,7 @@ export const globalSearchQuerySchema = z.object({
 });
 export type GlobalSearchQuery = z.infer<typeof globalSearchQuerySchema>;
 
-export type GlobalSearchKind = "client" | "product" | "sale" | "serviceOrder" | "service" | "pet";
+export type GlobalSearchKind = "client" | "product" | "sale" | "serviceOrder" | "service";
 
 export interface GlobalSearchItem {
   kind: GlobalSearchKind;

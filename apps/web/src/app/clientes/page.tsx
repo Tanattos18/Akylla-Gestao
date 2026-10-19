@@ -191,12 +191,6 @@ export default function ClientesPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
-            href="/pets"
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
-          >
-            Pets
-          </Link>
-          <Link
             href="/servicos"
             className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
           >
@@ -433,7 +427,6 @@ export default function ClientesPage() {
           { key: "c1", header: "Contato", cell: (client) => [client.mobile, client.phone, client.email].filter(Boolean).join(" · ") ||
                     "—" },
           { key: "c2", header: "Cidade", cell: (client) => [client.city, client.state].filter(Boolean).join("/") || "—" },
-          { key: "c3", header: "Pets", cell: (client) => client._count?.pets ?? 0 },
           { key: "c4", header: "Status", cell: (client) => <><span
                     className={
                       client.status === "ACTIVE"

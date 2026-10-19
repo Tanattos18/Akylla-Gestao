@@ -70,7 +70,7 @@ Classificadas como **preexistentes** (não introduzidas pela adaptação):
 
 | # | Limitação | Severidade | Notas |
 |---|---|---|---|
-| L11 | Seed ainda tem "Mundo Pet" (temático) | Baixa | Decisão D2 Etapa 10: reescrever com aprovação |
+| L11 | ~~Seed ainda tem "Mundo Pet" (temático)~~ | — | **Resolvido:** seeds por segmento (Fase 7) e módulo Pets retirado (2026-10-19) |
 | L12 | UI `/faturamento` não exibe limites/uso do plano | Média | Backend pronto (`userLimit` etc. no `planSelect`); front pendente |
 | L13 | Cobrança recorrente real não ativada | Alta (comercial) | Sandbox implementado; ativar exige E2E + aprovação |
 | L14 | Escrita do catálogo global de planos não exposta | Baixa | Exige papel de plataforma |
@@ -155,7 +155,7 @@ Checklist do proprietário — **não comercializar sem concluir**:
       off no código). Os comentários do `.env.example` já marcam isso
       como "apenas ambiente local/controllado"; os testes definem os
       flags em `tests/helpers/setup-env.ts` e não dependem do template.
-- [ ] Reescrever seed com dados não temáticos de pet shop (após aprovação)
+- [x] Seed sem dados de pet shop (Fase 7; módulo Pets retirado em 2026-10-19)
 - [ ] UI `/faturamento` exibindo limites e uso do plano
 
 ---

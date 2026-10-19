@@ -27,7 +27,6 @@ const appointmentSelect = {
   id: true,
   companyId: true,
   clientId: true,
-  petId: true,
   serviceId: true,
   startAt: true,
   endAt: true,
@@ -40,7 +39,6 @@ const appointmentSelect = {
   createdAt: true,
   updatedAt: true,
   client: { select: { id: true, name: true, phone: true, mobile: true, status: true } },
-  pet: { select: { id: true, name: true, species: true } },
   service: { select: { id: true, name: true, price: true, status: true } },
   createdBy: { select: { id: true, name: true } },
   cancelledBy: { select: { id: true, name: true } },
@@ -104,13 +102,11 @@ export class AppointmentsService {
     }
     if (query.status) andConditions.push({ status: query.status });
     if (query.clientId) andConditions.push({ clientId: query.clientId });
-    if (query.petId) andConditions.push({ petId: query.petId });
     if (query.serviceId) andConditions.push({ serviceId: query.serviceId });
     if (query.search) {
       andConditions.push({
         OR: [
           { client: { name: { contains: query.search, mode: "insensitive" } } },
-          { pet: { name: { contains: query.search, mode: "insensitive" } } },
           { service: { name: { contains: query.search, mode: "insensitive" } } },
         ],
       });
@@ -163,7 +159,6 @@ export class AppointmentsService {
 
     await this.assertReferences(auth, {
       clientId: input.clientId,
-      petId: input.petId ?? null,
       serviceId: input.serviceId,
     });
 
@@ -174,7 +169,6 @@ export class AppointmentsService {
         data: {
           companyId: auth.companyId,
           clientId: input.clientId,
-          petId: input.petId || null,
           serviceId: input.serviceId,
           startAt,
           endAt,
@@ -207,12 +201,11 @@ export class AppointmentsService {
 
     const clientId = input.clientId ?? existing.clientId;
     const serviceId = input.serviceId ?? existing.serviceId;
-    const petId = input.petId !== undefined ? input.petId || null : existing.petId;
 
     const refsChanged =
-      input.clientId !== undefined || input.petId !== undefined || input.serviceId !== undefined;
+      input.clientId !== undefined || input.serviceId !== undefined;
     if (refsChanged) {
-      await this.assertReferences(auth, { clientId, petId, serviceId });
+      await this.assertReferences(auth, { clientId, serviceId });
     }
 
     let startAt = existing.startAt;
@@ -248,7 +241,7 @@ export class AppointmentsService {
         where: { id: existing.id },
         data: {
           ...(refsChanged
-            ? { clientId, serviceId, petId }
+            ? { clientId, serviceId }
             : {}),
           ...(timeTouched
             ? { startAt, endAt, startLocal, durationMinutes }
@@ -349,7 +342,7 @@ export class AppointmentsService {
 
   private async assertReferences(
     auth: AuthContext,
-    refs: { clientId: string; petId: string | null; serviceId: string },
+    refs: { clientId: string; serviceId: string },
   ) {
     const client = await this.prisma.client.findFirst({
       where: { id: refs.clientId, companyId: auth.companyId },
@@ -360,22 +353,6 @@ export class AppointmentsService {
     }
     if (client.status !== "ACTIVE") {
       throw new BadRequestException("Cliente está inativo");
-    }
-
-    if (refs.petId) {
-      const pet = await this.prisma.pet.findFirst({
-        where: { id: refs.petId, companyId: auth.companyId },
-        select: { id: true, clientId: true, status: true },
-      });
-      if (!pet) {
-        throw new BadRequestException("Pet não encontrado");
-      }
-      if (pet.clientId !== refs.clientId) {
-        throw new BadRequestException("Pet não pertence ao cliente informado");
-      }
-      if (pet.status !== "ACTIVE") {
-        throw new BadRequestException("Pet está inativo");
-      }
     }
 
     const service = await this.prisma.service.findFirst({
@@ -477,7 +454,7 @@ export class AppointmentsService {
       const scheduled = appointment.startAt.getTime() - leadMinutes * 60_000;
       const nextAttemptAt = new Date(Math.max(Date.now(), scheduled));
       const variables = [
-        appointment.pet?.name || appointment.client.name,
+        appointment.client.name,
         appointment.service?.name ?? "",
         wallWhen(appointment.startLocal),
       ];

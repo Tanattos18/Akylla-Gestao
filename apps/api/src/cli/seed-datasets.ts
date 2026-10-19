@@ -19,17 +19,6 @@ export interface SeedProduct {
   description: string | null;
 }
 
-export interface SeedPet {
-  clientIndex: number;
-  name: string;
-  species: "DOG" | "CAT" | "BIRD";
-  breed: string;
-  sex: "MALE" | "FEMALE";
-  birthYear: number;
-  weight: number;
-  color: string;
-}
-
 export interface SeedDataset {
   /** Nome comercial usado nos textos (WhatsApp, e-mail do membro) */
   brand: string;
@@ -40,7 +29,6 @@ export interface SeedDataset {
   products: SeedProduct[];
   services: Array<{ name: string; durationMinutes: number; price: number; description: string }>;
   plans: Array<{ name: string; price: number; durationDays: number; description: string }>;
-  pets: SeedPet[];
   reminderBody: string;
   promo: { name: string; body: string };
   /** Texto do motivo de cancelamento de assinatura no exemplo */
@@ -106,7 +94,6 @@ export const COMERCIO: SeedDataset = {
     { name: "Kit Limpeza Mensal", price: 99.9, durationDays: 30, description: "Itens de limpeza para a casa" },
     { name: "Material Escolar Mensal", price: 59.9, durationDays: 30, description: "Reposição de papelaria" },
   ],
-  pets: [],
   reminderBody: "Olá {{1}}! Lembramos do seu horário de {{2}} amanhã. Até lá! — Empório Central",
   promo: {
     name: "promocao_semana",
@@ -166,7 +153,6 @@ export const SERVICOS: SeedDataset = {
     { name: "Clube Hidratação", price: 149.9, durationDays: 30, description: "2 hidratações por mês" },
     { name: "Sobrancelha Sempre Feita", price: 79.9, durationDays: 30, description: "2 designs por mês" },
   ],
-  pets: [],
   reminderBody: "Olá {{1}}! Lembramos do seu horário de {{2}} amanhã. Até lá! — Studio Beleza",
   promo: {
     name: "promocao_hidratacao",
@@ -227,7 +213,6 @@ export const ALIMENTACAO: SeedDataset = {
     { name: "Clube do Bolo", price: 89.9, durationDays: 30, description: "2 bolos por mês" },
     { name: "Lanche da Empresa", price: 349.9, durationDays: 30, description: "Coffee break semanal" },
   ],
-  pets: [],
   reminderBody: "Olá {{1}}! Lembramos da sua encomenda de {{2}} amanhã. Até lá! — Padaria Pão Quente",
   promo: {
     name: "promocao_fornada",

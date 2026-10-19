@@ -31,7 +31,6 @@ let bCategoryId: string;
 let bSupplierId: string;
 let bProductId: string;
 let bClientId: string;
-let bPetId: string;
 let bServiceId: string;
 let bAppointmentId: string;
 let bSaleReceipt: string;
@@ -145,16 +144,6 @@ beforeAll(async () => {
     },
   });
   bClientId = bClient.id;
-
-  const bPet = await prisma.pet.create({
-    data: {
-      companyId: companyB.id,
-      clientId: bClient.id,
-      name: "Pet Sigiloso B",
-      species: "DOG",
-    },
-  });
-  bPetId = bPet.id;
 
   const bService = await prisma.service.create({
     data: {
@@ -435,14 +424,6 @@ describe("3. Leitura cruzada por ID — empresa A lê registros de B (404)", () 
     expect((await get(`/api/clients/${bClientId}`, adminACookie)).status).toBe(404);
   });
 
-  it("pets do cliente de B: GET /api/clients/:id/pets → 404", async () => {
-    expect((await get(`/api/clients/${bClientId}/pets`, adminACookie)).status).toBe(404);
-  });
-
-  it("pet de B: GET /api/pets/:id → 404", async () => {
-    expect((await get(`/api/pets/${bPetId}`, adminACookie)).status).toBe(404);
-  });
-
   it("serviço de B: GET /api/services/:id → 404", async () => {
     expect((await get(`/api/services/${bServiceId}`, adminACookie)).status).toBe(404);
   });
@@ -555,17 +536,6 @@ describe("4. Escrita cruzada — empresa A altera registros de B (404, nada muda
 
     expect(response.status).toBe(404);
     const row = await prisma.client.findUnique({ where: { id: bClientId } });
-    expect(row?.status).toBe("ACTIVE");
-  });
-
-  it("PATCH /api/pets/:id/status de B → 404 e status inalterado", async () => {
-    const response = await request(app.getHttpServer())
-      .patch(`/api/pets/${bPetId}/status`)
-      .set("Cookie", adminACookie)
-      .send({ status: "INACTIVE" });
-
-    expect(response.status).toBe(404);
-    const row = await prisma.pet.findUnique({ where: { id: bPetId } });
     expect(row?.status).toBe("ACTIVE");
   });
 
@@ -731,22 +701,6 @@ describe("5. Referências cruzadas em criação (FK de outra empresa rejeitada)"
     expect(response.body.message).toBe("Serviço não encontrado");
   });
 
-  it("agendamento com petId de B → 400 'Pet não encontrado'", async () => {
-    const response = await request(app.getHttpServer())
-      .post("/api/appointments")
-      .set("Cookie", adminACookie)
-      .send({
-        clientId: aClientId,
-        serviceId: aServiceId,
-        petId: bPetId,
-        startLocal: "2026-11-20T10:00",
-        utcOffsetMinutes: -180,
-        durationMinutes: 60,
-      });
-
-    expect(response.status).toBe(400);
-    expect(response.body.message).toBe("Pet não encontrado");
-  });
 });
 
 describe("6. Listagens, relatórios e exportações por empresa", () => {

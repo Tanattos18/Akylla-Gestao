@@ -175,17 +175,21 @@ Etapa 1; os demais endpoints ficam em `/api/...`.
   `npm test`; a migration é aplicada no setup. `tests/integration/sales.test.ts`
   abre uma sessão de caixa no `beforeAll`.
 
-## Clientes, pets e serviços (Etapa 5)
+## Clientes e serviços (Etapa 5)
+
+> **2026-10-19:** o módulo Pets foi retirado do produto (migration
+> `20261019180000_remove_pets_module`). Referências a pets abaixo são
+> histórico; a tabela `Pet` ficou só como legado no banco.
 
 - Endpoints, payloads e permissões: `docs/architecture/API.md`.
-- Escrita de clientes/pets é liberada a qualquer usuário autenticado;
+- Escrita de clientes é liberada a qualquer usuário autenticado;
   escrita de serviços exige papel `ADMIN` (catálogo/preços).
 - Anti-duplicidade de cliente é checada na aplicação (409 com nome +
   contato iguais a um ativo) — nome de serviço é único no banco
   (`(companyId, nameKey)`).
 - `/pdv` envia `clientId` opcional no payload da venda; sem seleção,
   vende rápido (comportamento da Etapa 3 preservado).
-- Testes novos em `tests/integration/clients.test.ts`, `tests/integration/pets.test.ts`,
+- Testes novos em `tests/integration/clients.test.ts`,
   `tests/integration/services.test.ts` (+ casos em `tests/integration/sales.test.ts`) rodam no
   `petflow_test` via `npm test`; a migration é aplicada no setup.
 

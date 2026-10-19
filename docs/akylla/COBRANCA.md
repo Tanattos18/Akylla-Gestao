@@ -17,7 +17,7 @@ cliente pode somar módulos avulsos (combo personalizado).
 |---|---|---|---|---|---|---|
 | Básico | R$ 79,90 | R$ 799,00 | Automação WhatsApp, Crediário | 3 | 200 | 100 |
 | Intermediário | R$ 149,90 | R$ 1.499,00 | + Serviços, Agendamentos, Comissões | 10 | 1.000 | 500 |
-| Avançado | R$ 249,90 | R$ 2.499,00 | todos os 9 módulos | ilimitado | ilimitado | ilimitado |
+| Avançado | R$ 249,90 | R$ 2.499,00 | todos os 8 módulos | ilimitado | ilimitado | ilimitado |
 
 | Módulo avulso | Mensal |
 |---|---|
@@ -29,7 +29,6 @@ cliente pode somar módulos avulsos (combo personalizado).
 | Ordens de serviço | R$ 29,90 |
 | Nota fiscal | R$ 39,90 |
 | Assinaturas de clientes | R$ 19,90 |
-| Pets | R$ 9,90 |
 
 - **Combo:** kit + avulsos. Mensal = kit + soma dos avulsos; anual = kit
   anual + 10× cada avulso. Ex.: Básico + Nota fiscal = R$ 119,80/mês.

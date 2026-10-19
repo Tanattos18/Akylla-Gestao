@@ -254,6 +254,10 @@ tests/        → testes compartilhados/integração
 
 ## Módulo clientes, pets e serviços (Etapa 5)
 
+> **2026-10-19:** o módulo Pets foi retirado do produto (migration
+> `20261019180000_remove_pets_module`). Referências a pets abaixo são
+> histórico; a tabela `Pet` ficou só como legado no banco.
+
 - **Duplicidade de cliente por aplicação, não por unique**: `nameKey`
   (nome colapsado/minúsculo) tem apenas índice comum; o 409
   ("possivelmente duplicado") só dispara quando `nameKey` **e** algum

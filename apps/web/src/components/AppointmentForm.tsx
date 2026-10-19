@@ -6,7 +6,6 @@ import {
   type AppointmentDto,
   type ClientDto,
   type Paginated,
-  type PetDto,
   type ServiceDto,
 } from "../lib/types";
 
@@ -20,7 +19,6 @@ const datetimePattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
 
 export function AppointmentForm({ initial, onSubmit, submitLabel }: AppointmentFormProps) {
   const [clientId, setClientId] = useState(initial?.clientId ?? "");
-  const [petId, setPetId] = useState(initial?.petId ?? "");
   const [serviceId, setServiceId] = useState(initial?.serviceId ?? "");
   const [startLocal, setStartLocal] = useState(initial?.startLocal ?? "");
   const [durationMinutes, setDurationMinutes] = useState(
@@ -30,7 +28,6 @@ export function AppointmentForm({ initial, onSubmit, submitLabel }: AppointmentF
 
   const [clients, setClients] = useState<ClientDto[]>([]);
   const [services, setServices] = useState<ServiceDto[]>([]);
-  const [pets, setPets] = useState<PetDto[]>([]);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -48,21 +45,6 @@ export function AppointmentForm({ initial, onSubmit, submitLabel }: AppointmentF
         setFormError("Não foi possível carregar clientes e serviços.");
       });
   }, []);
-
-  useEffect(() => {
-    if (!clientId) {
-      setPets([]);
-      return;
-    }
-    void api<Paginated<PetDto>>(`/api/pets?clientId=${clientId}&status=ACTIVE&pageSize=100`)
-      .then((page) => {
-        setPets(page.items);
-        setPetId((current) =>
-          current && page.items.some((pet) => pet.id === current) ? current : "",
-        );
-      })
-      .catch(() => setPets([]));
-  }, [clientId]);
 
   function handleServiceChange(value: string) {
     setServiceId(value);
@@ -101,7 +83,6 @@ export function AppointmentForm({ initial, onSubmit, submitLabel }: AppointmentF
     try {
       await onSubmit({
         clientId,
-        petId: petId || null,
         serviceId,
         startLocal,
         utcOffsetMinutes: -new Date().getTimezoneOffset(),
@@ -156,26 +137,6 @@ export function AppointmentForm({ initial, onSubmit, submitLabel }: AppointmentF
         {fieldErrors.clientId && (
           <p className="mt-1 text-xs text-red-700">{fieldErrors.clientId}</p>
         )}
-      </div>
-      <div>
-        <label htmlFor="appointment-pet" className="mb-1 block text-sm text-slate-700">
-          Pet
-        </label>
-        <select
-          id="appointment-pet"
-          value={petId}
-          onChange={(event) => setPetId(event.target.value)}
-          disabled={!clientId}
-          className={inputClass}
-        >
-          <option value="">Sem pet</option>
-          {pets.map((pet) => (
-            <option key={pet.id} value={pet.id}>
-              {pet.name}
-            </option>
-          ))}
-        </select>
-        {fieldErrors.petId && <p className="mt-1 text-xs text-red-700">{fieldErrors.petId}</p>}
       </div>
       <div>
         <label htmlFor="appointment-service" className="mb-1 block text-sm text-slate-700">

@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import type { BusinessModule, GlobalSearchItem, GlobalSearchKind, GlobalSearchResult } from "@petflow/shared";
+import type { GlobalSearchItem, GlobalSearchKind, GlobalSearchResult } from "@petflow/shared";
 import type { AuthContext } from "../common/decorators/auth.decorator";
 import { PrismaService } from "../prisma/prisma.module";
 
@@ -11,7 +11,6 @@ const LABELS: Record<GlobalSearchKind, string> = {
   sale: "Vendas",
   serviceOrder: "Ordens de serviço",
   service: "Serviços",
-  pet: "Pets",
 };
 
 function brl(value: { toString(): string }): string {
@@ -37,9 +36,9 @@ export class SearchService {
       where: { companyId, status: "DISABLED" },
       select: { module: true },
     });
-    const disabled = new Set<BusinessModule>(disabledRows.map((row) => row.module));
+    const disabled = new Set<string>(disabledRows.map((row) => row.module));
 
-    const [clients, products, sales, orders, services, pets] = await Promise.all([
+    const [clients, products, sales, orders, services] = await Promise.all([
       this.prisma.client.findMany({
         where: {
           companyId,
@@ -83,14 +82,6 @@ export class SearchService {
             take: LIMIT,
             select: { id: true, name: true, price: true },
           }),
-      disabled.has("PETS")
-        ? Promise.resolve([])
-        : this.prisma.pet.findMany({
-            where: { companyId, name: contains },
-            orderBy: { name: "asc" },
-            take: LIMIT,
-            select: { id: true, name: true, client: { select: { id: true, name: true } } },
-          }),
     ]);
 
     const items: Record<GlobalSearchKind, GlobalSearchItem[]> = {
@@ -128,13 +119,6 @@ export class SearchService {
         title: s.name,
         subtitle: brl(s.price),
         href: "/servicos",
-      })),
-      pet: pets.map((p) => ({
-        kind: "pet",
-        id: p.id,
-        title: p.name,
-        subtitle: p.client.name,
-        href: `/clientes/${p.client.id}`,
       })),
     };
 

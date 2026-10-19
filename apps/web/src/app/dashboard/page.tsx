@@ -613,7 +613,6 @@ export default function DashboardPage() {
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-medium text-slate-800">
                               {appt.client.name}
-                              {appt.pet ? ` · ${appt.pet.name}` : ""}
                             </p>
                             <p className="truncate text-xs text-slate-500">
                               {appt.service.name} ·{" "}

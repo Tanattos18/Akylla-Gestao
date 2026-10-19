@@ -1,5 +1,18 @@
 # Banco de dados — diretrizes e modelo atual
 
+## Módulo Pets removido (2026-10-19)
+
+Migration: `20261019180000_remove_pets_module`. O Akylla Gestão é gestão
+empresarial genérica; o módulo de pet shop saiu do produto.
+
+- Removidos (configuração): o valor `PETS` do enum `BusinessModule`
+  (enum recriado), as linhas `PETS` de `CompanyModule` e `ModuleOffer` e
+  `PETS` dos arrays de kits, assinaturas, pagamentos e perfis.
+- **Preservados (dados):** a tabela `Pet` (com RLS) e
+  `Appointment.petId` ficam como **legado** — sem API nem telas; entram na
+  exportação de dados da empresa e na anonimização LGPD. Remoção física só
+  em etapa dedicada, com backup.
+
 ## Modelos implementados (Fase 8b — Kits de acesso)
 
 Migration: `20261019150000_module_kits` (aditiva; renomeia os planos para
@@ -214,7 +227,7 @@ proprietário).
 
 Enums novos:
 
-- `BusinessModule`: `PETS`, `APPOINTMENTS`, `SERVICES`, `WHATSAPP`,
+- `BusinessModule`: `APPOINTMENTS`, `SERVICES`, `WHATSAPP`,
   `SUBSCRIPTIONS` — apenas módulos desativáveis; o núcleo (clientes,
   produtos, vendas, caixa, financeiro, relatórios, billing) não consta e
   nunca é desativável.

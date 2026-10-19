@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { FileText, Package, PawPrint, Receipt, Scissors, Search, Users, Wrench, type LucideIcon } from "lucide-react";
+import { FileText, Package, Receipt, Scissors, Search, Users, Wrench, type LucideIcon } from "lucide-react";
 import type { GlobalSearchItem, GlobalSearchKind, GlobalSearchResult } from "@petflow/shared";
 import { api } from "@/lib/api";
 
@@ -12,7 +12,6 @@ const ICONS: Record<GlobalSearchKind, LucideIcon> = {
   sale: Receipt,
   serviceOrder: Wrench,
   service: Scissors,
-  pet: PawPrint,
 };
 
 /**

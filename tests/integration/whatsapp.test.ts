@@ -337,7 +337,7 @@ describe("Configuração — status, permissões e isolamento", () => {
     const created = await request(app.getHttpServer())
       .put("/api/whatsapp/config")
       .set("Cookie", adminACookie)
-      .send({ phoneNumberId: PHONE_NUMBER_ID, displayName: "Pet Shop A" });
+      .send({ phoneNumberId: PHONE_NUMBER_ID, displayName: "Loja A" });
     expect(created.status).toBe(200);
     expect(created.body.phoneNumberId).toBe(PHONE_NUMBER_ID);
 
@@ -345,7 +345,7 @@ describe("Configuração — status, permissões e isolamento", () => {
       .get("/api/whatsapp/config")
       .set("Cookie", adminACookie);
     expect(read.body.status).toBe("CONFIGURED");
-    expect(read.body.displayName).toBe("Pet Shop A");
+    expect(read.body.displayName).toBe("Loja A");
     expect(read.body.lastError).toBeNull();
   });
 
@@ -472,7 +472,7 @@ describe("Templates — validação, aprovação e permissões", () => {
     const response = await request(app.getHttpServer())
       .post("/api/whatsapp/templates")
       .set("Cookie", memberACookie)
-      .send({ name: "lembrete_pet", body: "Olá!" });
+      .send({ name: "lembrete_cliente", body: "Olá!" });
     expect(response.status).toBe(403);
     expect(response.body.message).toBe("Permissão administrativa necessária");
   });
@@ -482,10 +482,10 @@ describe("Templates — validação, aprovação e permissões", () => {
       .post("/api/whatsapp/templates")
       .set("Cookie", adminACookie)
       .send({
-        name: "lembrete_pet",
+        name: "lembrete_cliente",
         language: "pt_BR",
         category: "UTILITY",
-        body: "Olá {{1}}, seu pet {{2}} aguarda pelo próximo banho.",
+        body: "Olá {{1}}, seu pedido {{2}} está pronto para retirada.",
       });
     expect(response.status).toBe(201);
     expect(response.body.approval).toBe("PENDING_APPROVAL");
@@ -497,7 +497,7 @@ describe("Templates — validação, aprovação e permissões", () => {
     const response = await request(app.getHttpServer())
       .post("/api/whatsapp/templates")
       .set("Cookie", adminACookie)
-      .send({ name: "lembrete_pet", body: "Outro corpo" });
+      .send({ name: "lembrete_cliente", body: "Outro corpo" });
     expect(response.status).toBe(409);
     expect(response.body.message).toBe(
       "Já existe um template com este nome nesta empresa",
@@ -508,7 +508,7 @@ describe("Templates — validação, aprovação e permissões", () => {
     const response = await request(app.getHttpServer())
       .post("/api/whatsapp/templates")
       .set("Cookie", adminACookie)
-      .send({ name: "LembretePet", body: "Olá" });
+      .send({ name: "LembreteCliente", body: "Olá" });
     expect(response.status).toBe(400);
     expect(response.body.message).toBe("Dados inválidos");
   });
@@ -550,7 +550,7 @@ describe("Templates — validação, aprovação e permissões", () => {
     const response = await request(app.getHttpServer())
       .post("/api/whatsapp/templates")
       .set("Cookie", adminACookie)
-      .send({ name: "promo_natal", body: "Promoção de natal para seu pet!" });
+      .send({ name: "promo_natal", body: "Promoção de natal para você!" });
     expect(response.status).toBe(201);
     expect(response.body.approval).toBe("PENDING_APPROVAL");
     t2Id = response.body.id;

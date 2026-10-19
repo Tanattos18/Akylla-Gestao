@@ -85,19 +85,18 @@ afterAll(async () => {
 });
 
 describe("CompanyModules — listagem padrão", () => {
-  it("lista os 9 módulos desativáveis, todos ACTIVE por padrão (ausência de linha)", async () => {
+  it("lista os 8 módulos desativáveis, todos ACTIVE por padrão (ausência de linha)", async () => {
     const response = await request(app.getHttpServer())
       .get("/api/company-modules")
       .set("Cookie", memberACookie);
 
     expect(response.status).toBe(200);
-    expect(response.body).toHaveLength(9);
+    expect(response.body).toHaveLength(8);
     expect(response.body.map((entry: { module: string }) => entry.module).sort()).toEqual([
       "APPOINTMENTS",
       "COMMISSIONS",
       "CREDIT",
       "FISCAL",
-      "PETS",
       "SERVICES",
       "SERVICE_ORDERS",
       "SUBSCRIPTIONS",
@@ -131,34 +130,34 @@ describe("CompanyModules — ativação/desativação (ADMIN)", () => {
     const response = await request(app.getHttpServer())
       .patch("/api/company-modules")
       .set("Cookie", memberACookie)
-      .send({ module: "PETS", status: "DISABLED" });
+      .send({ module: "SERVICES", status: "DISABLED" });
 
     expect(response.status).toBe(403);
   });
 
-  it("ADMIN desabilita PETS e o upsert é idempotente ao reativar", async () => {
+  it("ADMIN desabilita SERVICES e o upsert é idempotente ao reativar", async () => {
     const disable = await request(app.getHttpServer())
       .patch("/api/company-modules")
       .set("Cookie", adminACookie)
-      .send({ module: "PETS", status: "DISABLED" });
+      .send({ module: "SERVICES", status: "DISABLED" });
 
     expect(disable.status).toBe(200);
-    expect(disable.body).toMatchObject({ module: "PETS", status: "DISABLED" });
+    expect(disable.body).toMatchObject({ module: "SERVICES", status: "DISABLED" });
 
     const disableAgain = await request(app.getHttpServer())
       .patch("/api/company-modules")
       .set("Cookie", adminACookie)
-      .send({ module: "PETS", status: "DISABLED" });
+      .send({ module: "SERVICES", status: "DISABLED" });
     expect(disableAgain.status).toBe(200);
-    expect(disableAgain.body).toMatchObject({ module: "PETS", status: "DISABLED" });
+    expect(disableAgain.body).toMatchObject({ module: "SERVICES", status: "DISABLED" });
 
     const enable = await request(app.getHttpServer())
       .patch("/api/company-modules")
       .set("Cookie", adminACookie)
-      .send({ module: "PETS", status: "ACTIVE" });
+      .send({ module: "SERVICES", status: "ACTIVE" });
 
     expect(enable.status).toBe(200);
-    expect(enable.body).toMatchObject({ module: "PETS", status: "ACTIVE" });
+    expect(enable.body).toMatchObject({ module: "SERVICES", status: "ACTIVE" });
   });
 });
 
@@ -166,33 +165,33 @@ describe("ModuleGuard — bloqueio de rotas do módulo desativado", () => {
   beforeAll(async () => {
     const companyId = (await prisma.company.findUniqueOrThrow({ where: { slug: "modules-a" } })).id;
     await prisma.companyModule.upsert({
-      where: { companyId_module: { companyId, module: "PETS" } },
-      create: { companyId, module: "PETS", status: "DISABLED" },
+      where: { companyId_module: { companyId, module: "SERVICES" } },
+      create: { companyId, module: "SERVICES", status: "DISABLED" },
       update: { status: "DISABLED" },
     });
   });
 
-  it("GET /api/pets retorna 403 quando PETS está desativado", async () => {
+  it("GET /api/services retorna 403 quando SERVICES está desativado", async () => {
     const response = await request(app.getHttpServer())
-      .get("/api/pets")
+      .get("/api/services")
       .set("Cookie", memberACookie);
 
     expect(response.status).toBe(403);
     expect(response.body.message).toContain("Módulo desativado");
   });
 
-  it("POST /api/pets também retorna 403", async () => {
+  it("POST /api/services também retorna 403", async () => {
     const response = await request(app.getHttpServer())
-      .post("/api/pets")
+      .post("/api/services")
       .set("Cookie", memberACookie)
-      .send({ clientId: "qualquer", name: "Rex", species: "DOG" });
+      .send({ name: "Revisão", price: "10.00" });
 
     expect(response.status).toBe(403);
   });
 
-  it("outras empresas não são afetadas (cross-tenant): admin B acessa /api/pets normalmente", async () => {
+  it("outras empresas não são afetadas (cross-tenant): admin B acessa /api/services normalmente", async () => {
     const response = await request(app.getHttpServer())
-      .get("/api/pets")
+      .get("/api/services")
       .set("Cookie", adminBCookie);
 
     expect(response.status).toBe(200);
@@ -206,15 +205,15 @@ describe("ModuleGuard — bloqueio de rotas do módulo desativado", () => {
     expect(response.status).toBe(200);
   });
 
-  it("reativar PETS devolve acesso (200)", async () => {
+  it("reativar SERVICES devolve acesso (200)", async () => {
     const companyId = (await prisma.company.findUniqueOrThrow({ where: { slug: "modules-a" } })).id;
     await prisma.companyModule.update({
-      where: { companyId_module: { companyId, module: "PETS" } },
+      where: { companyId_module: { companyId, module: "SERVICES" } },
       data: { status: "ACTIVE" },
     });
 
     const response = await request(app.getHttpServer())
-      .get("/api/pets")
+      .get("/api/services")
       .set("Cookie", memberACookie);
 
     expect(response.status).toBe(200);

@@ -10,8 +10,9 @@
 > endpoints, telas e testes.
 >
 > **Produto:** **Akylla Gestão** — SaaS multiempresa para pequenos
-> negócios brasileiros (nicho pet shop removido da navegação; módulos
-> genéricos reutilizáveis). Monorepo adaptado e renomeado em 2026-10-12.
+> negócios brasileiros (gestão empresarial genérica; o módulo Pets foi
+> **retirado do produto em 2026-10-19** — as menções a pets abaixo são
+> histórico). Monorepo adaptado e renomeado em 2026-10-12.
 >
 > **Estado em 2026-10-14:** código completo e testado (**538/538**),
 > sem deploy, sem backup e sem cobrança real. O caminho até o primeiro

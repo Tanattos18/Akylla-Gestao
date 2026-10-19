@@ -107,8 +107,8 @@ beforeAll(async () => {
   const inactive = await prisma.product.create({
     data: {
       companyId: companyA.id,
-      name: "Petisco Descontinuado",
-      sku: "PET-XXX",
+      name: "Produto Descontinuado",
+      sku: "DESC-XXX",
       salePrice: "5.00",
       stockQuantity: 5,
       status: "INACTIVE",

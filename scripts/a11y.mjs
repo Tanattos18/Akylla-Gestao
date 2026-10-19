@@ -36,7 +36,6 @@ const APP_PAGES = [
   "/categorias",
   "/fornecedores",
   "/clientes",
-  "/pets",
   "/servicos",
   "/agenda",
   "/profissionais",

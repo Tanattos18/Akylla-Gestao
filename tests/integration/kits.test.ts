@@ -64,13 +64,13 @@ afterAll(async () => {
 describe("preço do combo (puro)", () => {
   const offers = [
     { module: "FISCAL" as const, priceMonthly: "39.90" },
-    { module: "PETS" as const, priceMonthly: "9.90" },
+    { module: "SERVICES" as const, priceMonthly: "9.90" },
   ];
   const kit = { priceMonthly: "79.90", priceYearly: "799.00", includedModules: ["WHATSAPP", "CREDIT"] as const };
 
   it("mensal soma os avulsos; anual = kit anual + 10× cada avulso; módulo do kit não é cobrado", () => {
     expect(computeComboPrice({ kit, extraModules: ["FISCAL"], offers, cycle: "MONTHLY" })).toBe("119.80");
-    expect(computeComboPrice({ kit, extraModules: ["FISCAL", "PETS"], offers, cycle: "YEARLY" })).toBe("1297.00");
+    expect(computeComboPrice({ kit, extraModules: ["FISCAL", "SERVICES"], offers, cycle: "YEARLY" })).toBe("1297.00");
     expect(computeComboPrice({ kit, extraModules: ["CREDIT"], offers, cycle: "MONTHLY" })).toBe("79.90");
     expect(computeComboPrice({ kit: { ...kit, priceYearly: null }, extraModules: [], offers, cycle: "YEARLY" })).toBe("958.80");
   });
@@ -85,11 +85,11 @@ describe("catálogo de kits e módulos", () => {
     const names = plans.body.items.map((p: { name: string }) => p.name);
     expect(names.slice(0, 3)).toEqual(["Básico", "Intermediário", "Avançado"]);
     expect(plans.body.items[0].includedModules).toEqual(["WHATSAPP", "CREDIT"]);
-    expect(plans.body.items[2].includedModules).toHaveLength(9);
+    expect(plans.body.items[2].includedModules).toHaveLength(8);
 
     const modules = await http().get("/api/billing/modules").set("Cookie", cookie);
     expect(modules.status).toBe(200);
-    expect(modules.body.items).toHaveLength(9);
+    expect(modules.body.items).toHaveLength(8);
     expect(modules.body.items.find((m: { module: string }) => m.module === "FISCAL")).toMatchObject({
       label: expect.any(String),
       priceMonthly: "39.90",
@@ -97,28 +97,28 @@ describe("catálogo de kits e módulos", () => {
 
     // Só o dono edita o catálogo
     expect((await http().get("/api/platform/catalog").set("Cookie", cookie)).status).toBe(403);
-    expect((await http().put("/api/platform/modules/PETS").set("Cookie", cookie).send({ priceMonthly: "1.00" })).status).toBe(403);
+    expect((await http().put("/api/platform/modules/SERVICES").set("Cookie", cookie).send({ priceMonthly: "1.00" })).status).toBe(403);
   });
 
   it("dono edita preço de módulo e de kit (e valida a entrada)", async () => {
     const catalog = await http().get("/api/platform/catalog").set("Cookie", ownerCookie);
     expect(catalog.status).toBe(200);
     expect(catalog.body.plans.length).toBeGreaterThanOrEqual(3);
-    expect(catalog.body.modules).toHaveLength(9);
+    expect(catalog.body.modules).toHaveLength(8);
 
-    const changed = await http().put("/api/platform/modules/PETS").set("Cookie", ownerCookie).send({ priceMonthly: "12.50" });
+    const changed = await http().put("/api/platform/modules/SERVICES").set("Cookie", ownerCookie).send({ priceMonthly: "12.50" });
     expect(changed.status).toBe(200);
-    expect(changed.body.modules.find((m: { module: string }) => m.module === "PETS").priceMonthly).toBe("12.50");
-    await http().put("/api/platform/modules/PETS").set("Cookie", ownerCookie).send({ priceMonthly: "9.90" });
+    expect(changed.body.modules.find((m: { module: string }) => m.module === "SERVICES").priceMonthly).toBe("12.50");
+    await http().put("/api/platform/modules/SERVICES").set("Cookie", ownerCookie).send({ priceMonthly: "9.90" });
 
     expect((await http().put("/api/platform/modules/NAO_EXISTE").set("Cookie", ownerCookie).send({ active: false })).status).toBe(400);
-    expect((await http().put("/api/platform/modules/PETS").set("Cookie", ownerCookie).send({ priceMonthly: "abc" })).status).toBe(400);
+    expect((await http().put("/api/platform/modules/SERVICES").set("Cookie", ownerCookie).send({ priceMonthly: "abc" })).status).toBe(400);
 
     const plan = catalog.body.plans.find((p: { id: string }) => p.id === "tenantplan_essencial");
     const body = {
       priceMonthly: "84.90",
       priceYearly: "849.00",
-      includedModules: [...plan.includedModules, "PETS"],
+      includedModules: [...plan.includedModules, "SERVICES"],
       userLimit: plan.userLimit,
       clientLimit: plan.clientLimit,
       productLimit: plan.productLimit,
@@ -127,7 +127,7 @@ describe("catálogo de kits e módulos", () => {
     expect(updated.status).toBe(200);
     expect(updated.body.plans.find((p: { id: string }) => p.id === "tenantplan_essencial")).toMatchObject({
       priceMonthly: "84.90",
-      includedModules: ["WHATSAPP", "CREDIT", "PETS"],
+      includedModules: ["WHATSAPP", "CREDIT", "SERVICES"],
     });
     // Restaura (o catálogo é global)
     await http()
@@ -179,7 +179,7 @@ describe("acesso por módulo contratado", () => {
 
     const modules = await http().get("/api/company-modules").set("Cookie", cookie);
     const entitled = Object.fromEntries(modules.body.map((m: { module: string; entitled: boolean }) => [m.module, m.entitled]));
-    expect(entitled).toMatchObject({ CREDIT: true, FISCAL: true, SERVICE_ORDERS: false, PETS: false });
+    expect(entitled).toMatchObject({ CREDIT: true, FISCAL: true, SERVICE_ORDERS: false, SUBSCRIPTIONS: false });
   });
 
   it("dono troca o kit/avulsos na hora (sem pagamento) e o acesso muda", async () => {

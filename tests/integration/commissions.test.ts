@@ -18,7 +18,7 @@ let memberA: string;
 let adminB: string;
 let companyAId: string;
 let categoryRacao: string;
-let productRacao: string; // categoria Ração, R$ 100,00
+let productRacao: string; // categoria Materiais, R$ 100,00
 let productBola: string; // sem categoria, R$ 50,00
 let productB: string; // empresa B
 let professionalAna: string; // padrão 10%
@@ -60,10 +60,10 @@ beforeAll(async () => {
       { companyId: b.id, name: "Admin B", email: "admin@comissao-b.test", passwordHash: hash, role: "ADMIN" },
     ],
   });
-  const category = await prisma.category.create({ data: { companyId: a.id, name: "Ração", nameKey: "ração" } });
+  const category = await prisma.category.create({ data: { companyId: a.id, name: "Materiais", nameKey: "materiais" } });
   categoryRacao = category.id;
   productRacao = (await prisma.product.create({
-    data: { companyId: a.id, name: "Ração 10kg", sku: "RAC", salePrice: "100.00", stockQuantity: 100, categoryId: category.id },
+    data: { companyId: a.id, name: "Cimento 50kg", sku: "RAC", salePrice: "100.00", stockQuantity: 100, categoryId: category.id },
   })).id;
   productBola = (await prisma.product.create({
     data: { companyId: a.id, name: "Bola", sku: "BOLA", salePrice: "50.00", stockQuantity: 100 },
@@ -87,7 +87,7 @@ afterAll(async () => {
 
 describe("Profissionais", () => {
   it("ADMIN cadastra; nome duplicado → 409; MEMBER lista mas não cadastra", async () => {
-    const ana = await http().post("/api/professionals").set("Cookie", adminA).send({ name: "Ana Tosadora", commissionDefault: "10" });
+    const ana = await http().post("/api/professionals").set("Cookie", adminA).send({ name: "Ana Vendedora", commissionDefault: "10" });
     expect(ana.status).toBe(201);
     expect(ana.body.commissionDefault).toBe("10.00");
     professionalAna = ana.body.id;
@@ -95,7 +95,7 @@ describe("Profissionais", () => {
     const beto = await http().post("/api/professionals").set("Cookie", adminA).send({ name: "Beto Vendedor" });
     professionalBeto = beto.body.id;
 
-    const dup = await http().post("/api/professionals").set("Cookie", adminA).send({ name: "  ana   tosadora " });
+    const dup = await http().post("/api/professionals").set("Cookie", adminA).send({ name: "  ana   vendedora " });
     expect(dup.status).toBe(409);
 
     expect((await http().post("/api/professionals").set("Cookie", memberA).send({ name: "X" })).status).toBe(403);
@@ -132,7 +132,7 @@ describe("Cálculo na venda", () => {
   it("sem regras, usa o padrão do profissional (10%): comissão liberada + conta a pagar", async () => {
     const response = await sale({ items: [{ productId: productRacao, quantity: "1" }], professionalId: professionalAna });
     expect(response.status).toBe(201);
-    expect(response.body.professional).toEqual({ id: professionalAna, name: "Ana Tosadora" });
+    expect(response.body.professional).toEqual({ id: professionalAna, name: "Ana Vendedora" });
 
     const c = await commissionOfSale(response.body.id);
     expect(c?.status).toBe("RELEASED");
@@ -159,7 +159,7 @@ describe("Cálculo na venda", () => {
     for (const rule of rules) {
       expect((await http().post("/api/commission-rules").set("Cookie", adminA).send(rule)).status).toBe(201);
     }
-    // Ração (cat. 8%) + Bola (regra da Ana 12%); subtotal 150, desconto 15 → total 135
+    // Cimento (cat. 8%) + Bola (regra da Ana 12%); subtotal 150, desconto 15 → total 135
     const response = await sale({
       items: [{ productId: productRacao, quantity: "1" }, { productId: productBola, quantity: "1" }],
       discount: "15",
@@ -168,7 +168,7 @@ describe("Cálculo na venda", () => {
     expect(response.status).toBe(201);
     const c = await commissionOfSale(response.body.id);
     const lines = c?.lines as Array<{ productName: string; base: string; percentage: string; amount: string; source: string }>;
-    const racao = lines.find((l) => l.productName === "Ração 10kg");
+    const racao = lines.find((l) => l.productName === "Cimento 50kg");
     const bola = lines.find((l) => l.productName === "Bola");
     expect(racao).toMatchObject({ base: "90.00", percentage: "8.00", amount: "7.20", source: "CATEGORY" });
     expect(bola).toMatchObject({ base: "45.00", percentage: "12.00", amount: "5.40", source: "PROFESSIONAL_RULE" });
@@ -278,7 +278,7 @@ describe("Consulta e liberação manual", () => {
     const summary = await http().get("/api/commissions/summary").set("Cookie", adminA);
     expect(summary.status).toBe(200);
     const ana = summary.body.items.find((i: { professionalId: string }) => i.professionalId === professionalAna);
-    expect(ana.name).toBe("Ana Tosadora");
+    expect(ana.name).toBe("Ana Vendedora");
     const fromDb = await prisma.commission.aggregate({ where: { professionalId: professionalAna, status: "PAID" }, _sum: { amount: true } });
     expect(ana.paid).toBe(fromDb._sum.amount?.toFixed(2));
   });

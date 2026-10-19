@@ -31,7 +31,7 @@ const listQueryPipe = new ZodValidationPipe(listAppointmentsQuerySchema);
 /**
  * Operação diária: leitura e escrita com sessão autenticada (MEMBER
  * pode agendar); nenhum endpoint público e nenhuma escrita restrita a
- * ADMIN — mesma política de clientes/pets.
+ * ADMIN — mesma política de clientes.
  */
 @RequireModule(BusinessModules.APPOINTMENTS)
 @Controller("appointments")

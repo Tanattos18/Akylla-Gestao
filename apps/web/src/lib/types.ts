@@ -270,57 +270,7 @@ export interface ClientDto {
   status: RecordStatus;
   createdAt: string;
   updatedAt: string;
-  _count?: { pets: number; sales: number };
-}
-
-export type PetSpecies =
-  | "DOG"
-  | "CAT"
-  | "BIRD"
-  | "RODENT"
-  | "REPTILE"
-  | "FISH"
-  | "OTHER";
-
-export const petSpeciesLabels: Record<PetSpecies, string> = {
-  DOG: "Cachorro",
-  CAT: "Gato",
-  BIRD: "Ave",
-  RODENT: "Roedor",
-  REPTILE: "Réptil",
-  FISH: "Peixe",
-  OTHER: "Outro",
-};
-
-export type PetSex = "MALE" | "FEMALE" | "UNKNOWN";
-
-export const petSexLabels: Record<PetSex, string> = {
-  MALE: "Macho",
-  FEMALE: "Fêmea",
-  UNKNOWN: "Não informado",
-};
-
-export interface PetDto {
-  id: string;
-  clientId: string;
-  name: string;
-  species: PetSpecies;
-  breed: string | null;
-  sex: PetSex;
-  birthDate: string | null;
-  weight: string | null;
-  color: string | null;
-  notes: string | null;
-  status: RecordStatus;
-  createdAt: string;
-  updatedAt: string;
-  client: {
-    id: string;
-    name: string;
-    phone: string | null;
-    mobile: string | null;
-    email: string | null;
-  } | null;
+  _count?: { sales: number };
 }
 
 export interface ServiceDto {
@@ -735,7 +685,6 @@ export interface AppointmentDto {
   id: string;
   companyId: string;
   clientId: string;
-  petId: string | null;
   serviceId: string;
   startAt: string;
   endAt: string;
@@ -748,7 +697,6 @@ export interface AppointmentDto {
   createdAt: string;
   updatedAt: string;
   client: { id: string; name: string; phone: string | null; mobile: string | null; status: RecordStatus };
-  pet: { id: string; name: string; species: PetSpecies } | null;
   service: { id: string; name: string; price: string; status: RecordStatus };
   createdBy: { id: string; name: string };
   cancelledBy: { id: string; name: string } | null;
@@ -912,7 +860,6 @@ export interface FinancialSummaryDto {
 }
 
 export type BusinessModule =
-  | "PETS"
   | "APPOINTMENTS"
   | "SERVICES"
   | "WHATSAPP"

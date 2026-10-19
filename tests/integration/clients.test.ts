@@ -16,7 +16,6 @@ let adminBCookie: string;
 
 let clientAId: string;
 let clientBId: string;
-let petOfClientAId: string;
 let companyAId: string;
 
 async function createCompany(slug: string) {
@@ -90,17 +89,6 @@ beforeAll(async () => {
   });
   clientAId = clientA.id;
 
-  const pet = await prisma.pet.create({
-    data: {
-      companyId: companyA.id,
-      clientId: clientA.id,
-      name: "Thor",
-      species: "DOG",
-      breed: "Labrador",
-    },
-  });
-  petOfClientAId = pet.id;
-
   const clientB = await prisma.client.create({
     data: {
       companyId: companyB.id,
@@ -146,7 +134,7 @@ describe("Clientes — CRUD, normalização e permissões", () => {
     expect(response.body.email).toBe("joao@exemplo.com");
     expect(response.body.cpf).toBe("12345678900");
     expect(response.body.status).toBe("ACTIVE");
-    expect(response.body._count).toEqual({ pets: 0, sales: 0 });
+    expect(response.body._count).toEqual({ sales: 0 });
     createdClientId = response.body.id;
   });
 
@@ -246,14 +234,14 @@ describe("Clientes — CRUD, normalização e permissões", () => {
     expect(response.body.items.every((i: { id: string }) => i.id !== clientBId)).toBe(true);
   });
 
-  it("detalha cliente com contagem de pets e vendas", async () => {
+  it("detalha cliente com contagem de vendas", async () => {
     const response = await request(app.getHttpServer())
       .get(`/api/clients/${clientAId}`)
       .set("Cookie", adminACookie);
 
     expect(response.status).toBe(200);
     expect(response.body.name).toBe("Maria Oliveira");
-    expect(response.body._count.pets).toBe(1);
+    expect(response.body._count).toEqual({ sales: 0 });
   });
 
   it("não permite acessar cliente de outra empresa (404)", async () => {
@@ -329,40 +317,6 @@ describe("Clientes — CRUD, normalização e permissões", () => {
   it("exige autenticação", async () => {
     const response = await request(app.getHttpServer()).get("/api/clients");
     expect(response.status).toBe(401);
-  });
-});
-
-describe("Pets do cliente", () => {
-  it("lista os pets do responsável", async () => {
-    const response = await request(app.getHttpServer())
-      .get(`/api/clients/${clientAId}/pets`)
-      .set("Cookie", adminACookie);
-
-    expect(response.status).toBe(200);
-    expect(response.body.total).toBe(1);
-    expect(response.body.items[0].name).toBe("Thor");
-    expect(response.body.items[0].species).toBe("DOG");
-  });
-
-  it("retorna 404 para cliente inexistente", async () => {
-    const response = await request(app.getHttpServer())
-      .get("/api/clients/cli_inexistente/pets")
-      .set("Cookie", adminACookie);
-    expect(response.status).toBe(404);
-  });
-
-  it("exige autenticação", async () => {
-    const response = await request(app.getHttpServer()).get(`/api/clients/${clientAId}/pets`);
-    expect(response.status).toBe(401);
-  });
-});
-
-describe("Pets — cadastro básico usado pelos testes de isolamento", () => {
-  it("pet criado no setup pertence à empresa correta", async () => {
-    const response = await request(app.getHttpServer())
-      .get(`/api/pets/${petOfClientAId}`)
-      .set("Cookie", adminBCookie);
-    expect(response.status).toBe(404);
   });
 });
 

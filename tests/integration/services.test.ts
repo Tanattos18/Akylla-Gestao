@@ -79,8 +79,8 @@ beforeAll(async () => {
   const serviceB = await prisma.service.create({
     data: {
       companyId: companyB.id,
-      name: "Banho Tosa",
-      nameKey: "banho tosa",
+      name: "Revisão Geral",
+      nameKey: "revisão geral",
       price: "80.00",
       durationMinutes: 60,
     },
@@ -102,7 +102,7 @@ describe("Serviços — CRUD, permissões e validações", () => {
       .post("/api/services")
       .set("Cookie", adminACookie)
       .send({
-        name: "Banho e Tosa",
+        name: "Manutenção Preventiva",
         description: "Pacote completo",
         durationMinutes: 45,
         price: "45.50",
@@ -137,7 +137,7 @@ describe("Serviços — CRUD, permissões e validações", () => {
     const response = await request(app.getHttpServer())
       .post("/api/services")
       .set("Cookie", adminACookie)
-      .send({ name: "banho  e tosa", price: "50.00" });
+      .send({ name: "manutenção  preventiva", price: "50.00" });
 
     expect(response.status).toBe(409);
     expect(response.body.message).toBe(
@@ -149,7 +149,7 @@ describe("Serviços — CRUD, permissões e validações", () => {
     const response = await request(app.getHttpServer())
       .post("/api/services")
       .set("Cookie", adminBCookie)
-      .send({ name: "Banho e Tosa", price: "70.00" });
+      .send({ name: "Manutenção Preventiva", price: "70.00" });
 
     expect(response.status).toBe(201);
   });
@@ -190,11 +190,11 @@ describe("Serviços — CRUD, permissões e validações", () => {
 
   it("lista serviços com busca, ordenação por preço e paginação", async () => {
     const search = await request(app.getHttpServer())
-      .get("/api/services?search=banho")
+      .get("/api/services?search=manuten")
       .set("Cookie", adminACookie);
     expect(search.status).toBe(200);
     expect(search.body.items.every((s: { id: string }) => s.id !== serviceBId)).toBe(true);
-    expect(search.body.items[0].name).toBe("Banho e Tosa");
+    expect(search.body.items[0].name).toBe("Manutenção Preventiva");
 
     const ordered = await request(app.getHttpServer())
       .get("/api/services?orderBy=price&direction=desc&pageSize=5")
@@ -242,13 +242,13 @@ describe("Serviços — CRUD, permissões e validações", () => {
     const other = await request(app.getHttpServer())
       .post("/api/services")
       .set("Cookie", adminACookie)
-      .send({ name: "Tosa Sanitária", price: "35.00" });
+      .send({ name: "Limpeza Técnica", price: "35.00" });
     expect(other.status).toBe(201);
 
     const renamed = await request(app.getHttpServer())
       .patch(`/api/services/${other.body.id}`)
       .set("Cookie", adminACookie)
-      .send({ name: "BANHO E TOSA" });
+      .send({ name: "MANUTENÇÃO PREVENTIVA" });
     expect(renamed.status).toBe(409);
   });
 

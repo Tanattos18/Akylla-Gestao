@@ -55,7 +55,7 @@ porque exige SMTP. Para ligar: preencha `SMTP_*` no arquivo, mude para
 ## 2b. Empresa de demonstração (apresentações)
 
 ```bash
-sudo bash /opt/akylla/scripts/deploy/vps/create-demo.sh comercio   # ou servicos, alimentacao, pet
+sudo bash /opt/akylla/scripts/deploy/vps/create-demo.sh comercio   # ou servicos, alimentacao
 ```
 
 Cria "Demonstração - <marca>" com login `demo-<preset>@akyllagestao.com.br`

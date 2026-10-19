@@ -13,7 +13,6 @@ import { SalesModule } from "./sales/sales.module";
 import { CashModule } from "./cash/cash.module";
 import { FinancialModule } from "./financial/financial.module";
 import { ClientsModule } from "./clients/clients.module";
-import { PetsModule } from "./pets/pets.module";
 import { ServicesModule } from "./services/services.module";
 import { AppointmentsModule } from "./appointments/appointments.module";
 import { SubscriptionsModule } from "./subscriptions/subscriptions.module";
@@ -59,7 +58,6 @@ import { TenantContextInterceptor } from "./common/tenant/tenant-context.interce
     CashModule,
     FinancialModule,
     ClientsModule,
-    PetsModule,
     ServicesModule,
     AppointmentsModule,
     SubscriptionsModule,

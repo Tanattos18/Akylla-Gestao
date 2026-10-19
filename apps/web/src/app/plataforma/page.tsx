@@ -50,7 +50,7 @@ function accessDetail(company: PlatformCompanyDto): string {
   return company.billingExempt ? "isenta pelo dono" : "isenta (sem cobrança)";
 }
 
-/** Kits (Fase 8b): "Básico + Nota fiscal, Pets" */
+/** Kits (Fase 8b): "Básico + Nota fiscal, Comissões" */
 function contractLabel(company: PlatformCompanyDto): string | null {
   const c = company.contract;
   if (!c) return null;

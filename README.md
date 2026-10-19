@@ -83,7 +83,7 @@ sistema liga os módulos certos. Dá para trocar depois em
 |---|---|---|
 | **Comércio** | lojas, mercadinhos, adegas, papelarias, conveniência | nota fiscal, comissões, crediário, WhatsApp |
 | **Serviços** | salões, clínicas, oficinas, assistências técnicas | serviços, agenda, ordem de serviço, comissões, WhatsApp |
-| **Comércio e serviços** | pet shops, oficinas com loja, estúdios que vendem produtos | os dois conjuntos + crediário |
+| **Comércio e serviços** | oficinas com loja, estúdios, clínicas e assistências que vendem produtos | os dois conjuntos + crediário |
 | **Personalizado** | quem quer escolher | liga/desliga módulo a módulo |
 
 Módulo desligado some do menu e tem as rotas **bloqueadas no servidor**
@@ -107,7 +107,7 @@ PDV, estoque, caixa, financeiro, clientes e relatórios. Regras em
 | **Caixa** | turno com abertura e fechamento, valor esperado × contado, entradas, saídas e estornos auditados |
 | **Financeiro (AP/AR)** | contas a pagar e a receber com vencimento, baixa pelo caixa e estorno |
 | **Dashboard e relatórios** | indicadores calculados no servidor, filtros por período, CSV seguro e impressão |
-| **Busca global** | barra do topo: clientes, produtos, vendas, OS, serviços e pets, com navegação por teclado |
+| **Busca global** | barra do topo: clientes, produtos, vendas, OS e serviços, com navegação por teclado |
 | **Importação de planilhas** | CSV de categorias, fornecedores, produtos, clientes e serviços, com simulação antes de gravar |
 | **Faturamento (SaaS)** | plano da empresa, uso × limites, checkout Mercado Pago (sandbox) |
 
@@ -123,7 +123,6 @@ PDV, estoque, caixa, financeiro, clientes e relatórios. Regras em
 | **Agendamentos** | agenda por dia, semana e mês, conflito de horário, status e lembretes |
 | **WhatsApp** | Cloud API oficial da Meta: templates, consentimento, fila com retentativas e webhook assinado |
 | **Assinaturas de clientes** | planos recorrentes pagos no caixa, com renovação e cancelamento auditados |
-| **Pets** | ficha de animais vinculada ao cliente |
 
 ---
 
@@ -141,7 +140,7 @@ PDV, estoque, caixa, financeiro, clientes e relatórios. Regras em
 | `/comissoes`, `/profissionais` | comissões e equipe comissionada |
 | `/os` | ordens de serviço |
 | `/fiscal` | configuração e notas emitidas |
-| `/clientes`, `/pets` | clientes e fichas de animais |
+| `/clientes` | clientes, histórico e consentimento de WhatsApp |
 | `/produtos`, `/categorias`, `/fornecedores` | catálogo e estoque |
 | `/servicos`, `/agenda` | serviços e agendamentos |
 | `/planos`, `/assinaturas` | assinaturas de clientes |
@@ -277,8 +276,7 @@ npm run db:seed:demo -- --company=<slug|id|e-mail-do-admin> --preset=comercio
 Os presets (sempre numa empresa vazia) são:
 - `comercio` (padrão): Empório Central;
 - `servicos`: Studio Beleza;
-- `alimentacao`: Padaria Pão Quente;
-- `pet`: Mundo Pet.
+- `alimentacao`: Padaria Pão Quente.
 
 Cada um cria catálogo, clientes, 30 dias de vendas e caixa, agenda,
 assinaturas e WhatsApp de exemplo. Na VPS, o comando é

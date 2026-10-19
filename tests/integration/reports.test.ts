@@ -175,59 +175,12 @@ beforeAll(async () => {
       createdAt: at(yesterday, "10:00:00.000"),
     },
   });
-  const clientB = await prisma.client.create({
+  await prisma.client.create({
     data: {
       companyId: companyB.id,
       name: "Cliente Relatorios B",
       nameKey: "cliente relatorios b",
       createdAt: at(today, "10:00:00.000"),
-    },
-  });
-
-  // --- Pets (empresa A: 2 DOG + 1 CAT hoje, 1 DOG ontem; B: 1 hoje) ---
-  await prisma.pet.create({
-    data: {
-      companyId: companyA.id,
-      clientId: hackClient.id,
-      name: "Rex",
-      species: "DOG",
-      createdAt: at(today, "10:30:00.000"),
-    },
-  });
-  await prisma.pet.create({
-    data: {
-      companyId: companyA.id,
-      clientId: hackClient.id,
-      name: "Bolt",
-      species: "DOG",
-      createdAt: at(today, "12:00:00.000"),
-    },
-  });
-  await prisma.pet.create({
-    data: {
-      companyId: companyA.id,
-      clientId: hackClient.id,
-      name: "Mimi",
-      species: "CAT",
-      createdAt: at(today, "13:00:00.000"),
-    },
-  });
-  await prisma.pet.create({
-    data: {
-      companyId: companyA.id,
-      clientId: hackClient.id,
-      name: "Toto",
-      species: "DOG",
-      createdAt: at(yesterday, "09:00:00.000"),
-    },
-  });
-  await prisma.pet.create({
-    data: {
-      companyId: companyB.id,
-      clientId: clientB.id,
-      name: "Pet B",
-      species: "CAT",
-      createdAt: at(today, "10:30:00.000"),
     },
   });
 

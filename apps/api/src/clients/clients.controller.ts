@@ -41,11 +41,6 @@ export class ClientsController {
     return this.clientsService.get(auth, id);
   }
 
-  @Get(":id/pets")
-  listPets(@Auth() auth: AuthContext, @Param("id") id: string) {
-    return this.clientsService.listPets(auth, id);
-  }
-
   @Post()
   create(
     @Auth() auth: AuthContext,

@@ -14,7 +14,6 @@ import {
   Receipt,
   AlertTriangle,
   CalendarClock,
-  PawPrint,
   Scissors,
   Percent,
   HandCoins,
@@ -97,7 +96,6 @@ const navGroups: NavGroup[] = [
     label: "Relacionamento",
     items: [
       { label: "Clientes", href: "/clientes", icon: Users },
-      { label: "Pets", href: "/pets", icon: PawPrint },
       { label: "WhatsApp", href: "/whatsapp", icon: MessageCircle, module: "WHATSAPP" },
       { label: "Assinaturas", href: "/assinaturas", icon: Repeat, module: "SUBSCRIPTIONS" },
     ],
@@ -130,7 +128,6 @@ const routeLabels: Record<string, string> = {
   vendas: "Vendas",
   caixa: "Caixa",
   financeiro: "Financeiro",
-  pets: "Pets",
   servicos: "Serviços",
   whatsapp: "WhatsApp",
   agenda: "Agenda",

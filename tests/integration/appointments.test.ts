@@ -18,7 +18,6 @@ let adminBCookie: string;
 let anaId: string;
 let brunoId: string;
 let carlosId: string;
-let rexId: string;
 let serviceAId: string;
 let serviceBId: string;
 let inactiveServiceAId: string;
@@ -91,7 +90,6 @@ async function createAppointment(
   const response = await post(
     {
       clientId: anaId,
-      petId: rexId,
       serviceId: serviceAId,
       startLocal: nextSlot(),
       utcOffsetMinutes: OFFSET,
@@ -180,26 +178,11 @@ beforeAll(async () => {
   });
   carlosId = carlos.id;
 
-  const rex = await prisma.pet.create({
-    data: { companyId: companyA.id, clientId: ana.id, name: "Rex", species: "DOG" },
-  });
-  rexId = rex.id;
-
-  await prisma.pet.create({
-    data: { companyId: companyA.id, clientId: ana.id, name: "Nina", species: "CAT" },
-  });
-  await prisma.pet.create({
-    data: { companyId: companyA.id, clientId: bruno.id, name: "Luna", species: "CAT" },
-  });
-  await prisma.pet.create({
-    data: { companyId: companyB.id, clientId: carlos.id, name: "Bidu", species: "DOG" },
-  });
-
   const serviceA = await prisma.service.create({
     data: {
       companyId: companyA.id,
-      name: "Banho e Tosa",
-      nameKey: "banho e tosa",
+      name: "Manutenção Preventiva",
+      nameKey: "manutencao preventiva",
       price: "45.50",
       durationMinutes: 45,
     },
@@ -209,8 +192,8 @@ beforeAll(async () => {
   const inactive = await prisma.service.create({
     data: {
       companyId: companyA.id,
-      name: "Tosa Criativa",
-      nameKey: "tosa criativa",
+      name: "Instalação Especial",
+      nameKey: "instalacao especial",
       price: "30.00",
       durationMinutes: 30,
       status: "INACTIVE",
@@ -221,8 +204,8 @@ beforeAll(async () => {
   const serviceB = await prisma.service.create({
     data: {
       companyId: companyB.id,
-      name: "Banho B",
-      nameKey: "banho b",
+      name: "Revisão B",
+      nameKey: "revisao b",
       price: "70.00",
       durationMinutes: 60,
     },
@@ -243,12 +226,11 @@ describe("POST /api/appointments — criação e validações", () => {
     const startLocal = nextSlot();
     const response = await post({
       clientId: anaId,
-      petId: rexId,
       serviceId: serviceAId,
       startLocal,
       utcOffsetMinutes: OFFSET,
       durationMinutes: 45,
-      notes: "Tosa completa",
+      notes: "Revisão completa",
     });
 
     expect(response.status).toBe(201);
@@ -259,11 +241,10 @@ describe("POST /api/appointments — criação e validações", () => {
       expectedStartAt(startLocal) + 45 * 60_000,
     );
     expect(response.body.client.name).toBe("Ana Santos");
-    expect(response.body.pet.name).toBe("Rex");
-    expect(response.body.service.name).toBe("Banho e Tosa");
+    expect(response.body.service.name).toBe("Manutenção Preventiva");
     expect(response.body.service.price).toBe("45.50");
     expect(response.body.createdBy.name).toBe("Admin A");
-    expect(response.body.notes).toBe("Tosa completa");
+    expect(response.body.notes).toBe("Revisão completa");
   });
 
   it("membro comum pode criar agendamento (operação diária, sem AdminGuard)", async () => {
@@ -323,7 +304,7 @@ describe("POST /api/appointments — criação e validações", () => {
     expect(response.body.message).toContain("passado");
   });
 
-  it("recusa cliente, pet e serviço inválidos", async () => {
+  it("recusa cliente e serviço inválidos", async () => {
     const foreignClient = await post({
       clientId: carlosId,
       serviceId: serviceAId,
@@ -333,17 +314,6 @@ describe("POST /api/appointments — criação e validações", () => {
     });
     expect(foreignClient.status).toBe(400);
     expect(foreignClient.body.message).toBe("Cliente não encontrado");
-
-    const wrongPet = await post({
-      clientId: brunoId,
-      petId: rexId,
-      serviceId: serviceAId,
-      startLocal: nextSlot(),
-      utcOffsetMinutes: OFFSET,
-      durationMinutes: 30,
-    });
-    expect(wrongPet.status).toBe(400);
-    expect(wrongPet.body.message).toBe("Pet não pertence ao cliente informado");
 
     const inactiveService = await post({
       clientId: anaId,
@@ -366,7 +336,7 @@ describe("POST /api/appointments — criação e validações", () => {
     expect(foreignService.body.message).toBe("Serviço não encontrado");
   });
 
-  it("agendamento sem pet é permitido", async () => {
+  it("agendamento não tem mais vínculo com pet (módulo removido)", async () => {
     const response = await post({
       clientId: brunoId,
       serviceId: serviceAId,
@@ -375,8 +345,8 @@ describe("POST /api/appointments — criação e validações", () => {
       durationMinutes: 30,
     });
     expect(response.status).toBe(201);
-    expect(response.body.pet).toBeNull();
-    expect(response.body.petId).toBeNull();
+    expect(response.body).not.toHaveProperty("pet");
+    expect(response.body).not.toHaveProperty("petId");
   });
 });
 
@@ -510,7 +480,7 @@ describe("GET /api/appointments — lista, filtros e isolamento", () => {
     ).toBe(true);
   });
 
-  it("filtra por status, cliente, pet e serviço", async () => {
+  it("filtra por status, cliente e serviço", async () => {
     const doomed = await createAppointment({ startLocal: localAt(31, "09:00") });
     await request(app.getHttpServer())
       .post(`/api/appointments/${doomed.id}/cancel`)
@@ -532,13 +502,6 @@ describe("GET /api/appointments — lista, filtros e isolamento", () => {
     expect(byClient.status).toBe(200);
     expect(byClient.body.items.every((a: { clientId: string }) => a.clientId === anaId)).toBe(true);
 
-    const byPet = await request(app.getHttpServer())
-      .get(`/api/appointments?petId=${rexId}`)
-      .set("Cookie", adminACookie);
-    expect(byPet.status).toBe(200);
-    expect(byPet.body.items.length).toBeGreaterThan(0);
-    expect(byPet.body.items.every((a: { petId: string | null }) => a.petId === rexId)).toBe(true);
-
     const byService = await request(app.getHttpServer())
       .get(`/api/appointments?serviceId=${serviceAId}`)
       .set("Cookie", adminACookie);
@@ -546,7 +509,7 @@ describe("GET /api/appointments — lista, filtros e isolamento", () => {
     expect(byService.body.items.every((a: { serviceId: string }) => a.serviceId === serviceAId)).toBe(true);
   });
 
-  it("busca por nome de cliente, pet ou serviço", async () => {
+  it("busca por nome de cliente ou serviço", async () => {
     const response = await request(app.getHttpServer())
       .get("/api/appointments?search=bruno")
       .set("Cookie", adminACookie);
@@ -599,7 +562,7 @@ describe("GET /api/appointments/:id", () => {
       .set("Cookie", adminACookie);
     expect(own.status).toBe(200);
     expect(own.body.client.name).toBe("Ana Santos");
-    expect(own.body.service.name).toBe("Banho e Tosa");
+    expect(own.body.service.name).toBe("Manutenção Preventiva");
 
     const missing = await request(app.getHttpServer())
       .get("/api/appointments/nao-existe")
@@ -672,38 +635,16 @@ describe("PATCH /api/appointments/:id — edição e reagendamento", () => {
     );
   });
 
-  it("edita observações e troca pet por outro do mesmo cliente", async () => {
-    const nina = await prisma.pet.findFirstOrThrow({
-      where: { name: "Nina" },
-      select: { id: true },
-    });
+  it("edita observações", async () => {
     const created = await createAppointment({ startLocal: localAt(38, "10:00") });
 
     const response = await request(app.getHttpServer())
       .patch(`/api/appointments/${created.id}`)
       .set("Cookie", adminACookie)
-      .send({ notes: "Cliente chega 10 min antes", petId: nina.id });
+      .send({ notes: "Cliente chega 10 min antes" });
 
     expect(response.status).toBe(200);
     expect(response.body.notes).toBe("Cliente chega 10 min antes");
-    expect(response.body.pet.name).toBe("Nina");
-  });
-
-  it("recusa pet de outro cliente em edição", async () => {
-    const rexOther = rexId;
-    const brunoAppointment = await createAppointment({
-      clientId: brunoId,
-      petId: null,
-      startLocal: localAt(39, "10:00"),
-    });
-
-    const response = await request(app.getHttpServer())
-      .patch(`/api/appointments/${brunoAppointment.id}`)
-      .set("Cookie", adminACookie)
-      .send({ petId: rexOther });
-
-    expect(response.status).toBe(400);
-    expect(response.body.message).toBe("Pet não pertence ao cliente informado");
   });
 
   it("agendamento encerrado não pode ser editado", async () => {
@@ -980,8 +921,8 @@ describe("Lembretes automáticos de WhatsApp (Etapa 8)", () => {
     expect(message!.nextAttemptAt?.getTime()).toBe(expectedStartAt(startLocal) - 60 * 60_000);
 
     const variables = message!.variables as string[];
-    expect(variables[0]).toBe("Rex");
-    expect(variables[1]).toBe("Banho e Tosa");
+    expect(variables[0]).toBe("Ana Santos");
+    expect(variables[1]).toBe("Manutenção Preventiva");
     const [datePart, timePart] = startLocal.split("T");
     const [year, month, day] = datePart.split("-");
     expect(variables[2]).toBe(`${day}/${month}/${year} às ${timePart}`);
@@ -990,7 +931,6 @@ describe("Lembretes automáticos de WhatsApp (Etapa 8)", () => {
   it("cliente sem consentimento não gera mensagem de lembrete", async () => {
     const created = await createAppointment({
       clientId: brunoId,
-      petId: null,
       startLocal: localAt(51, "10:00"),
     });
 

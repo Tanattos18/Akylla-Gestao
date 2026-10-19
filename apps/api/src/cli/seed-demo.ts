@@ -16,7 +16,7 @@ const MEMBER_PASSWORD =
 const OFFSET_MIN = -180;
 const RECEIPT_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
-const PRESETS = ["comercio", "servicos", "alimentacao", "pet"] as const;
+const PRESETS = ["comercio", "servicos", "alimentacao"] as const;
 type Preset = (typeof PRESETS)[number];
 
 function parseArgs(): { company: string | null; preset: Preset } {
@@ -85,23 +85,6 @@ function randInt(min: number, max: number): number {
   return min + Math.floor(rnd() * (max - min + 1));
 }
 
-const PET_CATEGORIES = [
-  { name: "Ração", description: "Rações secas e úmidas para cães e gatos" },
-  { name: "Petiscos", description: "Bifinhos, ossos e recompensas" },
-  { name: "Higiene e Cosméticos", description: "Shampoos, condicionadores e cuidados" },
-  { name: "Saúde e Medicamentos", description: "Antipulgas, vitaminas e cuidados veterinários" },
-  { name: "Acessórios", description: "Coleiras, guias e itens do dia a dia" },
-  { name: "Camas e Transportadoras", description: "Conforto e transporte" },
-];
-
-const PET_SUPPLIERS = [
-  { name: "Distribuidora Pet Brasil", document: "12.345.678/0001-90", email: "vendas@petbrasil.com.br", phone: "(11) 3456-7890" },
-  { name: "Nordeste Rações", document: "98.765.432/0001-11", email: "comercial@nordesteracoes.com", phone: "(11) 3555-1234" },
-  { name: "Animal Care Cosméticos", document: "45.678.912/0001-05", email: "contato@animalcare.com.br", phone: "(21) 3333-4444" },
-  { name: "FarmaVet Distribuição", document: "32.109.876/0001-77", email: "pedidos@farmavet.com.br", phone: "(31) 3222-8899" },
-  { name: "ZooMania Brinquedos", document: "77.888.999/0001-30", email: "zoo@zoomania.com.br", phone: "(41) 3111-7788" },
-];
-
 type ProductRow = {
   name: string;
   category: string;
@@ -113,52 +96,6 @@ type ProductRow = {
   min: number;
   description: string | null;
 };
-
-const PET_PRODUCTS: ProductRow[] = [
-  { name: "Ração Golden Cães Adultos 15kg", category: "Ração", supplier: "Nordeste Rações", unit: "UNIDADE", cost: 89.9, price: 129.9, final: 18, min: 6, description: "Fórmula completa para cães adultos, saco 15kg" },
-  { name: "Ração Premier Gatos Frango 10kg", category: "Ração", supplier: "Nordeste Rações", unit: "UNIDADE", cost: 79.9, price: 119.9, final: 14, min: 5, description: "Alto teor proteico para gatos castrados" },
-  { name: "Ração N&D Cães Cordeiro 2.5kg", category: "Ração", supplier: "Distribuidora Pet Brasil", unit: "UNIDADE", cost: 96, price: 139.9, final: 10, min: 4, description: "Grain free com cordeiro" },
-  { name: "Ração Vet Life Gatos Renal 1kg", category: "Ração", supplier: "FarmaVet Distribuição", unit: "UNIDADE", cost: 68, price: 99.9, final: 8, min: 4, description: "Dieta veterinária para suporte renal" },
-  { name: "Ração Snack Cães File de Frango 500g", category: "Ração", supplier: "Nordeste Rações", unit: "PACOTE", cost: 12.9, price: 19.9, final: 25, min: 10, description: "Alimento úmido em filetes" },
-  { name: "Ração Golden Filhotes 10.1kg", category: "Ração", supplier: "Nordeste Rações", unit: "UNIDADE", cost: 72, price: 109.9, final: 12, min: 5, description: "Crescimento e desenvolvimento de filhotes" },
-  { name: "Petisco Osso Sintético M", category: "Petiscos", supplier: "ZooMania Brinquedos", unit: "UNIDADE", cost: 9.9, price: 16.9, final: 22, min: 8, description: "Higienizante dental para cães médios" },
-  { name: "Bifinho de Carne 100g", category: "Petiscos", supplier: "Distribuidora Pet Brasil", unit: "PACOTE", cost: 4.5, price: 7.9, final: 40, min: 15, description: "Recompensa macia sabor carne" },
-  { name: "Balinha Pet 150g", category: "Petiscos", supplier: "Distribuidora Pet Brasil", unit: "PACOTE", cost: 5.9, price: 9.9, final: 30, min: 12, description: "Doce funcional para cães" },
-  { name: "Brinquedo Bola com Sino", category: "Petiscos", supplier: "ZooMania Brinquedos", unit: "UNIDADE", cost: 8.9, price: 14.9, final: 18, min: 6, description: "Bola de borracha com sininho interno" },
-  { name: "Corda Nó para Cães P", category: "Petiscos", supplier: "ZooMania Brinquedos", unit: "UNIDADE", cost: 7.9, price: 13.9, final: 16, min: 6, description: "Corda de algodão para puxar" },
-  { name: "Rato de Borracha com Catnip", category: "Petiscos", supplier: "ZooMania Brinquedos", unit: "UNIDADE", cost: 6.9, price: 11.9, final: 20, min: 8, description: "Brinquedo com erva gato" },
-  { name: "Shampoo Neutro 500ml", category: "Higiene e Cosméticos", supplier: "Animal Care Cosméticos", unit: "ML", cost: 14.9, price: 24.9, final: 20, min: 6, description: "Limpeza diária sem ressecar" },
-  { name: "Condicionador Anti-Nós 500ml", category: "Higiene e Cosméticos", supplier: "Animal Care Cosméticos", unit: "ML", cost: 16.9, price: 27.9, final: 14, min: 5, description: "Desembaraça pelo longo" },
-  { name: "Hidratante de Patas 100ml", category: "Higiene e Cosméticos", supplier: "Animal Care Cosméticos", unit: "ML", cost: 13.9, price: 22.9, final: 12, min: 5, description: "Protetor para patas rachadas" },
-  { name: "Escova Dentária Pet", category: "Higiene e Cosméticos", supplier: "ZooMania Brinquedos", unit: "UNIDADE", cost: 9.9, price: 16.9, final: 15, min: 6, description: "Cerdas macias para cães e gatos" },
-  { name: "Toalha Umedecida 50 un", category: "Higiene e Cosméticos", supplier: "Animal Care Cosméticos", unit: "PACOTE", cost: 8.9, price: 14.9, final: 24, min: 8, description: "Limpeza rápida entre banhos" },
-  { name: "Antipulgas Frontline Gatos 0.67ml", category: "Saúde e Medicamentos", supplier: "FarmaVet Distribuição", unit: "UNIDADE", cost: 42, price: 64.9, final: 3, min: 6, description: "Pipeta mensal para gatos" },
-  { name: "Antipulgas Bravecto Cães 20-40kg", category: "Saúde e Medicamentos", supplier: "FarmaVet Distribuição", unit: "UNIDADE", cost: 89, price: 129.9, final: 10, min: 4, description: "Proteção por 3 meses" },
-  { name: "Vermífugo Milbemax", category: "Saúde e Medicamentos", supplier: "FarmaVet Distribuição", unit: "UNIDADE", cost: 45, price: 69.9, final: 12, min: 5, description: "Controle de vermes redondos e chatos" },
-  { name: "Vitamina Pet Gold 200ml", category: "Saúde e Medicamentos", supplier: "FarmaVet Distribuição", unit: "ML", cost: 29, price: 44.9, final: 11, min: 5, description: "Complexo vitamínico líquido" },
-  { name: "Solução Otológica 100ml", category: "Saúde e Medicamentos", supplier: "FarmaVet Distribuição", unit: "ML", cost: 22.9, price: 35.9, final: 13, min: 5, description: "Higienização e prevenção de otite" },
-  { name: "Protetor Solar para Orelhas 60ml", category: "Saúde e Medicamentos", supplier: "FarmaVet Distribuição", unit: "ML", cost: 26.9, price: 42.9, final: 9, min: 4, description: "Proteção UV em orelhas claras" },
-  { name: "Coleira Ajustável P", category: "Acessórios", supplier: "ZooMania Brinquedos", unit: "UNIDADE", cost: 12.9, price: 21.9, final: 20, min: 8, description: "Nylon com trava de segurança" },
-  { name: "Guia Retrátil 5m", category: "Acessórios", supplier: "ZooMania Brinquedos", unit: "UNIDADE", cost: 39, price: 59.9, final: 12, min: 5, description: "Trava automática até 15kg" },
-  { name: "Peitoral Correção M", category: "Acessórios", supplier: "ZooMania Brinquedos", unit: "UNIDADE", cost: 34, price: 52.9, final: 11, min: 4, description: "Puxa sem puxar o pescoço" },
-  { name: "Comedouro Dobrável Inox", category: "Acessórios", supplier: "Distribuidora Pet Brasil", unit: "UNIDADE", cost: 24.9, price: 39.9, final: 13, min: 5, description: "Prato portátil antiescorregão" },
-  { name: "Bebedouro Automático 2L", category: "Acessórios", supplier: "Distribuidora Pet Brasil", unit: "UNIDADE", cost: 44, price: 66.9, final: 2, min: 3, description: "Filtragem contínua de água" },
-  { name: "Cama Donut G", category: "Camas e Transportadoras", supplier: "Distribuidora Pet Brasil", unit: "UNIDADE", cost: 79, price: 129.9, final: 9, min: 3, description: "Tamanho G, tecido aconchegante" },
-  { name: "Transportadora Média IATA", category: "Camas e Transportadoras", supplier: "Distribuidora Pet Brasil", unit: "UNIDADE", cost: 89, price: 139.9, final: 1, min: 3, description: "Aprovada para viagens aéreas" },
-  { name: "Manta Antiescraping", category: "Camas e Transportadoras", supplier: "Animal Care Cosméticos", unit: "UNIDADE", cost: 22, price: 34.9, final: 14, min: 6, description: "Protege sofás e cadeiras" },
-  { name: "Caixa de Areia Higiênica", category: "Camas e Transportadoras", supplier: "Distribuidora Pet Brasil", unit: "UNIDADE", cost: 18.9, price: 29.9, final: 10, min: 4, description: "Com tampa e pá de limpeza" },
-];
-
-const PET_SERVICES = [
-  { name: "Banho", durationMinutes: 30, price: 45, description: "Banho com secagem" },
-  { name: "Banho e Tosa", durationMinutes: 60, price: 75, description: "Banho completa com tosa na máquina ou tesoura" },
-  { name: "Tosa Higiênica", durationMinutes: 20, price: 35, description: "Região íntima, patas e barriga" },
-  { name: "Corte de Unhas", durationMinutes: 15, price: 25, description: "Corte e lixamento" },
-  { name: "Hidratação de Pelagem", durationMinutes: 40, price: 60, description: "Tratamento para pelo seco" },
-  { name: "Limpeza de Ouvidos", durationMinutes: 15, price: 30, description: "Higienização com solução específica" },
-  { name: "Aplicação de Antipulgas", durationMinutes: 10, price: 55, description: "Aplicação tópica mensal" },
-  { name: "Hotel por Dia", durationMinutes: 720, price: 80, description: "Diária com alimentação e passeio" },
-];
 
 type ClientRow = { name: string; mobile: string; email: string | null; city: string };
 
@@ -189,73 +126,7 @@ const CLIENTS: ClientRow[] = [
   { name: "Otávio Cardoso", mobile: "(11) 99566-7788", email: "otavio.cardoso@email.com", city: "São Paulo" },
 ];
 
-type PetRow = {
-  clientIndex: number;
-  name: string;
-  species: "DOG" | "CAT" | "BIRD";
-  breed: string;
-  sex: "MALE" | "FEMALE";
-  birthYear: number;
-  weight: number;
-  color: string;
-};
-
-const PET_PETS: PetRow[] = [
-  { clientIndex: 0, name: "Thor", species: "DOG", breed: "Golden Retriever", sex: "MALE", birthYear: 2022, weight: 32.5, color: "Dourado" },
-  { clientIndex: 0, name: "Mel", species: "CAT", breed: "Persa", sex: "FEMALE", birthYear: 2021, weight: 4.2, color: "Branco" },
-  { clientIndex: 1, name: "Bob", species: "DOG", breed: "Bulldog Francês", sex: "MALE", birthYear: 2023, weight: 12.4, color: "Malhado" },
-  { clientIndex: 2, name: "Nina", species: "CAT", breed: "Siamês", sex: "FEMALE", birthYear: 2020, weight: 3.8, color: "Creme" },
-  { clientIndex: 3, name: "Rex", species: "DOG", breed: "Pastor Alemão", sex: "MALE", birthYear: 2021, weight: 34.1, color: "Preto e marrom" },
-  { clientIndex: 4, name: "Luna", species: "DOG", breed: "Shih Tzu", sex: "FEMALE", birthYear: 2022, weight: 6.7, color: "Branco e marrom" },
-  { clientIndex: 4, name: "Simba", species: "CAT", breed: "Maine Coon", sex: "MALE", birthYear: 2023, weight: 6.9, color: "Tigrado" },
-  { clientIndex: 5, name: "Zeca", species: "DOG", breed: "Beagle", sex: "MALE", birthYear: 2020, weight: 11.8, color: "Tricolor" },
-  { clientIndex: 6, name: "Amora", species: "CAT", breed: "Siamês", sex: "FEMALE", birthYear: 2024, weight: 2.9, color: "Cinza" },
-  { clientIndex: 7, name: "Bento", species: "DOG", breed: "Labrador", sex: "MALE", birthYear: 2019, weight: 31.2, color: "Preto" },
-  { clientIndex: 8, name: "Kiara", species: "DOG", breed: "Poodle", sex: "FEMALE", birthYear: 2022, weight: 8.4, color: "Caramelo" },
-  { clientIndex: 9, name: "Fred", species: "CAT", breed: "SRD", sex: "MALE", birthYear: 2021, weight: 4.6, color: "Cinza listrado" },
-  { clientIndex: 10, name: "Pipoca", species: "DOG", breed: "Pomerânia", sex: "FEMALE", birthYear: 2023, weight: 3.1, color: "Laranja" },
-  { clientIndex: 11, name: "Tico", species: "BIRD", breed: "Calopsita", sex: "MALE", birthYear: 2022, weight: 0.09, color: "Cinza e amarelo" },
-  { clientIndex: 12, name: "Bela", species: "DOG", breed: "Cocker Spaniel", sex: "FEMALE", birthYear: 2020, weight: 12.9, color: "Chocolate" },
-  { clientIndex: 13, name: "Toby", species: "DOG", breed: "Shiba Inu", sex: "MALE", birthYear: 2023, weight: 10.2, color: "Vermelho" },
-  { clientIndex: 14, name: "Jade", species: "CAT", breed: "Ragdoll", sex: "FEMALE", birthYear: 2022, weight: 5.1, color: "Branco e azul" },
-  { clientIndex: 15, name: "Nino", species: "DOG", breed: "Jack Russell", sex: "MALE", birthYear: 2021, weight: 7.3, color: "Branco e marrom" },
-  { clientIndex: 16, name: "Frida", species: "DOG", breed: "Dachshund", sex: "FEMALE", birthYear: 2022, weight: 6.1, color: "Preto e marrom" },
-  { clientIndex: 17, name: "Oscar", species: "CAT", breed: "SRD", sex: "MALE", birthYear: 2019, weight: 5.4, color: "Preto" },
-  { clientIndex: 18, name: "Polenta", species: "DOG", breed: "Golden Retriever", sex: "FEMALE", birthYear: 2024, weight: 9.8, color: "Creme" },
-  { clientIndex: 19, name: "Luke", species: "DOG", breed: "Rottweiler", sex: "MALE", birthYear: 2021, weight: 41.3, color: "Preto e marrom" },
-  { clientIndex: 20, name: "Maya", species: "CAT", breed: "Angorá", sex: "FEMALE", birthYear: 2023, weight: 3.6, color: "Branco" },
-  { clientIndex: 21, name: "Kiko", species: "DOG", breed: "Pinscher", sex: "MALE", birthYear: 2020, weight: 4.2, color: "Marrom" },
-  { clientIndex: 22, name: "Bolinha", species: "DOG", breed: "Poodle", sex: "FEMALE", birthYear: 2024, weight: 2.8, color: "Branco" },
-  { clientIndex: 23, name: "Salsicha", species: "DOG", breed: "Dachshund", sex: "MALE", birthYear: 2018, weight: 7.9, color: "Preto" },
-];
-
-const PET_PLANS = [
-  { name: "Banho Mensal Ilimitado", price: 189.9, durationDays: 30, description: "Banhos ilimitados por 30 dias" },
-  { name: "Banho e Tosa 2x por semana", price: 299.9, durationDays: 30, description: "Duas sessões semanais de banho e tosa" },
-  { name: "Cat Care", price: 149.9, durationDays: 30, description: "Banho e cuidados essenciais para gatos" },
-  { name: "Plano Sênior", price: 219.9, durationDays: 30, description: "Banho + hidratação mensal para pets idosos" },
-];
-
-/** Dados da pet shop "Mundo Pet" (seed original, `--preset=pet`). */
-const PET: SeedDataset = {
-  brand: "Mundo Pet",
-  memberEmail: "atendente@mundopet.test",
-  segment: "HIBRIDO",
-  categories: PET_CATEGORIES,
-  suppliers: PET_SUPPLIERS,
-  products: PET_PRODUCTS,
-  services: PET_SERVICES,
-  plans: PET_PLANS,
-  pets: PET_PETS,
-  reminderBody: "Olá {{1}}! Lembramos da consulta de {{2}} amanhã. Até lá! — Mundo Pet",
-  promo: {
-    name: "promocao_banho",
-    body: "Olá {{1}}! Essa semana banho completo com 15% de desconto. Responda SAIR para não receber mais promoções.",
-  },
-  subscriptionCancelReason: "Tutor relatou mudança de rotina",
-};
-
-const DATASETS: Record<Preset, SeedDataset> = { comercio: COMERCIO, servicos: SERVICOS, alimentacao: ALIMENTACAO, pet: PET };
+const DATASETS: Record<Preset, SeedDataset> = { comercio: COMERCIO, servicos: SERVICOS, alimentacao: ALIMENTACAO };
 
 // Dados ativos: definidos em main() pelo --preset (Fase 7 · 7.5)
 let DATA: SeedDataset = COMERCIO;
@@ -263,7 +134,6 @@ let CATEGORIES = DATA.categories;
 let SUPPLIERS = DATA.suppliers;
 let PRODUCTS: ProductRow[] = DATA.products;
 let SERVICES = DATA.services;
-let PETS: PetRow[] = DATA.pets;
 let PLAN_ROWS = DATA.plans;
 
 function useDataset(preset: Preset): void {
@@ -272,7 +142,6 @@ function useDataset(preset: Preset): void {
   SUPPLIERS = DATA.suppliers;
   PRODUCTS = DATA.products;
   SERVICES = DATA.services;
-  PETS = DATA.pets;
   PLAN_ROWS = DATA.plans;
 }
 
@@ -355,7 +224,7 @@ async function main() {
   useDataset(preset);
 
   if (!companyArg) {
-    console.error("Uso: npm run db:seed:demo -- --company=<slug|id|email-do-admin> [--preset=comercio|servicos|alimentacao|pet]");
+    console.error("Uso: npm run db:seed:demo -- --company=<slug|id|email-do-admin> [--preset=comercio|servicos|alimentacao]");
     process.exit(1);
   }
 
@@ -517,30 +386,6 @@ async function main() {
         clientIds.push(created.id);
       }
       counts.clients = CLIENTS.length;
-
-      const petIdsByClient = new Map<string, string[]>();
-      const allPetIds: string[] = [];
-      for (const row of PETS) {
-        const clientId = clientIds[row.clientIndex];
-        const created = await tx.pet.create({
-          data: {
-            companyId,
-            clientId,
-            name: row.name,
-            species: row.species,
-            breed: row.breed,
-            sex: row.sex,
-            birthDate: new Date(Date.UTC(row.birthYear, randInt(0, 11), randInt(1, 28))),
-            weight: row.weight,
-            color: row.color,
-          },
-        });
-        allPetIds.push(created.id);
-        const list = petIdsByClient.get(clientId) ?? [];
-        list.push(created.id);
-        petIdsByClient.set(clientId, list);
-      }
-      counts.pets = PETS.length;
 
       const serviceIds: string[] = [];
       for (const row of SERVICES) {
@@ -812,7 +657,6 @@ async function main() {
 
       for (const spec of appointmentSpecs) {
         const clientId = clientIds[spec.clientIndex];
-        const petsOfClient = petIdsByClient.get(clientId) ?? [];
         const service = SERVICES[spec.serviceIndex];
         const start = at(spec.day, spec.time);
         const end = new Date(start.getTime() + service.durationMinutes * 60_000);
@@ -820,7 +664,6 @@ async function main() {
           data: {
             companyId,
             clientId,
-            petId: petsOfClient.length > 0 ? petsOfClient[0] : null,
             serviceId: serviceIds[spec.serviceIndex],
             startAt: start,
             endAt: end,

@@ -29,7 +29,7 @@ const clientSelect = {
   status: true,
   createdAt: true,
   updatedAt: true,
-  _count: { select: { pets: true, sales: true } },
+  _count: { select: { sales: true } },
 } as const;
 
 type ClientRecord = Prisma.ClientGetPayload<{ select: typeof clientSelect }>;
@@ -107,44 +107,6 @@ export class ClientsService {
     }
 
     return formatClient(client);
-  }
-
-  async listPets(auth: AuthContext, id: string) {
-    const client = await this.prisma.client.findFirst({
-      where: { id, companyId: auth.companyId },
-      select: { id: true },
-    });
-
-    if (!client) {
-      throw new NotFoundException("Cliente não encontrado");
-    }
-
-    const pets = await this.prisma.pet.findMany({
-      where: { clientId: client.id, companyId: auth.companyId },
-      select: {
-        id: true,
-        clientId: true,
-        name: true,
-        species: true,
-        breed: true,
-        sex: true,
-        birthDate: true,
-        weight: true,
-        color: true,
-        status: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-      orderBy: { name: "asc" },
-    });
-
-    return {
-      items: pets.map((pet) => ({
-        ...pet,
-        weight: pet.weight ? pet.weight.toFixed(2) : null,
-      })),
-      total: pets.length,
-    };
   }
 
   async create(auth: AuthContext, input: CreateClientInput) {

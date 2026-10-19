@@ -195,7 +195,7 @@ describe("Fornecedores — CRUD e isolamento", () => {
     const response = await request(app.getHttpServer())
       .post("/api/suppliers")
       .set("Cookie", adminACookie)
-      .send({ name: "Pet Distribuidora", document: "", phone: "(11) 99999-0000" });
+      .send({ name: "Distribuidora Central", document: "", phone: "(11) 99999-0000" });
 
     expect(response.status).toBe(201);
     expect(response.body.document).toBeNull();

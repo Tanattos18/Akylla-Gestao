@@ -4,6 +4,15 @@
 > Este checklist cobre apenas a era do Akylla Gestão. O histórico
 > anterior à adaptação está preservado no Git.
 
+## Retirada do módulo Pets (2026-10-19)
+
+- [x] Web: `/pets`, menu, ficha na tela do cliente, coluna da lista, campo da agenda, busca e painel
+- [x] API: rotas `/api/pets*` e `/api/clients/:id/pets`; `petId` fora do agendamento; busca sem pets
+- [x] Banco: `PETS` fora do enum `BusinessModule`, kits, preços e perfis (migration `20261019180000_remove_pets_module`); tabela `Pet` mantida como legado
+- [x] Seeds/demo sem "Mundo Pet"; textos e dados de teste sem vocabulário de pet shop
+- [x] Testes ajustados (`pets.test.ts` arquivado); `API.md` e docs atualizados
+- [ ] Aplicar na VPS (`update.sh`)
+
 ## Fase 8b — Kits de acesso (2026-10-18)
 
 - [x] Schema: `TenantPlan.includedModules/sortOrder`, `TenantSubscription.extraModules`, `PlatformPayment.extraModules`, `ModuleOffer` (migration `20261019150000_module_kits`)

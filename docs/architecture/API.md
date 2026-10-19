@@ -218,9 +218,8 @@ Comportamentos importantes:
 
 | Método | Rota | Acesso | Descrição |
 |---|---|---|---|
-| GET | `/api/clients` | sessão | Lista paginada; `search` (nome/telefone/email/CPF), `status`, `page`, `pageSize`; inclui `petsCount`/`salesCount` |
+| GET | `/api/clients` | sessão | Lista paginada; `search` (nome/telefone/email/CPF), `status`, `page`, `pageSize`; inclui `_count.sales` |
 | GET | `/api/clients/:id` | sessão | Detalhe com contagens |
-| GET | `/api/clients/:id/pets` | sessão | Pets do responsável (inclui inativos) |
 | POST | `/api/clients` | sessão | Cria (MEMBER pode — operação diária) |
 | PATCH | `/api/clients/:id` | sessão | Edita |
 | PATCH | `/api/clients/:id/status` | sessão | Ativa/inativa |
@@ -235,20 +234,12 @@ Comportamentos importantes:
 - Recurso de outra empresa → 404; cliente inativo não bloqueia novo
   cadastro nem edição.
 
-## Pets (Etapa 5)
+## Pets — removido (2026-10-19)
 
-| Método | Rota | Acesso | Descrição |
-|---|---|---|---|
-| GET | `/api/pets` | sessão | Lista paginada; filtros `species`, `status`, `clientId`, `search` (pet/raça/cor/responsável) |
-| GET | `/api/pets/:id` | sessão | Detalhe com responsável |
-| POST | `/api/pets` | sessão | Cria (responsável ativo da mesma empresa) |
-| PATCH | `/api/pets/:id` | sessão | Edita (troca de responsável validada) |
-| PATCH | `/api/pets/:id/status` | sessão | Ativa/inativa |
-
-- Payload: `{ clientId, name, species, breed?, sex?, birthDate? (YYYY-MM-DD),
-  weight? (kg, 0..999.99), color?, notes? }`; `sex` padrão `UNKNOWN`;
-  nascimento futuro → 400; responsável inativo/outro tenant → 400.
-- Serialização: `birthDate` `YYYY-MM-DD`, `weight` string com 2 decimais.
+O módulo Pets saiu do produto: o Akylla Gestão é um sistema de gestão
+empresarial genérico. Não há rotas `/api/pets`. A tabela `Pet` e
+`Appointment.petId` ficam no banco só como legado (exportação de dados e
+anonimização LGPD).
 
 ## Serviços (Etapa 5)
 
@@ -364,8 +355,8 @@ também membros criam/editam. `companyId` sempre da sessão.
 
 | Método | Rota | Acesso | Descrição |
 |---|---|---|---|
-| POST | `/api/appointments` | sessão | Cria (201): `clientId`, `petId`, `serviceId`, `startLocal` (`YYYY-MM-DDTHH:mm`), `utcOffsetMinutes`, `notes?` |
-| GET | `/api/appointments` | sessão | Lista; filtros `from`, `to` (dia em `startLocal`), `status`, `clientId`, `petId`, `serviceId`, `search`, `page`, `pageSize` |
+| POST | `/api/appointments` | sessão | Cria (201): `clientId`, `serviceId`, `startLocal` (`YYYY-MM-DDTHH:mm`), `utcOffsetMinutes`, `notes?` |
+| GET | `/api/appointments` | sessão | Lista; filtros `from`, `to` (dia em `startLocal`), `status`, `clientId`, `serviceId`, `search`, `page`, `pageSize` |
 | GET | `/api/appointments/:id` | sessão | Detalhe (404 cross-tenant) |
 | PATCH | `/api/appointments/:id` | sessão | Edição parcial/reagendamento (apenas status não-terminal) |
 | PATCH | `/api/appointments/:id/status` | sessão | `CONFIRMED`, `COMPLETED` ou `NO_SHOW` (terminal → 409) |
@@ -383,14 +374,14 @@ Comportamentos importantes:
   (`startAt < end AND endAt > start`) → **409**; fim-início exato
   permitido; `COMPLETED`/`CANCELLED`/`NO_SHOW` não bloqueiam; a
   edição exclui o próprio registro da checagem.
-- **Validações**: cliente ativo, pet do cliente, serviço ativo, todos
+- **Validações**: cliente ativo, serviço ativo, todos
   da empresa (cross-tenant → 404); `endAt` sempre derivado (nunca
   vem do cliente).
 - **Lembrete automático** (`syncReminder`, mesma transação do CRUD):
   enfileira `WhatsAppMessage` com chave `appointment-reminder:<id>`
   (`origin: SERVICE_REMINDER`, única por empresa),
   `nextAttemptAt = max(now, startAt − reminderLeadMinutes)` e
-  variáveis `[pet ou tutor, serviço, "dd/mm/aaaa às HH:mm"]`;
+  variáveis `[cliente, serviço, "dd/mm/aaaa às HH:mm"]`;
   revalida config ≠ `DISCONNECTED`, template selecionado
   `APPROVED`/ativo com 3 variáveis, telefone E.164 e consentimento
   `OPTED_IN`; reagendar atualiza a pendente, cancelar/concluir/inelegível
@@ -402,7 +393,7 @@ Comportamentos importantes:
 
 ## Assinaturas e billing (Etapa 9)
 
-Duas famílias: assinaturas dos **clientes do pet shop** (tenant-scoped,
+Duas famílias: assinaturas dos **clientes da empresa** (tenant-scoped,
 escrita com `AdminGuard`) e **billing da empresa no SaaS** (catálogo
 global + assinatura única por empresa). Pagamentos usam o caixa
 existente (sem gateway); `companyId` sempre da sessão.
@@ -490,7 +481,7 @@ opção B: tabela `CompanyModule`).
 - **Bloqueio no servidor:** `ModuleGuard` (APP_GUARD, registrado após
   `AuthGuard`) consulta `CompanyModule`; `DISABLED` → **403** com mensagem
   "Módulo desativado para esta empresa". Rotas marcadas com
-  `@RequireModule(...)`: `pets`, `services`, `appointments`,
+  `@RequireModule(...)`: `services`, `appointments`,
   `whatsapp/config|templates|consents|messages`,
   `subscriptions`, `subscription-plans`. Rotas **sem** decorator e rotas
   `@Public` (ex.: webhook `/api/webhooks/whatsapp`) nunca são bloqueadas.
@@ -665,7 +656,7 @@ Regras: [`docs/akylla/ONBOARDING.md`](../akylla/ONBOARDING.md).
 
 | Método | Rota | Acesso | Descrição |
 |---|---|---|---|
-| GET | `/api/search` | sessão | `?q=` (2–80). Até 5 resultados por tipo (clientes por nome/e-mail/telefone/CPF, produtos por nome/SKU/código de barras, vendas pelo código, OS por número/título, serviços, pets), só da empresa da sessão e sem os tipos de módulos desligados. Resposta `{query, groups:[{kind, label, items:[{kind, id, title, subtitle, href}]}]}` |
+| GET | `/api/search` | sessão | `?q=` (2–80). Até 5 resultados por tipo (clientes por nome/e-mail/telefone/CPF, produtos por nome/SKU/código de barras, vendas pelo código, OS por número/título, serviços), só da empresa da sessão e sem os tipos de módulos desligados. Resposta `{query, groups:[{kind, label, items:[{kind, id, title, subtitle, href}]}]}` |
 
 ## Documentação OpenAPI (Fase 6 · 6.3)
 

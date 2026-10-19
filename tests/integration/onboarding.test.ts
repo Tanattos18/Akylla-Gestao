@@ -85,7 +85,7 @@ describe("onboarding por perfil (Fase 4)", () => {
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ segment: "COMERCIO", completed: true });
     const m = await modules(adminA);
-    expect(m).toMatchObject({ FISCAL: "ACTIVE", COMMISSIONS: "ACTIVE", CREDIT: "ACTIVE", WHATSAPP: "ACTIVE", PETS: "DISABLED", APPOINTMENTS: "DISABLED", SERVICE_ORDERS: "DISABLED" });
+    expect(m).toMatchObject({ FISCAL: "ACTIVE", COMMISSIONS: "ACTIVE", CREDIT: "ACTIVE", WHATSAPP: "ACTIVE", SERVICES: "DISABLED", APPOINTMENTS: "DISABLED", SERVICE_ORDERS: "DISABLED" });
     const fiscal = await prisma.fiscalConfig.findUnique({ where: { companyId: companyAId } });
     expect(fiscal).toMatchObject({ provider: "mock", active: false });
     // módulo desligado bloqueia a rota

@@ -65,7 +65,7 @@ afterAll(async () => {
 describe("POST /api/auth/register", () => {
   it("cria empresa pendente + administrador, exige confirmar o e-mail e só então entra (Fase 1 · 1D)", async () => {
     const response = await register({
-      companyName: "Pet Shop Registro",
+      companyName: "Loja Registro",
       name: "Dono Registro",
       email: "dono@registro.test",
       password: PASSWORD,
@@ -76,7 +76,7 @@ describe("POST /api/auth/register", () => {
     // Sem sessão antes da confirmação
     expect(response.headers["set-cookie"]).toBeUndefined();
 
-    const company = await prisma.company.findFirst({ where: { slug: "pet-shop-registro" } });
+    const company = await prisma.company.findFirst({ where: { slug: "loja-registro" } });
     expect(company?.status).toBe("PENDING_VERIFICATION");
     const user = await prisma.user.findFirst({ where: { email: "dono@registro.test" } });
     expect(user?.role).toBe("ADMIN");
@@ -97,7 +97,7 @@ describe("POST /api/auth/register", () => {
       .send({ token });
     expect(verified.status).toBe(200);
     expect(verified.body.user.email).toBe("dono@registro.test");
-    expect(verified.body.company.slug).toBe("pet-shop-registro");
+    expect(verified.body.company.slug).toBe("loja-registro");
 
     const cookie = sessionCookieFrom(verified);
     const me = await request(app.getHttpServer())
@@ -110,15 +110,15 @@ describe("POST /api/auth/register", () => {
       .post("/api/auth/login")
       .send({ email: "dono@registro.test", password: PASSWORD });
     expect(login.status).toBe(200);
-    expect(login.body.company.slug).toBe("pet-shop-registro");
+    expect(login.body.company.slug).toBe("loja-registro");
 
-    const active = await prisma.company.findFirst({ where: { slug: "pet-shop-registro" } });
+    const active = await prisma.company.findFirst({ where: { slug: "loja-registro" } });
     expect(active?.status).toBe("ACTIVE");
   });
 
   it("gera slug único quando já existe empresa com o mesmo nome", async () => {
     const response = await register({
-      companyName: "Pet Shop Registro",
+      companyName: "Loja Registro",
       name: "Segundo Dono",
       email: "dono2@registro.test",
       password: PASSWORD,
@@ -128,7 +128,7 @@ describe("POST /api/auth/register", () => {
     const company = await prisma.company.findFirst({
       where: { users: { some: { email: "dono2@registro.test" } } },
     });
-    expect(company?.slug).toBe("pet-shop-registro-2");
+    expect(company?.slug).toBe("loja-registro-2");
   });
 
   it("responde 409 para email já cadastrado", async () => {

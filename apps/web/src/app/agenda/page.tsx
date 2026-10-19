@@ -202,7 +202,7 @@ export default function AgendaPage() {
               id="agenda-search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Cliente, pet ou serviço"
+              placeholder="Cliente ou serviço"
               className={inputClass}
             />
           </div>
@@ -266,7 +266,6 @@ export default function AgendaPage() {
                     {appointment.durationMinutes} min
                   </span></>, className: "font-medium" },
           { key: "c1", header: "Cliente", cell: (appointment) => appointment.client.name },
-          { key: "c2", header: "Pet", cell: (appointment) => appointment.pet?.name ?? "—" },
           { key: "c3", header: "Serviço", cell: (appointment) => appointment.service.name },
           { key: "c4", header: "Status", cell: (appointment) => <><span className={statusBadgeClass[appointment.status]}>
                     {appointmentStatusLabels[appointment.status]}
