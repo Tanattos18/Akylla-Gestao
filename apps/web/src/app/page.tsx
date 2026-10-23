@@ -9,15 +9,13 @@ import {
   CalendarDays,
   CreditCard,
   FileText,
-  HandCoins,
+  Globe,
   LayoutDashboard,
   Lock,
   MessageCircle,
-  Package,
-  Percent,
+  Layers,
   Receipt,
   Repeat,
-  ShoppingCart,
   Users,
   Wallet,
   Wrench,
@@ -45,27 +43,25 @@ interface HomeGroup {
   items: HomeModule[];
 }
 
-/** Módulos da tela inicial, agrupados pelo dia a dia do negócio. */
+/** Módulos da tela inicial, agrupados pelo dia a dia: clientes, entregas e contratos. */
 const groups: HomeGroup[] = [
   {
-    title: "Vender e controlar",
-    subtitle: "O balcão, o caixa e o estoque",
+    title: "Clientes e entregas",
+    subtitle: "Quem atendemos e o que entregamos",
     items: [
-      { name: "Vendas e PDV", description: "Frente de caixa rápida, comprovante e histórico", href: "/pdv", icon: ShoppingCart, tone: "amber" },
-      { name: "Produtos e estoque", description: "Catálogo, fornecedores e movimentações", href: "/produtos", icon: Package, tone: "amber" },
-      { name: "Caixa e financeiro", description: "Abertura, fechamento e contas a pagar e receber", href: "/caixa", icon: Wallet, tone: "amber" },
-      { name: "Crediário", description: "Venda a prazo com parcelas e limite por cliente", href: "/crediario", icon: HandCoins, tone: "amber", module: "CREDIT" },
-      { name: "Nota fiscal", description: "NFC-e, NF-e e NFS-e por integradora autorizada", href: "/fiscal", icon: Receipt, tone: "amber", module: "FISCAL" },
+      { name: "Clientes", description: "Ficha com entregas, contratos e histórico", href: "/clientes", icon: Users, tone: "emerald" },
+      { name: "Entregas", description: "Sites, sistemas, lojas virtuais, domínios e hospedagens", href: "/entregas", icon: Globe, tone: "emerald" },
+      { name: "Catálogo digital", description: "Produtos digitais com preço e periodicidade", href: "/catalogo", icon: Layers, tone: "emerald" },
+      { name: "Contratos", description: "Planos recorrentes vinculados às entregas", href: "/assinaturas", icon: Repeat, tone: "emerald", module: "SUBSCRIPTIONS" },
     ],
   },
   {
-    title: "Atender e fidelizar",
-    subtitle: "Clientes, agenda e comunicação",
+    title: "Atender e cobrar",
+    subtitle: "Agenda, comunicação e dinheiro",
     items: [
-      { name: "Clientes", description: "Cadastro, contatos e histórico de compras", href: "/clientes", icon: Users, tone: "emerald" },
-      { name: "Agendamentos", description: "Agenda com conflito de horário e lembretes", href: "/agenda", icon: CalendarDays, tone: "emerald", module: "APPOINTMENTS" },
-      { name: "Automação WhatsApp", description: "Templates, consentimento e envios automáticos", href: "/whatsapp", icon: MessageCircle, tone: "emerald", module: "WHATSAPP" },
-      { name: "Assinaturas", description: "Planos recorrentes dos seus clientes", href: "/assinaturas", icon: Repeat, tone: "emerald", module: "SUBSCRIPTIONS" },
+      { name: "Financeiro", description: "Contas a pagar e a receber", href: "/financeiro", icon: Wallet, tone: "amber" },
+      { name: "Agendamentos", description: "Agenda com conflito de horário e lembretes", href: "/agenda", icon: CalendarDays, tone: "amber", module: "APPOINTMENTS" },
+      { name: "Automação WhatsApp", description: "Templates, consentimento e envios automáticos", href: "/whatsapp", icon: MessageCircle, tone: "amber", module: "WHATSAPP" },
     ],
   },
   {
@@ -74,14 +70,14 @@ const groups: HomeGroup[] = [
     items: [
       { name: "Serviços", description: "Catálogo com preço e duração", href: "/servicos", icon: Scissors, tone: "sky", module: "SERVICES" },
       { name: "Ordens de serviço", description: "Orçamento, aprovação, execução, fotos e anexos", href: "/os", icon: Wrench, tone: "sky", module: "SERVICE_ORDERS" },
-      { name: "Comissões", description: "Regras por profissional, produto e categoria", href: "/comissoes", icon: Percent, tone: "sky", module: "COMMISSIONS" },
+      { name: "Nota fiscal", description: "NFS-e e notas por integradora autorizada", href: "/fiscal", icon: Receipt, tone: "sky", module: "FISCAL" },
     ],
   },
   {
     title: "Acompanhar resultados",
     subtitle: "Números para decidir melhor",
     items: [
-      { name: "Dashboard", description: "Vendas, caixa, estoque e clientes num só lugar", href: "/dashboard", icon: LayoutDashboard, tone: "violet" },
+      { name: "Dashboard", description: "Clientes, financeiro e contratos num só lugar", href: "/dashboard", icon: LayoutDashboard, tone: "violet" },
       { name: "Relatórios", description: "Por período, com exportação e impressão", href: "/relatorios", icon: BarChart3, tone: "violet" },
       { name: "Faturamento", description: "Seu plano no Akylla Gestão e pagamentos", href: "/faturamento", icon: CreditCard, tone: "violet" },
     ],
@@ -98,10 +94,9 @@ const toneClass: Record<Tone, { icon: string; glow: string }> = {
 };
 
 const quickActions: Array<{ label: string; href: string; icon: LucideIcon; adminOnly?: boolean }> = [
-  { label: "Nova venda", href: "/pdv", icon: ShoppingCart },
-  { label: "Abrir o caixa", href: "/caixa", icon: Wallet },
   { label: "Novo cliente", href: "/clientes", icon: Users },
-  { label: "Novo produto", href: "/produtos/novo", icon: Package },
+  { label: "Entregas", href: "/entregas", icon: Globe },
+  { label: "Contratos", href: "/assinaturas", icon: Repeat },
   { label: "Relatórios", href: "/relatorios", icon: FileText },
 ];
 

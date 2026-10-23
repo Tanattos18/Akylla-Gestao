@@ -14,7 +14,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Akylla Gestão",
-  description: "Sistema de gestão para pequenos negócios",
+  description: "Controle de clientes e serviços digitais",
   applicationName: "Akylla Gestão",
   icons: {
     icon: [{ url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" }],

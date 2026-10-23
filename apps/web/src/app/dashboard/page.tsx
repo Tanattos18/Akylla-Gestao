@@ -20,6 +20,8 @@ import {
   FileText,
   Zap,
   Users,
+  Globe,
+  Repeat,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import {
@@ -30,6 +32,7 @@ import {
   todayLocal,
   shiftDay,
 } from "../../lib/format";
+import { RETAIL_UI_ENABLED } from "../../lib/features";
 import { fetchSession, type Session } from "../../lib/session";
 import {
   appointmentStatusLabels,
@@ -187,6 +190,7 @@ export default function DashboardPage() {
     (financial?.overdueReceivablesCount ?? 0) + (financial?.overduePayablesCount ?? 0);
   const hasOverdue = overdueCount > 0;
   const hasStockAlert =
+    RETAIL_UI_ENABLED &&
     summary != null && summary.stock.lowStockCount + summary.stock.outOfStockCount > 0;
 
   const miniStats: MiniStat[] = summary
@@ -218,11 +222,18 @@ export default function DashboardPage() {
     : [];
 
   const shortcuts = [
-    { label: "Abrir PDV", href: "/pdv", icon: ShoppingCart, primary: true },
-    { label: "Novo produto", href: "/produtos/novo", icon: Package },
+    ...(RETAIL_UI_ENABLED
+      ? [
+          { label: "Abrir PDV", href: "/pdv", icon: ShoppingCart, primary: true },
+          { label: "Novo produto", href: "/produtos/novo", icon: Package },
+        ]
+      : [
+          { label: "Clientes", href: "/clientes", icon: Users, primary: true },
+          { label: "Entregas", href: "/entregas", icon: Globe },
+        ]),
     { label: "Novo agendamento", href: "/agenda/novo", icon: Calendar },
-    { label: "Clientes", href: "/clientes", icon: Users },
-    { label: "Abrir caixa", href: "/caixa", icon: Wallet },
+    ...(RETAIL_UI_ENABLED ? [{ label: "Clientes", href: "/clientes", icon: Users }] : []),
+    { label: "Contratos", href: "/assinaturas", icon: Repeat },
     { label: "Relatórios", href: "/relatorios", icon: FileText },
   ];
 
@@ -457,7 +468,8 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Gráficos */}
+          {/* Gráficos de vendas (só com as telas de loja ligadas) */}
+          {RETAIL_UI_ENABLED && (
           <div className="grid gap-4 lg:grid-cols-3">
             <Card className="lg:col-span-2">
               <CardHeader
@@ -506,9 +518,12 @@ export default function DashboardPage() {
             </Card>
           </div>
 
+          )}
+
           {/* Atividades · Agenda · Atalhos */}
           <div className="grid gap-4 lg:grid-cols-3">
-            {/* Atividades recentes */}
+            {/* Atividades recentes (vendas) */}
+            {RETAIL_UI_ENABLED && (
             <Card>
               <CardHeader
                 title="Atividades recentes"
@@ -571,6 +586,7 @@ export default function DashboardPage() {
                 )}
               </CardBody>
             </Card>
+            )}
 
             {/* Próximos agendamentos */}
             <Card>

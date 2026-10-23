@@ -10,7 +10,7 @@ export default function manifest(): MetadataRoute.Manifest {
     id: "/",
     name: "Akylla Gestão",
     short_name: "Akylla",
-    description: "Gestão para comércio e serviços: PDV, estoque, caixa, financeiro, agenda e mais.",
+    description: "Controle de clientes e serviços digitais: entregas, contratos, financeiro, agenda e WhatsApp.",
     lang: "pt-BR",
     start_url: "/",
     scope: "/",
@@ -25,9 +25,9 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: "/icons/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
     shortcuts: [
-      { name: "Abrir PDV", short_name: "PDV", url: "/pdv", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
-      { name: "Vendas", url: "/vendas", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
-      { name: "Caixa", url: "/caixa", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
+      { name: "Clientes", url: "/clientes", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
+      { name: "Entregas", url: "/entregas", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
+      { name: "Contratos", url: "/assinaturas", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
       { name: "Agenda", url: "/agenda", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
     ],
   };

@@ -37,9 +37,12 @@ import {
   FileSpreadsheet,
   Settings,
   Building2,
+  Globe,
+  Layers,
   type LucideIcon,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { RETAIL_UI_ENABLED, isRetailMenuItem } from "@/lib/features";
 import { GlobalSearch } from "./GlobalSearch";
 import { ThemeToggle } from "./ThemeToggle";
 import type {
@@ -94,11 +97,13 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: "Relacionamento",
+    label: "Clientes",
     items: [
       { label: "Clientes", href: "/clientes", icon: Users },
+      { label: "Entregas", href: "/entregas", icon: Globe },
+      { label: "Catálogo digital", href: "/catalogo", icon: Layers },
+      { label: "Contratos", href: "/assinaturas", icon: Repeat, module: "SUBSCRIPTIONS" },
       { label: "WhatsApp", href: "/whatsapp", icon: MessageCircle, module: "WHATSAPP" },
-      { label: "Assinaturas", href: "/assinaturas", icon: Repeat, module: "SUBSCRIPTIONS" },
     ],
   },
   {
@@ -132,7 +137,9 @@ const routeLabels: Record<string, string> = {
   servicos: "Serviços",
   whatsapp: "WhatsApp",
   agenda: "Agenda",
-  assinaturas: "Assinaturas",
+  assinaturas: "Contratos",
+  entregas: "Entregas",
+  catalogo: "Catálogo digital",
   comissoes: "Comissões",
   crediario: "Crediário",
   os: "Ordens de serviço",
@@ -196,6 +203,7 @@ function filterItems(items: NavItem[], disabledModules: Set<string>, isAdmin: bo
     if (item.adminOnly && !isAdmin) return false;
     if (item.platformOnly && !isPlatformAdmin) return false;
     if (item.module && disabledModules.has(item.module)) return false;
+    if (isRetailMenuItem(item.href)) return false;
     return true;
   });
 }
@@ -249,8 +257,9 @@ export function Header({
         }).catch(() => null),
       ]);
       setNotif({
-        lowStock: summary.stock.lowStockCount,
-        outOfStock: summary.stock.outOfStockCount,
+        // Estoque só conta com as telas de loja ligadas
+        lowStock: RETAIL_UI_ENABLED ? summary.stock.lowStockCount : 0,
+        outOfStock: RETAIL_UI_ENABLED ? summary.stock.outOfStockCount : 0,
         overdueReceivables: fin?.overdueReceivablesCount ?? 0,
         overduePayables: fin?.overduePayablesCount ?? 0,
         loaded: true,
