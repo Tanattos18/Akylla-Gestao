@@ -13,7 +13,9 @@
 - [x] 4 Telas: Catálogo digital, Entregas, ficha com abas, Contratos, Configurações › Contratos
 - [x] 4b Script idempotente `db:seed:akylla` (produtos próprios + Akylla Studio de teste; demos desligáveis)
 - [ ] Aplicar na VPS (`update.sh`) e rodar `npm run db:seed:akylla` (proprietário)
-- [ ] Logins das entregas guardados criptografados (próxima etapa)
+- [x] Logins das entregas cifrados (AES-256-GCM), mostrar/ocultar com auditoria
+- [x] Monitor de sites (worker, HEAD/GET só leitura a cada 5 min, histórico 30 dias)
+- [x] Novo Início: receita recorrente, a receber 30 dias, atrasados, vencimentos, sites fora do ar
 - [ ] Pausa real por atraso (só depois de autorizada)
 
 ## Correções da auditoria (2026-10-19)

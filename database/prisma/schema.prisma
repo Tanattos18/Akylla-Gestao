@@ -359,6 +359,9 @@ model Company {
   fiscalDocuments         FiscalDocument[]
   digitalProducts         DigitalProduct[]
   clientDeliveries        ClientDelivery[]
+  deliveryCredentials     DeliveryCredential[]
+  credentialAccessLogs    CredentialAccessLog[]
+  siteChecks              SiteCheck[]
 }
 
 /// Módulos vendáveis. O antigo PETS saiu do produto em 2026-10-19
@@ -483,6 +486,8 @@ model User {
   emailVerificationTokens   EmailVerificationToken[]
   serviceOrdersCreated      ServiceOrder[]           @relation("ServiceOrderCreatedBy")
   fiscalDocumentsRequested  FiscalDocument[]         @relation("FiscalDocumentRequestedBy")
+  deliveryCredentials       DeliveryCredential[]
+  credentialAccessLogs      CredentialAccessLog[]
   twoFactorSecret           String?
   twoFactorEnabled          Boolean                  @default(false)
 
@@ -1484,32 +1489,109 @@ model DigitalProduct {
 
 /// O que foi entregue a um cliente (site, sistema, loja, domínio...).
 model ClientDelivery {
-  id               String             @id @default(cuid())
-  companyId        String
-  company          Company            @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  clientId         String
-  client           Client             @relation(fields: [clientId], references: [id], onDelete: Restrict)
-  productId        String?
-  product          DigitalProduct?    @relation(fields: [productId], references: [id], onDelete: Restrict)
-  name             String
-  type             DigitalProductType
-  siteUrl          String?
-  adminUrl         String?
-  repositoryUrl    String?
-  domain           String?
-  domainRenewalAt  DateTime?
-  hostingProvider  String?
-  hostingRenewalAt DateTime?
-  notes            String?
-  status           DeliveryStatus     @default(ACTIVE)
+  id                String               @id @default(cuid())
+  companyId         String
+  company           Company              @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  clientId          String
+  client            Client               @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  productId         String?
+  product           DigitalProduct?      @relation(fields: [productId], references: [id], onDelete: Restrict)
+  name              String
+  type              DigitalProductType
+  siteUrl           String?
+  adminUrl          String?
+  repositoryUrl     String?
+  domain            String?
+  domainRenewalAt   DateTime?
+  hostingProvider   String?
+  hostingRenewalAt  DateTime?
+  notes             String?
+  status            DeliveryStatus       @default(ACTIVE)
   /// Nunca pausar por atraso (produtos próprios e clientes estratégicos)
-  neverPause       Boolean            @default(false)
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
-  subscriptions    Subscription[]
+  neverPause        Boolean              @default(false)
+  /// Monitor (2026-10-23): o worker consulta siteUrl (GET/HEAD, só leitura)
+  monitorEnabled    Boolean              @default(true)
+  monitorStatus     SiteStatus?
+  monitorHttpStatus Int?
+  monitorResponseMs Int?
+  monitorCheckedAt  DateTime?
+  monitorDownSince  DateTime?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  subscriptions     Subscription[]
+  credentials       DeliveryCredential[]
+  siteChecks        SiteCheck[]
 
   @@index([companyId, status])
   @@index([companyId, clientId])
   @@index([companyId, type])
   @@index([companyId, createdAt])
+}
+
+enum SiteStatus {
+  UP
+  DOWN
+}
+
+enum CredentialAction {
+  CREATE
+  UPDATE
+  REVEAL
+  ARCHIVE
+}
+
+/// Login de uma entrega (painel, hospedagem, domínio). A senha fica cifrada
+/// (AES-256-GCM); nunca é devolvida na listagem, só em "mostrar" auditado.
+model DeliveryCredential {
+  id              String                @id @default(cuid())
+  companyId       String
+  company         Company               @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  deliveryId      String
+  delivery        ClientDelivery        @relation(fields: [deliveryId], references: [id], onDelete: Restrict)
+  label           String
+  username        String?
+  secretEncrypted String?
+  url             String?
+  notes           String?
+  archivedAt      DateTime?
+  createdByUserId String
+  createdBy       User                  @relation(fields: [createdByUserId], references: [id], onDelete: Restrict)
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  accessLogs      CredentialAccessLog[]
+
+  @@index([companyId, deliveryId])
+}
+
+/// Auditoria imutável de quem criou, alterou, mostrou ou arquivou um login.
+model CredentialAccessLog {
+  id           String             @id @default(cuid())
+  companyId    String
+  company      Company            @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  credentialId String
+  credential   DeliveryCredential @relation(fields: [credentialId], references: [id], onDelete: Restrict)
+  userId       String
+  user         User               @relation(fields: [userId], references: [id], onDelete: Restrict)
+  action       CredentialAction
+  createdAt    DateTime           @default(now())
+
+  @@index([companyId, credentialId, createdAt])
+}
+
+/// Histórico do monitor de sites (retenção curta, limpo pelo worker).
+model SiteCheck {
+  id         String         @id @default(cuid())
+  companyId  String
+  company    Company        @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  deliveryId String
+  delivery   ClientDelivery @relation(fields: [deliveryId], references: [id], onDelete: Restrict)
+  url        String
+  ok         Boolean
+  httpStatus Int?
+  responseMs Int?
+  error      String?
+  checkedAt  DateTime       @default(now())
+
+  @@index([companyId, deliveryId, checkedAt])
+  @@index([checkedAt])
 }

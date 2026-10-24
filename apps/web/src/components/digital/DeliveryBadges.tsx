@@ -28,3 +28,11 @@ export function ExternalLink({ href, label }: { href: string | null; label?: str
     </a>
   );
 }
+
+/** Status do monitor do site: no ar, fora do ar ou ainda não checado. */
+export function SiteStatusBadge({ status, enabled = true }: { status: "UP" | "DOWN" | null; enabled?: boolean }) {
+  if (!enabled) return <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">Sem monitor</span>;
+  if (status === "UP") return <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-800">● No ar</span>;
+  if (status === "DOWN") return <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">● Fora do ar</span>;
+  return <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">Aguardando checagem</span>;
+}

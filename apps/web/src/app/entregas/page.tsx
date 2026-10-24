@@ -16,7 +16,7 @@ import {
 } from "../../lib/types";
 import { DataTable } from "../../components/ui/DataTable";
 import { Pagination } from "../../components/ui/Pagination";
-import { DeliveryStatusBadge, ExternalLink, NeverPauseBadge } from "../../components/digital/DeliveryBadges";
+import { DeliveryStatusBadge, ExternalLink, NeverPauseBadge, SiteStatusBadge } from "../../components/digital/DeliveryBadges";
 
 const PAGE_SIZE = 20;
 const TYPES = Object.keys(digitalProductTypeLabels) as DigitalProductType[];
@@ -139,7 +139,20 @@ export default function EntregasPage() {
               <Link href={`/clientes/${delivery.client.id}`} className="text-slate-700 hover:underline">{delivery.client.name}</Link>
             ),
           },
-          { key: "site", header: "Site", cell: (delivery) => <ExternalLink href={delivery.siteUrl} /> },
+          {
+            key: "site",
+            header: "Site",
+            cell: (delivery) => (
+              <div className="space-y-1">
+                <ExternalLink href={delivery.siteUrl} />
+                {delivery.siteUrl && (
+                  <div>
+                    <SiteStatusBadge status={delivery.monitorStatus} enabled={delivery.monitorEnabled} />
+                  </div>
+                )}
+              </div>
+            ),
+          },
           { key: "renewal", header: "Próxima renovação", cell: (delivery) => <>{renewal(delivery)}</> },
           {
             key: "status",

@@ -49,6 +49,9 @@ export const TENANT_MODELS: ReadonlySet<string> = new Set([
   // Transformação 2026-10-23
   "DigitalProduct",
   "ClientDelivery",
+  "DeliveryCredential",
+  "CredentialAccessLog",
+  "SiteCheck",
 ]);
 
 /** Operações cujo `where` aceita filtros (permite injeção via AND). */

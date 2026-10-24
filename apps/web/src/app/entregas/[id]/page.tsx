@@ -4,16 +4,19 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { api, ApiError } from "../../../lib/api";
-import { formatBrl, formatDate } from "../../../lib/format";
+import { formatBrl, formatDate, formatDateTime } from "../../../lib/format";
+import { fetchSession } from "../../../lib/session";
 import {
   digitalProductTypeLabels,
   subscriptionStatusLabels,
   type DeliveryDto,
   type Paginated,
+  type SiteCheckDto,
   type SubscriptionDto,
 } from "../../../lib/types";
+import { CredentialsPanel } from "../../../components/digital/CredentialsPanel";
 import { DeliveryForm } from "../../../components/digital/DeliveryForm";
-import { DeliveryStatusBadge, ExternalLink, NeverPauseBadge } from "../../../components/digital/DeliveryBadges";
+import { DeliveryStatusBadge, ExternalLink, NeverPauseBadge, SiteStatusBadge } from "../../../components/digital/DeliveryBadges";
 
 function day(value: string | null): string {
   return value ? formatDate(`${value}T12:00:00`) : "—";
@@ -23,6 +26,8 @@ export default function EntregaDetalhePage() {
   const { id } = useParams<{ id: string }>();
   const [delivery, setDelivery] = useState<DeliveryDto | null>(null);
   const [contracts, setContracts] = useState<SubscriptionDto[]>([]);
+  const [checks, setChecks] = useState<SiteCheckDto[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [editing, setEditing] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +41,7 @@ export default function EntregaDetalhePage() {
         redirectOnUnauthorized: false,
       }).catch(() => null);
       setContracts(subs?.items ?? []);
+      setChecks(await api<SiteCheckDto[]>(`/api/deliveries/${id}/checks`).catch(() => []));
     } catch (err) {
       if (err instanceof ApiError && err.status === 404) setNotFound(true);
       else setError(err instanceof ApiError ? err.message : "Falha ao carregar a entrega.");
@@ -44,6 +50,7 @@ export default function EntregaDetalhePage() {
 
   useEffect(() => {
     void load();
+    fetchSession().then((session) => setIsAdmin(session?.user.role === "ADMIN"));
   }, [load]);
 
   if (notFound) {
@@ -116,6 +123,43 @@ export default function EntregaDetalhePage() {
           {delivery.notes && <p className="mt-4 whitespace-pre-line border-t border-slate-100 pt-4 text-sm text-slate-700">{delivery.notes}</p>}
         </div>
       )}
+
+      {delivery.siteUrl && (
+        <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Monitor do site</h3>
+              <p className="text-xs text-slate-500">Consulta só de leitura a cada 5 minutos; nada é alterado no site.</p>
+            </div>
+            <SiteStatusBadge status={delivery.monitorStatus} enabled={delivery.monitorEnabled} />
+          </div>
+          {delivery.monitorStatus === "DOWN" && delivery.monitorDownSince && (
+            <p className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              Fora do ar desde {formatDateTime(delivery.monitorDownSince)}
+              {delivery.monitorHttpStatus ? ` (HTTP ${delivery.monitorHttpStatus})` : ""}.
+            </p>
+          )}
+          {checks.length === 0 ? (
+            <p className="text-sm text-slate-500">Ainda sem checagens.</p>
+          ) : (
+            <ul className="max-h-64 divide-y divide-slate-100 overflow-y-auto text-sm">
+              {checks.map((check) => (
+                <li key={check.id} className="flex flex-wrap items-center justify-between gap-2 py-1.5">
+                  <span className="text-slate-600">{formatDateTime(check.checkedAt)}</span>
+                  <span className={check.ok ? "text-emerald-700" : "text-red-700"}>
+                    {check.ok ? "No ar" : "Fora do ar"}
+                    {check.httpStatus ? ` · HTTP ${check.httpStatus}` : ""}
+                    {check.responseMs !== null ? ` · ${check.responseMs} ms` : ""}
+                    {check.error && !check.ok ? ` · ${check.error}` : ""}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+
+      <CredentialsPanel deliveryId={delivery.id} isAdmin={isAdmin} />
 
       <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-3 flex items-center justify-between gap-3">

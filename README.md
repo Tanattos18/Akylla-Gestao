@@ -16,7 +16,12 @@
 > - ficha do cliente com abas **Entregas / Contratos / Histórico**;
 > - política de atraso configurável (aviso no dia 1, pausa no dia 10),
 >   **só registrada** — nenhuma pausa automática;
-> - `npm run db:seed:akylla` cadastra os produtos do próprio Akylla.
+> - `npm run db:seed:akylla` cadastra os produtos do próprio Akylla;
+> - **logins das entregas** com senha cifrada (mostrar/ocultar só ADMIN,
+>   com auditoria);
+> - **monitor de sites** no worker (HEAD/GET só leitura a cada 5 min) e
+>   **novo Início** com receita recorrente, a receber, atrasados,
+>   vencimentos em 30 dias e sites fora do ar.
 >
 > A versão de loja está guardada na tag `versao-loja-2026-10-23` e no
 > ramo `versao-loja`. O texto abaixo ainda descreve a versão de loja.

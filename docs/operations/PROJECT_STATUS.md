@@ -7,8 +7,10 @@ etapas 2 (menu sem loja), 3 (modelo) e 4 (telas) concluídas no código.
 Backup da versão de loja: tag `versao-loja-2026-10-23` e ramo
 `versao-loja`. Produção ainda na versão anterior: falta o proprietário
 rodar o backup do banco, o `update.sh` e `npm run db:seed:akylla` na VPS.
-Pendências desta linha: logins criptografados das entregas e a pausa
-real por atraso (hoje só configuração). Detalhes no CHANGELOG.
+Em 2026-10-24 entraram os logins cifrados das entregas (com auditoria),
+o monitor de sites (só leitura) e o novo Início. Pendência desta linha:
+a pausa real por atraso (hoje só configuração, proibida até
+autorização). Detalhes no CHANGELOG.
 
 ### Roteiro anterior
 

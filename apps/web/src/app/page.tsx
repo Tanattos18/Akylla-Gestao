@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { api } from "../lib/api";
 import { fetchSession, type Session } from "../lib/session";
+import { DigitalOverview } from "../components/digital/DigitalOverview";
 import type { BusinessModule, CompanyModuleDto, OnboardingStatusDto } from "../lib/types";
 
 type Tone = "amber" | "emerald" | "sky" | "violet" | "rose" | "slate";
@@ -221,6 +222,8 @@ export default function HomePage() {
           </ul>
         </div>
       </section>
+
+      <DigitalOverview />
 
       {view.map((group) => (
         <section key={group.title} aria-labelledby={`grupo-${group.title}`}>

@@ -2299,6 +2299,8 @@ const deliveryFields = {
   notes: optionalText(2000),
   status: deliveryStatusSchema.optional(),
   neverPause: z.boolean().optional(),
+  /** Monitor de site (GET/HEAD só leitura a cada 5 min); padrão ligado. */
+  monitorEnabled: z.boolean().optional(),
 };
 
 export const createDeliverySchema = z.object({
@@ -2363,5 +2365,102 @@ export interface ClientHistoryItemDto {
   detail: string | null;
   /** Rota da web para abrir o registro, quando houver tela. */
   href: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Transformação 2026-10-23 — logins das entregas (cifrados) e monitor
+// ---------------------------------------------------------------------------
+
+export const createCredentialSchema = z.object({
+  label: z.string().trim().min(2, "Descreva o login (ex.: Painel admin)").max(120),
+  username: optionalText(190),
+  /** Senha em claro só na ida; o servidor grava cifrada. */
+  secret: z.string().max(500, "Máximo de 500 caracteres").optional().nullable(),
+  url: z
+    .string()
+    .trim()
+    .max(500)
+    .url("URL inválida (use https://...)")
+    .optional()
+    .nullable()
+    .or(z.literal("").transform(() => null)),
+  notes: optionalText(1000),
+});
+export type CreateCredentialInput = z.infer<typeof createCredentialSchema>;
+
+/** Na edição, `secret` ausente mantém a senha; "" apaga. */
+export const updateCredentialSchema = createCredentialSchema.partial();
+export type UpdateCredentialInput = z.infer<typeof updateCredentialSchema>;
+
+export type CredentialAction = "CREATE" | "UPDATE" | "REVEAL" | "ARCHIVE";
+
+export const credentialActionLabels: Record<CredentialAction, string> = {
+  CREATE: "Criou",
+  UPDATE: "Alterou",
+  REVEAL: "Mostrou a senha",
+  ARCHIVE: "Arquivou",
+};
+
+export interface DeliveryCredentialDto {
+  id: string;
+  deliveryId: string;
+  label: string;
+  username: string | null;
+  url: string | null;
+  notes: string | null;
+  /** Nunca a senha: só se existe uma gravada. */
+  hasSecret: boolean;
+  archivedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CredentialAccessLogDto {
+  id: string;
+  action: CredentialAction;
+  userName: string;
+  createdAt: string;
+}
+
+export type SiteStatus = "UP" | "DOWN";
+
+export interface SiteCheckDto {
+  id: string;
+  url: string;
+  ok: boolean;
+  httpStatus: number | null;
+  responseMs: number | null;
+  error: string | null;
+  checkedAt: string;
+}
+
+/** Monitor: intervalo entre checagens e limite de resposta. */
+export const SITE_MONITOR_INTERVAL_MS = 5 * 60 * 1000;
+export const SITE_MONITOR_TIMEOUT_MS = 10_000;
+export const SITE_CHECK_RETENTION_DAYS = 30;
+
+export interface DigitalOverviewDto {
+  /** Receita mensal recorrente dos contratos ativos (preço × 30 / duração). */
+  monthlyRecurringRevenue: string;
+  activeContracts: number;
+  receivableNext30: { total: string; count: number };
+  overdueReceivables: { total: string; count: number };
+  upcoming: Array<{
+    kind: "CONTRACT" | "DOMAIN" | "HOSTING";
+    date: string;
+    title: string;
+    clientName: string;
+    href: string;
+  }>;
+  sitesDown: Array<{
+    deliveryId: string;
+    name: string;
+    clientName: string;
+    url: string;
+    since: string | null;
+    httpStatus: number | null;
+    neverPause: boolean;
+  }>;
+  monitoredSites: number;
 }
 

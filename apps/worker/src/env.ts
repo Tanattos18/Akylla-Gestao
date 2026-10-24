@@ -20,6 +20,11 @@ const schema = z.object({
   WORKER_POLL_INTERVAL_MS: z.coerce.number().int().min(250).default(5000),
   WHATSAPP_SEND_MAX_PER_CYCLE: z.coerce.number().int().min(1).max(500).default(20),
   WHATSAPP_SEND_INTERVAL_MS: z.coerce.number().int().min(0).max(60_000).default(250),
+  // Monitor de sites das entregas (2026-10-23): GET/HEAD só leitura a cada 5 min
+  SITE_MONITOR_ENABLED: z
+    .string()
+    .optional()
+    .transform((value) => value !== "false"),
   // Monitoramento (Fase 1 · 1B) — desligado sem DSN
   NODE_ENV: z.string().default("development"),
   SENTRY_DSN: z.string().url().optional().or(z.literal("").transform(() => undefined)),

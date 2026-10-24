@@ -33,6 +33,7 @@ function initialForm(delivery?: DeliveryDto | null, clientId?: string) {
     notes: delivery?.notes ?? "",
     status: delivery?.status ?? ("ACTIVE" as DeliveryStatus),
     neverPause: delivery?.neverPause ?? false,
+    monitorEnabled: delivery?.monitorEnabled ?? true,
   };
 }
 
@@ -100,6 +101,7 @@ export function DeliveryForm({
       notes: form.notes.trim(),
       status: form.status,
       neverPause: form.neverPause,
+      monitorEnabled: form.monitorEnabled,
     };
     try {
       const saved = delivery
@@ -216,6 +218,18 @@ export function DeliveryForm({
         <span>
           <strong className="font-medium">Nunca pausar</strong> — produtos próprios e clientes estratégicos ficam
           fora de qualquer pausa por atraso.
+        </span>
+      </label>
+      <label className="flex items-start gap-2 text-sm text-slate-700 sm:col-span-2">
+        <input
+          type="checkbox"
+          checked={form.monitorEnabled}
+          onChange={(e) => setForm({ ...form, monitorEnabled: e.target.checked })}
+          className="mt-0.5"
+        />
+        <span>
+          <strong className="font-medium">Monitorar o site</strong> — a cada 5 minutos o sistema só consulta a
+          URL do site (sem alterar nada) e avisa no Início se ele cair.
         </span>
       </label>
       {error && (

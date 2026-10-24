@@ -3,6 +3,7 @@ import { createWhatsAppProvider } from "@petflow/whatsapp";
 import { workerEnv } from "./env";
 import { captureWorkerError, flushWorkerMonitoring, initWorkerMonitoring } from "./monitoring";
 import { processDueMessages } from "./whatsapp/processor";
+import { checkSites, SITE_MONITOR_INTERVAL_MS, type FetchLike } from "./monitor/site-monitor";
 
 const HEARTBEAT_INTERVAL_MS = 60_000;
 
@@ -47,7 +48,7 @@ async function main() {
   }
 
   log(
-    `worker iniciado (fila WhatsApp, provedor=${provider.name}, poll=${workerEnv.WORKER_POLL_INTERVAL_MS}ms, máx=${workerEnv.WHATSAPP_SEND_MAX_PER_CYCLE}/ciclo, intervalo=${workerEnv.WHATSAPP_SEND_INTERVAL_MS}ms, monitoramento=${monitoring ? "sentry" : "desligado"})`,
+    `worker iniciado (fila WhatsApp, provedor=${provider.name}, poll=${workerEnv.WORKER_POLL_INTERVAL_MS}ms, máx=${workerEnv.WHATSAPP_SEND_MAX_PER_CYCLE}/ciclo, intervalo=${workerEnv.WHATSAPP_SEND_INTERVAL_MS}ms, monitoramento=${monitoring ? "sentry" : "desligado"}, sites=${workerEnv.SITE_MONITOR_ENABLED ? "a cada 5 min" : "desligado"})`,
   );
 
   let running = false;
@@ -75,12 +76,31 @@ async function main() {
     }
   };
 
+  let checkingSites = false;
+  const monitorCycle = async () => {
+    if (checkingSites) return;
+    checkingSites = true;
+    try {
+      const result = await checkSites({ prisma, fetchImpl: fetch as unknown as FetchLike });
+      log(`monitor: ${result.checked} site(s), no ar=${result.up}, fora=${result.down}, histórico limpo=${result.purged}`);
+    } catch (error) {
+      log(`erro no monitor: ${error instanceof Error ? error.message : "erro desconhecido"}`);
+      captureWorkerError(error, "site-monitor");
+    } finally {
+      checkingSites = false;
+    }
+  };
+
   const poll = setInterval(() => void cycle(), workerEnv.WORKER_POLL_INTERVAL_MS);
+  const monitorPoll = workerEnv.SITE_MONITOR_ENABLED
+    ? setInterval(() => void monitorCycle(), SITE_MONITOR_INTERVAL_MS)
+    : null;
   const heartbeat = setInterval(() => log("heartbeat"), HEARTBEAT_INTERVAL_MS);
 
   const shutdown = async (signal: string) => {
     log(`sinal ${signal} recebido, encerrando`);
     clearInterval(poll);
+    if (monitorPoll) clearInterval(monitorPoll);
     clearInterval(heartbeat);
     await prisma.$disconnect();
     await flushWorkerMonitoring();
@@ -91,6 +111,7 @@ async function main() {
   process.on("SIGTERM", () => void shutdown("SIGTERM"));
 
   await cycle();
+  if (workerEnv.SITE_MONITOR_ENABLED) void monitorCycle();
 }
 
 main().catch(async (error) => {

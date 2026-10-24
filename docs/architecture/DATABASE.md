@@ -1,5 +1,22 @@
 # Banco de dados — diretrizes e modelo atual
 
+## Logins cifrados e monitor de sites (2026-10-24)
+
+Migration `20261024090000_credentials_and_monitor` — **só adiciona**:
+
+- `DeliveryCredential`: `companyId`, `deliveryId` e `createdByUserId`
+  com FK `Restrict`; `label`, `username?`, `secretEncrypted?`
+  (`v1:<iv>:<tag>:<cifrado>`, AES-256-GCM), `url?`, `notes?`,
+  `archivedAt?` (arquivar em vez de apagar).
+- `CredentialAccessLog` (imutável): quem (`userId`) fez o quê
+  (`CredentialAction`: CREATE, UPDATE, REVEAL, ARCHIVE) e quando.
+- `SiteCheck`: histórico do monitor (`ok`, `httpStatus`, `responseMs`,
+  `error`, `checkedAt`), limpo pelo worker após 30 dias.
+- `ClientDelivery.monitorEnabled` (padrão true), `monitorStatus`
+  (`SiteStatus` UP/DOWN), `monitorHttpStatus`, `monitorResponseMs`,
+  `monitorCheckedAt`, `monitorDownSince`.
+- As três tabelas novas têm RLS `ENABLE` + `FORCE` e `tenant_isolation`.
+
 ## Clientes e produtos digitais (2026-10-23)
 
 Migration `20261023120000_digital_products` — **só adiciona**:

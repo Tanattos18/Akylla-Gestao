@@ -50,6 +50,9 @@ export async function resetDatabase(prisma: PrismaService): Promise<void> {
   // subscription referencia client/plan/users; cashMovement referencia subscription (SetNull)
   await prisma.subscription.deleteMany();
   // Transformação 2026-10-23: entrega referencia cliente/produto digital (Restrict)
+  await prisma.credentialAccessLog.deleteMany();
+  await prisma.deliveryCredential.deleteMany();
+  await prisma.siteCheck.deleteMany();
   await prisma.clientDelivery.deleteMany();
   await prisma.digitalProduct.deleteMany();
   await prisma.tenantSubscription.deleteMany();

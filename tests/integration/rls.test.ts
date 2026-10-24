@@ -39,7 +39,7 @@ const TENANT_TABLES = [
   // Fase 8
   "PlatformPayment",
   // Transformação 2026-10-23
-  "DigitalProduct", "ClientDelivery",
+  "DigitalProduct", "ClientDelivery", "DeliveryCredential", "CredentialAccessLog", "SiteCheck",
 ];
 
 /**

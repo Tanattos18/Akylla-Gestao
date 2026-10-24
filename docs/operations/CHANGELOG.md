@@ -6,6 +6,34 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-24 - Logins cifrados, monitor de sites e novo Início
+
+### Adicionado
+
+- **Logins das entregas** (`DeliveryCredential`): senha cifrada com
+  AES-256-GCM (mesmo formato dos segredos fiscais; chave
+  `CREDENTIALS_ENCRYPTION_KEY` ou, sem ela, `FISCAL_ENCRYPTION_KEY`). A
+  senha nunca vem na listagem; "Mostrar senha" é só de ADMIN, responde
+  com `Cache-Control: no-store`, some da tela em 30 s e fica registrada
+  na auditoria imutável `CredentialAccessLog` (criou, alterou, mostrou,
+  arquivou). Não há exclusão: o login é arquivado.
+- **Monitor de sites** no worker: a cada 5 min faz `HEAD` (e `GET` com
+  corpo descartado se o servidor recusar `HEAD`) na URL do site das
+  entregas no ar com monitor ligado. **Somente leitura**: nunca envia
+  POST, formulário, cookie ou credencial. Guarda status, código HTTP,
+  tempo de resposta, início da queda e o histórico `SiteCheck` (30 dias).
+  Desligável por entrega ou por `SITE_MONITOR_ENABLED=false`.
+- **Novo Início**: receita mensal recorrente, a receber em 30 dias,
+  atrasados, vencimentos de contrato/domínio/hospedagem em 30 dias e
+  alerta de sites fora do ar (`GET /api/digital/overview`).
+- Tela da entrega com seções Monitor do site e Logins; coluna de status
+  do site na lista de entregas.
+- Migration aditiva `20261024090000_credentials_and_monitor` (RLS FORCE
+  nas três tabelas novas). Testes `tests/integration/digital-ops.test.ts`.
+
+Pausa real por atraso continua **não implementada** (proibida até
+autorização).
+
 ## [Akylla Gestão] - 2026-10-23 - Transformação: clientes e produtos digitais (etapas 2 a 4)
 
 Backup antes da mudança: tag `versao-loja-2026-10-23` e ramo `versao-loja`

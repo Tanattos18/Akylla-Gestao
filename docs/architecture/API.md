@@ -723,11 +723,26 @@ Na interface, "Assinaturas" aparecem como **Contratos**. Rotas sem
 | GET | `/api/deliveries/:id` | sessão | Detalhe com `contractsCount` (404 cross-tenant) |
 | PATCH | `/api/deliveries/:id` | sessão | Edição parcial; texto vazio limpa o campo; `neverPause` + `PAUSED` → 409 |
 | GET | `/api/clients/:id/history` | sessão | Linha do tempo do cliente: cadastro, entregas, contratos (início/cancelamento), financeiro, agenda e OS |
+| GET | `/api/deliveries/:id/checks` | sessão | Últimas 50 checagens do monitor do site (`ok`, `httpStatus`, `responseMs`, `error`) |
+| GET | `/api/deliveries/:id/credentials` | sessão | Logins da entrega **sem senha** (`hasSecret`); `archived=true` inclui arquivados |
+| POST | `/api/deliveries/:id/credentials` | ADMIN | Cria (201): `label`, `username?`, `secret?` (gravada cifrada AES-256-GCM), `url?`, `notes?` |
+| PATCH | `/api/delivery-credentials/:id` | ADMIN | Edição parcial; `secret` ausente mantém, `""` apaga; arquivado → 409 |
+| POST | `/api/delivery-credentials/:id/reveal` | ADMIN | `{secret}` em claro, `Cache-Control: no-store`; registra `REVEAL` na auditoria |
+| POST | `/api/delivery-credentials/:id/archive` | ADMIN | Arquiva (não apaga); duplo → 409 |
+| GET | `/api/delivery-credentials/:id/access-log` | ADMIN | Auditoria imutável: `CREATE`/`UPDATE`/`REVEAL`/`ARCHIVE`, quem e quando |
+| GET | `/api/digital/overview` | sessão | Início: receita mensal recorrente, a receber em 30 dias, atrasados, vencimentos (contrato/domínio/hospedagem) em 30 dias e sites fora do ar |
 | GET | `/api/overdue-policy` | sessão | `{warnDays, pauseDays, autoPauseEnabled: false}` (padrão 1 e 10) |
 | PUT | `/api/overdue-policy` | ADMIN | `{warnDays 0..365, pauseDays 1..365}`; pausa ≤ aviso → 400. Só configuração: nenhuma pausa automática nesta etapa |
 
 - `neverPause`: produtos próprios e clientes estratégicos; a entrega
   não aceita o status `PAUSED` enquanto a flag estiver ligada.
+- **Monitor de sites** (worker, a cada 5 min, `SITE_MONITOR_ENABLED`):
+  só `HEAD` e, se o servidor recusar, `GET` com o corpo descartado —
+  nunca `POST`, formulário, cookie ou credencial. Checa entregas `ACTIVE`
+  com `siteUrl` e `monitorEnabled`; grava `monitorStatus`/`monitorDownSince`
+  e o histórico `SiteCheck` (30 dias).
+- **Logins**: chave `CREDENTIALS_ENCRYPTION_KEY` (ou, sem ela,
+  `FISCAL_ENCRYPTION_KEY`); sem chave → 503 ao gravar senha.
 - Script `npm run db:seed:akylla` (idempotente) cadastra o cliente
   "Akylla (próprio)" com as entregas do próprio Akylla e o cliente de
   teste "Akylla Studio (teste)", todas com `neverPause`. Opções

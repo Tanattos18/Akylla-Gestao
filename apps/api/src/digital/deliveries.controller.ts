@@ -27,6 +27,11 @@ export class DeliveriesController {
     return this.deliveriesService.get(auth, id);
   }
 
+  @Get(":id/checks")
+  checks(@Auth() auth: AuthContext, @Param("id") id: string) {
+    return this.deliveriesService.siteChecks(auth, id);
+  }
+
   @Post()
   create(
     @Auth() auth: AuthContext,

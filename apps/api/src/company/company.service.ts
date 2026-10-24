@@ -108,6 +108,8 @@ export class CompanyService {
       whatsappMessages,
       digitalProducts,
       clientDeliveries,
+      deliveryCredentials,
+      credentialAccessLogs,
     ] = await Promise.all([
       this.prisma.company.findUnique({ where: { id: companyId } }),
       this.prisma.user.findMany({
@@ -148,6 +150,9 @@ export class CompanyService {
       this.prisma.whatsAppMessage.findMany({ where: { companyId } }),
       this.prisma.digitalProduct.findMany({ where: { companyId } }),
       this.prisma.clientDelivery.findMany({ where: { companyId } }),
+      // Senhas seguem cifradas na exportação (nunca em claro)
+      this.prisma.deliveryCredential.findMany({ where: { companyId } }),
+      this.prisma.credentialAccessLog.findMany({ where: { companyId } }),
     ]);
 
     if (!company) {
@@ -183,6 +188,8 @@ export class CompanyService {
       whatsappMessages,
       digitalProducts,
       clientDeliveries,
+      deliveryCredentials,
+      credentialAccessLogs,
     };
   }
 }

@@ -88,6 +88,13 @@ const schema = z.object({
     .transform((v) => v || undefined)
     .refine((v) => v === undefined || /^[0-9a-fA-F]{64}$/.test(v), "FISCAL_ENCRYPTION_KEY deve ter 64 caracteres hex (32 bytes)"),
   FISCAL_WEBHOOK_SECRET: z.string().optional().transform((v) => v || undefined),
+  // Logins das entregas (2026-10-23): chave própria opcional (64 hex). Sem
+  // ela, usa FISCAL_ENCRYPTION_KEY (já gerada pelo install.sh da VPS).
+  CREDENTIALS_ENCRYPTION_KEY: z
+    .string()
+    .optional()
+    .transform((v) => v || undefined)
+    .refine((v) => v === undefined || /^[0-9a-fA-F]{64}$/.test(v), "CREDENTIALS_ENCRYPTION_KEY deve ter 64 caracteres hex (32 bytes)"),
   // Fase 6 · 6.3 — documentação OpenAPI em /api/docs. Padrão: ligada fora de
   // produção; em produção só com API_DOCS_ENABLED=true.
   // Fase 8 — cobrança: dias de teste grátis no cadastro e e-mails dos donos

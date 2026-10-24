@@ -1162,8 +1162,24 @@ export interface FiscalConfigDto extends FiscalStatusDto {
 // Transformação 2026-10-23 — clientes e produtos digitais
 // ---------------------------------------------------------------------------
 
-export type { ClientHistoryItemDto, DeliveryStatus, DigitalBillingPeriod, DigitalProductType, OverduePolicyDto } from "@petflow/shared";
-export { deliveryStatusLabels, digitalBillingPeriodLabels, digitalProductTypeLabels } from "@petflow/shared";
+export type {
+  ClientHistoryItemDto,
+  CredentialAccessLogDto,
+  DeliveryCredentialDto,
+  DeliveryStatus,
+  DigitalBillingPeriod,
+  DigitalOverviewDto,
+  DigitalProductType,
+  OverduePolicyDto,
+  SiteCheckDto,
+  SiteStatus,
+} from "@petflow/shared";
+export {
+  credentialActionLabels,
+  deliveryStatusLabels,
+  digitalBillingPeriodLabels,
+  digitalProductTypeLabels,
+} from "@petflow/shared";
 
 export interface DigitalProductDto {
   id: string;
@@ -1194,6 +1210,12 @@ export interface DeliveryDto {
   notes: string | null;
   status: DeliveryStatus;
   neverPause: boolean;
+  monitorEnabled: boolean;
+  monitorStatus: "UP" | "DOWN" | null;
+  monitorHttpStatus: number | null;
+  monitorResponseMs: number | null;
+  monitorCheckedAt: string | null;
+  monitorDownSince: string | null;
   contractsCount: number;
   createdAt: string;
   updatedAt: string;

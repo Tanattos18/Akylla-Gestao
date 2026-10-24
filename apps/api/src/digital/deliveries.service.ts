@@ -26,6 +26,12 @@ const deliverySelect = {
   notes: true,
   status: true,
   neverPause: true,
+  monitorEnabled: true,
+  monitorStatus: true,
+  monitorHttpStatus: true,
+  monitorResponseMs: true,
+  monitorCheckedAt: true,
+  monitorDownSince: true,
   createdAt: true,
   updatedAt: true,
   client: { select: { id: true, name: true } },
@@ -149,6 +155,7 @@ export class DeliveriesService {
         notes: emptyToNull(input.notes) ?? null,
         status,
         neverPause,
+        monitorEnabled: input.monitorEnabled ?? true,
       },
       select: deliverySelect,
     });
@@ -178,10 +185,27 @@ export class DeliveriesService {
         notes: emptyToNull(input.notes),
         ...(input.status !== undefined ? { status: input.status } : {}),
         ...(input.neverPause !== undefined ? { neverPause: input.neverPause } : {}),
+        ...(input.monitorEnabled !== undefined ? { monitorEnabled: input.monitorEnabled } : {}),
       },
       select: deliverySelect,
     });
     return formatDelivery(updated);
+  }
+
+  /** Últimas checagens do monitor (só leitura). */
+  async siteChecks(auth: AuthContext, id: string) {
+    const delivery = await this.prisma.clientDelivery.findFirst({
+      where: { id, companyId: auth.companyId },
+      select: { id: true },
+    });
+    if (!delivery) throw new NotFoundException("Entrega não encontrada");
+    const checks = await this.prisma.siteCheck.findMany({
+      where: { companyId: auth.companyId, deliveryId: delivery.id },
+      select: { id: true, url: true, ok: true, httpStatus: true, responseMs: true, error: true, checkedAt: true },
+      orderBy: { checkedAt: "desc" },
+      take: 50,
+    });
+    return checks.map((check) => ({ ...check, checkedAt: check.checkedAt.toISOString() }));
   }
 
   /** Linha do tempo da ficha do cliente: entregas, contratos, financeiro, agenda e OS. */
