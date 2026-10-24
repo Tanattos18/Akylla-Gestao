@@ -237,10 +237,12 @@ ufw --force enable >/dev/null
 log "9/9 Backup diário (02:00) e verificação"
 cat > /etc/cron.d/akylla-backup <<CRON
 # Backup diário do Akylla (dump + verificação + retenção), com trava contra execução dupla. Log em $BACKUP_DIR/backup.log
-0 2 * * * $APP_USER cd $APP_DIR && /usr/bin/flock -n /var/lock/akylla-backup.lock /usr/bin/npm run db:backup >> $BACKUP_DIR/cron.log 2>&1
+0 2 * * * $APP_USER cd $APP_DIR && /usr/bin/flock -n $DATA_DIR/backup.lock /usr/bin/npm run db:backup >> $BACKUP_DIR/cron.log 2>&1
 CRON
 chmod 644 /etc/cron.d/akylla-backup
-touch /var/lock/akylla-backup.lock && chown "$APP_USER" /var/lock/akylla-backup.lock
+# Trava em $DATA_DIR (não em /var/lock: com fs.protected_regular=2 o root
+# não abre arquivo de outro usuário em diretório sticky)
+touch "$DATA_DIR/backup.lock" && chown "$APP_USER:$APP_USER" "$DATA_DIR/backup.lock"
 
 for i in $(seq 1 60); do
   if curl -fsS http://127.0.0.1:3001/health/ready 2>/dev/null | grep -q '"database":"ok"' \

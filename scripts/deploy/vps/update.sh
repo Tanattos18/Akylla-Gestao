@@ -18,7 +18,9 @@ APP_USER="akylla"
 APP_DIR="/opt/akylla"
 ENV_FILE="/etc/akylla/akylla.env"
 BACKUP_DIR="/var/backups/akylla"
-LOCK_FILE="/var/lock/akylla-backup.lock"
+# Trava do backup fora de /var/lock: lá (diretório sticky) o Ubuntu, com
+# fs.protected_regular=2, impede o root de abrir o arquivo do usuário akylla
+LOCK_FILE="/var/lib/akylla/backup.lock"
 BRANCH="${BRANCH:-main}"
 REF="${1:-${REF:-}}"
 
@@ -82,7 +84,7 @@ cat > /etc/cron.d/akylla-backup <<CRON
 0 2 * * * $APP_USER cd $APP_DIR && /usr/bin/flock -n $LOCK_FILE /usr/bin/npm run db:backup >> $BACKUP_DIR/cron.log 2>&1
 CRON
 chmod 644 /etc/cron.d/akylla-backup
-touch "$LOCK_FILE" && chown "$APP_USER" "$LOCK_FILE"
+touch "$LOCK_FILE" && chown "$APP_USER:$APP_USER" "$LOCK_FILE"
 
 echo "==> Código"
 git_app fetch --tags origin "$BRANCH"

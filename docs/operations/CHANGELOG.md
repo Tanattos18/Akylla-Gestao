@@ -37,6 +37,14 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 - Migration aditiva `20261024150000_contract_billing`. Testes
   `tests/integration/contract-billing.test.ts`.
 
+### Corrigido
+
+- `update.sh`/`install.sh`: a trava do backup saiu de `/var/lock` para
+  `/var/lib/akylla/backup.lock`. No Ubuntu 24.04 (`fs.protected_regular=2`)
+  o root não abre, em diretório sticky, o arquivo de trava que pertence ao
+  usuário `akylla`, e o `update.sh` parava no backup (código 66) a partir
+  da 2ª execução.
+
 ### Alterado
 
 - Textos que sobravam da loja: Profissionais, dados da empresa, aviso de

@@ -102,7 +102,7 @@ Outros pontos da instalação:
 | Situação | `systemctl status akylla-api akylla-web akylla-worker` |
 | Logs | `journalctl -u akylla-api -f` |
 | Editar configuração | `sudo nano /etc/akylla/akylla.env` e depois `sudo systemctl restart akylla-api akylla-web akylla-worker` (as variáveis `NEXT_PUBLIC_*` exigem rodar o `update.sh`) |
-| Backup manual | `sudo flock -w 600 /var/lock/akylla-backup.lock runuser -u akylla -- bash -c 'cd /opt/akylla && npm run db:backup'` |
+| Backup manual | `sudo flock -w 600 /var/lib/akylla/backup.lock runuser -u akylla -- bash -c 'cd /opt/akylla && npm run db:backup'` |
 | Saúde | `curl http://127.0.0.1:3001/health/ready` |
 
 Monitoramento externo: UptimeRobot em
