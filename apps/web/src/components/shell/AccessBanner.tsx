@@ -33,7 +33,7 @@ export function AccessBanner({ pathname }: { pathname: string }) {
     text = `Sua assinatura venceu. Em ${days} dia(s) o sistema fica somente para consulta.`;
   } else if (access.status === "READ_ONLY") {
     tone = "border-red-300 bg-red-50 text-red-900";
-    text = "Modo somente leitura: a assinatura venceu. Você consulta tudo, mas não registra vendas nem cadastros. Nenhum dado foi apagado.";
+    text = "Modo somente leitura: a assinatura venceu. Você consulta tudo, mas não registra lançamentos nem cadastros. Nenhum dado foi apagado.";
   } else {
     return null;
   }

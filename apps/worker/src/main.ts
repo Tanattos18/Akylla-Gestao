@@ -4,6 +4,11 @@ import { workerEnv } from "./env";
 import { captureWorkerError, flushWorkerMonitoring, initWorkerMonitoring } from "./monitoring";
 import { processDueMessages } from "./whatsapp/processor";
 import { checkSites, SITE_MONITOR_INTERVAL_MS, type FetchLike } from "./monitor/site-monitor";
+import {
+  CONTRACT_BILLING_INTERVAL_MS,
+  generateContractReceivables,
+  queueContractReminders,
+} from "./billing/contract-billing";
 
 const HEARTBEAT_INTERVAL_MS = 60_000;
 
@@ -91,7 +96,25 @@ async function main() {
     }
   };
 
+  // Cobrança dos contratos (2026-10-24): títulos a receber + lembretes, de hora em hora
+  let billing = false;
+  const billingCycle = async () => {
+    if (billing) return;
+    billing = true;
+    try {
+      const receivables = await generateContractReceivables({ prisma });
+      const reminders = await queueContractReminders({ prisma, countryCode: workerEnv.WHATSAPP_COUNTRY_CODE });
+      log(`cobrança: títulos criados=${receivables.created}, lembretes na fila=${reminders.queued}, sem envio=${reminders.skipped}`);
+    } catch (error) {
+      log(`erro na cobrança: ${error instanceof Error ? error.message : "erro desconhecido"}`);
+      captureWorkerError(error, "contract-billing");
+    } finally {
+      billing = false;
+    }
+  };
+
   const poll = setInterval(() => void cycle(), workerEnv.WORKER_POLL_INTERVAL_MS);
+  const billingPoll = setInterval(() => void billingCycle(), CONTRACT_BILLING_INTERVAL_MS);
   const monitorPoll = workerEnv.SITE_MONITOR_ENABLED
     ? setInterval(() => void monitorCycle(), SITE_MONITOR_INTERVAL_MS)
     : null;
@@ -101,6 +124,7 @@ async function main() {
     log(`sinal ${signal} recebido, encerrando`);
     clearInterval(poll);
     if (monitorPoll) clearInterval(monitorPoll);
+    clearInterval(billingPoll);
     clearInterval(heartbeat);
     await prisma.$disconnect();
     await flushWorkerMonitoring();
@@ -112,6 +136,7 @@ async function main() {
 
   await cycle();
   if (workerEnv.SITE_MONITOR_ENABLED) void monitorCycle();
+  void billingCycle();
 }
 
 main().catch(async (error) => {

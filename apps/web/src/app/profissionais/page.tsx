@@ -135,7 +135,7 @@ export default function ProfissionaisPage() {
         <div>
           <h2 className="text-xl font-semibold text-slate-900">Profissionais</h2>
           <p className="text-sm text-slate-500">
-            Quem recebe comissão nas vendas (vendedores, técnicos, cabeleireiros…)
+            Quem recebe comissão pelos serviços (técnicos, designers, desenvolvedores…)
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

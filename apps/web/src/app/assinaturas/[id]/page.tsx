@@ -12,6 +12,7 @@ import {
 } from "../../../lib/types";
 import { useDialog } from "../../../components/ui/Dialog";
 import { DataTable } from "../../../components/ui/DataTable";
+import { ContractBilling } from "../../../components/digital/ContractBilling";
 
 const statusBadge: Record<string, string> = {
   ACTIVE: "rounded-full bg-primary-50 px-2 py-0.5 text-xs text-primary-700",
@@ -228,6 +229,8 @@ export default function AssinaturaDetalhePage() {
           </p>
         )}
       </div>
+
+      <ContractBilling subscription={subscription} />
 
       <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
         <h3 className="border-b border-slate-100 px-6 py-4 text-sm font-semibold uppercase tracking-wide text-slate-500">

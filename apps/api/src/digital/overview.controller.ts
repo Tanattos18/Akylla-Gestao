@@ -79,6 +79,8 @@ export class DigitalOverviewController {
       }),
     ]);
 
+    const daysUntil = (date: Date) => Math.max(0, Math.round((startOfUtcDay(date).getTime() - today.getTime()) / DAY_MS));
+
     // Contrato de N dias vale preço × 30 / N por mês
     const mrr = contracts.reduce(
       (sum, c) => sum.add(c.plan.price.mul(30).div(c.plan.durationDays)),
@@ -89,6 +91,7 @@ export class DigitalOverviewController {
       ...expiring.map((c) => ({
         kind: "CONTRACT" as const,
         date: c.endAt.toISOString(),
+        daysLeft: daysUntil(c.endAt),
         title: `Contrato vence: ${c.plan.name}`,
         clientName: c.client.name,
         href: `/assinaturas/${c.id}`,
@@ -96,6 +99,7 @@ export class DigitalOverviewController {
       ...domains.map((d) => ({
         kind: "DOMAIN" as const,
         date: (d.domainRenewalAt as Date).toISOString(),
+        daysLeft: daysUntil(d.domainRenewalAt as Date),
         title: `Domínio renova: ${d.domain ?? d.name}`,
         clientName: d.client.name,
         href: `/entregas/${d.id}`,
@@ -103,6 +107,7 @@ export class DigitalOverviewController {
       ...hostings.map((d) => ({
         kind: "HOSTING" as const,
         date: (d.hostingRenewalAt as Date).toISOString(),
+        daysLeft: daysUntil(d.hostingRenewalAt as Date),
         title: `Hospedagem renova: ${d.name}${d.hostingProvider ? ` (${d.hostingProvider})` : ""}`,
         clientName: d.client.name,
         href: `/entregas/${d.id}`,

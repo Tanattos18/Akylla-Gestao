@@ -246,6 +246,8 @@ enum WhatsAppMessageOrigin {
   SERVICE_REMINDER
   // Fase 2 · 2.3: mensagem vinculada a uma ordem de serviço (originId)
   SERVICE_ORDER
+  // 2026-10-24: cobrança de contrato (originId = FinancialEntry)
+  CONTRACT_BILLING
 }
 
 enum WhatsAppAttemptOutcome {
@@ -320,6 +322,8 @@ model Company {
   /// até a pausa da entrega (só configuração; a pausa ainda não é executada)
   overdueWarnDays         Int                      @default(1)
   overduePauseDays        Int                      @default(10)
+  /// Chave Pix usada nas mensagens de cobrança dos contratos
+  pixKey                  String?
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   users                   User[]

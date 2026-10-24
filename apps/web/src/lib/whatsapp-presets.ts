@@ -17,6 +17,28 @@ export interface WhatsAppTemplatePreset {
 }
 
 export const WHATSAPP_TEMPLATE_PRESETS: WhatsAppTemplatePreset[] = [
+  // 2026-10-24: cobrança automática dos contratos (o worker usa estes nomes)
+  {
+    name: "cobranca_lembrete",
+    title: "Cobrança: lembrete (3 dias antes)",
+    category: "UTILITY",
+    body: "Olá, {{1}}! O pagamento de {{2}}, no valor de {{3}}, vence em {{4}}. Você pode pagar pelo Pix: {{5}}. Qualquer dúvida, é só responder.",
+    variables: ["nome do cliente", "contrato", "valor", "data de vencimento", "chave Pix"],
+  },
+  {
+    name: "cobranca_vencimento",
+    title: "Cobrança: vence hoje",
+    category: "UTILITY",
+    body: "Olá, {{1}}! O pagamento de {{2}}, no valor de {{3}}, vence hoje ({{4}}). Pix: {{5}}. Obrigado!",
+    variables: ["nome do cliente", "contrato", "valor", "data de vencimento", "chave Pix"],
+  },
+  {
+    name: "cobranca_atraso",
+    title: "Cobrança: aviso de atraso",
+    category: "UTILITY",
+    body: "Olá, {{1}}. Consta em aberto o pagamento de {{2}}, no valor de {{3}}, vencido em {{4}}. Pix: {{5}}. Se já pagou, por favor desconsidere.",
+    variables: ["nome do cliente", "contrato", "valor", "data de vencimento", "chave Pix"],
+  },
   {
     name: "lembrete_agendamento",
     title: "Lembrete de agendamento",

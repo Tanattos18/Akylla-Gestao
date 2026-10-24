@@ -2333,6 +2333,8 @@ export const updateOverduePolicySchema = z
   .object({
     warnDays: z.coerce.number().int("Use um número inteiro de dias").min(0).max(365),
     pauseDays: z.coerce.number().int("Use um número inteiro de dias").min(1).max(365),
+    /** Chave Pix das mensagens de cobrança; "" apaga, ausente mantém. */
+    pixKey: z.string().trim().max(140, "Máximo de 140 caracteres").optional().nullable(),
   })
   .refine((value) => value.pauseDays > value.warnDays, {
     message: "A pausa deve vir depois do aviso",
@@ -2345,6 +2347,70 @@ export interface OverduePolicyDto {
   pauseDays: number;
   /** Sempre false nesta etapa: a pausa automática ainda não existe. */
   autoPauseEnabled: false;
+  pixKey: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// 2026-10-24 — cobrança automática dos contratos
+// ---------------------------------------------------------------------------
+
+/**
+ * Título a receber de um contrato (FinancialEntry origin SUBSCRIPTION):
+ * `originId = <subscriptionId>:<inicio|renovacao>:<AAAA-MM-DD>`. "inicio" é o
+ * primeiro período sem pagamento; "renovacao" é o período que começa no fim
+ * do contrato. O worker gera; pagar o título de renovação renova o contrato.
+ * (O worker repete este formato em apps/worker/src/billing.)
+ */
+export type ContractReceivableKind = "inicio" | "renovacao";
+
+export function contractReceivableOriginId(subscriptionId: string, kind: ContractReceivableKind, due: Date): string {
+  return `${subscriptionId}:${kind}:${due.toISOString().slice(0, 10)}`;
+}
+
+export function parseContractReceivableOriginId(
+  originId: string,
+): { subscriptionId: string; kind: ContractReceivableKind; day: string } | null {
+  const match = /^([^:]+):(inicio|renovacao):(\d{4}-\d{2}-\d{2})$/.exec(originId);
+  if (!match) return null;
+  return { subscriptionId: match[1]!, kind: match[2] as ContractReceivableKind, day: match[3]! };
+}
+
+/** Dias antes do fim do contrato em que o título de renovação é gerado. */
+export const CONTRACT_BILLING_LEAD_DAYS = 30;
+
+/** Modelos de WhatsApp da cobrança (nome do template na Meta). */
+export const CONTRACT_BILLING_TEMPLATES = {
+  BEFORE: "cobranca_lembrete",
+  DUE: "cobranca_vencimento",
+  OVERDUE: "cobranca_atraso",
+} as const;
+
+export interface ContractReceivableDto {
+  id: string;
+  kind: ContractReceivableKind;
+  description: string;
+  amount: string;
+  dueDate: string;
+  status: "OPEN" | "PAID" | "CANCELLED";
+  paidAt: string | null;
+}
+
+/** Texto da cobrança para enviar manualmente (botão "Copiar mensagem"). */
+export function contractBillingMessage(params: {
+  clientName: string;
+  contract: string;
+  amount: string;
+  dueDate: string;
+  pixKey: string | null;
+  overdue: boolean;
+}): string {
+  const first = params.clientName.split(" ")[0] || params.clientName;
+  const head = params.overdue
+    ? `Olá, ${first}! Consta em aberto o pagamento de ${params.contract}, no valor de ${params.amount}, vencido em ${params.dueDate}.`
+    : `Olá, ${first}! O pagamento de ${params.contract}, no valor de ${params.amount}, vence em ${params.dueDate}.`;
+  const pix = params.pixKey ? ` Você pode pagar pelo Pix: ${params.pixKey}.` : "";
+  const tail = params.overdue ? " Se já pagou, por favor desconsidere esta mensagem." : " Qualquer dúvida, estou à disposição.";
+  return `${head}${pix}${tail}`;
 }
 
 export const clientHistoryKindSchema = z.enum([
@@ -2448,6 +2514,8 @@ export interface DigitalOverviewDto {
   upcoming: Array<{
     kind: "CONTRACT" | "DOMAIN" | "HOSTING";
     date: string;
+    /** Dias até o vencimento (0 = hoje). Avisos em 30, 7 e 1 dia. */
+    daysLeft: number;
     title: string;
     clientName: string;
     href: string;
@@ -2462,5 +2530,27 @@ export interface DigitalOverviewDto {
     neverPause: boolean;
   }>;
   monitoredSites: number;
+}
+
+/** Faixas de aviso de renovação de domínio/hospedagem: 30, 7 e 1 dia antes. */
+export const RENEWAL_ALERT_DAYS = [30, 7, 1] as const;
+
+export interface DigitalReportsDto {
+  months: Array<{ month: string; monthlyRecurringRevenue: string; received: string; activeContracts: number }>;
+  revenueByProduct: Array<{ product: string; received: string; monthlyRecurringRevenue: string; contracts: number }>;
+  delinquency: {
+    overdueTotal: string;
+    overdueCount: number;
+    /** Atrasado ÷ tudo que venceu nos últimos 90 dias (0..1). */
+    rate: number;
+    topClients: Array<{ clientId: string; name: string; total: string; count: number; oldestDueDate: string }>;
+  };
+  clientsByStatus: {
+    active: number;
+    inactive: number;
+    withActiveContract: number;
+    withOverdue: number;
+    withoutContract: number;
+  };
 }
 

@@ -19,7 +19,7 @@ import {
   Users,
   Wallet,
   Wrench,
-  Scissors,
+  Briefcase,
   type LucideIcon,
 } from "lucide-react";
 import { api } from "../lib/api";
@@ -69,7 +69,7 @@ const groups: HomeGroup[] = [
     title: "Prestar serviços",
     subtitle: "Do orçamento à entrega",
     items: [
-      { name: "Serviços", description: "Catálogo com preço e duração", href: "/servicos", icon: Scissors, tone: "sky", module: "SERVICES" },
+      { name: "Serviços", description: "Catálogo com preço e duração", href: "/servicos", icon: Briefcase, tone: "sky", module: "SERVICES" },
       { name: "Ordens de serviço", description: "Orçamento, aprovação, execução, fotos e anexos", href: "/os", icon: Wrench, tone: "sky", module: "SERVICE_ORDERS" },
       { name: "Nota fiscal", description: "NFS-e e notas por integradora autorizada", href: "/fiscal", icon: Receipt, tone: "sky", module: "FISCAL" },
     ],

@@ -1,5 +1,13 @@
 # Banco de dados — diretrizes e modelo atual
 
+## Cobrança automática dos contratos (2026-10-24)
+
+Migration `20261024150000_contract_billing` — só adiciona
+`Company.pixKey` e o valor `CONTRACT_BILLING` em `WhatsAppMessageOrigin`.
+Os títulos usam `FinancialEntry` com `origin = SUBSCRIPTION` e
+`originId = <contrato>:<inicio|renovacao>:<AAAA-MM-DD>`; o unique
+`(companyId, origin, originId)` garante a idempotência do worker.
+
 ## Logins cifrados e monitor de sites (2026-10-24)
 
 Migration `20261024090000_credentials_and_monitor` — **só adiciona**:

@@ -21,7 +21,13 @@
 >   com auditoria);
 > - **monitor de sites** no worker (HEAD/GET só leitura a cada 5 min) e
 >   **novo Início** com receita recorrente, a receber, atrasados,
->   vencimentos em 30 dias e sites fora do ar.
+>   vencimentos em 30 dias e sites fora do ar;
+> - **cobrança automática**: o título de cada período entra sozinho no
+>   Financeiro e marcar como pago renova o contrato; lembretes pelo
+>   WhatsApp (3 dias antes, no dia, atraso) com a chave Pix e botão
+>   "Copiar mensagem de cobrança" — sem pausar nada;
+> - avisos de renovação de domínio/hospedagem (30, 7 e 1 dia) e
+>   **Relatórios › Contratos e receita**.
 >
 > A versão de loja está guardada na tag `versao-loja-2026-10-23` e no
 > ramo `versao-loja`. O texto abaixo ainda descreve a versão de loja.

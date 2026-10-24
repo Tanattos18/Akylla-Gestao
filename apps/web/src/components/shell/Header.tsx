@@ -14,7 +14,7 @@ import {
   Receipt,
   AlertTriangle,
   CalendarClock,
-  Scissors,
+  Briefcase,
   Percent,
   HandCoins,
   Wrench,
@@ -48,6 +48,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import type {
   BusinessModule,
   DashboardSummaryDto,
+  DigitalOverviewDto,
   FinancialSummaryDto,
 } from "@/lib/types";
 
@@ -79,7 +80,7 @@ const navGroups: NavGroup[] = [
       { label: "Vendas", href: "/vendas", icon: Receipt },
       { label: "Caixa", href: "/caixa", icon: Wallet },
       { label: "Financeiro", href: "/financeiro", icon: TrendingUp },
-      { label: "Serviços", href: "/servicos", icon: Scissors, module: "SERVICES" },
+      { label: "Serviços", href: "/servicos", icon: Briefcase, module: "SERVICES" },
       { label: "Agenda", href: "/agenda", icon: Calendar, module: "APPOINTMENTS" },
       { label: "Comissões", href: "/comissoes", icon: Percent, module: "COMMISSIONS" },
       { label: "Crediário", href: "/crediario", icon: HandCoins, module: "CREDIT" },
@@ -171,7 +172,23 @@ interface Notifications {
   outOfStock: number;
   overdueReceivables: number;
   overduePayables: number;
+  /** 2026-10-24: sites fora do ar e renovações de domínio/hospedagem (30, 7 e 1 dia) */
+  sitesDown: DigitalOverviewDto["sitesDown"];
+  renewals: DigitalOverviewDto["upcoming"];
   loaded: boolean;
+}
+
+/** Faixa do aviso de renovação: até 1 dia, até 7 ou até 30. */
+function renewalTone(daysLeft: number): string {
+  if (daysLeft <= 1) return "text-red-500";
+  if (daysLeft <= 7) return "text-amber-700";
+  return "text-slate-400";
+}
+
+function daysLabel(daysLeft: number): string {
+  if (daysLeft === 0) return "hoje";
+  if (daysLeft === 1) return "amanhã";
+  return `em ${daysLeft} dias`;
 }
 
 function formatDate(): string {
@@ -234,6 +251,8 @@ export function Header({
     outOfStock: 0,
     overdueReceivables: 0,
     overduePayables: 0,
+    sitesDown: [],
+    renewals: [],
     loaded: false,
   });
   const [notifLoading, setNotifLoading] = useState(false);
@@ -244,17 +263,25 @@ export function Header({
   const profileRef = useRef<HTMLDivElement>(null);
   const groupRef = useRef<HTMLDivElement>(null);
 
+  const urgentRenewals = notif.renewals.filter((r) => r.daysLeft <= 7).length;
   const alertCount =
-    notif.lowStock + notif.outOfStock + notif.overdueReceivables + notif.overduePayables;
+    notif.lowStock +
+    notif.outOfStock +
+    notif.overdueReceivables +
+    notif.overduePayables +
+    notif.sitesDown.length +
+    urgentRenewals;
+  const hasAnyNotice = alertCount > 0 || notif.renewals.length > 0;
 
   const loadNotifications = useCallback(async () => {
     setNotifLoading(true);
     try {
-      const [summary, fin] = await Promise.all([
+      const [summary, fin, overview] = await Promise.all([
         api<DashboardSummaryDto>("/api/reports/summary", { redirectOnUnauthorized: false }),
         api<FinancialSummaryDto>("/api/financial/summary", {
           redirectOnUnauthorized: false,
         }).catch(() => null),
+        api<DigitalOverviewDto>("/api/digital/overview", { redirectOnUnauthorized: false }).catch(() => null),
       ]);
       setNotif({
         // Estoque só conta com as telas de loja ligadas
@@ -262,6 +289,8 @@ export function Header({
         outOfStock: RETAIL_UI_ENABLED ? summary.stock.outOfStockCount : 0,
         overdueReceivables: fin?.overdueReceivablesCount ?? 0,
         overduePayables: fin?.overduePayablesCount ?? 0,
+        sitesDown: overview?.sitesDown ?? [],
+        renewals: (overview?.upcoming ?? []).filter((u) => u.kind !== "CONTRACT"),
         loaded: true,
       });
     } catch {
@@ -444,12 +473,42 @@ export function Header({
                   </div>
                   {notifLoading && !notif.loaded ? (
                     <p className="px-4 py-3 text-sm text-slate-400">Carregando…</p>
-                  ) : alertCount === 0 ? (
+                  ) : !hasAnyNotice ? (
                     <p className="px-4 py-3 text-sm text-slate-400">
                       Nenhum alerta no momento. Tudo em ordem!
                     </p>
                   ) : (
-                    <div className="divide-y divide-slate-100">
+                    <div className="max-h-[70vh] divide-y divide-slate-100 overflow-y-auto">
+                      {notif.sitesDown.map((site) => (
+                        <Link
+                          key={site.deliveryId}
+                          href={`/entregas/${site.deliveryId}`}
+                          onClick={() => setNotifOpen(false)}
+                          className="flex items-start gap-3 px-4 py-3 hover:bg-slate-50"
+                        >
+                          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+                          <div>
+                            <p className="text-sm text-slate-800">Site fora do ar: {site.name}</p>
+                            <p className="text-xs text-slate-400">{site.clientName} · ver entrega →</p>
+                          </div>
+                        </Link>
+                      ))}
+                      {notif.renewals.map((renewal) => (
+                        <Link
+                          key={`${renewal.kind}-${renewal.href}-${renewal.date}`}
+                          href={renewal.href}
+                          onClick={() => setNotifOpen(false)}
+                          className="flex items-start gap-3 px-4 py-3 hover:bg-slate-50"
+                        >
+                          <CalendarClock className={`mt-0.5 h-4 w-4 shrink-0 ${renewalTone(renewal.daysLeft)}`} />
+                          <div>
+                            <p className="text-sm text-slate-800">{renewal.title}</p>
+                            <p className="text-xs text-slate-400">
+                              {renewal.clientName} · {daysLabel(renewal.daysLeft)}
+                            </p>
+                          </div>
+                        </Link>
+                      ))}
                       {notif.outOfStock > 0 && (
                         <Link
                           href="/produtos"

@@ -17,6 +17,7 @@ export function OverduePolicyForm() {
   const toast = useToast();
   const [warnDays, setWarnDays] = useState("");
   const [pauseDays, setPauseDays] = useState("");
+  const [pixKey, setPixKey] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -25,6 +26,7 @@ export function OverduePolicyForm() {
       .then((policy) => {
         setWarnDays(String(policy.warnDays));
         setPauseDays(String(policy.pauseDays));
+        setPixKey(policy.pixKey ?? "");
       })
       .catch(() => setError("Não foi possível carregar a política de atraso."));
   }, []);
@@ -36,10 +38,11 @@ export function OverduePolicyForm() {
     try {
       const policy = await api<OverduePolicyDto>("/api/overdue-policy", {
         method: "PUT",
-        body: JSON.stringify({ warnDays: Number(warnDays), pauseDays: Number(pauseDays) }),
+        body: JSON.stringify({ warnDays: Number(warnDays), pauseDays: Number(pauseDays), pixKey: pixKey.trim() }),
       });
       setWarnDays(String(policy.warnDays));
       setPauseDays(String(policy.pauseDays));
+      setPixKey(policy.pixKey ?? "");
       toast.success("Política de atraso salva.");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Não foi possível salvar.");
@@ -67,6 +70,20 @@ export function OverduePolicyForm() {
           <label htmlFor="overdue-pause" className="mb-1 block text-sm text-slate-700">Pausa no dia</label>
           <input id="overdue-pause" type="number" min={1} max={365} value={pauseDays} onChange={(e) => setPauseDays(e.target.value)} className={inputClass} />
         </div>
+      </div>
+      <div>
+        <label htmlFor="billing-pix" className="mb-1 block text-sm text-slate-700">Chave Pix das cobranças</label>
+        <input
+          id="billing-pix"
+          value={pixKey}
+          onChange={(e) => setPixKey(e.target.value)}
+          placeholder="e-mail, telefone, CPF/CNPJ ou chave aleatória"
+          className="w-full max-w-md rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
+        />
+        <p className="mt-1 text-xs text-slate-500">
+          Vai nos lembretes de cobrança do WhatsApp (3 dias antes, no dia e no aviso de atraso) e na mensagem
+          &quot;Copiar mensagem de cobrança&quot; do contrato.
+        </p>
       </div>
       {error && <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       <button type="submit" disabled={saving} className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60">

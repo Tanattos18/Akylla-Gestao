@@ -129,6 +129,13 @@ export function DigitalOverview() {
                 </Link>
                 <span className="text-slate-500">
                   {item.clientName} · {formatDate(item.kind === "CONTRACT" ? item.date : `${item.date.slice(0, 10)}T12:00:00`)}
+                  <span
+                    className={`ml-2 rounded px-1.5 py-0.5 text-xs font-medium ${
+                      item.daysLeft <= 1 ? "bg-red-50 text-red-700" : item.daysLeft <= 7 ? "bg-amber-50 text-amber-800" : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    {item.daysLeft === 0 ? "hoje" : item.daysLeft === 1 ? "amanhã" : `${item.daysLeft} dias`}
+                  </span>
                 </span>
               </li>
             ))}

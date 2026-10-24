@@ -25,12 +25,20 @@ import {
 } from "../../lib/types";
 import { DataTable } from "../../components/ui/DataTable";
 import { Tabs } from "../../components/ui/Tabs";
+import { DigitalReports } from "../../components/digital/DigitalReports";
+import { RETAIL_UI_ENABLED } from "../../lib/features";
 
-type Tab = "vendas" | "estoque" | "caixa" | "clientes" | "whatsapp";
+type Tab = "contratos" | "vendas" | "estoque" | "caixa" | "clientes" | "whatsapp";
 
+// 2026-10-24: relatórios de contratos primeiro; vendas e estoque só com a loja ligada
 const tabs: Array<{ id: Tab; label: string }> = [
-  { id: "vendas", label: "Vendas" },
-  { id: "estoque", label: "Estoque" },
+  { id: "contratos", label: "Contratos e receita" },
+  ...(RETAIL_UI_ENABLED
+    ? [
+        { id: "vendas" as const, label: "Vendas" },
+        { id: "estoque" as const, label: "Estoque" },
+      ]
+    : []),
   { id: "caixa", label: "Caixa e financeiro" },
   { id: "clientes", label: "Clientes" },
   { id: "whatsapp", label: "WhatsApp" },
@@ -865,7 +873,7 @@ export default function RelatoriosPage() {
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<Tab>("vendas");
+  const [tab, setTab] = useState<Tab>("contratos");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [applied, setApplied] = useState({ from: "", to: "", key: 0 });
@@ -994,6 +1002,7 @@ export default function RelatoriosPage() {
       </form>
 
       <Tabs label="Relatórios" items={tabs.map((item) => ({ key: item.id, label: item.label }))} value={tab} onChange={setTab}>
+        {tab === "contratos" && <DigitalReports />}
         {tab === "vendas" && <VendasTab {...periodProps} />}
         {tab === "estoque" && <EstoqueTab {...periodProps} />}
         {tab === "caixa" && <CaixaTab {...periodProps} />}

@@ -8,6 +8,7 @@ import {
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.module";
 import { lockOpenCashSession } from "../cash/cash-session.helpers";
+import { applyContractPayment } from "../subscriptions/contract-billing.helpers";
 import {
   releasePendingCommissionsForSale,
   revertReleasedCommissionsForSale,
@@ -239,6 +240,11 @@ export class FinancialService {
           where: { id: entry.originId, companyId: auth.companyId, status: "RELEASED" },
           data: { status: "PAID", paidAt },
         });
+      }
+
+      // 2026-10-24: título de contrato pago → renova o contrato
+      if (entry.origin === "SUBSCRIPTION" && entry.originId) {
+        await applyContractPayment(tx, auth.companyId, entry.originId, paidAt);
       }
 
       // Fase 2 · 2.3: OS recebida → libera comissões que aguardavam o pagamento

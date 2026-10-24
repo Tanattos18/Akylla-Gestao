@@ -731,8 +731,9 @@ Na interface, "Assinaturas" aparecem como **Contratos**. Rotas sem
 | POST | `/api/delivery-credentials/:id/archive` | ADMIN | Arquiva (não apaga); duplo → 409 |
 | GET | `/api/delivery-credentials/:id/access-log` | ADMIN | Auditoria imutável: `CREATE`/`UPDATE`/`REVEAL`/`ARCHIVE`, quem e quando |
 | GET | `/api/digital/overview` | sessão | Início: receita mensal recorrente, a receber em 30 dias, atrasados, vencimentos (contrato/domínio/hospedagem) em 30 dias e sites fora do ar |
-| GET | `/api/overdue-policy` | sessão | `{warnDays, pauseDays, autoPauseEnabled: false}` (padrão 1 e 10) |
-| PUT | `/api/overdue-policy` | ADMIN | `{warnDays 0..365, pauseDays 1..365}`; pausa ≤ aviso → 400. Só configuração: nenhuma pausa automática nesta etapa |
+| GET | `/api/digital/reports` | sessão | `months` 1..24 (padrão 12): receita recorrente e recebido por mês, receita por produto do catálogo, inadimplência (taxa e maiores devedores) e clientes por status |
+| GET | `/api/overdue-policy` | sessão | `{warnDays, pauseDays, autoPauseEnabled: false, pixKey}` (padrão 1 e 10) |
+| PUT | `/api/overdue-policy` | ADMIN | `{warnDays 0..365, pauseDays 1..365, pixKey?}` (`pixKey` `""` apaga, ausente mantém); pausa ≤ aviso → 400. Nenhuma pausa automática |
 
 - `neverPause`: produtos próprios e clientes estratégicos; a entrega
   não aceita o status `PAUSED` enquanto a flag estiver ligada.
@@ -741,6 +742,22 @@ Na interface, "Assinaturas" aparecem como **Contratos**. Rotas sem
   nunca `POST`, formulário, cookie ou credencial. Checa entregas `ACTIVE`
   com `siteUrl` e `monitorEnabled`; grava `monitorStatus`/`monitorDownSince`
   e o histórico `SiteCheck` (30 dias).
+- **Cobrança automática dos contratos** (worker, de hora em hora): o
+  contrato ativo/vencido de empresa ativa ganha o título a receber
+  (`FinancialEntry` origem `SUBSCRIPTION`, `originId`
+  `<contrato>:<inicio|renovacao>:<AAAA-MM-DD>`) do período seguinte quando
+  faltam ≤ 30 dias para o fim (e o do 1º período, se não houve pagamento).
+  Idempotente pelo unique `(companyId, origin, originId)`. **Pagar o título
+  de renovação** (`POST /api/financial/:id/pay`) renova o contrato; renovar
+  pelo caixa (`POST /api/subscriptions/:id/renew`) quita o título aberto.
+  `GET /api/subscriptions/:id` traz `receivables`.
+- **Lembretes de cobrança** (worker): WhatsApp com os modelos aprovados
+  `cobranca_lembrete` (1 a 3 dias antes), `cobranca_vencimento` (no dia) e
+  `cobranca_atraso` (do dia de aviso até antes do dia de pausa), 5
+  variáveis: cliente, contrato, valor, vencimento, chave Pix. Uma vez por
+  título e tipo (`idempotencyKey`), só com consentimento `OPTED_IN`,
+  telefone válido e integração ativa; nunca para cliente com entrega
+  "nunca pausar". Nada é pausado.
 - **Logins**: chave `CREDENTIALS_ENCRYPTION_KEY` (ou, sem ela,
   `FISCAL_ENCRYPTION_KEY`); sem chave → 503 ao gravar senha.
 - Script `npm run db:seed:akylla` (idempotente) cadastra o cliente

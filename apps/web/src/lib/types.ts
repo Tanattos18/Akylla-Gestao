@@ -1,4 +1,5 @@
 import type {
+  ContractReceivableDto,
   DeliveryStatus,
   DigitalBillingPeriod,
   DigitalProductType,
@@ -763,6 +764,8 @@ export interface SubscriptionDto {
     status: RecordStatus;
   };
   payments?: SubscriptionPaymentDto[];
+  /** 2026-10-24: títulos da cobrança automática */
+  receivables?: ContractReceivableDto[];
 }
 
 export interface TenantPlanDto {
@@ -1164,7 +1167,9 @@ export interface FiscalConfigDto extends FiscalStatusDto {
 
 export type {
   ClientHistoryItemDto,
+  ContractReceivableDto,
   CredentialAccessLogDto,
+  DigitalReportsDto,
   DeliveryCredentialDto,
   DeliveryStatus,
   DigitalBillingPeriod,

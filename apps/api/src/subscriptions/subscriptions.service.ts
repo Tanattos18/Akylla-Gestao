@@ -8,6 +8,8 @@ import {
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.module";
 import { lockOpenCashSession } from "../cash/cash-session.helpers";
+import { settleRenewalReceivable } from "./contract-billing.helpers";
+import { parseContractReceivableOriginId } from "@petflow/shared";
 import type {
   CancelSubscriptionInput,
   CreateSubscriptionInput,
@@ -149,9 +151,26 @@ export class SubscriptionsService {
       orderBy: { createdAt: "desc" },
     });
 
+    // 2026-10-24: títulos gerados pela cobrança automática deste contrato
+    const receivables = await this.prisma.financialEntry.findMany({
+      where: { companyId: auth.companyId, origin: "SUBSCRIPTION", originId: { startsWith: `${subscription.id}:` } },
+      select: { id: true, originId: true, description: true, amount: true, dueDate: true, status: true, paidAt: true },
+      orderBy: { dueDate: "desc" },
+      take: 24,
+    });
+
     return {
       ...formatSubscription(subscription),
       payments: payments.map(formatPayment),
+      receivables: receivables.map((entry) => ({
+        id: entry.id,
+        kind: parseContractReceivableOriginId(entry.originId ?? "")?.kind ?? "renovacao",
+        description: entry.description,
+        amount: entry.amount.toFixed(2),
+        dueDate: entry.dueDate.toISOString(),
+        status: entry.status,
+        paidAt: entry.paidAt?.toISOString() ?? null,
+      })),
     };
   }
 
@@ -292,7 +311,7 @@ export class SubscriptionsService {
         select: subscriptionSelect,
       });
 
-      await tx.cashMovement.create({
+      const movement = await tx.cashMovement.create({
         data: {
           companyId: auth.companyId,
           cashSessionId: session.id,
@@ -304,6 +323,14 @@ export class SubscriptionsService {
           subscriptionId: subscription.id,
           createdByUserId: auth.userId,
         },
+        select: { id: true },
+      });
+      await settleRenewalReceivable(tx, {
+        companyId: auth.companyId,
+        subscriptionId: subscription.id,
+        previousEndAt: subscription.endAt,
+        paidAt: now,
+        cashMovementId: movement.id,
       });
 
       return formatSubscription(updated);

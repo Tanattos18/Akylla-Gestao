@@ -8,7 +8,10 @@ Backup da versão de loja: tag `versao-loja-2026-10-23` e ramo
 `versao-loja`. Produção ainda na versão anterior: falta o proprietário
 rodar o backup do banco, o `update.sh` e `npm run db:seed:akylla` na VPS.
 Em 2026-10-24 entraram os logins cifrados das entregas (com auditoria),
-o monitor de sites (só leitura) e o novo Início. Pendência desta linha:
+o monitor de sites (só leitura) e o novo Início; depois, a cobrança
+automática dos contratos, os lembretes de cobrança pelo WhatsApp (em
+simulação até a Meta), os avisos de renovação e os relatórios de
+contratos. Pendência desta linha:
 a pausa real por atraso (hoje só configuração, proibida até
 autorização). Detalhes no CHANGELOG.
 

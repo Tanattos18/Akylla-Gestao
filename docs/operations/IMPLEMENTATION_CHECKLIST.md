@@ -16,6 +16,11 @@
 - [x] Logins das entregas cifrados (AES-256-GCM), mostrar/ocultar com auditoria
 - [x] Monitor de sites (worker, HEAD/GET só leitura a cada 5 min, histórico 30 dias)
 - [x] Novo Início: receita recorrente, a receber 30 dias, atrasados, vencimentos, sites fora do ar
+- [x] Cobrança automática: título de cada período no Financeiro (worker, idempotente); pagar renova
+- [x] Lembretes de cobrança WhatsApp (3 dias antes, no dia, atraso) + "Copiar mensagem de cobrança" + chave Pix
+- [x] Avisos de renovação de domínio/hospedagem (30/7/1 dia) no Início e nas notificações
+- [x] Relatórios: receita recorrente por mês, por produto, inadimplência, clientes por status
+- [ ] Aprovar na Meta os modelos `cobranca_*` e ligar o token (proprietário) — até lá, simulação
 - [ ] Pausa real por atraso (só depois de autorizada)
 
 ## Correções da auditoria (2026-10-19)

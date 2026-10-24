@@ -7,6 +7,7 @@ import { OverduePolicyController } from "./overdue-policy.controller";
 import { CredentialsController } from "./credentials.controller";
 import { CredentialsService } from "./credentials.service";
 import { DigitalOverviewController } from "./overview.controller";
+import { DigitalReportsController } from "./reports.controller";
 
 /** Transformação 2026-10-23: catálogo digital, entregas por cliente e política de atraso. */
 @Module({
@@ -17,6 +18,7 @@ import { DigitalOverviewController } from "./overview.controller";
     OverduePolicyController,
     CredentialsController,
     DigitalOverviewController,
+    DigitalReportsController,
   ],
   providers: [DigitalProductsService, DeliveriesService, CredentialsService],
   exports: [DigitalProductsService, DeliveriesService],

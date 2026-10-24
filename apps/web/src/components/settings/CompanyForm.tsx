@@ -117,7 +117,7 @@ export function CompanyForm() {
     <div className="space-y-6">
       <form onSubmit={save} className="space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <h3 className="text-lg font-semibold text-slate-900">Dados da empresa</h3>
-        <p className="text-sm text-slate-600">Aparecem no comprovante de venda e na ordem de serviço impressos.</p>
+        <p className="text-sm text-slate-600">Aparecem nos comprovantes e na ordem de serviço impressos.</p>
         {field("name", "Nome da empresa *")}
         <div className="grid gap-4 sm:grid-cols-2">
           {field("document", "CNPJ ou CPF", "Só os números ou com máscara.", "00.000.000/0000-00")}

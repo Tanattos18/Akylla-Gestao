@@ -6,6 +6,42 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-24 - Cobrança automática, lembretes, avisos de renovação e relatórios
+
+### Adicionado
+
+- **Cobrança automática dos contratos** (worker, de hora em hora): cada
+  contrato ativo/vencido de empresa ativa ganha sozinho o título a receber
+  do período seguinte no Financeiro quando faltam ≤ 30 dias para o fim (e
+  o do 1º período, se ainda não houve pagamento). Idempotente: o unique
+  `(companyId, origin, originId)` impede duplicar. **Marcar como pago
+  renova o contrato** (novo período a partir de max(agora, fim)); renovar
+  pelo caixa quita o título já gerado. O contrato mostra os títulos.
+- **Lembretes de cobrança pelo WhatsApp** (worker): 1 a 3 dias antes, no
+  dia e no aviso de atraso (dia configurado, padrão 1; para antes do dia
+  da pausa). Usam os modelos `cobranca_lembrete`, `cobranca_vencimento` e
+  `cobranca_atraso` (adicionados aos modelos prontos) com a chave Pix da
+  empresa. Respeitam consentimento e a integração; com o provedor de
+  simulação nada é enviado de verdade. **Nunca** cobram clientes com
+  entrega "nunca pausar". **Nada é pausado.**
+- Botão **"Copiar mensagem de cobrança"** no contrato e campo **chave Pix**
+  em Configurações › Contratos (`Company.pixKey`; o `db:seed:akylla`
+  grava a chave já usada no Faturamento se estiver vazia).
+- **Avisos de renovação** de domínio e hospedagem com dias restantes
+  (faixas de 30, 7 e 1 dia) no Início e no sino de notificações, junto
+  com os sites fora do ar.
+- **Relatórios › Contratos e receita** (`GET /api/digital/reports`):
+  receita mensal recorrente e recebido por mês, receita por produto do
+  catálogo, inadimplência (taxa e maiores atrasos) e clientes por status.
+  As abas Vendas e Estoque só aparecem com a loja ligada.
+- Migration aditiva `20261024150000_contract_billing`. Testes
+  `tests/integration/contract-billing.test.ts`.
+
+### Alterado
+
+- Textos que sobravam da loja: Profissionais, dados da empresa, aviso de
+  somente leitura; ícone de Serviços.
+
 ## [Akylla Gestão] - 2026-10-24 - Logins cifrados, monitor de sites e novo Início
 
 ### Adicionado

@@ -213,7 +213,7 @@ describe("Entregas por cliente", () => {
 describe("Política de atraso (só configuração)", () => {
   it("padrão: aviso no dia 1, pausa no dia 10, sem pausa automática", async () => {
     const res = await http().get("/api/overdue-policy").set("Cookie", memberA);
-    expect(res.body).toEqual({ warnDays: 1, pauseDays: 10, autoPauseEnabled: false });
+    expect(res.body).toEqual({ warnDays: 1, pauseDays: 10, autoPauseEnabled: false, pixKey: null });
   });
 
   it("admin altera; pausa antes do aviso → 400; membro → 403; isolado por empresa", async () => {
@@ -222,7 +222,7 @@ describe("Política de atraso (só configuração)", () => {
     const member = await http().put("/api/overdue-policy").set("Cookie", memberA).send({ warnDays: 2, pauseDays: 15 });
     expect(member.status).toBe(403);
     const ok = await http().put("/api/overdue-policy").set("Cookie", adminA).send({ warnDays: 2, pauseDays: 15 });
-    expect(ok.body).toEqual({ warnDays: 2, pauseDays: 15, autoPauseEnabled: false });
+    expect(ok.body).toEqual({ warnDays: 2, pauseDays: 15, autoPauseEnabled: false, pixKey: null });
     const b = await http().get("/api/overdue-policy").set("Cookie", adminB);
     expect(b.body).toMatchObject({ warnDays: 1, pauseDays: 10 });
   });

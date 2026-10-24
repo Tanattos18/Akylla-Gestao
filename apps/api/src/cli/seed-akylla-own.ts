@@ -13,6 +13,10 @@ import { systemDatabaseUrl } from "../common/tenant/rls.extension";
  *   npm run db:seed:akylla -- --desativar-demos     # também suspende as demos "demo-*"
  *   npm run db:seed:akylla -- --reativar-demos      # desfaz a suspensão das demos
  *   npm run db:seed:akylla -- --simular             # só mostra o que faria
+ *   npm run db:seed:akylla -- --pix=<chave>         # chave Pix das cobranças
+ *
+ * Chave Pix: se a empresa ainda não tem, grava --pix, ou NEXT_PUBLIC_PIX_KEY,
+ * ou a mesma chave padrão do Faturamento (apps/web/src/components/billing/PixCard.tsx).
  *
  * Demos: suspender = status INACTIVE + sessões revogadas, igual ao botão
  * "Suspender" do painel /plataforma. Os dados das demos são mantidos.
@@ -24,6 +28,8 @@ const prisma = new PrismaClient({
 });
 
 const DEMO_SLUG_PREFIX = "demo-";
+/** Mesma chave padrão de apps/web/src/components/billing/PixCard.tsx. */
+const DEFAULT_PIX_KEY = "7dda9a3c-400d-45de-906b-f22b2615f1d5";
 const DEMO_REASON = "Demonstração de comércio desligada na transformação para produtos digitais (dados mantidos)";
 
 interface DeliverySeed {
@@ -107,11 +113,14 @@ function key(name: string): string {
 function parseArgs() {
   const args = process.argv.slice(2);
   let company = process.env.SEED_COMPANY ?? "akylla-gestao";
+  let pix: string | null = null;
   for (const arg of args) {
     if (arg.startsWith("--company=")) company = arg.slice("--company=".length);
+    if (arg.startsWith("--pix=")) pix = arg.slice("--pix=".length).trim() || null;
   }
   return {
     company,
+    pix: pix ?? (process.env.NEXT_PUBLIC_PIX_KEY || DEFAULT_PIX_KEY),
     disableDemos: args.includes("--desativar-demos"),
     enableDemos: args.includes("--reativar-demos"),
     dryRun: args.includes("--simular"),
@@ -215,14 +224,14 @@ async function toggleDemos(disable: boolean, dryRun: boolean) {
 }
 
 async function main() {
-  const { company: companyArg, disableDemos, enableDemos, dryRun } = parseArgs();
+  const { company: companyArg, pix, disableDemos, enableDemos, dryRun } = parseArgs();
   if (disableDemos && enableDemos) {
     throw new Error("Use --desativar-demos ou --reativar-demos, não os dois.");
   }
 
   const company = await prisma.company.findFirst({
     where: { OR: [{ slug: companyArg }, { id: companyArg }] },
-    select: { id: true, name: true, slug: true },
+    select: { id: true, name: true, slug: true, pixKey: true },
   });
   if (!company) {
     throw new Error(`Empresa não encontrada: ${companyArg}. Informe --company=<slug>.`);
@@ -233,6 +242,13 @@ async function main() {
 
   console.log(`${dryRun ? "[SIMULAÇÃO] " : ""}Produtos próprios do Akylla → ${company.name} (${company.slug})`);
   await seedOwnDeliveries(company.id, dryRun);
+
+  if (company.pixKey) {
+    console.log("  = chave Pix da cobrança já cadastrada");
+  } else {
+    console.log(`  + chave Pix da cobrança: ${pix}`);
+    if (!dryRun) await prisma.company.update({ where: { id: company.id }, data: { pixKey: pix } });
+  }
 
   if (disableDemos || enableDemos) {
     console.log(`${dryRun ? "[SIMULAÇÃO] " : ""}Empresas de demonstração:`);
