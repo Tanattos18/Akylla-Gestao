@@ -4,6 +4,18 @@
 > Este checklist cobre apenas a era do Akylla Gestão. O histórico
 > anterior à adaptação está preservado no Git.
 
+## Transformação: clientes e produtos digitais (2026-10-23)
+
+- [x] 1 Backup: tag `versao-loja-2026-10-23`, ramo `versao-loja`, zip local do código
+- [ ] 1b Backup do banco e do env na VPS (proprietário roda `COMO_FAZER_BACKUP_VPS.md`)
+- [x] 2 Menu/rotas sem telas de loja (feature flag), textos de clientes e serviços
+- [x] 3 Modelo: catálogo digital, entregas por cliente, contrato → entrega, política de atraso (migration aditiva + RLS)
+- [x] 4 Telas: Catálogo digital, Entregas, ficha com abas, Contratos, Configurações › Contratos
+- [x] 4b Script idempotente `db:seed:akylla` (produtos próprios + Akylla Studio de teste; demos desligáveis)
+- [ ] Aplicar na VPS (`update.sh`) e rodar `npm run db:seed:akylla` (proprietário)
+- [ ] Logins das entregas guardados criptografados (próxima etapa)
+- [ ] Pausa real por atraso (só depois de autorizada)
+
 ## Correções da auditoria (2026-10-19)
 
 - [x] 1 Dinheiro com vírgula + formatBrl

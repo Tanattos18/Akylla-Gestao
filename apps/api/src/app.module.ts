@@ -31,6 +31,7 @@ import { OnboardingModule } from "./onboarding/onboarding.module";
 import { SearchModule } from "./search/search.module";
 import { AccessModule } from "./billing/access.module";
 import { PlatformModule } from "./platform/platform.module";
+import { DigitalModule } from "./digital/digital.module";
 import { AuthGuard } from "./common/guards/auth.guard";
 import { ModuleGuard } from "./common/guards/module.guard";
 import { AccessGuard } from "./common/guards/access.guard";
@@ -61,6 +62,7 @@ import { TenantContextInterceptor } from "./common/tenant/tenant-context.interce
     ServicesModule,
     AppointmentsModule,
     SubscriptionsModule,
+    DigitalModule,
     BillingModule,
     WhatsAppModule,
     ReportsModule,

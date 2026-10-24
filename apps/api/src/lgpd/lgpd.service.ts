@@ -85,7 +85,7 @@ export class LgpdService {
       throw new NotFoundException("Cliente não encontrado");
     }
 
-    const [sales, financialEntries, subscriptions, consents] =
+    const [sales, financialEntries, subscriptions, deliveries, consents] =
       await Promise.all([
         this.prisma.sale.findMany({
           where: { clientId, companyId: auth.companyId },
@@ -96,6 +96,10 @@ export class LgpdService {
           orderBy: { createdAt: "desc" },
         }),
         this.prisma.subscription.findMany({
+          where: { clientId, companyId: auth.companyId },
+          orderBy: { createdAt: "desc" },
+        }),
+        this.prisma.clientDelivery.findMany({
           where: { clientId, companyId: auth.companyId },
           orderBy: { createdAt: "desc" },
         }),
@@ -128,6 +132,7 @@ export class LgpdService {
       sales,
       financialEntries,
       subscriptions,
+      deliveries,
       consents: consents.map((c) => this.toConsentDto(c)),
     };
   }

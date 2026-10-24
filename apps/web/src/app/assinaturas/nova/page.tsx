@@ -5,10 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "../../../lib/api";
 import { fetchSession, type Session } from "../../../lib/session";
-import type {
-  ClientDto,
-  Paginated,
-  SubscriptionPlanDto,
+import {
+  digitalProductTypeLabels,
+  type ClientDto,
+  type DeliveryDto,
+  type Paginated,
+  type SubscriptionPlanDto,
 } from "../../../lib/types";
 import { formatBrl } from "../../../lib/format";
 import { SearchSelect } from "../../../components/ui/SearchSelect";
@@ -20,9 +22,13 @@ export default function NovaAssinaturaPage() {
   const [plans, setPlans] = useState<SubscriptionPlanDto[]>([]);
 
   const [clientId, setClientId] = useState("");
+  const [clientName, setClientName] = useState<string | null>(null);
+  const [deliveries, setDeliveries] = useState<DeliveryDto[]>([]);
+  const [deliveryId, setDeliveryId] = useState("");
   const [planId, setPlanId] = useState("");
   const [startAt, setStartAt] = useState("");
-  const [registerPayment, setRegisterPayment] = useState(true);
+  // Transformação 2026-10-23: o caixa saiu do menu; pagamento fica opcional
+  const [registerPayment, setRegisterPayment] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -56,6 +62,30 @@ export default function NovaAssinaturaPage() {
     })();
   }, [session]);
 
+  // Aberto pela entrega ou pela ficha: ?cliente=<id>&entrega=<id>
+  useEffect(() => {
+    if (!session) return;
+    const params = new URLSearchParams(window.location.search);
+    const presetClient = params.get("cliente");
+    if (!presetClient) return;
+    setClientId(presetClient);
+    setDeliveryId(params.get("entrega") ?? "");
+    api<ClientDto>(`/api/clients/${presetClient}`)
+      .then((client) => setClientName(client.name))
+      .catch(() => setClientName(null));
+  }, [session]);
+
+  // Entregas do cliente escolhido (para vincular ao contrato)
+  useEffect(() => {
+    if (!clientId) {
+      setDeliveries([]);
+      return;
+    }
+    api<Paginated<DeliveryDto>>(`/api/deliveries?clientId=${clientId}&pageSize=100`)
+      .then((data) => setDeliveries(data.items))
+      .catch(() => setDeliveries([]));
+  }, [clientId]);
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setFormError(null);
@@ -72,6 +102,7 @@ export default function NovaAssinaturaPage() {
     setSaving(true);
     try {
       const payload: Record<string, unknown> = { clientId, planId, registerPayment };
+      if (deliveryId) payload.deliveryId = deliveryId;
       if (startAt) payload.startAt = new Date(startAt).toISOString();
       await api("/api/subscriptions", { method: "POST", body: JSON.stringify(payload) });
       router.push("/assinaturas");
@@ -84,7 +115,7 @@ export default function NovaAssinaturaPage() {
         }
         setFormError(err.message);
       } else {
-        setFormError("Não foi possível criar a assinatura.");
+        setFormError("Não foi possível criar o contrato.");
       }
       setSaving(false);
     }
@@ -98,10 +129,10 @@ export default function NovaAssinaturaPage() {
     return (
       <div className="mx-auto max-w-md rounded-lg border border-amber-200 bg-amber-50 p-6 text-center">
         <p className="text-sm text-amber-800">
-          Apenas administradores podem criar assinaturas.
+          Apenas administradores podem criar contratos.
         </p>
         <Link href="/assinaturas" className="mt-3 inline-block text-sm text-primary-700 underline">
-          Voltar para assinaturas
+          Voltar para contratos
         </Link>
       </div>
     );
@@ -114,7 +145,7 @@ export default function NovaAssinaturaPage() {
     <div className="mx-auto max-w-xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-slate-900">Nova assinatura</h2>
+          <h2 className="text-xl font-semibold text-slate-900">Novo contrato</h2>
           <p className="text-sm text-slate-500">{session.company.name}</p>
         </div>
         <Link
@@ -135,13 +166,41 @@ export default function NovaAssinaturaPage() {
               id="client"
               endpoint="/api/clients?status=ACTIVE"
               value={clientId}
-              onChange={(id) => setClientId(id)}
+              selectedLabel={clientName}
+              onChange={(id, client) => {
+                setClientId(id);
+                setClientName(client?.name ?? null);
+                setDeliveryId("");
+              }}
               placeholder="Digite o nome do cliente"
               invalid={Boolean(fieldErrors.clientId)}
               describe={(client) => client.mobile ?? client.phone ?? null}
             />
             {fieldErrors.clientId && (
               <p className="mt-1 text-xs text-red-700">{fieldErrors.clientId}</p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="delivery" className="mb-1 block text-sm text-slate-700">
+              Entrega coberta
+            </label>
+            <select
+              id="delivery"
+              value={deliveryId}
+              onChange={(event) => setDeliveryId(event.target.value)}
+              disabled={!clientId}
+              className={inputClass}
+            >
+              <option value="">Sem entrega vinculada</option>
+              {deliveries.map((delivery) => (
+                <option key={delivery.id} value={delivery.id}>
+                  {delivery.name} ({digitalProductTypeLabels[delivery.type]})
+                </option>
+              ))}
+            </select>
+            {fieldErrors.deliveryId && (
+              <p className="mt-1 text-xs text-red-700">{fieldErrors.deliveryId}</p>
             )}
           </div>
 
@@ -199,7 +258,7 @@ export default function NovaAssinaturaPage() {
             <span>
               Registrar pagamento no caixa
               <span className="block text-xs text-slate-500">
-                Cria uma entrada em dinheiro vinculada à assinatura. Exige caixa aberto.
+                Cria uma entrada em dinheiro vinculada ao contrato. Exige caixa aberto.
               </span>
             </span>
           </label>
@@ -215,7 +274,7 @@ export default function NovaAssinaturaPage() {
             disabled={saving}
             className="rounded-md bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 disabled:opacity-60"
           >
-            {saving ? "Criando..." : "Criar assinatura"}
+            {saving ? "Criando..." : "Criar contrato"}
           </button>
         </div>
       </form>

@@ -407,8 +407,8 @@ existente (sem gateway); `companyId` sempre da sessão.
 | GET | `/api/subscription-plans/:id` | sessão | Detalhe (404 cross-tenant) |
 | PATCH | `/api/subscription-plans/:id` | ADMIN | Edição parcial (404 cross-tenant) |
 | PATCH | `/api/subscription-plans/:id/status` | ADMIN | `ACTIVE`/`INACTIVE` |
-| GET | `/api/subscriptions` | sessão | Lista; `status`, `clientId`, `search`, `page`, `pageSize`; expiração lazy |
-| POST | `/api/subscriptions` | ADMIN | Cria (201): `clientId`, `planId`, `startAt?` (ISO), `registerPayment?` |
+| GET | `/api/subscriptions` | sessão | Lista; `status`, `clientId`, `deliveryId`, `search`, `page`, `pageSize`; expiração lazy |
+| POST | `/api/subscriptions` | ADMIN | Cria (201): `clientId`, `planId`, `startAt?` (ISO), `registerPayment?`, `deliveryId?` (entrega do mesmo cliente; outra empresa → 404, outro cliente → 400) |
 | GET | `/api/subscriptions/:id` | sessão | Detalhe com `payments` (404 cross-tenant; expiração lazy) |
 | POST | `/api/subscriptions/:id/renew` | ADMIN | Renova (201): exige caixa aberto; cancelada → 409 |
 | POST | `/api/subscriptions/:id/cancel` | ADMIN | Cancela (201): `reason` 3..500; duplo → 409 |
@@ -705,6 +705,34 @@ papel ADMIN e, em produção, 2FA ativo; senão 403. Usa conexão de sistema
 | PUT | `/api/platform/plans/:id` | dono | `{description?, priceMonthly, priceYearly\|null, includedModules[], userLimit, clientLimit, productLimit}` (limites `null` = ilimitado) |
 | PUT | `/api/platform/modules/:module` | dono | `{description?, priceMonthly?, active?}`: preço/oferta de um módulo avulso |
 | POST | `/api/platform/companies/:id/reset-password` | dono | senha provisória para o admin principal da empresa (`{email, temporaryPassword}`); derruba as sessões dele |
+
+## Clientes e produtos digitais (transformação 2026-10-23)
+
+Na interface, "Assinaturas" aparecem como **Contratos**. Rotas sem
+`@RequireModule` (núcleo); `companyId` sempre da sessão.
+
+| Método | Rota | Acesso | Descrição |
+|---|---|---|---|
+| GET | `/api/digital-products` | sessão | Catálogo; `search`, `type`, `status`, `page`, `pageSize`, `orderBy` (`name`/`defaultPrice`/`createdAt`) |
+| POST | `/api/digital-products` | ADMIN | Cria (201): `name` único por empresa → 409, `type` (`SITE`, `PROFESSIONAL_PROFILE`, `SYSTEM`, `ONLINE_STORE`, `HOSTING`, `DOMAIN`, `MAINTENANCE`), `defaultPrice`, `billingPeriod` (`MONTHLY`/`YEARLY`), `description?` |
+| GET | `/api/digital-products/:id` | sessão | Detalhe com `deliveriesCount` (404 cross-tenant) |
+| PATCH | `/api/digital-products/:id` | ADMIN | Edição parcial |
+| PATCH | `/api/digital-products/:id/status` | ADMIN | `ACTIVE`/`INACTIVE` |
+| GET | `/api/deliveries` | sessão | Entregas; `search` (nome, domínio, URL, cliente), `clientId`, `type`, `status`, `orderBy` |
+| POST | `/api/deliveries` | sessão | Cria (201): `clientId`, `name`, `type`, `productId?`, `siteUrl?`, `adminUrl?`, `repositoryUrl?` (http/https), `domain?`, `domainRenewalAt?`/`hostingRenewalAt?` (AAAA-MM-DD), `hostingProvider?`, `notes?`, `status?`, `neverPause?` |
+| GET | `/api/deliveries/:id` | sessão | Detalhe com `contractsCount` (404 cross-tenant) |
+| PATCH | `/api/deliveries/:id` | sessão | Edição parcial; texto vazio limpa o campo; `neverPause` + `PAUSED` → 409 |
+| GET | `/api/clients/:id/history` | sessão | Linha do tempo do cliente: cadastro, entregas, contratos (início/cancelamento), financeiro, agenda e OS |
+| GET | `/api/overdue-policy` | sessão | `{warnDays, pauseDays, autoPauseEnabled: false}` (padrão 1 e 10) |
+| PUT | `/api/overdue-policy` | ADMIN | `{warnDays 0..365, pauseDays 1..365}`; pausa ≤ aviso → 400. Só configuração: nenhuma pausa automática nesta etapa |
+
+- `neverPause`: produtos próprios e clientes estratégicos; a entrega
+  não aceita o status `PAUSED` enquanto a flag estiver ligada.
+- Script `npm run db:seed:akylla` (idempotente) cadastra o cliente
+  "Akylla (próprio)" com as entregas do próprio Akylla e o cliente de
+  teste "Akylla Studio (teste)", todas com `neverPause`. Opções
+  `--desativar-demos` / `--reativar-demos` suspendem ou reativam as
+  empresas `demo-*` (dados mantidos) e `--simular` só mostra o que faria.
 
 ## Padrão para módulos futuros
 

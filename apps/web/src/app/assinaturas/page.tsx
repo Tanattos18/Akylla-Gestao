@@ -46,7 +46,7 @@ export default function AssinaturasPage() {
         setTotal(data.total);
         setError(null);
       } catch (err) {
-        setError(err instanceof ApiError ? err.message : "Falha ao carregar assinaturas.");
+        setError(err instanceof ApiError ? err.message : "Falha ao carregar contratos.");
       }
     },
     [],
@@ -77,9 +77,9 @@ export default function AssinaturasPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-semibold text-slate-900">Assinaturas</h2>
+          <h2 className="text-xl font-semibold text-slate-900">Contratos</h2>
           <p className="text-sm text-slate-500">
-            Assinaturas recorrentes de clientes · {session.company.name}
+            Contratos recorrentes dos clientes · {session.company.name}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -94,7 +94,7 @@ export default function AssinaturasPage() {
               href="/assinaturas/nova"
               className="rounded-md bg-primary-700 px-3 py-2 text-sm font-medium text-white hover:bg-primary-800"
             >
-              Nova assinatura
+              Novo contrato
             </Link>
           )}
           <Link
@@ -144,7 +144,7 @@ export default function AssinaturasPage() {
       <DataTable
         rows={items}
         rowKey={(subscription) => subscription.id}
-        empty={<>Nenhuma assinatura encontrada.</>}
+        empty={<>Nenhum contrato encontrado.</>}
         columns={[
           { key: "c0", header: "Cliente", cell: (subscription) => <><Link
                     href={`/assinaturas/${subscription.id}`}
@@ -155,7 +155,10 @@ export default function AssinaturasPage() {
           { key: "c1", header: "Plano", cell: (subscription) => <>{subscription.plan.name}
                   <span className="ml-2 text-xs text-slate-500">
                     {formatBrl(subscription.plan.price)}
-                  </span></> },
+                  </span>
+                  {subscription.delivery && (
+                    <p className="text-xs text-slate-500">Entrega: {subscription.delivery.name}</p>
+                  )}</> },
           { key: "c2", header: "Período", cell: (subscription) => <>{formatDate(subscription.startAt)} — {formatDate(subscription.endAt)}</> },
           { key: "c3", header: "Renovações", cell: (subscription) => subscription.renewalCount },
           { key: "c4", header: "Status", cell: (subscription) => <><span className={statusBadge[subscription.status]}>
@@ -166,7 +169,7 @@ export default function AssinaturasPage() {
 
       <div className="flex items-center justify-between text-sm text-slate-600">
         <span>
-          {total} assinatura{total === 1 ? "" : "s"} · página {page} de {totalPages}
+          {total} contrato{total === 1 ? "" : "s"} · página {page} de {totalPages}
         </span>
         <div className="flex flex-wrap gap-2">
           <button

@@ -1266,6 +1266,8 @@ export const createSubscriptionSchema = z.object({
   planId: z.string().trim().min(1, "Plano é obrigatório").max(60),
   startAt: z.string().trim().datetime({ offset: true }).optional(),
   registerPayment: z.boolean().optional(),
+  /** Transformação 2026-10-23: entrega do mesmo cliente coberta pelo contrato */
+  deliveryId: z.string().trim().min(1).max(60).optional(),
 });
 export type CreateSubscriptionInput = z.infer<typeof createSubscriptionSchema>;
 
@@ -1281,6 +1283,7 @@ export type CancelSubscriptionInput = z.infer<typeof cancelSubscriptionSchema>;
 export const listSubscriptionsQuerySchema = paginationQuerySchema.extend({
   status: subscriptionStatusSchema.optional(),
   clientId: z.string().trim().max(60).optional(),
+  deliveryId: z.string().trim().max(60).optional(),
   search: z.string().trim().max(120).optional(),
   orderBy: z.enum(["endAt", "createdAt"]).default("endAt"),
   direction: z.enum(["asc", "desc"]).default("asc"),
@@ -1844,6 +1847,8 @@ export const lgpdDataExportSchema = z.object({
   sales: z.array(z.unknown()),
   financialEntries: z.array(z.unknown()),
   subscriptions: z.array(z.unknown()),
+  /** Transformação 2026-10-23: entregas (sites, sistemas, domínios) do cliente */
+  deliveries: z.array(z.unknown()),
   consents: z.array(lgpdConsentSchema),
 });
 export type LgpdDataExportDto = z.infer<typeof lgpdDataExportSchema>;
@@ -2192,3 +2197,171 @@ export const listFiscalDocumentsQuerySchema = paginationQuerySchema.extend({
   to: isoDateField.optional(),
 });
 export type ListFiscalDocumentsQuery = z.infer<typeof listFiscalDocumentsQuerySchema>;
+
+// ---------------------------------------------------------------------------
+// Transformação 2026-10-23 — clientes e produtos digitais
+// ---------------------------------------------------------------------------
+
+export const digitalProductTypeSchema = z.enum([
+  "SITE",
+  "PROFESSIONAL_PROFILE",
+  "SYSTEM",
+  "ONLINE_STORE",
+  "HOSTING",
+  "DOMAIN",
+  "MAINTENANCE",
+]);
+export type DigitalProductType = z.infer<typeof digitalProductTypeSchema>;
+
+export const digitalProductTypeLabels: Record<DigitalProductType, string> = {
+  SITE: "Site",
+  PROFESSIONAL_PROFILE: "Perfil profissional",
+  SYSTEM: "Sistema",
+  ONLINE_STORE: "Loja virtual",
+  HOSTING: "Hospedagem",
+  DOMAIN: "Domínio",
+  MAINTENANCE: "Manutenção",
+};
+
+export const digitalBillingPeriodSchema = z.enum(["MONTHLY", "YEARLY"]);
+export type DigitalBillingPeriod = z.infer<typeof digitalBillingPeriodSchema>;
+
+export const digitalBillingPeriodLabels: Record<DigitalBillingPeriod, string> = {
+  MONTHLY: "Mensal",
+  YEARLY: "Anual",
+};
+
+export const deliveryStatusSchema = z.enum(["IN_PROGRESS", "ACTIVE", "PAUSED", "CANCELLED"]);
+export type DeliveryStatus = z.infer<typeof deliveryStatusSchema>;
+
+export const deliveryStatusLabels: Record<DeliveryStatus, string> = {
+  IN_PROGRESS: "Em produção",
+  ACTIVE: "No ar",
+  PAUSED: "Pausada",
+  CANCELLED: "Cancelada",
+};
+
+export const createDigitalProductSchema = z.object({
+  name: nameField,
+  type: digitalProductTypeSchema,
+  description: optionalText(1000),
+  defaultPrice: priceFieldSchema,
+  billingPeriod: digitalBillingPeriodSchema.default("MONTHLY"),
+});
+export type CreateDigitalProductInput = z.infer<typeof createDigitalProductSchema>;
+
+export const updateDigitalProductSchema = createDigitalProductSchema
+  .omit({ billingPeriod: true })
+  .extend({ billingPeriod: digitalBillingPeriodSchema })
+  .partial();
+export type UpdateDigitalProductInput = z.infer<typeof updateDigitalProductSchema>;
+
+export const listDigitalProductsQuerySchema = paginationQuerySchema.extend({
+  search: z.string().trim().max(120).optional(),
+  type: digitalProductTypeSchema.optional(),
+  status: recordStatusSchema.optional(),
+  orderBy: z.enum(["name", "defaultPrice", "createdAt"]).default("name"),
+  direction: z.enum(["asc", "desc"]).default("asc"),
+});
+export type ListDigitalProductsQuery = z.infer<typeof listDigitalProductsQuerySchema>;
+
+/** URL http(s) opcional (site, painel, repositório). */
+const optionalUrl = z
+  .string()
+  .trim()
+  .max(500, "Máximo de 500 caracteres")
+  .url("URL inválida (use https://...)")
+  .refine((value) => /^https?:\/\//i.test(value), "URL deve começar com http:// ou https://")
+  .optional()
+  .nullable()
+  .or(z.literal("").transform(() => null));
+
+/** Data (AAAA-MM-DD) opcional de renovação. */
+const optionalDay = z
+  .string()
+  .trim()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida (use AAAA-MM-DD)")
+  .optional()
+  .nullable()
+  .or(z.literal("").transform(() => null));
+
+const deliveryFields = {
+  name: nameField,
+  type: digitalProductTypeSchema,
+  productId: z.string().trim().min(1).max(60).optional().nullable(),
+  siteUrl: optionalUrl,
+  adminUrl: optionalUrl,
+  repositoryUrl: optionalUrl,
+  domain: optionalText(253),
+  domainRenewalAt: optionalDay,
+  hostingProvider: optionalText(120),
+  hostingRenewalAt: optionalDay,
+  notes: optionalText(2000),
+  status: deliveryStatusSchema.optional(),
+  neverPause: z.boolean().optional(),
+};
+
+export const createDeliverySchema = z.object({
+  clientId: z.string().trim().min(1, "Cliente é obrigatório").max(60),
+  ...deliveryFields,
+});
+export type CreateDeliveryInput = z.infer<typeof createDeliverySchema>;
+
+export const updateDeliverySchema = z.object(deliveryFields).partial();
+export type UpdateDeliveryInput = z.infer<typeof updateDeliverySchema>;
+
+export const listDeliveriesQuerySchema = paginationQuerySchema.extend({
+  search: z.string().trim().max(120).optional(),
+  clientId: z.string().trim().max(60).optional(),
+  type: digitalProductTypeSchema.optional(),
+  status: deliveryStatusSchema.optional(),
+  orderBy: z.enum(["name", "createdAt", "domainRenewalAt", "hostingRenewalAt"]).default("name"),
+  direction: z.enum(["asc", "desc"]).default("asc"),
+});
+export type ListDeliveriesQuery = z.infer<typeof listDeliveriesQuerySchema>;
+
+/**
+ * Atraso de contrato: aviso no dia N e pausa da entrega no dia M (padrão 1 e
+ * 10). Por ora é só configuração — nenhuma pausa automática é executada.
+ */
+export const OVERDUE_WARN_DAYS_DEFAULT = 1;
+export const OVERDUE_PAUSE_DAYS_DEFAULT = 10;
+
+export const updateOverduePolicySchema = z
+  .object({
+    warnDays: z.coerce.number().int("Use um número inteiro de dias").min(0).max(365),
+    pauseDays: z.coerce.number().int("Use um número inteiro de dias").min(1).max(365),
+  })
+  .refine((value) => value.pauseDays > value.warnDays, {
+    message: "A pausa deve vir depois do aviso",
+    path: ["pauseDays"],
+  });
+export type UpdateOverduePolicyInput = z.infer<typeof updateOverduePolicySchema>;
+
+export interface OverduePolicyDto {
+  warnDays: number;
+  pauseDays: number;
+  /** Sempre false nesta etapa: a pausa automática ainda não existe. */
+  autoPauseEnabled: false;
+}
+
+export const clientHistoryKindSchema = z.enum([
+  "CLIENT_CREATED",
+  "DELIVERY_CREATED",
+  "CONTRACT_STARTED",
+  "CONTRACT_CANCELLED",
+  "FINANCIAL_ENTRY",
+  "APPOINTMENT",
+  "SERVICE_ORDER",
+]);
+export type ClientHistoryKind = z.infer<typeof clientHistoryKindSchema>;
+
+export interface ClientHistoryItemDto {
+  kind: ClientHistoryKind;
+  at: string;
+  title: string;
+  detail: string | null;
+  /** Rota da web para abrir o registro, quando houver tela. */
+  href: string | null;
+}
+

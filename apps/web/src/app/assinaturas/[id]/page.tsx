@@ -39,7 +39,7 @@ export default function AssinaturaDetalhePage() {
       setSubscription(data);
       setError(null);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Falha ao carregar a assinatura.");
+      setError(err instanceof ApiError ? err.message : "Falha ao carregar o contrato.");
     }
   }, [id]);
 
@@ -65,7 +65,7 @@ export default function AssinaturaDetalhePage() {
     setError(null);
     try {
       await api(`/api/subscriptions/${id}/renew`, { method: "POST" });
-      setNotice("Assinatura renovada.");
+      setNotice("Contrato renovado.");
       await load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Falha ao renovar.");
@@ -75,7 +75,7 @@ export default function AssinaturaDetalhePage() {
   }
 
   async function handleCancel() {
-    const reason = await dialog.prompt({ title: "Cancelar assinatura", label: "Motivo do cancelamento", minLength: 3, maxLength: 500, danger: true, confirmLabel: "Cancelar assinatura" });
+    const reason = await dialog.prompt({ title: "Cancelar contrato", label: "Motivo do cancelamento", minLength: 3, maxLength: 500, danger: true, confirmLabel: "Cancelar contrato" });
     if (reason === null) return;
     setBusy(true);
     setNotice(null);
@@ -85,7 +85,7 @@ export default function AssinaturaDetalhePage() {
         method: "POST",
         body: JSON.stringify({ reason }),
       });
-      setNotice("Assinatura cancelada.");
+      setNotice("Contrato cancelado.");
       await load();
     } catch (err) {
       if (err instanceof ApiError && err.issues?.length) {
@@ -107,7 +107,7 @@ export default function AssinaturaDetalhePage() {
       <div className="space-y-4 text-center">
         <p className="text-sm text-red-700">{error}</p>
         <Link href="/assinaturas" className="text-sm text-primary-700 underline">
-          Voltar para assinaturas
+          Voltar para contratos
         </Link>
       </div>
     );
@@ -151,6 +151,19 @@ export default function AssinaturaDetalhePage() {
 
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <dl className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <dt className="text-xs uppercase text-slate-500">Entrega coberta</dt>
+            <dd className="text-sm text-slate-800">
+              {subscription.delivery ? (
+                <Link href={`/entregas/${subscription.delivery.id}`} className="text-primary-700 hover:underline">
+                  {subscription.delivery.name}
+                  {subscription.delivery.neverPause ? " · nunca pausar" : ""}
+                </Link>
+              ) : (
+                "—"
+              )}
+            </dd>
+          </div>
           <div>
             <dt className="text-xs uppercase text-slate-500">Período</dt>
             <dd className="text-sm text-slate-800">
@@ -204,14 +217,14 @@ export default function AssinaturaDetalhePage() {
                 disabled={busy}
                 className="rounded-md border border-red-300 px-4 py-2 text-sm text-red-700 hover:bg-red-50 disabled:opacity-60"
               >
-                Cancelar assinatura
+                Cancelar contrato
               </button>
             )}
           </div>
         )}
         {isAdmin && canRenew && (
           <p className="mt-2 text-xs text-slate-500">
-            Renovar exige caixa aberto; a entrada é criada como pagamento/renovação da assinatura.
+            Renovar exige caixa aberto; a entrada é criada como pagamento/renovação do contrato.
           </p>
         )}
       </div>

@@ -26,6 +26,7 @@
     "db": "node scripts/db.mjs",
     "bootstrap:admin": "npm run build:shared && npm run bootstrap:admin --workspace @petflow/api",
     "db:seed:demo": "npm run seed:demo --workspace @petflow/api --",
+    "db:seed:akylla": "npm run build:shared && npm run seed:akylla --workspace @petflow/api --",
     "db:validate": "prisma validate --schema database/prisma/schema.prisma",
     "db:generate": "prisma generate --schema database/prisma/schema.prisma",
     "db:migrate": "prisma migrate dev --schema database/prisma/schema.prisma",

@@ -12,6 +12,8 @@ import {
   type WhatsAppConsentDto,
 } from "../../../lib/types";
 import { useDialog } from "../../../components/ui/Dialog";
+import { ClientTabs } from "../../../components/digital/ClientTabs";
+import { RETAIL_UI_ENABLED } from "../../../lib/features";
 
 export default function ClienteDetalhePage() {
   const dialog = useDialog();
@@ -155,12 +157,14 @@ export default function ClienteDetalhePage() {
           >
             Voltar aos clientes
           </Link>
-          <Link
-            href={`/crediario?cliente=${client.id}`}
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
-          >
-            Crediário
-          </Link>
+          {RETAIL_UI_ENABLED && (
+            <Link
+              href={`/crediario?cliente=${client.id}`}
+              className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+            >
+              Crediário
+            </Link>
+          )}
         </div>
       </div>
 
@@ -228,12 +232,16 @@ export default function ClienteDetalhePage() {
             <dt className="text-xs uppercase text-slate-500">Observações</dt>
             <dd className="text-slate-700">{client.notes || "—"}</dd>
           </div>
-          <div>
-            <dt className="text-xs uppercase text-slate-500">Vendas</dt>
-            <dd className="text-slate-700">{client._count?.sales ?? 0}</dd>
-          </div>
+          {RETAIL_UI_ENABLED && (
+            <div>
+              <dt className="text-xs uppercase text-slate-500">Vendas</dt>
+              <dd className="text-slate-700">{client._count?.sales ?? 0}</dd>
+            </div>
+          )}
         </dl>
       </div>
+
+      <ClientTabs clientId={client.id} clientName={client.name} isAdmin={session.user.role === "ADMIN"} />
 
       <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

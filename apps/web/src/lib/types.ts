@@ -1,3 +1,9 @@
+import type {
+  DeliveryStatus,
+  DigitalBillingPeriod,
+  DigitalProductType,
+} from "@petflow/shared";
+
 export interface Paginated<T> {
   items: T[];
   total: number;
@@ -747,6 +753,8 @@ export interface SubscriptionDto {
   createdAt: string;
   updatedAt: string;
   client: { id: string; name: string; phone: string | null; mobile: string | null };
+  /** Transformação 2026-10-23: entrega coberta pelo contrato */
+  delivery: { id: string; name: string; type: DigitalProductType; neverPause: boolean } | null;
   plan: {
     id: string;
     name: string;
@@ -1149,3 +1157,47 @@ export interface FiscalConfigDto extends FiscalStatusDto {
   hasApiToken: boolean;
   certificate: { uploaded: boolean; subject: string | null; validTo: string | null };
 }
+
+// ---------------------------------------------------------------------------
+// Transformação 2026-10-23 — clientes e produtos digitais
+// ---------------------------------------------------------------------------
+
+export type { ClientHistoryItemDto, DeliveryStatus, DigitalBillingPeriod, DigitalProductType, OverduePolicyDto } from "@petflow/shared";
+export { deliveryStatusLabels, digitalBillingPeriodLabels, digitalProductTypeLabels } from "@petflow/shared";
+
+export interface DigitalProductDto {
+  id: string;
+  name: string;
+  type: DigitalProductType;
+  description: string | null;
+  defaultPrice: string;
+  billingPeriod: DigitalBillingPeriod;
+  status: RecordStatus;
+  deliveriesCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DeliveryDto {
+  id: string;
+  clientId: string;
+  productId: string | null;
+  name: string;
+  type: DigitalProductType;
+  siteUrl: string | null;
+  adminUrl: string | null;
+  repositoryUrl: string | null;
+  domain: string | null;
+  domainRenewalAt: string | null;
+  hostingProvider: string | null;
+  hostingRenewalAt: string | null;
+  notes: string | null;
+  status: DeliveryStatus;
+  neverPause: boolean;
+  contractsCount: number;
+  createdAt: string;
+  updatedAt: string;
+  client: { id: string; name: string };
+  product: { id: string; name: string } | null;
+}
+

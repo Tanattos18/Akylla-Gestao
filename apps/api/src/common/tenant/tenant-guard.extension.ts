@@ -46,6 +46,9 @@ export const TENANT_MODELS: ReadonlySet<string> = new Set([
   // Fase 3
   "FiscalConfig",
   "FiscalDocument",
+  // Transformação 2026-10-23
+  "DigitalProduct",
+  "ClientDelivery",
 ]);
 
 /** Operações cujo `where` aceita filtros (permite injeção via AND). */

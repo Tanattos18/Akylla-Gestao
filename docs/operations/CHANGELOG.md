@@ -6,6 +6,55 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-23 - Transformação: clientes e produtos digitais (etapas 2 a 4)
+
+Backup antes da mudança: tag `versao-loja-2026-10-23` e ramo `versao-loja`
+(commit `19860fe`).
+
+### Alterado
+
+- **Menu sem telas de loja** (etapa 2): PDV, vendas, caixa, produtos,
+  categorias, fornecedores, crediário, comissões, profissionais e
+  importações saem do menu; as rotas mostram "Tela desligada". Nada foi
+  apagado: código, API e dados continuam. Religar com
+  `NEXT_PUBLIC_RETAIL_UI=true` (`apps/web/src/lib/features.ts`). A rota
+  `/caixa` segue aberta porque a renovação de contrato registra o
+  pagamento no caixa.
+- Textos de loja trocados por "clientes e serviços": Início, Dashboard
+  (gráficos de vendas e alerta de estoque só com a loja ligada),
+  notificações, manifesto do aplicativo e descrição do site.
+- "Assinaturas" aparecem como **Contratos**; o contrato pode cobrir uma
+  entrega do mesmo cliente (`deliveryId`). O pagamento no caixa ao criar
+  passou a vir desmarcado.
+
+### Adicionado
+
+- **Catálogo digital** (`DigitalProduct`, `/api/digital-products`,
+  tela `/catalogo`): tipo (site, perfil profissional, sistema, loja
+  virtual, hospedagem, domínio, manutenção), preço padrão e
+  periodicidade mensal/anual.
+- **Entregas por cliente** (`ClientDelivery`, `/api/deliveries`, telas
+  `/entregas`, `/entregas/nova`, `/entregas/:id`): URL do site e do
+  admin, repositório Git, domínio e renovação, hospedagem e renovação,
+  observações, status e **nunca pausar** (bloqueia o status pausada).
+- Ficha do cliente com abas **Entregas / Contratos / Histórico**
+  (`GET /api/clients/:id/history`).
+- **Política de atraso** (`Company.overdueWarnDays`/`overduePauseDays`,
+  padrão 1 e 10; `/api/overdue-policy`; aba Contratos em Configurações).
+  Só configuração: nenhuma pausa automática.
+- Script idempotente `npm run db:seed:akylla` (não roda sozinho em
+  produção): catálogo base, cliente "Akylla (próprio)" com as entregas
+  Akylla Gestão (app), site akyllagestao.com.br, Akylla Shop (+ admin) e
+  Akylla Studio (+ links), e o cliente de teste "Akylla Studio (teste)",
+  todas com nunca pausar. `--desativar-demos` / `--reativar-demos`
+  suspendem ou reativam as empresas `demo-*` mantendo os dados;
+  `--simular` só mostra.
+- Migration aditiva `20261023120000_digital_products` (RLS `FORCE` +
+  `tenant_isolation` nas duas tabelas novas; nada removido). Exportação
+  da empresa e exportação LGPD do cliente incluem as entregas.
+- Testes: `tests/integration/digital.test.ts`; RLS e contrato da API
+  atualizados.
+
 ## [Akylla Gestão] - 2026-10-19 - Correções da auditoria (blocos 1 a 11)
 
 ### Corrigido

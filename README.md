@@ -2,6 +2,25 @@
 
 **Seu negócio inteiro, num só lugar.**
 
+> **Transformação em andamento (desde 2026-10-23):** o Akylla passa a ser
+> o **controle de clientes e produtos digitais** do proprietário (sites,
+> perfis profissionais, sistemas, lojas virtuais, hospedagem, domínios e
+> manutenção). Já no código:
+> - menu sem as telas de loja (PDV, vendas, estoque, fornecedores,
+>   crediário, comissões, importações) — código e dados preservados,
+>   religáveis com `NEXT_PUBLIC_RETAIL_UI=true`;
+> - **Catálogo digital** (`/catalogo`), **Entregas** por cliente
+>   (`/entregas`, com URL do site e do admin, repositório, domínio,
+>   hospedagem, renovações e a flag **nunca pausar**) e **Contratos**
+>   (as antigas assinaturas, vinculadas à entrega);
+> - ficha do cliente com abas **Entregas / Contratos / Histórico**;
+> - política de atraso configurável (aviso no dia 1, pausa no dia 10),
+>   **só registrada** — nenhuma pausa automática;
+> - `npm run db:seed:akylla` cadastra os produtos do próprio Akylla.
+>
+> A versão de loja está guardada na tag `versao-loja-2026-10-23` e no
+> ramo `versao-loja`. O texto abaixo ainda descreve a versão de loja.
+
 Sistema online de gestão para **comércio e serviços**. Reúne:
 
 - PDV, estoque e caixa por turno;

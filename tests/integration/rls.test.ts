@@ -38,6 +38,8 @@ const TENANT_TABLES = [
   "FiscalConfig", "FiscalDocument",
   // Fase 8
   "PlatformPayment",
+  // Transformação 2026-10-23
+  "DigitalProduct", "ClientDelivery",
 ];
 
 /**

@@ -32,6 +32,7 @@ const subscriptionSelect = {
   createdAt: true,
   updatedAt: true,
   client: { select: { id: true, name: true, phone: true, mobile: true } },
+  delivery: { select: { id: true, name: true, type: true, neverPause: true } },
   plan: {
     select: {
       id: true,
@@ -90,6 +91,7 @@ export class SubscriptionsService {
     const andConditions: Prisma.SubscriptionWhereInput[] = [];
     if (query.status) andConditions.push({ status: query.status });
     if (query.clientId) andConditions.push({ clientId: query.clientId });
+    if (query.deliveryId) andConditions.push({ deliveryId: query.deliveryId });
     if (query.search) {
       andConditions.push({
         OR: [
@@ -176,6 +178,22 @@ export class SubscriptionsService {
       throw new BadRequestException("Plano de assinatura inativo");
     }
 
+    // Transformação 2026-10-23: o contrato pode cobrir uma entrega do mesmo cliente
+    let deliveryId: string | null = null;
+    if (input.deliveryId) {
+      const delivery = await this.prisma.clientDelivery.findFirst({
+        where: { id: input.deliveryId, companyId: auth.companyId },
+        select: { id: true, clientId: true },
+      });
+      if (!delivery) {
+        throw new NotFoundException("Entrega não encontrada");
+      }
+      if (delivery.clientId !== client.id) {
+        throw new BadRequestException("A entrega pertence a outro cliente");
+      }
+      deliveryId = delivery.id;
+    }
+
     const startAt = input.startAt ? new Date(input.startAt) : new Date();
     const endAt = new Date(startAt.getTime() + plan.durationDays * DAY_MS);
 
@@ -192,6 +210,7 @@ export class SubscriptionsService {
             companyId: auth.companyId,
             clientId: client.id,
             planId: plan.id,
+            deliveryId,
             startAt,
             endAt,
             lastPaymentAt: new Date(),
@@ -223,6 +242,7 @@ export class SubscriptionsService {
         companyId: auth.companyId,
         clientId: client.id,
         planId: plan.id,
+        deliveryId,
         startAt,
         endAt,
         createdByUserId: auth.userId,

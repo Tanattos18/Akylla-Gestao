@@ -8,6 +8,7 @@ import { Tabs } from "../../components/ui/Tabs";
 import { useToast } from "../../components/ui/Toast";
 import { CompanyForm } from "../../components/settings/CompanyForm";
 import { SecurityForm } from "../../components/settings/SecurityForm";
+import { OverduePolicyForm } from "../../components/settings/OverduePolicyForm";
 import { fetchSession } from "../../lib/session";
 
 const segmentLabels: Record<string, string> = {
@@ -24,7 +25,7 @@ export default function ConfiguracoesPage() {
   const [saving, setSaving] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [changed, setChanged] = useState(false);
-  const [tab, setTab] = useState<"empresa" | "modulos" | "perfil" | "seguranca">("empresa");
+  const [tab, setTab] = useState<"empresa" | "contratos" | "modulos" | "perfil" | "seguranca">("empresa");
   const toast = useToast();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
@@ -73,6 +74,7 @@ export default function ConfiguracoesPage() {
         label="Configurações"
         items={[
           { key: "empresa", label: "Empresa" },
+          { key: "contratos", label: "Contratos" },
           { key: "modulos", label: "Módulos" },
           { key: "perfil", label: "Perfil do negócio" },
           { key: "seguranca", label: "Segurança" },
@@ -81,6 +83,7 @@ export default function ConfiguracoesPage() {
         onChange={setTab}
       >
       {tab === "empresa" && <CompanyForm />}
+      {tab === "contratos" && <OverduePolicyForm />}
       {tab === "seguranca" && <SecurityForm />}
 
       {tab === "perfil" && (

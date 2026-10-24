@@ -1,5 +1,24 @@
 # Banco de dados — diretrizes e modelo atual
 
+## Clientes e produtos digitais (2026-10-23)
+
+Migration `20261023120000_digital_products` — **só adiciona**:
+
+- `DigitalProduct` (catálogo): `companyId` + FK `Restrict`, `name` /
+  `nameKey` único por empresa, `type` (`DigitalProductType`),
+  `defaultPrice` `Decimal(12,2)`, `billingPeriod` (`MONTHLY`/`YEARLY`),
+  `status`.
+- `ClientDelivery` (entrega): `companyId`, `clientId` e `productId?` com
+  FK `Restrict`; URLs do site/admin/repositório, domínio e
+  `domainRenewalAt`, `hostingProvider` e `hostingRenewalAt`, `notes`,
+  `status` (`DeliveryStatus`: em produção, no ar, pausada, cancelada) e
+  `neverPause` (bloqueia `PAUSED`).
+- `Subscription.deliveryId?` (contrato → entrega, FK `Restrict`).
+- `Company.overdueWarnDays` (1) e `overduePauseDays` (10): política de
+  atraso, só configuração.
+- As duas tabelas novas têm RLS `ENABLE` + `FORCE` e `tenant_isolation`
+  e estão em `TENANT_MODELS` e `TENANT_TABLES`.
+
 ## Parcela devolvida (2026-10-19, auditoria bloco 4)
 
 Migration: `20261019210000_credit_installment_refunded`.

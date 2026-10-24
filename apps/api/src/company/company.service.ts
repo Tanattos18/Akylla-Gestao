@@ -106,6 +106,8 @@ export class CompanyService {
       whatsappTemplates,
       whatsappConsents,
       whatsappMessages,
+      digitalProducts,
+      clientDeliveries,
     ] = await Promise.all([
       this.prisma.company.findUnique({ where: { id: companyId } }),
       this.prisma.user.findMany({
@@ -144,6 +146,8 @@ export class CompanyService {
       this.prisma.whatsAppTemplate.findMany({ where: { companyId } }),
       this.prisma.whatsAppConsent.findMany({ where: { companyId } }),
       this.prisma.whatsAppMessage.findMany({ where: { companyId } }),
+      this.prisma.digitalProduct.findMany({ where: { companyId } }),
+      this.prisma.clientDelivery.findMany({ where: { companyId } }),
     ]);
 
     if (!company) {
@@ -177,6 +181,8 @@ export class CompanyService {
       whatsappTemplates,
       whatsappConsents,
       whatsappMessages,
+      digitalProducts,
+      clientDeliveries,
     };
   }
 }

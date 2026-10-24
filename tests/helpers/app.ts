@@ -49,6 +49,9 @@ export async function resetDatabase(prisma: PrismaService): Promise<void> {
   await prisma.appointment.deleteMany();
   // subscription referencia client/plan/users; cashMovement referencia subscription (SetNull)
   await prisma.subscription.deleteMany();
+  // Transformação 2026-10-23: entrega referencia cliente/produto digital (Restrict)
+  await prisma.clientDelivery.deleteMany();
+  await prisma.digitalProduct.deleteMany();
   await prisma.tenantSubscription.deleteMany();
   await prisma.subscriptionPlan.deleteMany();
   await prisma.pet.deleteMany();
