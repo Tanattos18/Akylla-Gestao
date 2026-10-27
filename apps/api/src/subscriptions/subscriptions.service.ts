@@ -8,7 +8,8 @@ import {
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.module";
 import { lockOpenCashSession } from "../cash/cash-session.helpers";
-import { settleRenewalReceivable } from "./contract-billing.helpers";
+import { resumeAfterPayment, settleRenewalReceivable } from "./contract-billing.helpers";
+import { loadBillingStatuses } from "../digital/billing-state";
 import { parseContractReceivableOriginId } from "@petflow/shared";
 import type {
   CancelSubscriptionInput,
@@ -34,7 +35,9 @@ const subscriptionSelect = {
   createdAt: true,
   updatedAt: true,
   client: { select: { id: true, name: true, phone: true, mobile: true } },
-  delivery: { select: { id: true, name: true, type: true, neverPause: true } },
+  delivery: { select: { id: true, name: true, type: true, neverPause: true, status: true } },
+  graceUntil: true,
+  graceNote: true,
   plan: {
     select: {
       id: true,
@@ -80,6 +83,27 @@ function formatPayment(payment: {
 export class SubscriptionsService {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
+  /** 2026-10-27: situação de cobrança calculada no servidor. */
+  private async withBilling<T extends { id: string }>(auth: AuthContext, items: T[]) {
+    const statuses = await loadBillingStatuses(this.prisma, auth.companyId);
+    return items.map((item) => {
+      const billing = statuses.bySubscription.get(item.id);
+      return {
+        ...item,
+        billing: billing
+          ? {
+              state: billing.state,
+              daysToDue: billing.daysToDue,
+              dueDate: billing.dueDate,
+              amount: billing.amount,
+              graceUntil: billing.graceUntil,
+              agreementBroken: billing.agreementBroken,
+            }
+          : null,
+      };
+    });
+  }
+
   private async expireStale(companyId: string) {
     await this.prisma.subscription.updateMany({
       where: { companyId, status: "ACTIVE", endAt: { lt: new Date() } },
@@ -120,7 +144,7 @@ export class SubscriptionsService {
     ]);
 
     return {
-      items: items.map(formatSubscription),
+      items: await this.withBilling(auth, items.map(formatSubscription)),
       total,
       page: query.page,
       pageSize: query.pageSize,
@@ -160,7 +184,7 @@ export class SubscriptionsService {
     });
 
     return {
-      ...formatSubscription(subscription),
+      ...(await this.withBilling(auth, [formatSubscription(subscription)]))[0]!,
       payments: payments.map(formatPayment),
       receivables: receivables.map((entry) => ({
         id: entry.id,
@@ -332,6 +356,7 @@ export class SubscriptionsService {
         paidAt: now,
         cashMovementId: movement.id,
       });
+      await resumeAfterPayment(tx, auth.companyId, subscription.id, now);
 
       return formatSubscription(updated);
     });

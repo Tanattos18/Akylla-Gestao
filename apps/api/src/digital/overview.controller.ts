@@ -3,6 +3,8 @@ import { Prisma } from "@prisma/client";
 import type { DigitalOverviewDto } from "@petflow/shared";
 import { PrismaService } from "../prisma/prisma.module";
 import { Auth, type AuthContext } from "../common/decorators/auth.decorator";
+import { billingStateSeverity } from "@petflow/shared";
+import { loadBillingStatuses } from "./billing-state";
 
 const DAY_MS = 86_400_000;
 const WINDOW_DAYS = 30;
@@ -116,7 +118,45 @@ export class DigitalOverviewController {
       .sort((a, b) => a.date.localeCompare(b.date))
       .slice(0, UPCOMING_LIMIT);
 
+    // 2026-10-27: quem está devendo (o dono decide pausar, dar prazo ou cobrar)
+    const statuses = await loadBillingStatuses(this.prisma, companyId, now);
+    const debtStates = new Set(["VENCIDO", "EM_DEBITO", "EM_ACORDO", "PAUSADO"]);
+    const debtorIds = [...statuses.bySubscription.values()].filter((s) => debtStates.has(s.state)).map((s) => s.subscriptionId);
+    const debtorContracts = debtorIds.length
+      ? await this.prisma.subscription.findMany({
+          where: { companyId, id: { in: debtorIds } },
+          select: {
+            id: true,
+            clientId: true,
+            client: { select: { name: true } },
+            plan: { select: { name: true } },
+            delivery: { select: { id: true, name: true, neverPause: true } },
+          },
+        })
+      : [];
+    const debtors: DigitalOverviewDto["debtors"] = debtorContracts
+      .map((c) => {
+        const s = statuses.bySubscription.get(c.id)!;
+        return {
+          subscriptionId: c.id,
+          clientId: c.clientId,
+          clientName: c.client.name,
+          contract: c.plan.name,
+          deliveryId: c.delivery?.id ?? null,
+          deliveryName: c.delivery?.name ?? null,
+          neverPause: c.delivery?.neverPause ?? false,
+          state: s.state,
+          amount: s.amount,
+          dueDate: s.dueDate,
+          daysOverdue: s.daysToDue !== null && s.daysToDue < 0 ? -s.daysToDue : 0,
+          graceUntil: s.graceUntil,
+          agreementBroken: s.agreementBroken,
+        };
+      })
+      .sort((a, b) => billingStateSeverity[b.state] - billingStateSeverity[a.state] || b.daysOverdue - a.daysOverdue);
+
     return {
+      debtors,
       monthlyRecurringRevenue: mrr.toFixed(2),
       activeContracts: contracts.length,
       receivableNext30: { total: (receivable._sum.amount ?? new Prisma.Decimal(0)).toFixed(2), count: receivable._count },

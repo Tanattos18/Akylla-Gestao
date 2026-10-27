@@ -10,6 +10,7 @@ import type {
 } from "@petflow/shared";
 import type { AuthContext } from "../common/decorators/auth.decorator";
 import { clientNameKey } from "../common/utils/client-name-key";
+import { loadBillingStatuses } from "../digital/billing-state";
 
 const clientSelect = {
   id: true,
@@ -72,6 +73,13 @@ export class ClientsService {
     }
     if (query.status) andConditions.push({ status: query.status });
 
+    // 2026-10-27: situação de cobrança (pior contrato do cliente)
+    const statuses = await loadBillingStatuses(this.prisma, auth.companyId);
+    if (query.billingState) {
+      const ids = [...statuses.byClient.entries()].filter(([, s]) => s.state === query.billingState).map(([id]) => id);
+      andConditions.push({ id: { in: ids } });
+    }
+
     const where: Prisma.ClientWhereInput = {
       companyId: auth.companyId,
       ...(andConditions.length > 0 ? { AND: andConditions } : {}),
@@ -89,7 +97,7 @@ export class ClientsService {
     ]);
 
     return {
-      items: items.map(formatClient),
+      items: items.map((client) => ({ ...formatClient(client), billing: statuses.byClient.get(client.id) ?? null })),
       total,
       page: query.page,
       pageSize: query.pageSize,

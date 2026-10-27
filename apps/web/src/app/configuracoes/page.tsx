@@ -9,6 +9,7 @@ import { useToast } from "../../components/ui/Toast";
 import { CompanyForm } from "../../components/settings/CompanyForm";
 import { SecurityForm } from "../../components/settings/SecurityForm";
 import { OverduePolicyForm } from "../../components/settings/OverduePolicyForm";
+import { BillingSettingsForm } from "../../components/settings/BillingSettingsForm";
 import { fetchSession } from "../../lib/session";
 
 const segmentLabels: Record<string, string> = {
@@ -83,7 +84,12 @@ export default function ConfiguracoesPage() {
         onChange={setTab}
       >
       {tab === "empresa" && <CompanyForm />}
-      {tab === "contratos" && <OverduePolicyForm />}
+      {tab === "contratos" && (
+        <div className="space-y-6">
+          <OverduePolicyForm />
+          <BillingSettingsForm />
+        </div>
+      )}
       {tab === "seguranca" && <SecurityForm />}
 
       {tab === "perfil" && (

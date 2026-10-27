@@ -27,7 +27,12 @@
 >   WhatsApp (3 dias antes, no dia, atraso) com a chave Pix e botão
 >   "Copiar mensagem de cobrança" — sem pausar nada;
 > - avisos de renovação de domínio/hospedagem (30, 7 e 1 dia) e
->   **Relatórios › Contratos e receita**.
+>   **Relatórios › Contratos e receita**;
+> - **pausa dos sites vendidos** (2026-10-27): pausar até pagar, ativar,
+>   inativar, dar prazo, situação de cobrança e "clientes em débito" no
+>   Início; o script `akylla-status.js` aplica a pausa no site do cliente
+>   (guia em `docs/akylla/PAUSA_DE_SITES.md`). Os sites "nunca pausar"
+>   do proprietário nunca são pausados.
 >
 > A versão de loja está guardada na tag `versao-loja-2026-10-23` e no
 > ramo `versao-loja`. O texto abaixo ainda descreve a versão de loja.

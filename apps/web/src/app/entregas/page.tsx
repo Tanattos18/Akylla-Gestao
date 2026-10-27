@@ -7,6 +7,7 @@ import { api, ApiError } from "../../lib/api";
 import { fetchSession, type Session } from "../../lib/session";
 import { formatDate } from "../../lib/format";
 import {
+  billingStateLabels,
   deliveryStatusLabels,
   digitalProductTypeLabels,
   type DeliveryDto,
@@ -15,6 +16,7 @@ import {
   type Paginated,
 } from "../../lib/types";
 import { DataTable } from "../../components/ui/DataTable";
+import { BillingBadge, BILLING_FILTER_OPTIONS } from "../../components/digital/BillingBadge";
 import { Pagination } from "../../components/ui/Pagination";
 import { DeliveryStatusBadge, ExternalLink, NeverPauseBadge, SiteStatusBadge } from "../../components/digital/DeliveryBadges";
 
@@ -37,14 +39,16 @@ export default function EntregasPage() {
   const [search, setSearch] = useState("");
   const [type, setType] = useState("");
   const [status, setStatus] = useState("");
+  const [billing, setBilling] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async (params: { page: number; search: string; type: string; status: string }) => {
+  const load = useCallback(async (params: { page: number; search: string; type: string; status: string; billing: string }) => {
     try {
       const query = new URLSearchParams({ page: String(params.page), pageSize: String(PAGE_SIZE) });
       if (params.search.trim()) query.set("search", params.search.trim());
       if (params.type) query.set("type", params.type);
       if (params.status) query.set("status", params.status);
+      if (params.billing) query.set("billingState", params.billing);
       const data = await api<Paginated<DeliveryDto>>(`/api/deliveries?${query.toString()}`);
       setItems(data.items);
       setTotal(data.total);
@@ -65,12 +69,17 @@ export default function EntregasPage() {
   }, [router]);
 
   useEffect(() => {
-    if (session) void load({ page, search, type, status });
-  }, [session, load, page, search, type, status]);
+    if (session) void load({ page, search, type, status, billing });
+  }, [session, load, page, search, type, status, billing]);
 
   useEffect(() => {
     setPage(1);
-  }, [search, type, status]);
+  }, [search, type, status, billing]);
+
+  useEffect(() => {
+    const situacao = new URLSearchParams(window.location.search).get("situacao");
+    if (situacao) setBilling(situacao);
+  }, []);
 
   if (!session) {
     return <p className="py-16 text-center text-sm text-slate-500">Carregando...</p>;
@@ -111,6 +120,13 @@ export default function EntregasPage() {
           <option value="">Todos os status</option>
           {STATUSES.map((s) => (
             <option key={s} value={s}>{deliveryStatusLabels[s]}</option>
+          ))}
+        </select>
+        <label htmlFor="delivery-billing-filter" className="sr-only">Situação de cobrança</label>
+        <select id="delivery-billing-filter" value={billing} onChange={(e) => setBilling(e.target.value)} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
+          <option value="">Todas as situações</option>
+          {BILLING_FILTER_OPTIONS.map((state) => (
+            <option key={state} value={state}>{billingStateLabels[state]}</option>
           ))}
         </select>
       </div>
@@ -161,6 +177,7 @@ export default function EntregasPage() {
               <div className="flex flex-wrap gap-1">
                 <DeliveryStatusBadge status={delivery.status} />
                 {delivery.neverPause && <NeverPauseBadge />}
+                <BillingBadge billing={delivery.billing} showDetail={false} />
               </div>
             ),
           },

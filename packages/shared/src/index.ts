@@ -740,9 +740,15 @@ export type CreateClientInput = z.infer<typeof createClientSchema>;
 export const updateClientSchema = createClientSchema.partial();
 export type UpdateClientInput = z.infer<typeof updateClientSchema>;
 
+/** 2026-10-27: situação de cobrança (detalhes mais abaixo). */
+export const billingStateSchema = z.enum(["EM_DIA", "VENCE_EM", "VENCIDO", "EM_DEBITO", "EM_ACORDO", "PAUSADO", "INATIVO"]);
+export type BillingState = z.infer<typeof billingStateSchema>;
+
 export const listClientsQuerySchema = paginationQuerySchema.extend({
   search: z.string().trim().max(120).optional(),
   status: recordStatusSchema.optional(),
+  /** 2026-10-27: filtra pela situação de cobrança (pior contrato do cliente) */
+  billingState: billingStateSchema.optional(),
   orderBy: z.enum(["name", "createdAt"]).default("name"),
   direction: z.enum(["asc", "desc"]).default("asc"),
 });
@@ -2301,6 +2307,8 @@ const deliveryFields = {
   neverPause: z.boolean().optional(),
   /** Monitor de site (GET/HEAD só leitura a cada 5 min); padrão ligado. */
   monitorEnabled: z.boolean().optional(),
+  /** 2026-10-27: faixa de pendência no site do cliente quando vencido */
+  showWarningBanner: z.boolean().optional(),
 };
 
 export const createDeliverySchema = z.object({
@@ -2317,6 +2325,8 @@ export const listDeliveriesQuerySchema = paginationQuerySchema.extend({
   clientId: z.string().trim().max(60).optional(),
   type: digitalProductTypeSchema.optional(),
   status: deliveryStatusSchema.optional(),
+  /** 2026-10-27: filtra pela situação de cobrança (ex.: EM_DEBITO) */
+  billingState: billingStateSchema.optional(),
   orderBy: z.enum(["name", "createdAt", "domainRenewalAt", "hostingRenewalAt"]).default("name"),
   direction: z.enum(["asc", "desc"]).default("asc"),
 });
@@ -2421,6 +2431,7 @@ export const clientHistoryKindSchema = z.enum([
   "FINANCIAL_ENTRY",
   "APPOINTMENT",
   "SERVICE_ORDER",
+  "BILLING_ACTION",
 ]);
 export type ClientHistoryKind = z.infer<typeof clientHistoryKindSchema>;
 
@@ -2530,6 +2541,22 @@ export interface DigitalOverviewDto {
     neverPause: boolean;
   }>;
   monitoredSites: number;
+  /** 2026-10-27: contratos vencidos, em débito, em acordo ou pausados. */
+  debtors: Array<{
+    subscriptionId: string;
+    clientId: string;
+    clientName: string;
+    contract: string;
+    deliveryId: string | null;
+    deliveryName: string | null;
+    neverPause: boolean;
+    state: BillingState;
+    amount: string | null;
+    dueDate: string | null;
+    daysOverdue: number;
+    graceUntil: string | null;
+    agreementBroken: boolean;
+  }>;
 }
 
 /** Faixas de aviso de renovação de domínio/hospedagem: 30, 7 e 1 dia antes. */
@@ -2552,5 +2579,142 @@ export interface DigitalReportsDto {
     withOverdue: number;
     withoutContract: number;
   };
+}
+
+// ---------------------------------------------------------------------------
+// 2026-10-27 — pausa dos sites vendidos, prazo combinado e estados de cobrança
+// ---------------------------------------------------------------------------
+
+/**
+ * Situação de cobrança de um contrato/entrega, calculada no servidor:
+ * em dia → vence em N dias → vencido (alerta) → em débito (após N dias) ou
+ * em acordo (prazo dado); pausado/inativo vêm do status da entrega.
+ */
+
+export const billingStateLabels: Record<BillingState, string> = {
+  EM_DIA: "Em dia",
+  VENCE_EM: "Vence em breve",
+  VENCIDO: "Vencido",
+  EM_DEBITO: "Em débito",
+  EM_ACORDO: "Em acordo",
+  PAUSADO: "Pausado",
+  INATIVO: "Inativo",
+};
+
+/** Ordem de gravidade (maior = pior) para resumir vários contratos. */
+export const billingStateSeverity: Record<BillingState, number> = {
+  EM_DIA: 0,
+  INATIVO: 1,
+  VENCE_EM: 2,
+  EM_ACORDO: 3,
+  VENCIDO: 4,
+  PAUSADO: 5,
+  EM_DEBITO: 6,
+};
+
+/** "Vence em breve" a partir de N dias antes do vencimento. */
+export const BILLING_DUE_SOON_DAYS = 7;
+
+export interface BillingStatusDto {
+  state: BillingState;
+  /** Dias até o vencimento (negativo = dias de atraso); null sem título. */
+  daysToDue: number | null;
+  dueDate: string | null;
+  amount: string | null;
+  graceUntil: string | null;
+  /** Prazo combinado venceu sem pagamento. */
+  agreementBroken: boolean;
+}
+
+export const reasonSchema = z.object({
+  reason: z.string().trim().min(3, "Informe o motivo (mínimo 3 caracteres)").max(500),
+});
+export type ReasonInput = z.infer<typeof reasonSchema>;
+
+export const optionalReasonSchema = z.object({
+  reason: z.string().trim().max(500).optional(),
+});
+export type OptionalReasonInput = z.infer<typeof optionalReasonSchema>;
+
+export const grantGraceSchema = z.object({
+  until: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida (use AAAA-MM-DD)"),
+  note: z.string().trim().min(3, "Descreva o acordo (mínimo 3 caracteres)").max(500),
+});
+export type GrantGraceInput = z.infer<typeof grantGraceSchema>;
+
+export const billingActionLabels: Record<
+  "ACTIVATE" | "PAUSE" | "DEACTIVATE" | "REACTIVATE" | "AUTO_PAUSE" | "AUTO_RESUME" | "GRACE",
+  string
+> = {
+  ACTIVATE: "Ativou",
+  PAUSE: "Pausou até pagar",
+  DEACTIVATE: "Inativou (cliente desistiu)",
+  REACTIVATE: "Reativou",
+  AUTO_PAUSE: "Pausa automática",
+  AUTO_RESUME: "Voltou ao ar (pagamento)",
+  GRACE: "Deu prazo",
+};
+
+export interface BillingActionDto {
+  id: string;
+  action: keyof typeof billingActionLabels;
+  fromStatus: DeliveryStatus | null;
+  toStatus: DeliveryStatus | null;
+  reason: string | null;
+  graceUntil: string | null;
+  userName: string | null;
+  createdAt: string;
+}
+
+/** Textos editáveis (Configurações › Contratos). Variáveis entre chaves. */
+export const BILLING_TEXT_VARIABLES = ["{cliente}", "{contrato}", "{valor}", "{vencimento}", "{dias}", "{pix}", "{prazo}"] as const;
+
+export const DEFAULT_BILLING_TEXTS = {
+  billingTextBefore:
+    "Olá, {cliente}! Seu plano {contrato} vence em {dias} dia(s), em {vencimento}, no valor de {valor}. Pix: {pix}. Qualquer dúvida, estou à disposição.",
+  billingTextOverdue:
+    "Olá, {cliente}. Seu plano {contrato}, no valor de {valor}, venceu em {vencimento}. Renove sua conta pelo Pix: {pix}. Se já pagou, por favor desconsidere.",
+  billingTextAgreement:
+    "Olá, {cliente}! Conforme combinado, o pagamento de {contrato} ({valor}) fica para até {prazo}. Pix: {pix}. Obrigado!",
+  siteWarningText: "Pagamento do plano deste site pendente. Regularize para evitar a suspensão.",
+  siteSuspendedText: "Este site está temporariamente suspenso. Entre em contato com o responsável.",
+} as const;
+export type BillingTextKey = keyof typeof DEFAULT_BILLING_TEXTS;
+
+const billingTextField = z.string().trim().max(1000, "Máximo de 1000 caracteres").optional().nullable();
+
+export const updateBillingSettingsSchema = z.object({
+  autoPauseEnabled: z.boolean().optional(),
+  autoPauseDays: z.coerce.number().int().min(1).max(365).optional(),
+  billingTextBefore: billingTextField,
+  billingTextOverdue: billingTextField,
+  billingTextAgreement: billingTextField,
+  siteWarningText: billingTextField,
+  siteSuspendedText: billingTextField,
+});
+export type UpdateBillingSettingsInput = z.infer<typeof updateBillingSettingsSchema>;
+
+export interface BillingSettingsDto {
+  autoPauseEnabled: boolean;
+  autoPauseDays: number;
+  /** Textos efetivos (o padrão quando a empresa não editou). */
+  texts: Record<BillingTextKey, string>;
+  customized: Record<BillingTextKey, boolean>;
+}
+
+/** Troca {variavel} pelo valor; variável sem valor vira "—". */
+export function renderBillingText(template: string, values: Partial<Record<string, string | number | null>>): string {
+  return template.replace(/\{(\w+)\}/g, (match, key: string) => {
+    if (!(key in values)) return match;
+    const value = values[key];
+    return value === null || value === undefined || value === "" ? "—" : String(value);
+  });
+}
+
+/** Resposta do endpoint público do script no site do cliente (sem dados pessoais). */
+export type PublicSiteStatus = "ativo" | "aviso" | "pausado" | "inativo";
+export interface PublicSiteStatusDto {
+  status: PublicSiteStatus;
+  message: string | null;
 }
 

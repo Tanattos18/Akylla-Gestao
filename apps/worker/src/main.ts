@@ -6,6 +6,7 @@ import { processDueMessages } from "./whatsapp/processor";
 import { checkSites, SITE_MONITOR_INTERVAL_MS, type FetchLike } from "./monitor/site-monitor";
 import {
   CONTRACT_BILLING_INTERVAL_MS,
+  autoPauseOverdue,
   generateContractReceivables,
   queueContractReminders,
 } from "./billing/contract-billing";
@@ -104,7 +105,11 @@ async function main() {
     try {
       const receivables = await generateContractReceivables({ prisma });
       const reminders = await queueContractReminders({ prisma, countryCode: workerEnv.WHATSAPP_COUNTRY_CODE });
-      log(`cobrança: títulos criados=${receivables.created}, lembretes na fila=${reminders.queued}, sem envio=${reminders.skipped}`);
+      // Só age nas empresas que ligaram a pausa automática (padrão: desligada)
+      const autoPause = await autoPauseOverdue({ prisma });
+      log(
+        `cobrança: títulos criados=${receivables.created}, lembretes na fila=${reminders.queued}, sem envio=${reminders.skipped}, pausas automáticas=${autoPause.paused}`,
+      );
     } catch (error) {
       log(`erro na cobrança: ${error instanceof Error ? error.message : "erro desconhecido"}`);
       captureWorkerError(error, "contract-billing");

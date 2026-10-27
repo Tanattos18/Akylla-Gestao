@@ -21,6 +21,10 @@
 - [x] Avisos de renovação de domínio/hospedagem (30/7/1 dia) no Início e nas notificações
 - [x] Relatórios: receita recorrente por mês, por produto, inadimplência, clientes por status
 - [ ] Aprovar na Meta os modelos `cobranca_*` e ligar o token (proprietário) — até lá, simulação
+- [x] Pausa dos sites vendidos (2026-10-27): pausar/ativar/inativar/reativar, prazo combinado, situação de cobrança, histórico
+- [x] Script `akylla-status.js` + endpoint público (falha aberta; "nunca pausar" sempre ativo)
+- [x] Pausa automática opcional (desligada por padrão) e textos editáveis
+- [ ] Instalar o código de status nos sites dos clientes (proprietário, um por site vendido)
 - [ ] Pausa real por atraso (só depois de autorizada)
 
 ## Correções da auditoria (2026-10-19)

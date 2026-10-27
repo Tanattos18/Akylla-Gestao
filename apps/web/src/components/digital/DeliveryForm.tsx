@@ -34,6 +34,7 @@ function initialForm(delivery?: DeliveryDto | null, clientId?: string) {
     status: delivery?.status ?? ("ACTIVE" as DeliveryStatus),
     neverPause: delivery?.neverPause ?? false,
     monitorEnabled: delivery?.monitorEnabled ?? true,
+    showWarningBanner: delivery?.showWarningBanner ?? false,
   };
 }
 
@@ -102,6 +103,7 @@ export function DeliveryForm({
       status: form.status,
       neverPause: form.neverPause,
       monitorEnabled: form.monitorEnabled,
+      showWarningBanner: form.showWarningBanner,
     };
     try {
       const saved = delivery
@@ -232,6 +234,20 @@ export function DeliveryForm({
           URL do site (sem alterar nada) e avisa no Início se ele cair.
         </span>
       </label>
+      {!form.neverPause && (
+        <label className="flex items-start gap-2 text-sm text-slate-700 sm:col-span-2">
+          <input
+            type="checkbox"
+            checked={form.showWarningBanner}
+            onChange={(e) => setForm({ ...form, showWarningBanner: e.target.checked })}
+            className="mt-0.5"
+          />
+          <span>
+            <strong className="font-medium">Faixa de pendência no site</strong> — com o código de status instalado no
+            site do cliente, mostra uma faixa discreta quando o contrato estiver vencido.
+          </span>
+        </label>
+      )}
       {error && (
         <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 sm:col-span-2">{error}</div>
       )}

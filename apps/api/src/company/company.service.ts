@@ -110,6 +110,7 @@ export class CompanyService {
       clientDeliveries,
       deliveryCredentials,
       credentialAccessLogs,
+      billingActions,
     ] = await Promise.all([
       this.prisma.company.findUnique({ where: { id: companyId } }),
       this.prisma.user.findMany({
@@ -153,6 +154,7 @@ export class CompanyService {
       // Senhas seguem cifradas na exportação (nunca em claro)
       this.prisma.deliveryCredential.findMany({ where: { companyId } }),
       this.prisma.credentialAccessLog.findMany({ where: { companyId } }),
+      this.prisma.billingActionLog.findMany({ where: { companyId } }),
     ]);
 
     if (!company) {
@@ -190,6 +192,7 @@ export class CompanyService {
       clientDeliveries,
       deliveryCredentials,
       credentialAccessLogs,
+      billingActions,
     };
   }
 }

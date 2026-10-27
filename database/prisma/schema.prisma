@@ -324,6 +324,15 @@ model Company {
   overduePauseDays        Int                      @default(10)
   /// Chave Pix usada nas mensagens de cobrança dos contratos
   pixKey                  String?
+  /// 2026-10-27: pausa automática (desligada por padrão: quem decide é o dono)
+  autoPauseEnabled        Boolean                  @default(false)
+  autoPauseDays           Int                      @default(15)
+  /// Textos editáveis das mensagens de cobrança e do aviso no site (null = padrão)
+  billingTextBefore       String?
+  billingTextOverdue      String?
+  billingTextAgreement    String?
+  siteWarningText         String?
+  siteSuspendedText       String?
   createdAt               DateTime                 @default(now())
   updatedAt               DateTime                 @updatedAt
   users                   User[]
@@ -366,6 +375,7 @@ model Company {
   deliveryCredentials     DeliveryCredential[]
   credentialAccessLogs    CredentialAccessLog[]
   siteChecks              SiteCheck[]
+  billingActions          BillingActionLog[]
 }
 
 /// Módulos vendáveis. O antigo PETS saiu do produto em 2026-10-19
@@ -492,6 +502,7 @@ model User {
   fiscalDocumentsRequested  FiscalDocument[]         @relation("FiscalDocumentRequestedBy")
   deliveryCredentials       DeliveryCredential[]
   credentialAccessLogs      CredentialAccessLog[]
+  billingActions            BillingActionLog[]
   twoFactorSecret           String?
   twoFactorEnabled          Boolean                  @default(false)
 
@@ -1198,12 +1209,16 @@ model Subscription {
   createdBy         User               @relation("SubscriptionCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict)
   renewalCount      Int                @default(0)
   lastPaymentAt     DateTime?
+  /// 2026-10-27: prazo combinado com o cliente (nada é pausado até esta data)
+  graceUntil        DateTime?
+  graceNote         String?
   /// Transformação 2026-10-23: entrega coberta por este contrato
   deliveryId        String?
   delivery          ClientDelivery?    @relation(fields: [deliveryId], references: [id], onDelete: Restrict)
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   payments          CashMovement[]
+  billingActions    BillingActionLog[]
 
   @@index([companyId, status, endAt])
   @@index([clientId])
@@ -1520,11 +1535,19 @@ model ClientDelivery {
   monitorResponseMs Int?
   monitorCheckedAt  DateTime?
   monitorDownSince  DateTime?
+  /// 2026-10-27: chave pública do script de status no site do cliente
+  publicKey         String?              @unique
+  /// Faixa discreta de pendência no site quando o contrato está vencido
+  showWarningBanner Boolean              @default(false)
+  /// Pausada por falta de pagamento (volta sozinha ao pagar)
+  pausedForDebt     Boolean              @default(false)
+  statusChangedAt   DateTime?
   createdAt         DateTime             @default(now())
   updatedAt         DateTime             @updatedAt
   subscriptions     Subscription[]
   credentials       DeliveryCredential[]
   siteChecks        SiteCheck[]
+  billingActions    BillingActionLog[]
 
   @@index([companyId, status])
   @@index([companyId, clientId])
@@ -1598,4 +1621,38 @@ model SiteCheck {
 
   @@index([companyId, deliveryId, checkedAt])
   @@index([checkedAt])
+}
+
+enum BillingAction {
+  ACTIVATE
+  PAUSE
+  DEACTIVATE
+  REACTIVATE
+  AUTO_PAUSE
+  AUTO_RESUME
+  GRACE
+}
+
+/// Histórico imutável das decisões de cobrança: ativar, pausar, inativar,
+/// reativar e prazo combinado (com motivo, quem e quando; userId null =
+/// sistema).
+model BillingActionLog {
+  id             String          @id @default(cuid())
+  companyId      String
+  company        Company         @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  deliveryId     String?
+  delivery       ClientDelivery? @relation(fields: [deliveryId], references: [id], onDelete: Restrict)
+  subscriptionId String?
+  subscription   Subscription?   @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
+  action         BillingAction
+  fromStatus     DeliveryStatus?
+  toStatus       DeliveryStatus?
+  reason         String?
+  graceUntil     DateTime?
+  userId         String?
+  user           User?           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  createdAt      DateTime        @default(now())
+
+  @@index([companyId, deliveryId, createdAt])
+  @@index([companyId, subscriptionId, createdAt])
 }

@@ -718,7 +718,7 @@ Na interface, "Assinaturas" aparecem como **Contratos**. Rotas sem
 | GET | `/api/digital-products/:id` | sessão | Detalhe com `deliveriesCount` (404 cross-tenant) |
 | PATCH | `/api/digital-products/:id` | ADMIN | Edição parcial |
 | PATCH | `/api/digital-products/:id/status` | ADMIN | `ACTIVE`/`INACTIVE` |
-| GET | `/api/deliveries` | sessão | Entregas; `search` (nome, domínio, URL, cliente), `clientId`, `type`, `status`, `orderBy` |
+| GET | `/api/deliveries` | sessão | Entregas; `search` (nome, domínio, URL, cliente), `clientId`, `type`, `status`, `billingState`, `orderBy`; cada item traz `billing` (situação de cobrança) |
 | POST | `/api/deliveries` | sessão | Cria (201): `clientId`, `name`, `type`, `productId?`, `siteUrl?`, `adminUrl?`, `repositoryUrl?` (http/https), `domain?`, `domainRenewalAt?`/`hostingRenewalAt?` (AAAA-MM-DD), `hostingProvider?`, `notes?`, `status?`, `neverPause?` |
 | GET | `/api/deliveries/:id` | sessão | Detalhe com `contractsCount` (404 cross-tenant) |
 | PATCH | `/api/deliveries/:id` | sessão | Edição parcial; texto vazio limpa o campo; `neverPause` + `PAUSED` → 409 |
@@ -731,6 +731,16 @@ Na interface, "Assinaturas" aparecem como **Contratos**. Rotas sem
 | POST | `/api/delivery-credentials/:id/archive` | ADMIN | Arquiva (não apaga); duplo → 409 |
 | GET | `/api/delivery-credentials/:id/access-log` | ADMIN | Auditoria imutável: `CREATE`/`UPDATE`/`REVEAL`/`ARCHIVE`, quem e quando |
 | GET | `/api/digital/overview` | sessão | Início: receita mensal recorrente, a receber em 30 dias, atrasados, vencimentos (contrato/domínio/hospedagem) em 30 dias e sites fora do ar |
+| POST | `/api/deliveries/:id/pause` | ADMIN | Pausa o site até pagar (`{reason}` 3..500); "nunca pausar" → 409; já pausada → 409 |
+| POST | `/api/deliveries/:id/activate` | ADMIN | Ativa (ou reativa, se inativa) — `{reason?}` |
+| POST | `/api/deliveries/:id/deactivate` | ADMIN | Inativa: cliente desistiu (`{reason}`); "nunca pausar" → 409 |
+| GET | `/api/deliveries/:id/billing-actions` | sessão | Histórico imutável das decisões (quem, quando, motivo) |
+| GET | `/api/deliveries/:id/install-code` | ADMIN | `{publicKey, snippet}` do script de status (gera a chave na 1ª vez); "nunca pausar" → 409 |
+| POST | `/api/subscriptions/:id/grace` | ADMIN | Prazo combinado `{until: AAAA-MM-DD, note}`; data no passado → 400 |
+| GET | `/api/subscriptions/:id/billing-actions` | sessão | Histórico de decisões do contrato |
+| GET | `/api/billing-settings` | sessão | Pausa automática (`autoPauseEnabled` padrão **false**, `autoPauseDays`) e textos efetivos |
+| PUT | `/api/billing-settings` | ADMIN | Altera; texto `""` volta ao padrão |
+| GET | `/api/public/site-status/:key` | **público** | Script do site do cliente: `{status: ativo\|aviso\|pausado\|inativo, message}`; sem dados pessoais, CORS `*`, cache 60 s, limite por IP; chave desconhecida → 404; "nunca pausar" → sempre `ativo` |
 | GET | `/api/digital/reports` | sessão | `months` 1..24 (padrão 12): receita recorrente e recebido por mês, receita por produto do catálogo, inadimplência (taxa e maiores devedores) e clientes por status |
 | GET | `/api/overdue-policy` | sessão | `{warnDays, pauseDays, autoPauseEnabled: false, pixKey}` (padrão 1 e 10) |
 | PUT | `/api/overdue-policy` | ADMIN | `{warnDays 0..365, pauseDays 1..365, pixKey?}` (`pixKey` `""` apaga, ausente mantém); pausa ≤ aviso → 400. Nenhuma pausa automática |

@@ -6,6 +6,7 @@ import { AlertTriangle, CalendarClock, Globe, Repeat, TrendingUp, Wallet } from 
 import { api } from "../../lib/api";
 import { formatBrl, formatDate, formatDateTime } from "../../lib/format";
 import type { DigitalOverviewDto } from "../../lib/types";
+import { BillingBadge } from "./BillingBadge";
 
 const kindLabel = { CONTRACT: "Contrato", DOMAIN: "Domínio", HOSTING: "Hospedagem" } as const;
 
@@ -81,6 +82,49 @@ export function DigitalOverview() {
                 {site.httpStatus ? ` · HTTP ${site.httpStatus}` : ""}
                 {site.since ? ` · desde ${formatDateTime(site.since)}` : ""}
                 {site.neverPause ? " · produto que nunca pausa" : ""}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {data.debtors.length > 0 && (
+        <div className="rounded-xl border border-amber-200 bg-white p-4 shadow-sm">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm font-semibold text-slate-900">
+              Clientes com pagamento pendente · {data.debtors.filter((d) => d.state === "EM_DEBITO").length} em débito
+            </p>
+            <Link href="/clientes?situacao=EM_DEBITO" className="text-xs font-medium text-primary-700 hover:underline">
+              Ver clientes em débito →
+            </Link>
+          </div>
+          <ul className="divide-y divide-slate-100 text-sm">
+            {data.debtors.map((d) => (
+              <li key={d.subscriptionId} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                <span className="min-w-0">
+                  <Link href={`/assinaturas/${d.subscriptionId}`} className="font-medium text-slate-800 hover:underline">
+                    {d.clientName}
+                  </Link>{" "}
+                  <span className="text-slate-500">· {d.contract}{d.deliveryName ? ` — ${d.deliveryName}` : ""}</span>
+                </span>
+                <span className="flex flex-wrap items-center gap-2">
+                  {d.amount && <span className="text-slate-700">{formatBrl(d.amount)}</span>}
+                  <BillingBadge
+                    billing={{
+                      state: d.state,
+                      daysToDue: d.daysOverdue ? -d.daysOverdue : null,
+                      dueDate: d.dueDate,
+                      amount: d.amount,
+                      graceUntil: d.graceUntil,
+                      agreementBroken: d.agreementBroken,
+                    }}
+                  />
+                  {d.deliveryId && !d.neverPause && (
+                    <Link href={`/entregas/${d.deliveryId}`} className="text-xs font-medium text-primary-700 hover:underline">
+                      decidir →
+                    </Link>
+                  )}
+                </span>
               </li>
             ))}
           </ul>

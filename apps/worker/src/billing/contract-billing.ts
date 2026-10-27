@@ -160,15 +160,28 @@ export async function queueContractReminders(params: {
     },
   });
 
-  // Nome do contrato (plano — entrega) pelo id no originId
+  // Contrato (plano — entrega), status e prazo combinado pelo id no originId
   const subscriptionIds = [...new Set(entries.map((e) => (e.originId ?? "").split(":")[0]).filter(Boolean))] as string[];
   const contracts = new Map(
     (
       await prisma.subscription.findMany({
         where: { id: { in: subscriptionIds } },
-        select: { id: true, plan: { select: { name: true } }, delivery: { select: { name: true } } },
+        select: {
+          id: true,
+          status: true,
+          graceUntil: true,
+          plan: { select: { name: true } },
+          delivery: { select: { name: true, status: true } },
+        },
       })
-    ).map((s) => [s.id, `${s.plan.name}${s.delivery ? ` — ${s.delivery.name}` : ""}`]),
+    ).map((s) => [
+      s.id,
+      {
+        label: `${s.plan.name}${s.delivery ? ` — ${s.delivery.name}` : ""}`,
+        cancelled: s.status === "CANCELLED" || s.delivery?.status === "CANCELLED",
+        graceUntil: s.graceUntil,
+      },
+    ]),
   );
 
   let queued = 0;
@@ -179,14 +192,21 @@ export async function queueContractReminders(params: {
   for (const entry of entries) {
     const client = entry.client;
     if (!client) continue;
+    const info = contracts.get((entry.originId ?? "").split(":")[0] ?? "");
+    // Contrato cancelado ou site inativado (cliente desistiu): não cobra
+    if (info?.cancelled) continue;
     const daysUntil = localDayNumber(entry.dueDate) - today;
     const warnDays = entry.company.overdueWarnDays;
+    const grace = info?.graceUntil ?? null;
+    const graceActive = grace !== null && localDayNumber(grace) >= today;
     let kind: ReminderKind | null = null;
     if (daysUntil >= 1 && daysUntil <= 3) kind = "BEFORE";
     else if (daysUntil === 0) kind = "DUE";
-    // Aviso de atraso a partir do dia configurado, só até o dia da pausa
-    // (a pausa em si não existe: nada é pausado)
-    else if (-daysUntil >= Math.max(warnDays, 1) && -daysUntil < entry.company.overduePauseDays) kind = "OVERDUE";
+    // Atraso: a partir do dia de aviso até o dia de débito; com prazo
+    // combinado, espera o prazo e, se vencer sem pagamento, avisa de novo
+    else if (daysUntil < 0 && !graceActive) {
+      if (grace !== null || (-daysUntil >= Math.max(warnDays, 1) && -daysUntil < entry.company.overduePauseDays)) kind = "OVERDUE";
+    }
     if (!kind) continue;
 
     // Produtos próprios / estratégicos: nunca cobrar automaticamente
@@ -227,14 +247,15 @@ export async function queueContractReminders(params: {
       continue;
     }
 
-    const idempotencyKey = `cobranca:${entry.id}:${kind}`;
+    // Depois de um prazo descumprido, o aviso de atraso sai uma vez por prazo
+    const idempotencyKey = `cobranca:${entry.id}:${kind}${kind === "OVERDUE" && grace ? `:${isoDay(grace)}` : ""}`;
     const exists = await prisma.whatsAppMessage.findFirst({
       where: { companyId: entry.companyId, idempotencyKey },
       select: { id: true },
     });
     if (exists) continue;
 
-    const contract = contracts.get((entry.originId ?? "").split(":")[0] ?? "") ?? "seu contrato";
+    const contract = info?.label ?? "seu contrato";
     const variables = [
       client.name,
       contract,
@@ -268,4 +289,70 @@ export async function queueContractReminders(params: {
   }
 
   return { queued, skipped };
+}
+
+/**
+ * Pausa automática (2026-10-27) — DESLIGADA por padrão; só roda para a
+ * empresa que ligou "pausar automaticamente após N dias em débito". Nunca
+ * toca entrega "nunca pausar", entrega já pausada/inativa nem contrato em
+ * prazo combinado. A entrega fica marcada `pausedForDebt` e volta sozinha
+ * quando o pagamento é registrado.
+ */
+export async function autoPauseOverdue(params: { prisma: PrismaClient; now?: Date }): Promise<{ paused: number }> {
+  const { prisma } = params;
+  const now = params.now ?? new Date();
+  const today = localDayNumber(now);
+  const companies = await prisma.company.findMany({
+    where: { status: "ACTIVE", autoPauseEnabled: true },
+    select: { id: true, autoPauseDays: true },
+  });
+  let paused = 0;
+  for (const company of companies) {
+    const contracts = await prisma.subscription.findMany({
+      where: {
+        companyId: company.id,
+        status: { not: "CANCELLED" },
+        delivery: { status: "ACTIVE", neverPause: false },
+      },
+      select: { id: true, graceUntil: true, deliveryId: true },
+    });
+    for (const contract of contracts) {
+      if (contract.graceUntil && localDayNumber(contract.graceUntil) >= today) continue;
+      const oldest = await prisma.financialEntry.findFirst({
+        where: {
+          companyId: company.id,
+          origin: "SUBSCRIPTION",
+          status: "OPEN",
+          originId: { startsWith: `${contract.id}:` },
+        },
+        orderBy: { dueDate: "asc" },
+        select: { dueDate: true },
+      });
+      if (!oldest) continue;
+      const overdueDays = today - localDayNumber(oldest.dueDate);
+      if (overdueDays < company.autoPauseDays || !contract.deliveryId) continue;
+      const deliveryId = contract.deliveryId;
+      await prisma.$transaction(async (tx) => {
+        // Condições repetidas no WHERE: nunca pausa "nunca pausar", mesmo em corrida
+        const result = await tx.clientDelivery.updateMany({
+          where: { id: deliveryId, companyId: company.id, status: "ACTIVE", neverPause: false },
+          data: { status: "PAUSED", pausedForDebt: true, statusChangedAt: now },
+        });
+        if (result.count === 0) return;
+        paused += 1;
+        await tx.billingActionLog.create({
+          data: {
+            companyId: company.id,
+            deliveryId,
+            subscriptionId: contract.id,
+            action: "AUTO_PAUSE",
+            fromStatus: "ACTIVE",
+            toStatus: "PAUSED",
+            reason: `Pausa automática: ${overdueDays} dia(s) em atraso`,
+          },
+        });
+      });
+    }
+  }
+  return { paused };
 }

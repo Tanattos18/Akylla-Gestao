@@ -11,9 +11,12 @@ Em 2026-10-24 entraram os logins cifrados das entregas (com auditoria),
 o monitor de sites (só leitura) e o novo Início; depois, a cobrança
 automática dos contratos, os lembretes de cobrança pelo WhatsApp (em
 simulação até a Meta), os avisos de renovação e os relatórios de
-contratos. Pendência desta linha:
-a pausa real por atraso (hoje só configuração, proibida até
-autorização). Detalhes no CHANGELOG.
+contratos. Em 2026-10-27 o proprietário autorizou a pausa dos sites vendidos: entrou o
+controle manual (pausar, ativar, inativar, prazo), a situação de cobrança,
+o script de status para os sites dos clientes e a pausa automática
+opcional (desligada). Pendência desta linha:
+instalar o código de status nos sites vendidos e aprovar os modelos de
+cobrança na Meta. Detalhes no CHANGELOG.
 
 ### Roteiro anterior
 

@@ -8,6 +8,8 @@ import { CredentialsController } from "./credentials.controller";
 import { CredentialsService } from "./credentials.service";
 import { DigitalOverviewController } from "./overview.controller";
 import { DigitalReportsController } from "./reports.controller";
+import { BillingControlController, PublicSiteStatusController } from "./billing-control.controller";
+import { BillingControlService } from "./billing-control.service";
 
 /** Transformação 2026-10-23: catálogo digital, entregas por cliente e política de atraso. */
 @Module({
@@ -19,8 +21,10 @@ import { DigitalReportsController } from "./reports.controller";
     CredentialsController,
     DigitalOverviewController,
     DigitalReportsController,
+    BillingControlController,
+    PublicSiteStatusController,
   ],
-  providers: [DigitalProductsService, DeliveriesService, CredentialsService],
+  providers: [DigitalProductsService, DeliveriesService, CredentialsService, BillingControlService],
   exports: [DigitalProductsService, DeliveriesService],
 })
 export class DigitalModule {}

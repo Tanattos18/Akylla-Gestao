@@ -1,4 +1,5 @@
 import type {
+  BillingStatusDto,
   ContractReceivableDto,
   DeliveryStatus,
   DigitalBillingPeriod,
@@ -278,6 +279,8 @@ export interface ClientDto {
   createdAt: string;
   updatedAt: string;
   _count?: { sales: number };
+  /** 2026-10-27: pior situação de cobrança entre os contratos */
+  billing?: BillingStatusDto | null;
 }
 
 export interface ServiceDto {
@@ -755,7 +758,11 @@ export interface SubscriptionDto {
   updatedAt: string;
   client: { id: string; name: string; phone: string | null; mobile: string | null };
   /** Transformação 2026-10-23: entrega coberta pelo contrato */
-  delivery: { id: string; name: string; type: DigitalProductType; neverPause: boolean } | null;
+  delivery: { id: string; name: string; type: DigitalProductType; neverPause: boolean; status: DeliveryStatus } | null;
+  /** 2026-10-27: prazo combinado e situação de cobrança */
+  graceUntil?: string | null;
+  graceNote?: string | null;
+  billing?: BillingStatusDto | null;
   plan: {
     id: string;
     name: string;
@@ -1166,6 +1173,11 @@ export interface FiscalConfigDto extends FiscalStatusDto {
 // ---------------------------------------------------------------------------
 
 export type {
+  BillingActionDto,
+  BillingSettingsDto,
+  BillingState,
+  BillingStatusDto,
+  BillingTextKey,
   ClientHistoryItemDto,
   ContractReceivableDto,
   CredentialAccessLogDto,
@@ -1180,6 +1192,11 @@ export type {
   SiteStatus,
 } from "@petflow/shared";
 export {
+  BILLING_TEXT_VARIABLES,
+  billingActionLabels,
+  billingStateLabels,
+  DEFAULT_BILLING_TEXTS,
+  renderBillingText,
   credentialActionLabels,
   deliveryStatusLabels,
   digitalBillingPeriodLabels,
@@ -1221,6 +1238,12 @@ export interface DeliveryDto {
   monitorResponseMs: number | null;
   monitorCheckedAt: string | null;
   monitorDownSince: string | null;
+  /** 2026-10-27: controle de pausa */
+  showWarningBanner: boolean;
+  pausedForDebt: boolean;
+  statusChangedAt: string | null;
+  hasInstallCode: boolean;
+  billing: BillingStatusDto | null;
   contractsCount: number;
   createdAt: string;
   updatedAt: string;

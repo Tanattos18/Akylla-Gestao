@@ -9,9 +9,9 @@ const inputClass =
   "w-24 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none";
 
 /**
- * Política de atraso dos contratos (transformação 2026-10-23): aviso no dia
- * N e pausa da entrega no dia M. Por enquanto só fica registrada — nenhuma
- * entrega é pausada automaticamente, e entregas "nunca pausar" ficam de fora.
+ * Política de atraso dos contratos: aviso no dia N e "em débito" a partir do
+ * dia M (2026-10-27: a pausa é decisão do dono ou da pausa automática
+ * opcional; entregas "nunca pausar" ficam sempre de fora).
  */
 export function OverduePolicyForm() {
   const toast = useToast();
@@ -56,9 +56,9 @@ export function OverduePolicyForm() {
       <div>
         <h3 className="text-sm font-semibold text-slate-900">Atraso de contratos</h3>
         <p className="mt-1 text-sm text-slate-500">
-          Quantos dias depois do vencimento o cliente recebe o aviso e quando a entrega seria pausada. Por enquanto
-          a configuração só fica registrada: nenhuma entrega é pausada automaticamente, e as marcadas como
-          &quot;nunca pausar&quot; sempre ficam de fora.
+          Quantos dias depois do vencimento o cliente recebe o aviso de atraso e a partir de quando o contrato
+          aparece como &quot;em débito&quot; no Início. Pausar o site é decisão sua (botão na entrega ou no contrato);
+          as entregas &quot;nunca pausar&quot; sempre ficam de fora.
         </p>
       </div>
       <div className="flex flex-wrap gap-6">
@@ -67,7 +67,7 @@ export function OverduePolicyForm() {
           <input id="overdue-warn" type="number" min={0} max={365} value={warnDays} onChange={(e) => setWarnDays(e.target.value)} className={inputClass} />
         </div>
         <div>
-          <label htmlFor="overdue-pause" className="mb-1 block text-sm text-slate-700">Pausa no dia</label>
+          <label htmlFor="overdue-pause" className="mb-1 block text-sm text-slate-700">Em débito a partir do dia</label>
           <input id="overdue-pause" type="number" min={1} max={365} value={pauseDays} onChange={(e) => setPauseDays(e.target.value)} className={inputClass} />
         </div>
       </div>

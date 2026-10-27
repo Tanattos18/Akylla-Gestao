@@ -230,7 +230,7 @@ export default function AssinaturaDetalhePage() {
         )}
       </div>
 
-      <ContractBilling subscription={subscription} />
+      <ContractBilling subscription={subscription} isAdmin={isAdmin} onChanged={() => void load()} />
 
       <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
         <h3 className="border-b border-slate-100 px-6 py-4 text-sm font-semibold uppercase tracking-wide text-slate-500">

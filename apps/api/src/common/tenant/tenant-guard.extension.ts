@@ -52,6 +52,7 @@ export const TENANT_MODELS: ReadonlySet<string> = new Set([
   "DeliveryCredential",
   "CredentialAccessLog",
   "SiteCheck",
+  "BillingActionLog",
 ]);
 
 /** Operações cujo `where` aceita filtros (permite injeção via AND). */

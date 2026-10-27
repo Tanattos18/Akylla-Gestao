@@ -1,5 +1,18 @@
 # Banco de dados — diretrizes e modelo atual
 
+## Pausa dos sites vendidos (2026-10-27)
+
+Migration `20261027120000_site_pause` — só adiciona:
+
+- `ClientDelivery.publicKey` (único, chave do script de status),
+  `showWarningBanner`, `pausedForDebt`, `statusChangedAt`.
+- `Subscription.graceUntil` e `graceNote` (prazo combinado).
+- `Company.autoPauseEnabled` (padrão **false**), `autoPauseDays` (15) e
+  os textos editáveis (`billingText*`, `siteWarningText`,
+  `siteSuspendedText`; null = padrão).
+- `BillingActionLog` (imutável): ação (`BillingAction`), status de/para,
+  motivo, prazo, quem (null = sistema). RLS ENABLE + FORCE.
+
 ## Cobrança automática dos contratos (2026-10-24)
 
 Migration `20261024150000_contract_billing` — só adiciona

@@ -6,6 +6,40 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-27 - Pausa dos sites vendidos, prazo combinado e situação de cobrança
+
+Autorizado pelo proprietário: pausar os sites **vendidos a clientes** até
+pagarem; os sites dele ("nunca pausar") continuam intocáveis.
+
+### Adicionado
+
+- **Controle do site** na entrega e no contrato (só ADMIN, com motivo):
+  pausar até pagar, ativar, inativar (cliente desistiu) e reativar.
+  "Nunca pausar" é bloqueado no servidor (409), na pausa automática e no
+  endpoint público.
+- **Dar prazo** no contrato (data + acordo): nada é pausado e o aviso de
+  atraso espera; vencido sem pagamento → "em débito (acordo descumprido)".
+- **Situação de cobrança** calculada no servidor: em dia, vence em breve,
+  vencido, em débito (padrão: dia 10), em acordo, pausado, inativo.
+  "Clientes com pagamento pendente" no Início; filtro por situação em
+  Clientes e Entregas; coluna em Contratos.
+- **Pagamento reativa** o site pausado por débito (e encerra o prazo);
+  site inativado não volta sozinho.
+- **Histórico imutável** das decisões (`BillingActionLog`), também na
+  ficha do cliente.
+- **Pausa automática opcional** (worker) após N dias de atraso —
+  **desligada por padrão**.
+- **Mensagens editáveis** (Configurações › Contratos): aviso antes,
+  vencido/renove, prazo combinado, faixa de pendência e página de site
+  suspenso; botões "Copiar" no contrato.
+- **Pausa real nos sites dos clientes**: endpoint público somente leitura
+  `GET /api/public/site-status/:chave` (sem dados pessoais, CORS aberto,
+  cache 60 s, limite por IP) e o script `akylla-status.js` (falha
+  aberta). Botão "Copiar código de instalação" na entrega. Guia:
+  `docs/akylla/PAUSA_DE_SITES.md`.
+- Migration aditiva `20261027120000_site_pause` (RLS FORCE em
+  `BillingActionLog`). Testes `tests/integration/site-pause.test.ts`.
+
 ## [Akylla Gestão] - 2026-10-24 - Cobrança automática, lembretes, avisos de renovação e relatórios
 
 ### Adicionado

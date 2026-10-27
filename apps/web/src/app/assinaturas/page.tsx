@@ -13,6 +13,7 @@ import {
   type SubscriptionStatus,
 } from "../../lib/types";
 import { DataTable } from "../../components/ui/DataTable";
+import { BillingBadge } from "../../components/digital/BillingBadge";
 
 const PAGE_SIZE = 20;
 
@@ -161,6 +162,7 @@ export default function AssinaturasPage() {
                   )}</> },
           { key: "c2", header: "Período", cell: (subscription) => <>{formatDate(subscription.startAt)} — {formatDate(subscription.endAt)}</> },
           { key: "c3", header: "Renovações", cell: (subscription) => subscription.renewalCount },
+          { key: "c5", header: "Cobrança", cell: (subscription) => <BillingBadge billing={subscription.billing} /> },
           { key: "c4", header: "Status", cell: (subscription) => <><span className={statusBadge[subscription.status]}>
                     {subscriptionStatusLabels[subscription.status]}
                   </span></> },

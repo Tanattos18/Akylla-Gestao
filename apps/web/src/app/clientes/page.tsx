@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "../../lib/api";
 import { fetchSession, type Session } from "../../lib/session";
-import type { ClientDto, Paginated } from "../../lib/types";
+import { billingStateLabels, type ClientDto, type Paginated } from "../../lib/types";
 import { useDialog } from "../../components/ui/Dialog";
+import { BillingBadge, BILLING_FILTER_OPTIONS } from "../../components/digital/BillingBadge";
 import { DataTable } from "../../components/ui/DataTable";
 import { useToast } from "../../components/ui/Toast";
 import { Pagination } from "../../components/ui/Pagination";
@@ -40,6 +41,7 @@ export default function ClientesPage() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
+  const [billingFilter, setBillingFilter] = useState("");
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -48,11 +50,10 @@ export default function ClientesPage() {
   const [saving, setSaving] = useState(false);
   const [listError, setListError] = useState<string | null>(null);
 
-  const loadClients = useCallback(async (term: string, pageNumber = 1) => {
+  const loadClients = useCallback(async (term: string, pageNumber = 1, billing = "") => {
     try {
-      const query = term.trim()
-        ? `&search=${encodeURIComponent(term.trim())}`
-        : "";
+      const query =
+        (term.trim() ? `&search=${encodeURIComponent(term.trim())}` : "") + (billing ? `&billingState=${billing}` : "");
       const data = await api<Paginated<ClientDto>>(`/api/clients?pageSize=${PAGE_SIZE}&page=${pageNumber}${query}`);
       setClients(data.items);
       setTotal(data.total);
@@ -80,12 +81,18 @@ export default function ClientesPage() {
   }, []);
 
   useEffect(() => {
-    if (session) void loadClients(search, page);
-  }, [session, loadClients, search, page]);
+    if (session) void loadClients(search, page, billingFilter);
+  }, [session, loadClients, search, page, billingFilter]);
 
   useEffect(() => {
     setPage(1);
-  }, [search]);
+  }, [search, billingFilter]);
+
+  // Filtro vindo do Início (ex.: /clientes?situacao=EM_DEBITO)
+  useEffect(() => {
+    const situacao = new URLSearchParams(window.location.search).get("situacao");
+    if (situacao) setBillingFilter(situacao);
+  }, []);
 
   function startEdit(client: ClientDto) {
     setEditingId(client.id);
@@ -427,6 +434,18 @@ export default function ClientesPage() {
           placeholder="Nome, telefone, email ou CPF"
           className="w-full max-w-sm rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none"
         />
+        <label htmlFor="client-billing" className="sr-only">Situação de cobrança</label>
+        <select
+          id="client-billing"
+          value={billingFilter}
+          onChange={(event) => setBillingFilter(event.target.value)}
+          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+        >
+          <option value="">Todas as situações</option>
+          {BILLING_FILTER_OPTIONS.map((state) => (
+            <option key={state} value={state}>{billingStateLabels[state]}</option>
+          ))}
+        </select>
       </div>
 
       <DataTable
@@ -438,6 +457,7 @@ export default function ClientesPage() {
           { key: "c1", header: "Contato", cell: (client) => [client.mobile, client.phone, client.email].filter(Boolean).join(" · ") ||
                     "—" },
           { key: "c2", header: "Cidade", cell: (client) => [client.city, client.state].filter(Boolean).join("/") || "—" },
+          { key: "c3", header: "Cobrança", cell: (client) => <BillingBadge billing={client.billing} showDetail={false} /> },
           { key: "c4", header: "Status", cell: (client) => <><span
                     className={
                       client.status === "ACTIVE"

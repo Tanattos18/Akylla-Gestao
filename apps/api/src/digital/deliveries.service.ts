@@ -2,6 +2,7 @@ import { ConflictException, Inject, Injectable, NotFoundException } from "@nestj
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.module";
 import {
+  billingActionLabels,
   digitalProductTypeLabels,
   type ClientHistoryItemDto,
   type CreateDeliveryInput,
@@ -9,6 +10,10 @@ import {
   type UpdateDeliveryInput,
 } from "@petflow/shared";
 import type { AuthContext } from "../common/decorators/auth.decorator";
+import type { BillingStatusDto } from "@petflow/shared";
+import type { DeliveryStatus } from "@prisma/client";
+import { loadBillingStatuses } from "./billing-state";
+import { logBillingAction } from "./billing-control.service";
 
 const deliverySelect = {
   id: true,
@@ -32,6 +37,10 @@ const deliverySelect = {
   monitorResponseMs: true,
   monitorCheckedAt: true,
   monitorDownSince: true,
+  showWarningBanner: true,
+  pausedForDebt: true,
+  statusChangedAt: true,
+  publicKey: true,
   createdAt: true,
   updatedAt: true,
   client: { select: { id: true, name: true } },
@@ -45,13 +54,31 @@ function day(value: Date | null): string | null {
   return value ? value.toISOString().slice(0, 10) : null;
 }
 
-function formatDelivery({ _count, ...delivery }: DeliveryRecord) {
+function formatDelivery({ _count, publicKey, ...delivery }: DeliveryRecord, billing?: BillingStatusDto | null) {
   return {
     ...delivery,
+    // A chave só sai no "Copiar código de instalação" (ADMIN)
+    hasInstallCode: publicKey !== null,
+    billing: billing ?? fallbackBilling(delivery.status),
     domainRenewalAt: day(delivery.domainRenewalAt),
     hostingRenewalAt: day(delivery.hostingRenewalAt),
     contractsCount: _count.subscriptions,
   };
+}
+
+/** Entrega sem contrato: situação só pelo status. */
+function fallbackBilling(status: DeliveryStatus): BillingStatusDto | null {
+  if (status === "PAUSED" || status === "CANCELLED") {
+    return {
+      state: status === "PAUSED" ? "PAUSADO" : "INATIVO",
+      daysToDue: null,
+      dueDate: null,
+      amount: null,
+      graceUntil: null,
+      agreementBroken: false,
+    };
+  }
+  return null;
 }
 
 /** "AAAA-MM-DD" → meia-noite UTC; null limpa; undefined não altera. */
@@ -98,6 +125,16 @@ export class DeliveriesService {
     if (query.type) andConditions.push({ type: query.type });
     if (query.status) andConditions.push({ status: query.status });
 
+    const statuses = await loadBillingStatuses(this.prisma, auth.companyId);
+    const billingOf = (d: { id: string; status: DeliveryStatus }) => statuses.byDelivery.get(d.id) ?? fallbackBilling(d.status);
+    if (query.billingState) {
+      const all = await this.prisma.clientDelivery.findMany({
+        where: { companyId: auth.companyId },
+        select: { id: true, status: true },
+      });
+      andConditions.push({ id: { in: all.filter((d) => billingOf(d)?.state === query.billingState).map((d) => d.id) } });
+    }
+
     const where: Prisma.ClientDeliveryWhereInput = {
       companyId: auth.companyId,
       ...(andConditions.length > 0 ? { AND: andConditions } : {}),
@@ -114,7 +151,7 @@ export class DeliveriesService {
       this.prisma.clientDelivery.count({ where }),
     ]);
 
-    return { items: items.map(formatDelivery), total, page: query.page, pageSize: query.pageSize };
+    return { items: items.map((d) => formatDelivery(d, billingOf(d))), total, page: query.page, pageSize: query.pageSize };
   }
 
   async get(auth: AuthContext, id: string) {
@@ -123,7 +160,8 @@ export class DeliveriesService {
       select: deliverySelect,
     });
     if (!delivery) throw new NotFoundException("Entrega não encontrada");
-    return formatDelivery(delivery);
+    const statuses = await loadBillingStatuses(this.prisma, auth.companyId);
+    return formatDelivery(delivery, statuses.byDelivery.get(delivery.id) ?? null);
   }
 
   async create(auth: AuthContext, input: CreateDeliveryInput) {
@@ -156,6 +194,7 @@ export class DeliveriesService {
         status,
         neverPause,
         monitorEnabled: input.monitorEnabled ?? true,
+        showWarningBanner: input.showWarningBanner ?? false,
       },
       select: deliverySelect,
     });
@@ -168,8 +207,29 @@ export class DeliveriesService {
     if (input.productId) await this.assertProduct(auth, input.productId);
 
     this.assertPausable(input.neverPause ?? existing.neverPause, input.status ?? existing.status);
+    const statusChanged = input.status !== undefined && input.status !== existing.status;
 
-    const updated = await this.prisma.clientDelivery.update({
+    const updated = await this.prisma.$transaction(async (tx) => {
+      if (statusChanged && input.status) {
+        // Mudança de status pela edição também entra no histórico
+        await logBillingAction(tx, {
+          companyId: auth.companyId,
+          deliveryId: existing.id,
+          action:
+            input.status === "PAUSED"
+              ? "PAUSE"
+              : input.status === "CANCELLED"
+                ? "DEACTIVATE"
+                : existing.status === "CANCELLED"
+                  ? "REACTIVATE"
+                  : "ACTIVATE",
+          fromStatus: existing.status,
+          toStatus: input.status,
+          reason: "Alterado na edição da entrega",
+          userId: auth.userId,
+        });
+      }
+      return tx.clientDelivery.update({
       where: { id: existing.id },
       data: {
         ...(input.name !== undefined ? { name: input.name } : {}),
@@ -186,10 +246,13 @@ export class DeliveriesService {
         ...(input.status !== undefined ? { status: input.status } : {}),
         ...(input.neverPause !== undefined ? { neverPause: input.neverPause } : {}),
         ...(input.monitorEnabled !== undefined ? { monitorEnabled: input.monitorEnabled } : {}),
+        ...(input.showWarningBanner !== undefined ? { showWarningBanner: input.showWarningBanner } : {}),
+        ...(statusChanged ? { statusChangedAt: new Date(), pausedForDebt: input.status === "PAUSED" } : {}),
       },
-      select: deliverySelect,
+      select: { id: true },
+      });
     });
-    return formatDelivery(updated);
+    return this.get(auth, updated.id);
   }
 
   /** Últimas checagens do monitor (só leitura). */
@@ -218,6 +281,24 @@ export class DeliveriesService {
 
     const scope = { clientId, companyId: auth.companyId };
     const take = 100;
+    const actions = await this.prisma.billingActionLog.findMany({
+      where: {
+        companyId: auth.companyId,
+        OR: [{ delivery: { clientId } }, { subscription: { clientId } }],
+      },
+      select: {
+        action: true,
+        reason: true,
+        graceUntil: true,
+        createdAt: true,
+        deliveryId: true,
+        subscriptionId: true,
+        delivery: { select: { name: true } },
+        user: { select: { name: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    });
     const [deliveries, contracts, entries, appointments, orders] = await Promise.all([
       this.prisma.clientDelivery.findMany({
         where: scope,
@@ -316,6 +397,17 @@ export class DeliveriesService {
       });
     }
 
+    for (const a of actions) {
+      const prazo = a.graceUntil ? ` até ${a.graceUntil.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}` : "";
+      items.push({
+        kind: "BILLING_ACTION",
+        at: a.createdAt.toISOString(),
+        title: `${billingActionLabels[a.action]}${prazo}${a.delivery ? `: ${a.delivery.name}` : ""}`,
+        detail: [a.reason, a.user ? `por ${a.user.name}` : "pelo sistema"].filter(Boolean).join(" · "),
+        href: a.deliveryId ? `/entregas/${a.deliveryId}` : a.subscriptionId ? `/assinaturas/${a.subscriptionId}` : null,
+      });
+    }
+
     return items.sort((a, b) => b.at.localeCompare(a.at));
   }
 
@@ -328,7 +420,7 @@ export class DeliveriesService {
   }
 
   private assertPausable(neverPause: boolean, status: string) {
-    if (neverPause && status === "PAUSED") {
+    if (neverPause && (status === "PAUSED" || status === "CANCELLED")) {
       throw new ConflictException("Esta entrega está marcada para nunca ser pausada");
     }
   }

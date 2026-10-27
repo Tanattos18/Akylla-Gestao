@@ -15,6 +15,7 @@ import {
   type SubscriptionDto,
 } from "../../../lib/types";
 import { CredentialsPanel } from "../../../components/digital/CredentialsPanel";
+import { SiteControl } from "../../../components/digital/SiteControl";
 import { DeliveryForm } from "../../../components/digital/DeliveryForm";
 import { DeliveryStatusBadge, ExternalLink, NeverPauseBadge, SiteStatusBadge } from "../../../components/digital/DeliveryBadges";
 
@@ -123,6 +124,8 @@ export default function EntregaDetalhePage() {
           {delivery.notes && <p className="mt-4 whitespace-pre-line border-t border-slate-100 pt-4 text-sm text-slate-700">{delivery.notes}</p>}
         </div>
       )}
+
+      <SiteControl delivery={delivery} isAdmin={isAdmin} onChanged={() => void load()} />
 
       {delivery.siteUrl && (
         <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
