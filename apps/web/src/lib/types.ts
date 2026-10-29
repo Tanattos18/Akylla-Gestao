@@ -885,7 +885,8 @@ export type BusinessModule =
   | "COMMISSIONS"
   | "CREDIT"
   | "SERVICE_ORDERS"
-  | "FISCAL";
+  | "FISCAL"
+  | "ADS";
 
 export type CompanyModuleStatus = "ACTIVE" | "DISABLED";
 
@@ -1251,3 +1252,30 @@ export interface DeliveryDto {
   product: { id: string; name: string } | null;
 }
 
+// 2026-10-29 — gestão de anúncios (fases A1 e A2)
+export type {
+  AdAccountDto,
+  AdCampaignDetailDto,
+  AdCampaignDto,
+  AdCampaignListItemDto,
+  AdCampaignLogDto,
+  AdCampaignStatus,
+  AdClientSummaryDto,
+  AdImportReportDto,
+  AdIndicatorsDto,
+  AdLinkDto,
+  AdLogAction,
+  AdMetricDayDto,
+  AdMetricSource,
+  AdObjective,
+  AdOverviewDto,
+  AdPlatform,
+} from "@petflow/shared";
+export {
+  adCampaignStatusLabels,
+  adLogActionLabels,
+  adMetricSourceLabels,
+  adObjectiveLabels,
+  adObjectiveResultLabels,
+  adPlatformLabels,
+} from "@petflow/shared";

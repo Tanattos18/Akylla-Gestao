@@ -90,7 +90,7 @@ describe("catálogo de kits e módulos", () => {
 
     const modules = await http().get("/api/billing/modules").set("Cookie", cookie);
     expect(modules.status).toBe(200);
-    expect(modules.body.items).toHaveLength(8);
+    expect(modules.body.items).toHaveLength(9);
     expect(modules.body.items.find((m: { module: string }) => m.module === "FISCAL")).toMatchObject({
       label: expect.any(String),
       priceMonthly: "39.90",
@@ -105,7 +105,7 @@ describe("catálogo de kits e módulos", () => {
     const catalog = await http().get("/api/platform/catalog").set("Cookie", ownerCookie);
     expect(catalog.status).toBe(200);
     expect(catalog.body.plans.length).toBeGreaterThanOrEqual(3);
-    expect(catalog.body.modules).toHaveLength(8);
+    expect(catalog.body.modules).toHaveLength(9);
 
     const changed = await http().put("/api/platform/modules/SERVICES").set("Cookie", ownerCookie).send({ priceMonthly: "12.50" });
     expect(changed.status).toBe(200);

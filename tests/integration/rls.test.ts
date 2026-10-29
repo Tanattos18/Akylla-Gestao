@@ -40,6 +40,8 @@ const TENANT_TABLES = [
   "PlatformPayment",
   // Transformação 2026-10-23
   "DigitalProduct", "ClientDelivery", "DeliveryCredential", "CredentialAccessLog", "SiteCheck", "BillingActionLog",
+  // 2026-10-29: anúncios
+  "AdAccount", "AdCampaign", "AdMetricDaily", "AdCampaignLog",
 ];
 
 /**

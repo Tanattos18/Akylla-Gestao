@@ -5,25 +5,40 @@ import Link from "next/link";
 import { api, ApiError } from "../../lib/api";
 import { formatBrl, formatDate, formatDateTime } from "../../lib/format";
 import {
+  adPlatformLabels,
   digitalProductTypeLabels,
   subscriptionStatusLabels,
+  type AdClientSummaryDto,
   type ClientHistoryItemDto,
+  type CompanyModuleDto,
   type DeliveryDto,
   type Paginated,
   type SubscriptionDto,
 } from "../../lib/types";
 import { Tabs } from "../ui/Tabs";
 import { DeliveryStatusBadge, ExternalLink, NeverPauseBadge } from "./DeliveryBadges";
+import { AdStatusBadge, formatInt } from "../ads/AdsShared";
 
-type TabKey = "entregas" | "contratos" | "historico";
+type TabKey = "entregas" | "contratos" | "anuncios" | "historico";
 
-/** Abas da ficha do cliente (transformação 2026-10-23): Entregas, Contratos e Histórico. */
+/**
+ * Abas da ficha do cliente (transformação 2026-10-23): Entregas, Contratos,
+ * Anúncios (2026-10-29, só com o módulo ADS ativo) e Histórico.
+ */
 export function ClientTabs({ clientId, clientName, isAdmin }: { clientId: string; clientName: string; isAdmin: boolean }) {
   const [tab, setTab] = useState<TabKey>("entregas");
   const [deliveries, setDeliveries] = useState<DeliveryDto[] | null>(null);
   const [contracts, setContracts] = useState<SubscriptionDto[] | null>(null);
   const [history, setHistory] = useState<ClientHistoryItemDto[] | null>(null);
+  const [ads, setAds] = useState<AdClientSummaryDto | null>(null);
+  const [adsEnabled, setAdsEnabled] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    api<CompanyModuleDto[]>("/api/company-modules")
+      .then((mods) => setAdsEnabled(mods.some((m) => m.module === "ADS" && m.status === "ACTIVE" && m.entitled !== false)))
+      .catch(() => setAdsEnabled(false));
+  }, []);
 
   useEffect(() => {
     const fail = (err: unknown) => setError(err instanceof ApiError ? err.message : "Falha ao carregar a ficha.");
@@ -46,7 +61,10 @@ export function ClientTabs({ clientId, clientName, isAdmin }: { clientId: string
     if (tab === "historico" && history === null) {
       api<ClientHistoryItemDto[]>(`/api/clients/${clientId}/history`).then(setHistory).catch(fail);
     }
-  }, [tab, clientId, deliveries, contracts, history]);
+    if (tab === "anuncios" && ads === null) {
+      api<AdClientSummaryDto>(`/api/clients/${clientId}/ads`).then(setAds).catch(fail);
+    }
+  }, [tab, clientId, deliveries, contracts, history, ads]);
 
   const newDeliveryHref = `/entregas/nova?cliente=${clientId}&nome=${encodeURIComponent(clientName)}`;
 
@@ -59,6 +77,7 @@ export function ClientTabs({ clientId, clientName, isAdmin }: { clientId: string
         items={[
           { key: "entregas", label: "Entregas" },
           { key: "contratos", label: "Contratos" },
+          ...(adsEnabled ? [{ key: "anuncios" as const, label: "Anúncios" }] : []),
           { key: "historico", label: "Histórico" },
         ]}
       >
@@ -124,6 +143,46 @@ export function ClientTabs({ clientId, clientName, isAdmin }: { clientId: string
                   </li>
                 ))}
               </ul>
+            )}
+          </div>
+        )}
+
+        {tab === "anuncios" && (
+          <div className="space-y-3">
+            {isAdmin && (
+              <div className="flex justify-end">
+                <Link href={`/anuncios/campanhas/nova?cliente=${clientId}&nome=${encodeURIComponent(clientName)}`} className="text-sm font-medium text-primary-700 hover:underline">
+                  Nova campanha
+                </Link>
+              </div>
+            )}
+            {ads === null ? (
+              <p className="text-sm text-slate-500">Carregando...</p>
+            ) : (
+              <>
+                <p className="text-sm text-slate-600">
+                  Investimento total do cliente: <strong>{formatBrl(ads.indicators.spend)}</strong> · {formatInt(ads.indicators.results)} resultado(s)
+                  {ads.indicators.costPerResult !== null && <> · {formatBrl(ads.indicators.costPerResult)} por resultado</>}
+                  {ads.accounts.length > 0 && <> · contas: {ads.accounts.map((a) => `${a.name} (${adPlatformLabels[a.platform]})`).join(", ")}</>}
+                </p>
+                {ads.campaigns.length === 0 ? (
+                  <p className="text-sm text-slate-500">Nenhuma campanha para este cliente.</p>
+                ) : (
+                  <ul className="divide-y divide-slate-100">
+                    {ads.campaigns.map((campaign) => (
+                      <li key={campaign.id} className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm">
+                        <div className="min-w-0">
+                          <Link href={`/anuncios/campanhas/${campaign.id}`} className="font-medium text-slate-800 hover:underline">{campaign.name}</Link>
+                          <p className="text-xs text-slate-500">
+                            {adPlatformLabels[campaign.platform]} · {campaign.promotedItem} · {formatBrl(campaign.indicators.spend)} · {formatInt(campaign.indicators.results)} resultado(s)
+                          </p>
+                        </div>
+                        <AdStatusBadge status={campaign.status} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
             )}
           </div>
         )}

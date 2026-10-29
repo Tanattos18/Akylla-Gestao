@@ -137,3 +137,36 @@ clientes, estoque, WhatsApp, títulos (AP/AR) e entradas de caixa.
 | Empresa A × Empresa B | isolamento em todos os endpoints + `tenancy-audit.test.ts` (CSV de A não contém dados de B) |
 | Exportação com caracteres especiais e fórmulas | "neutraliza fórmulas (inclusive com espaço inicial) e escapa vírgulas, aspas e quebras de linha" + teste original de `=HACK` |
 | Coerência entre indicadores e dados de origem | "resumo, relatórios de estoque/financeiro/caixa batem com o banco" |
+
+---
+
+## 8. Anúncios — módulo ADS (2026-10-29, fases A1 e A2)
+
+Calculados em `apps/api/src/ads/ads-indicators.ts` (funções puras,
+testadas em `tests/integration/ads.test.ts`). A verba é do **cliente**,
+paga direto à plataforma: estes números são referência de resultado, não
+dinheiro que passou pelo Akylla.
+
+**Regra da origem:** cada campanha tem no máximo uma linha por dia e por
+origem (`MANUAL`, `CSV`, `API`). No cálculo, vale **uma só** por dia, a de
+maior precedência: **API > CSV > MANUAL**. As outras continuam gravadas e
+aparecem como "substitui" na tela.
+
+| Indicador | Fórmula | Vazio / divisor zero |
+|---|---|---|
+| Investimento | soma de `spend` das linhas efetivas do período | `"0.00"` |
+| Impressões, alcance, cliques, resultados | soma das linhas efetivas (alcance somado por dia: é aproximado, as plataformas deduplicam pessoas no período) | `0` |
+| CTR | cliques ÷ impressões × 100, 2 casas | `null` (sem impressões) |
+| CPC | investimento ÷ cliques, 2 casas (arredondamento meio para cima) | `null` (sem cliques) |
+| Custo por resultado | investimento ÷ resultados, 2 casas | `null` (sem resultados) |
+| Dias com métrica | quantidade de dias com linha efetiva | `0` |
+| Campanhas ativas | campanhas com status `ACTIVE` (agora, não no período) | `0` |
+| Receita de gestão por mês | contratos `ACTIVE` cuja entrega é `ADS_MANAGEMENT` ou que estão ligados a uma campanha: `preço × 30 ÷ duração em dias` | `"0.00"` |
+| Sem métrica há 3+ dias | campanha `ACTIVE` cujo último dia lançado (ou, sem lançamento, o início ou a criação) tem 3 dias ou mais | lista vazia |
+
+- **Resultado** é o que o objetivo da campanha conta: conversas
+  (mensagens), visitas, cadastros, compras, visitas ao perfil.
+- Período da visão geral: `from`/`to` (padrão: do dia 1º do mês até hoje,
+  fuso de Brasília); `from > to` → 400.
+- "Contatos pelo site" e "custo por contato" dependem do rastreamento
+  (fase A3) e ainda não existem.

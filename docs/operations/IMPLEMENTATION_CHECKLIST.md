@@ -4,6 +4,21 @@
 > Este checklist cobre apenas a era do Akylla Gestão. O histórico
 > anterior à adaptação está preservado no Git.
 
+## Anúncios — plano `upgrade/PLANO_ANUNCIOS.md` (2026-10-29)
+
+- [x] Backup: tag `antes-anuncios-2026-10-29`
+- [x] A1 · Módulo `ADS` (+ `ModuleOffer`), tipo `ADS_MANAGEMENT`, empresa da plataforma com o módulo ativo
+- [x] A1 · `AdAccount`, `AdCampaign`, `AdMetricDaily`, `AdCampaignLog` (migration aditiva, RLS FORCE, `TENANT_TABLES`, log imutável por trigger)
+- [x] A1 · API `apps/api/src/ads` (escritas ADMIN, `@RequireModule("ADS")`), indicadores no servidor, precedência API > CSV > MANUAL, UTM único
+- [x] A1 · Telas `/anuncios`, `/anuncios/campanhas` (+ nova e detalhe), `/anuncios/contas`, aba Anúncios da ficha, menu Administração
+- [x] A2 · Importar CSV da Meta e do Google Ads com prévia (`source=CSV`, log `CSV_IMPORT`)
+- [x] Testes `tests/integration/ads.test.ts` + docs (`ANUNCIOS.md`, API, DATABASE, dicionário)
+- [ ] Aplicar na VPS (`update.sh`) e cadastrar os pacotes de gestão com preço (proprietário)
+- [ ] A3 · Rastreamento nos sites (aguarda autorização)
+- [ ] A4 · Relatórios para o cliente (aguarda autorização)
+- [ ] A5/A6 · APIs Meta e Google (aguardam app aprovado na Meta e developer token do Google)
+- [ ] A7 · Extras (decisão do proprietário)
+
 ## Transformação: clientes e produtos digitais (2026-10-23)
 
 - [x] 1 Backup: tag `versao-loja-2026-10-23`, ramo `versao-loja`, zip local do código

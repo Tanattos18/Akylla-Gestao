@@ -6,6 +6,62 @@ Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 > roteiro das Etapas 0–12, a partir de 2026-10-12). O histórico anterior à
 > adaptação não é mantido aqui — está preservado no histórico do Git.
 
+## [Akylla Gestão] - 2026-10-29 - Anúncios: base manual (A1) e importação do CSV (A2)
+
+Autorizado pelo proprietário: **somente** as fases A1 e A2 do plano de
+anúncios (`upgrade/PLANO_ANUNCIOS.md`, transcrito do PDF). Backup antes da
+mudança: tag `antes-anuncios-2026-10-29`. A verba dos anúncios é paga
+pelo cliente direto à plataforma; o Akylla só registra e calcula.
+
+### Adicionado
+
+- **Módulo `ADS` (Anúncios)** vendável como avulso (`ModuleOffer`
+  R$ 49,90 sugerido) e tipo de produto digital **Gestão de anúncios**
+  (`ADS_MANAGEMENT`). A empresa da plataforma (`akylla-gestao`) recebe o
+  módulo ativo na migration e no `npm run db:seed:akylla` (que também
+  cria o produto "Gestão de anúncios" no catálogo).
+- **Modelo** (migrations aditivas `20261029120000_ads_management` e
+  `20261029120100_ads_module_offer`): `AdAccount`, `AdCampaign`,
+  `AdMetricDaily` e `AdCampaignLog`, com RLS `ENABLE` + `FORCE` +
+  `tenant_isolation` na mesma migration, `TENANT_MODELS`/`TENANT_TABLES`
+  e trigger que recusa `UPDATE` no histórico.
+- **API** `apps/api/src/ads` (`@RequireModule("ADS")`, escritas só
+  ADMIN): visão geral, contas de anúncio, campanhas (UTM único gerado no
+  servidor), status com transições e motivo, lançamento/correção da
+  métrica do dia, link com UTM e aba do cliente (`/api/clients/:id/ads`).
+- **Indicadores no servidor**: CTR, CPC, custo por resultado,
+  investimento; divisão por zero → `null`; no mesmo dia vale uma origem
+  só (API > CSV > MANUAL). Dicionário §8.
+- **Importação do CSV (A2)** do Gerenciador de Anúncios da Meta e do
+  Google Ads: cabeçalhos pt-BR/en, vírgula decimal, UTF-8/UTF-16,
+  separador vírgula/ponto e vírgula/tabulação, títulos e linhas de total
+  ignorados, escolha da campanha quando a planilha tem várias, **prévia
+  antes de gravar**, `source=CSV` e registro `CSV_IMPORT`. Reaproveita o
+  `csv-parse` e o limite de linhas das Importações.
+- **Telas**: `/anuncios` (visão geral com alerta "sem métrica há 3+
+  dias"), `/anuncios/campanhas` (+ nova), `/anuncios/campanhas/[id]`
+  (indicadores, gráfico investimento × resultados, status, link UTM,
+  lançar dia, importar CSV com prévia, métricas e histórico),
+  `/anuncios/contas`, aba **Anúncios** na ficha do cliente (só com o
+  módulo ativo) e item **Anúncios** em Administração (adminOnly).
+- Exportação de dados da empresa inclui as tabelas de anúncios (sem token).
+- Testes `tests/integration/ads.test.ts` (26): isolamento por empresa,
+  AdminGuard, `MODULE_NOT_CONTRACTED`, módulo desativado, indicadores,
+  precedência, UTM único, log imutável, visão geral, CSV Meta e Google.
+- Docs: `docs/akylla/ANUNCIOS.md` (guia), `upgrade/PLANO_ANUNCIOS.md`,
+  `API.md`, `DATABASE.md`, `DICIONARIO_INDICADORES.md`.
+
+### Alterado
+
+- `company-modules` e o catálogo de módulos passam de 8 para 9 itens
+  (testes `company-modules` e `kits` ajustados). O kit Avançado não
+  inclui `ADS` (avulso).
+
+### Fora desta entrega
+
+- Fases A3 (rastreamento), A4 (relatórios), A5/A6 (APIs Meta/Google) e
+  A7, que aguardam autorização. Nenhum código foi copiado de terceiros.
+
 ## [Akylla Gestão] - 2026-10-27 - Pausa dos sites vendidos, prazo combinado e situação de cobrança
 
 Autorizado pelo proprietário: pausar os sites **vendidos a clientes** até

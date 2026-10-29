@@ -2,6 +2,15 @@
 
 ## Etapa atual
 
+**Anúncios (2026-10-29)**: o proprietário autorizou **somente** as fases
+A1 (base manual) e A2 (importar CSV) do `upgrade/PLANO_ANUNCIOS.md` —
+ambas concluídas no código: módulo `ADS`, contas de anúncio, campanhas
+com UTM, métricas do dia (manual e CSV da Meta/Google com prévia),
+indicadores no servidor e telas em Administração › Anúncios e na ficha do
+cliente (`docs/akylla/ANUNCIOS.md`). Backup: tag
+`antes-anuncios-2026-10-29`. Produção: falta o proprietário rodar o
+`update.sh` na VPS. As fases A3 a A7 aguardam autorização.
+
 **Transformação para clientes e produtos digitais (desde 2026-10-23)**:
 etapas 2 (menu sem loja), 3 (modelo) e 4 (telas) concluídas no código.
 Backup da versão de loja: tag `versao-loja-2026-10-23` e ramo

@@ -56,6 +56,8 @@ const CATALOG: Array<{ name: string; type: DigitalProductType; billingPeriod: "M
   { name: "Hospedagem", type: "HOSTING", billingPeriod: "MONTHLY" },
   { name: "Domínio", type: "DOMAIN", billingPeriod: "YEARLY" },
   { name: "Manutenção", type: "MAINTENANCE", billingPeriod: "MONTHLY" },
+  // 2026-10-29: pacotes de gestão de anúncios (preços em docs/akylla/ANUNCIOS.md)
+  { name: "Gestão de anúncios", type: "ADS_MANAGEMENT", billingPeriod: "MONTHLY" },
 ];
 
 const CLIENTS: ClientSeed[] = [
@@ -187,6 +189,23 @@ async function seedOwnDeliveries(companyId: string, dryRun: boolean) {
   }
 }
 
+/** 2026-10-29: a empresa da plataforma usa o módulo de anúncios. */
+async function enableAdsModule(companyId: string, dryRun: boolean) {
+  const row = await prisma.companyModule.findUnique({ where: { companyId_module: { companyId, module: "ADS" } } });
+  if (row?.status === "ACTIVE") {
+    console.log("  = módulo Anúncios já ativo");
+    return;
+  }
+  console.log("  + módulo Anúncios ativo");
+  if (!dryRun) {
+    await prisma.companyModule.upsert({
+      where: { companyId_module: { companyId, module: "ADS" } },
+      create: { companyId, module: "ADS", status: "ACTIVE" },
+      update: { status: "ACTIVE" },
+    });
+  }
+}
+
 async function toggleDemos(disable: boolean, dryRun: boolean) {
   const demos = await prisma.company.findMany({
     where: { slug: { startsWith: DEMO_SLUG_PREFIX } },
@@ -242,6 +261,7 @@ async function main() {
 
   console.log(`${dryRun ? "[SIMULAÇÃO] " : ""}Produtos próprios do Akylla → ${company.name} (${company.slug})`);
   await seedOwnDeliveries(company.id, dryRun);
+  await enableAdsModule(company.id, dryRun);
 
   if (company.pixKey) {
     console.log("  = chave Pix da cobrança já cadastrada");

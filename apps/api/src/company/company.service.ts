@@ -111,6 +111,10 @@ export class CompanyService {
       deliveryCredentials,
       credentialAccessLogs,
       billingActions,
+      adAccounts,
+      adCampaigns,
+      adMetrics,
+      adCampaignLogs,
     ] = await Promise.all([
       this.prisma.company.findUnique({ where: { id: companyId } }),
       this.prisma.user.findMany({
@@ -155,6 +159,27 @@ export class CompanyService {
       this.prisma.deliveryCredential.findMany({ where: { companyId } }),
       this.prisma.credentialAccessLog.findMany({ where: { companyId } }),
       this.prisma.billingActionLog.findMany({ where: { companyId } }),
+      // Tokens de API (fase A5) nunca saem, nem cifrados
+      this.prisma.adAccount.findMany({
+        where: { companyId },
+        select: {
+          id: true,
+          clientId: true,
+          platform: true,
+          name: true,
+          externalAccountId: true,
+          connection: true,
+          tokenExpiresAt: true,
+          lastSyncAt: true,
+          lastSyncError: true,
+          status: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      }),
+      this.prisma.adCampaign.findMany({ where: { companyId } }),
+      this.prisma.adMetricDaily.findMany({ where: { companyId } }),
+      this.prisma.adCampaignLog.findMany({ where: { companyId } }),
     ]);
 
     if (!company) {
@@ -193,6 +218,10 @@ export class CompanyService {
       deliveryCredentials,
       credentialAccessLogs,
       billingActions,
+      adAccounts,
+      adCampaigns,
+      adMetrics,
+      adCampaignLogs,
     };
   }
 }

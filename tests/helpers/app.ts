@@ -47,6 +47,11 @@ export async function resetDatabase(prisma: PrismaService): Promise<void> {
   await prisma.product.deleteMany();
   // appointment referencia client/service e users (FK Restrict); Pet é tabela legada
   await prisma.appointment.deleteMany();
+  // 2026-10-29: anúncios referenciam cliente/entrega/contrato (Restrict)
+  await prisma.adCampaignLog.deleteMany();
+  await prisma.adMetricDaily.deleteMany();
+  await prisma.adCampaign.deleteMany();
+  await prisma.adAccount.deleteMany();
   // 2026-10-27: histórico de cobrança referencia contrato/entrega (Restrict)
   await prisma.billingActionLog.deleteMany();
   // subscription referencia client/plan/users; cashMovement referencia subscription (SetNull)

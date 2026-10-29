@@ -1340,6 +1340,7 @@ export const businessModuleSchema = z.enum([
   "CREDIT",
   "SERVICE_ORDERS",
   "FISCAL",
+  "ADS",
 ]);
 export type BusinessModule = z.infer<typeof businessModuleSchema>;
 
@@ -1352,6 +1353,7 @@ export const BUSINESS_MODULES: readonly BusinessModule[] = [
   "CREDIT",
   "SERVICE_ORDERS",
   "FISCAL",
+  "ADS",
 ];
 
 /** Valores literais para uso como identificadores (ex.: decorators). */
@@ -1364,6 +1366,7 @@ export const BusinessModules = {
   CREDIT: "CREDIT",
   SERVICE_ORDERS: "SERVICE_ORDERS",
   FISCAL: "FISCAL",
+  ADS: "ADS",
 } as const satisfies Record<BusinessModule, BusinessModule>;
 
 export const businessModuleLabels: Record<BusinessModule, string> = {
@@ -1375,6 +1378,7 @@ export const businessModuleLabels: Record<BusinessModule, string> = {
   CREDIT: "Crediário",
   SERVICE_ORDERS: "Ordens de serviço",
   FISCAL: "Nota fiscal",
+  ADS: "Anúncios",
 };
 
 export const companyModuleStatusSchema = z.enum(["ACTIVE", "DISABLED"]);
@@ -2216,6 +2220,7 @@ export const digitalProductTypeSchema = z.enum([
   "HOSTING",
   "DOMAIN",
   "MAINTENANCE",
+  "ADS_MANAGEMENT",
 ]);
 export type DigitalProductType = z.infer<typeof digitalProductTypeSchema>;
 
@@ -2227,6 +2232,7 @@ export const digitalProductTypeLabels: Record<DigitalProductType, string> = {
   HOSTING: "Hospedagem",
   DOMAIN: "Domínio",
   MAINTENANCE: "Manutenção",
+  ADS_MANAGEMENT: "Gestão de anúncios",
 };
 
 export const digitalBillingPeriodSchema = z.enum(["MONTHLY", "YEARLY"]);
@@ -2718,3 +2724,368 @@ export interface PublicSiteStatusDto {
   message: string | null;
 }
 
+
+// ---------------------------------------------------------------------------
+// 2026-10-29 — gestão de anúncios (upgrade/PLANO_ANUNCIOS.md, fases A1 e A2)
+// ---------------------------------------------------------------------------
+
+export const adPlatformSchema = z.enum(["META", "GOOGLE", "TIKTOK", "OTHER"]);
+export type AdPlatform = z.infer<typeof adPlatformSchema>;
+
+export const adPlatformLabels: Record<AdPlatform, string> = {
+  META: "Meta (Facebook e Instagram)",
+  GOOGLE: "Google",
+  TIKTOK: "TikTok",
+  OTHER: "Outra",
+};
+
+/** Valor de `utm_source` do link de cada plataforma. */
+export const adPlatformUtmSource: Record<AdPlatform, string> = {
+  META: "facebook",
+  GOOGLE: "google",
+  TIKTOK: "tiktok",
+  OTHER: "outros",
+};
+
+export const adObjectiveSchema = z.enum(["MESSAGES", "TRAFFIC", "LEADS", "SALES", "PROFILE_VISITS", "AWARENESS"]);
+export type AdObjective = z.infer<typeof adObjectiveSchema>;
+
+export const adObjectiveLabels: Record<AdObjective, string> = {
+  MESSAGES: "Mensagens (WhatsApp/Direct)",
+  TRAFFIC: "Visitas ao site",
+  LEADS: "Cadastros (leads)",
+  SALES: "Vendas na loja",
+  PROFILE_VISITS: "Visitas ao perfil",
+  AWARENESS: "Alcance",
+};
+
+/** O que conta como "resultado" em cada objetivo (texto das telas). */
+export const adObjectiveResultLabels: Record<AdObjective, string> = {
+  MESSAGES: "conversas",
+  TRAFFIC: "visitas",
+  LEADS: "cadastros",
+  SALES: "compras",
+  PROFILE_VISITS: "visitas ao perfil",
+  AWARENESS: "resultados",
+};
+
+export const adCampaignStatusSchema = z.enum(["DRAFT", "WAITING_APPROVAL", "ACTIVE", "PAUSED", "FINISHED"]);
+export type AdCampaignStatus = z.infer<typeof adCampaignStatusSchema>;
+
+export const adCampaignStatusLabels: Record<AdCampaignStatus, string> = {
+  DRAFT: "Rascunho",
+  WAITING_APPROVAL: "Aguardando aprovação",
+  ACTIVE: "Ativa",
+  PAUSED: "Pausada",
+  FINISHED: "Finalizada",
+};
+
+/** Transições permitidas (finalizada não volta). */
+export const AD_CAMPAIGN_TRANSITIONS: Record<AdCampaignStatus, readonly AdCampaignStatus[]> = {
+  DRAFT: ["WAITING_APPROVAL", "ACTIVE", "FINISHED"],
+  WAITING_APPROVAL: ["DRAFT", "ACTIVE", "FINISHED"],
+  ACTIVE: ["PAUSED", "FINISHED"],
+  PAUSED: ["ACTIVE", "FINISHED"],
+  FINISHED: [],
+};
+
+/** Pausar e finalizar exigem motivo (vai para o histórico). */
+export const AD_STATUS_REASON_REQUIRED: readonly AdCampaignStatus[] = ["PAUSED", "FINISHED"];
+
+export const adMetricSourceSchema = z.enum(["MANUAL", "CSV", "API"]);
+export type AdMetricSource = z.infer<typeof adMetricSourceSchema>;
+
+export const adMetricSourceLabels: Record<AdMetricSource, string> = {
+  MANUAL: "Manual",
+  CSV: "Planilha (CSV)",
+  API: "API",
+};
+
+/** Precedência no mesmo dia: maior vence (API > CSV > MANUAL). */
+export const AD_METRIC_SOURCE_PRIORITY: Record<AdMetricSource, number> = { MANUAL: 1, CSV: 2, API: 3 };
+
+export const adLogActionLabels: Record<"CREATE" | "UPDATE" | "STATUS" | "METRIC" | "METRIC_FIX" | "CSV_IMPORT", string> = {
+  CREATE: "Criou a campanha",
+  UPDATE: "Editou a campanha",
+  STATUS: "Mudou o status",
+  METRIC: "Lançou métrica do dia",
+  METRIC_FIX: "Corrigiu métrica do dia",
+  CSV_IMPORT: "Importou planilha",
+};
+export type AdLogAction = keyof typeof adLogActionLabels;
+
+const adDay = z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida (use AAAA-MM-DD)");
+const optionalAdDay = adDay.optional().nullable().or(z.literal("").transform(() => null));
+const optionalAdMoney = z.union([priceFieldSchema, z.null()]).optional();
+const adUrl = z
+  .string()
+  .trim()
+  .max(500, "Máximo de 500 caracteres")
+  .url("URL inválida (use https://...)")
+  .refine((value) => /^https?:\/\//i.test(value), "URL deve começar com http:// ou https://");
+const optionalAdId = z.string().trim().min(1).max(60).optional().nullable().or(z.literal("").transform(() => null));
+const adAccountExternalId = z
+  .string()
+  .trim()
+  .max(60, "Máximo de 60 caracteres")
+  .nullable()
+  .transform((value) => (value ? value : null));
+
+export const createAdAccountSchema = z.object({
+  clientId: z.string().trim().min(1, "Cliente é obrigatório").max(60),
+  platform: adPlatformSchema,
+  name: nameField,
+  externalAccountId: adAccountExternalId.optional(),
+});
+export type CreateAdAccountInput = z.infer<typeof createAdAccountSchema>;
+
+export const updateAdAccountSchema = z
+  .object({
+    name: nameField,
+    externalAccountId: adAccountExternalId,
+    status: recordStatusSchema,
+  })
+  .partial()
+  .refine((value) => Object.keys(value).length > 0, "Nada para alterar");
+export type UpdateAdAccountInput = z.infer<typeof updateAdAccountSchema>;
+
+export const listAdAccountsQuerySchema = z.object({
+  clientId: z.string().trim().max(60).optional(),
+  platform: adPlatformSchema.optional(),
+  status: recordStatusSchema.optional(),
+});
+export type ListAdAccountsQuery = z.infer<typeof listAdAccountsQuerySchema>;
+
+const adCampaignFields = {
+  adAccountId: optionalAdId,
+  deliveryId: optionalAdId,
+  subscriptionId: optionalAdId,
+  objective: adObjectiveSchema,
+  name: nameField,
+  /** Vazio com entrega escolhida → usa o nome da entrega. */
+  promotedItem: z.string().trim().max(200, "Máximo de 200 caracteres").optional().nullable(),
+  targetUrl: adUrl.optional().nullable().or(z.literal("").transform(() => null)),
+  audienceNotes: optionalText(1000),
+  dailyBudget: optionalAdMoney,
+  totalBudget: optionalAdMoney,
+  startAt: optionalAdDay,
+  endAt: optionalAdDay,
+  notes: optionalText(2000),
+};
+
+/** `utmCampaign` não é aceito: o servidor gera (único por empresa). */
+export const createAdCampaignSchema = z.object({
+  clientId: z.string().trim().min(1, "Cliente é obrigatório").max(60),
+  platform: adPlatformSchema,
+  ...adCampaignFields,
+});
+export type CreateAdCampaignInput = z.infer<typeof createAdCampaignSchema>;
+
+export const updateAdCampaignSchema = z
+  .object(adCampaignFields)
+  .partial()
+  .refine((value) => Object.keys(value).length > 0, "Nada para alterar");
+export type UpdateAdCampaignInput = z.infer<typeof updateAdCampaignSchema>;
+
+export const listAdCampaignsQuerySchema = paginationQuerySchema.extend({
+  search: z.string().trim().max(120).optional(),
+  clientId: z.string().trim().max(60).optional(),
+  status: adCampaignStatusSchema.optional(),
+  platform: adPlatformSchema.optional(),
+});
+export type ListAdCampaignsQuery = z.infer<typeof listAdCampaignsQuerySchema>;
+
+export const changeAdCampaignStatusSchema = z.object({
+  status: adCampaignStatusSchema,
+  reason: z.string().trim().max(500).optional(),
+});
+export type ChangeAdCampaignStatusInput = z.infer<typeof changeAdCampaignStatusSchema>;
+
+const metricInt = z.coerce
+  .number({ invalid_type_error: "Use um número inteiro" })
+  .int("Use um número inteiro")
+  .min(0, "Não pode ser negativo")
+  .max(2_000_000_000, "Valor muito alto");
+
+export const upsertAdMetricSchema = z.object({
+  impressions: metricInt.default(0),
+  reach: metricInt.default(0),
+  clicks: metricInt.default(0),
+  spend: priceFieldSchema.default("0"),
+  results: metricInt.default(0),
+});
+export type UpsertAdMetricInput = z.infer<typeof upsertAdMetricSchema>;
+
+export const adDayParamSchema = adDay;
+
+export const adLinkQuerySchema = z.object({
+  url: adUrl.optional(),
+});
+export type AdLinkQuery = z.infer<typeof adLinkQuerySchema>;
+
+export const adOverviewQuerySchema = z.object({
+  from: adDay.optional(),
+  to: adDay.optional(),
+});
+export type AdOverviewQuery = z.infer<typeof adOverviewQuerySchema>;
+
+/** Formulário do upload do CSV (multipart): prévia por padrão. */
+export const adMetricsImportFormSchema = z.object({
+  dryRun: z
+    .union([z.boolean(), z.enum(["true", "false"])])
+    .transform((value) => value === true || value === "true")
+    .default(true),
+  /** Planilha com várias campanhas: qual delas importar. */
+  campaignName: z.string().trim().max(300).optional(),
+});
+export type AdMetricsImportForm = z.infer<typeof adMetricsImportFormSchema>;
+
+/** Indicadores calculados no servidor; divisão por zero → null. */
+export interface AdIndicatorsDto {
+  impressions: number;
+  reach: number;
+  clicks: number;
+  spend: string;
+  results: number;
+  /** cliques ÷ impressões, em % (2 casas) */
+  ctr: number | null;
+  /** investimento ÷ cliques */
+  cpc: string | null;
+  /** investimento ÷ resultados */
+  costPerResult: string | null;
+  /** dias com métrica no período */
+  days: number;
+}
+
+export interface AdAccountDto {
+  id: string;
+  clientId: string;
+  platform: AdPlatform;
+  name: string;
+  externalAccountId: string | null;
+  connection: "MANUAL" | "API";
+  status: "ACTIVE" | "INACTIVE";
+  campaignsCount: number;
+  client: { id: string; name: string };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdCampaignDto {
+  id: string;
+  clientId: string;
+  adAccountId: string | null;
+  deliveryId: string | null;
+  subscriptionId: string | null;
+  platform: AdPlatform;
+  objective: AdObjective;
+  status: AdCampaignStatus;
+  name: string;
+  promotedItem: string;
+  targetUrl: string | null;
+  utmCampaign: string;
+  audienceNotes: string | null;
+  dailyBudget: string | null;
+  totalBudget: string | null;
+  startAt: string | null;
+  endAt: string | null;
+  notes: string | null;
+  client: { id: string; name: string };
+  adAccount: { id: string; name: string } | null;
+  delivery: { id: string; name: string } | null;
+  subscription: { id: string; planName: string } | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Linha diária efetiva (a de maior precedência) + as outras origens do dia. */
+export interface AdMetricDayDto {
+  date: string;
+  source: AdMetricSource;
+  impressions: number;
+  reach: number;
+  clicks: number;
+  spend: string;
+  results: number;
+  /** Outras origens gravadas no mesmo dia (ignoradas no cálculo). */
+  overridden: AdMetricSource[];
+}
+
+export interface AdCampaignLogDto {
+  id: string;
+  action: AdLogAction;
+  detail: unknown;
+  userName: string | null;
+  createdAt: string;
+}
+
+export interface AdCampaignDetailDto extends AdCampaignDto {
+  indicators: AdIndicatorsDto;
+  metrics: AdMetricDayDto[];
+  logs: AdCampaignLogDto[];
+  allowedStatuses: AdCampaignStatus[];
+}
+
+export interface AdCampaignListItemDto extends AdCampaignDto {
+  indicators: AdIndicatorsDto;
+  lastMetricDate: string | null;
+}
+
+export interface AdOverviewDto {
+  from: string;
+  to: string;
+  activeCampaigns: number;
+  indicators: AdIndicatorsDto;
+  /** Mensalidades ativas dos contratos de gestão (ADS_MANAGEMENT), por mês */
+  managementMonthly: string;
+  managementContracts: number;
+  byClient: Array<{
+    client: { id: string; name: string };
+    activeCampaigns: number;
+    indicators: AdIndicatorsDto;
+  }>;
+  /** Campanhas ativas sem métrica há 3 dias ou mais */
+  stale: Array<{ id: string; name: string; clientName: string; lastMetricDate: string | null; daysWithout: number | null }>;
+}
+
+export interface AdClientSummaryDto {
+  indicators: AdIndicatorsDto;
+  campaigns: AdCampaignListItemDto[];
+  accounts: AdAccountDto[];
+}
+
+export interface AdLinkDto {
+  url: string;
+  utmSource: string;
+  utmMedium: string;
+  utmCampaign: string;
+}
+
+export interface AdImportRowDto {
+  date: string;
+  impressions: number;
+  reach: number;
+  clicks: number;
+  spend: string;
+  results: number;
+  /** Já existe CSV gravado neste dia (será substituído). */
+  replaces: boolean;
+}
+
+export type AdImportColumn = "date" | "endDate" | "impressions" | "reach" | "clicks" | "spend" | "results" | "campaign";
+
+export interface AdImportReportDto {
+  dryRun: boolean;
+  filename: string;
+  /** Formato reconhecido pelo cabeçalho */
+  format: "META" | "GOOGLE" | "GENERIC";
+  /** Coluna da planilha usada para cada campo. */
+  columns: Partial<Record<AdImportColumn, string>>;
+  campaignNames: string[];
+  selectedCampaign: string | null;
+  rows: AdImportRowDto[];
+  totals: AdIndicatorsDto;
+  skipped: number;
+  errors: Array<{ row: number; message: string }>;
+  imported: number;
+}

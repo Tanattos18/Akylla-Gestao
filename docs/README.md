@@ -33,6 +33,7 @@ Para começar, leia nesta ordem:
 | [Ordem de serviço](akylla/ORDEM_DE_SERVICO.md) | estados, itens, conclusão (estoque/financeiro/comissão), anexos e WhatsApp |
 | [Componentes e acessibilidade](akylla/DESIGN_SYSTEM.md) | tabela, diálogo, aviso, abas, cores e auditoria `test:a11y` |
 | [Cobrança do SaaS](akylla/COBRANCA.md) | planos, teste grátis, somente leitura, painel do dono e como cobrar |
+| [Anúncios](akylla/ANUNCIOS.md) | gestão de anúncios dos clientes: campanhas, UTM, métricas e CSV da Meta/Google ([plano](../upgrade/PLANO_ANUNCIOS.md)) |
 | [Onboarding por perfil](akylla/ONBOARDING.md) | perfis Comércio/Serviços/Híbrido, módulos ligados, configurações e páginas públicas |
 | [Nota fiscal](akylla/FISCAL.md) | emissão por integradora, segredos cifrados, webhook, cancelamento e o que falta para emitir de verdade |
 

@@ -85,14 +85,15 @@ afterAll(async () => {
 });
 
 describe("CompanyModules — listagem padrão", () => {
-  it("lista os 8 módulos desativáveis, todos ACTIVE por padrão (ausência de linha)", async () => {
+  it("lista os 9 módulos desativáveis, todos ACTIVE por padrão (ausência de linha)", async () => {
     const response = await request(app.getHttpServer())
       .get("/api/company-modules")
       .set("Cookie", memberACookie);
 
     expect(response.status).toBe(200);
-    expect(response.body).toHaveLength(8);
+    expect(response.body).toHaveLength(9);
     expect(response.body.map((entry: { module: string }) => entry.module).sort()).toEqual([
+      "ADS",
       "APPOINTMENTS",
       "COMMISSIONS",
       "CREDIT",

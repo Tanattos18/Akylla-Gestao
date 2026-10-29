@@ -33,6 +33,11 @@
 >   Início; o script `akylla-status.js` aplica a pausa no site do cliente
 >   (guia em `docs/akylla/PAUSA_DE_SITES.md`). Os sites "nunca pausar"
 >   do proprietário nunca são pausados.
+> - **anúncios** (2026-10-29, módulo `ADS`): campanhas dos clientes com
+>   link UTM, métricas do dia lançadas à mão ou importadas do CSV da Meta
+>   e do Google Ads (com prévia) e indicadores calculados no servidor —
+>   a verba é paga pelo cliente direto à plataforma
+>   ([guia](docs/akylla/ANUNCIOS.md)).
 >
 > A versão de loja está guardada na tag `versao-loja-2026-10-23` e no
 > ramo `versao-loja`. O texto abaixo ainda descreve a versão de loja.
@@ -158,6 +163,7 @@ PDV, estoque, caixa, financeiro, clientes e relatórios. Regras em
 | **Agendamentos** | agenda por dia, semana e mês, conflito de horário, status e lembretes |
 | **WhatsApp** | Cloud API oficial da Meta: modelos prontos editáveis, consentimento, fila com retentativas e webhook assinado ([como ligar](docs/akylla/WHATSAPP.md)) |
 | **Assinaturas de clientes** | planos recorrentes pagos no caixa, com renovação e cancelamento auditados |
+| **Anúncios** | campanhas dos clientes, contas de anúncio, link UTM, métricas do dia (manual ou CSV da Meta/Google) e indicadores no servidor ([guia](docs/akylla/ANUNCIOS.md)) |
 
 ---
 
@@ -183,6 +189,7 @@ PDV, estoque, caixa, financeiro, clientes e relatórios. Regras em
 | `/importacoes` | importar planilhas |
 | `/dashboard`, `/relatorios` | indicadores, exportação e impressão |
 | `/usuarios`, `/faturamento` | equipe e plano da empresa (admin) |
+| `/anuncios/*` | anúncios: visão geral, campanhas e contas de anúncio (admin) |
 | `/plataforma` | painel do dono: todas as empresas, pagamentos, teste, isenção e suspensão |
 
 Documentação da API: `/api/docs` (Swagger, gerada do código).
@@ -213,7 +220,7 @@ Documentação da API: `/api/docs` (Swagger, gerada do código).
 | Verificação | Resultado (2026-10-18) |
 |---|---|
 | `npm run validate` (lint, typecheck, testes, build, schema) | ✅ verde |
-| Testes de integração em PostgreSQL real | **733/733** (42 arquivos), incluindo isolamento por RLS |
+| Testes de integração em PostgreSQL real | **811/811** (50 arquivos), incluindo isolamento por RLS |
 | Cobertura de services/controllers da API | **93,7%** das linhas (CI falha se cair) |
 | E2E no navegador (Playwright) | **7 fluxos**: login; cliente; caixa → venda → NFC-e → fechamento; importação CSV; rota protegida; CNPJ no comprovante + busca global; agenda semana/mês |
 | Acessibilidade (axe, WCAG 2.1 AA) | **0 violações** em 36 telas |
@@ -419,6 +426,7 @@ Arquivos Sem USO/  arquivo local de itens fora de uso (ignorado pelo Git)
 | [Cobrança do SaaS](docs/akylla/COBRANCA.md) · [Comissões](docs/akylla/COMISSOES.md) · [Crediário](docs/akylla/CREDIARIO.md) · [OS](docs/akylla/ORDEM_DE_SERVICO.md) · [Fiscal](docs/akylla/FISCAL.md) · [Onboarding](docs/akylla/ONBOARDING.md) | regras de negócio dos módulos |
 | [Componentes e acessibilidade](docs/akylla/DESIGN_SYSTEM.md) | padrão visual e auditoria |
 | [WhatsApp](docs/akylla/WHATSAPP.md) | ligar a API oficial da Meta e templates |
+| [Anúncios](docs/akylla/ANUNCIOS.md) · [Plano](upgrade/PLANO_ANUNCIOS.md) | gestão de anúncios dos clientes (fases A1 e A2) |
 | [Go/No-go para venda](docs/akylla/GO_NO_GO.md) · [Checklist pré-produção](docs/akylla/CHECKLIST_PRE_PRODUCAO.md) | critérios para o primeiro cliente pagante |
 | [Roteiro de evolução](upgrade/Prompt_Mestre.md) · [Referências no GitHub](upgrade/REFERENCIAS_GIT.md) | as 7 fases e repositórios de apoio |
 | [AGENTS.md](AGENTS.md) | regras para agentes de desenvolvimento |

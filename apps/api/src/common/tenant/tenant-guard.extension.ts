@@ -53,6 +53,11 @@ export const TENANT_MODELS: ReadonlySet<string> = new Set([
   "CredentialAccessLog",
   "SiteCheck",
   "BillingActionLog",
+  // 2026-10-29: anúncios
+  "AdAccount",
+  "AdCampaign",
+  "AdMetricDaily",
+  "AdCampaignLog",
 ]);
 
 /** Operações cujo `where` aceita filtros (permite injeção via AND). */

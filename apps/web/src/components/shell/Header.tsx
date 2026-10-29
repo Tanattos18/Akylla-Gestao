@@ -39,6 +39,7 @@ import {
   Building2,
   Globe,
   Layers,
+  Megaphone,
   type LucideIcon,
 } from "lucide-react";
 import { api } from "@/lib/api";
@@ -117,6 +118,7 @@ const navGroups: NavGroup[] = [
       { label: "Usuários", href: "/usuarios", icon: UserCog, adminOnly: true },
       { label: "Faturamento", href: "/faturamento", icon: CreditCard, adminOnly: true },
       { label: "Planos", href: "/planos", icon: ClipboardList, adminOnly: true },
+      { label: "Anúncios", href: "/anuncios", icon: Megaphone, adminOnly: true, module: "ADS" },
       { label: "Importações", href: "/importacoes", icon: FileSpreadsheet, adminOnly: true },
       { label: "Configurações", href: "/configuracoes", icon: Settings, adminOnly: true },
       { label: "Plataforma", href: "/plataforma", icon: Building2, platformOnly: true },
@@ -155,6 +157,9 @@ const routeLabels: Record<string, string> = {
   importacoes: "Importações",
   configuracoes: "Configurações",
   plataforma: "Plataforma",
+  anuncios: "Anúncios",
+  campanhas: "Campanhas",
+  contas: "Contas de anúncio",
   conta: "Minha conta",
   onboarding: "Primeiros passos",
   novo: "Novo",

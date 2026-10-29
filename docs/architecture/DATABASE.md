@@ -1,5 +1,41 @@
 # Banco de dados — diretrizes e modelo atual
 
+## Gestão de anúncios (2026-10-29, fases A1 e A2)
+
+Migrations `20261029120000_ads_management` e
+`20261029120100_ads_module_offer` — **só adicionam** (plano em
+`upgrade/PLANO_ANUNCIOS.md`):
+
+- Enums novos: `AdPlatform` (META, GOOGLE, TIKTOK, OTHER), `AdObjective`,
+  `AdCampaignStatus` (DRAFT, WAITING_APPROVAL, ACTIVE, PAUSED, FINISHED),
+  `AdMetricSource` (MANUAL, CSV, API), `AdAccountConnection` (MANUAL, API)
+  e `AdLogAction` (CREATE, UPDATE, STATUS, METRIC, METRIC_FIX, CSV_IMPORT).
+  Valores novos: `BusinessModule.ADS` e `DigitalProductType.ADS_MANAGEMENT`.
+- `AdAccount`: conta de anúncio do **cliente** (`clientId`, `platform`,
+  `name`, `externalAccountId?` — único por empresa e plataforma). Campos
+  `tokenEncrypted`, `tokenExpiresAt`, `lastSyncAt` e `lastSyncError` ficam
+  reservados para a fase A5 (API); o token nunca sai na API nem na
+  exportação.
+- `AdCampaign`: `clientId`, `adAccountId?`, `deliveryId?` (entrega
+  promovida), `subscriptionId?` (contrato de gestão), plataforma,
+  objetivo, status, `promotedItem`, `targetUrl?`, `utmCampaign` (gerado no
+  servidor, **único por empresa**), verba de referência do cliente
+  (`dailyBudget?`/`totalBudget?` `Decimal(12,2)`), datas e `createdByUserId`.
+- `AdMetricDaily`: uma linha por campanha, dia (`@db.Date`) e origem
+  (unique `campaignId + date + source`); `impressions`, `reach`, `clicks`,
+  `spend Decimal(12,2)`, `results`. No cálculo vale, por dia, só a origem de
+  maior precedência (API > CSV > MANUAL).
+- `AdCampaignLog`: histórico **imutável** (`action`, `detail Json`,
+  `userId?`); o trigger `AdCampaignLog_no_update` recusa qualquer `UPDATE`.
+- FKs `Restrict` e índices por empresa; as 4 tabelas têm RLS `ENABLE` +
+  `FORCE` + `tenant_isolation` na mesma migration e estão em
+  `TENANT_MODELS` e `TENANT_TABLES`.
+- A segunda migration (separada porque o valor novo do enum só pode ser
+  usado depois do commit) insere `ModuleOffer` `ADS` (R$ 49,90 sugerido,
+  editável no painel do dono) e ativa o módulo na empresa da plataforma
+  (slug `akylla-gestao`, inclusive como avulso se ela tiver kit).
+- Fora desta etapa (fases A3+): `AdTrackingDaily` e `AdReport`.
+
 ## Pausa dos sites vendidos (2026-10-27)
 
 Migration `20261027120000_site_pause` — só adiciona:

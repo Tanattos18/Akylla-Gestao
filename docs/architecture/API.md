@@ -475,7 +475,7 @@ opção B: tabela `CompanyModule`).
 
 | Método e rota | Guard | Descrição |
 |---|---|---|
-| `GET /api/company-modules` | Sessão | Lista os 5 módulos desativáveis com `module`, `status` (`ACTIVE` = padrão quando não há linha) e `label`; Kits (Fase 8b): `entitled` = contratado (kit + avulsos; tudo no teste/isenta). Rota de módulo não contratado → **403** `{code:"MODULE_NOT_CONTRACTED"}` |
+| `GET /api/company-modules` | Sessão | Lista os 9 módulos desativáveis (incluindo `ADS`, anúncios, desde 2026-10-29) com `module`, `status` (`ACTIVE` = padrão quando não há linha) e `label`; Kits (Fase 8b): `entitled` = contratado (kit + avulsos; tudo no teste/isenta). Rota de módulo não contratado → **403** `{code:"MODULE_NOT_CONTRACTED"}` |
 | `PATCH /api/company-modules` | `AdminGuard` | Upsert `{ module, status }` da empresa autenticada (Zod `upsertCompanyModuleSchema`) |
 
 - **Bloqueio no servidor:** `ModuleGuard` (APP_GUARD, registrado após
@@ -483,7 +483,7 @@ opção B: tabela `CompanyModule`).
   "Módulo desativado para esta empresa". Rotas marcadas com
   `@RequireModule(...)`: `services`, `appointments`,
   `whatsapp/config|templates|consents|messages`,
-  `subscriptions`, `subscription-plans`. Rotas **sem** decorator e rotas
+  `subscriptions`, `subscription-plans`, `ads/*` e `clients/:id/ads` (`ADS`). Rotas **sem** decorator e rotas
   `@Public` (ex.: webhook `/api/webhooks/whatsapp`) nunca são bloqueadas.
 - Ocultação de cards na home acompanha o status (UI), mas **não é
   controle de acesso** — a fonte de verdade é o guard.
@@ -714,7 +714,7 @@ Na interface, "Assinaturas" aparecem como **Contratos**. Rotas sem
 | Método | Rota | Acesso | Descrição |
 |---|---|---|---|
 | GET | `/api/digital-products` | sessão | Catálogo; `search`, `type`, `status`, `page`, `pageSize`, `orderBy` (`name`/`defaultPrice`/`createdAt`) |
-| POST | `/api/digital-products` | ADMIN | Cria (201): `name` único por empresa → 409, `type` (`SITE`, `PROFESSIONAL_PROFILE`, `SYSTEM`, `ONLINE_STORE`, `HOSTING`, `DOMAIN`, `MAINTENANCE`), `defaultPrice`, `billingPeriod` (`MONTHLY`/`YEARLY`), `description?` |
+| POST | `/api/digital-products` | ADMIN | Cria (201): `name` único por empresa → 409, `type` (`SITE`, `PROFESSIONAL_PROFILE`, `SYSTEM`, `ONLINE_STORE`, `HOSTING`, `DOMAIN`, `MAINTENANCE`, `ADS_MANAGEMENT` — pacote de gestão de anúncios), `defaultPrice`, `billingPeriod` (`MONTHLY`/`YEARLY`), `description?` |
 | GET | `/api/digital-products/:id` | sessão | Detalhe com `deliveriesCount` (404 cross-tenant) |
 | PATCH | `/api/digital-products/:id` | ADMIN | Edição parcial |
 | PATCH | `/api/digital-products/:id/status` | ADMIN | `ACTIVE`/`INACTIVE` |
@@ -775,6 +775,37 @@ Na interface, "Assinaturas" aparecem como **Contratos**. Rotas sem
   teste "Akylla Studio (teste)", todas com `neverPause`. Opções
   `--desativar-demos` / `--reativar-demos` suspendem ou reativam as
   empresas `demo-*` (dados mantidos) e `--simular` só mostra o que faria.
+
+## Gestão de anúncios — módulo ADS (2026-10-29, fases A1 e A2)
+
+Plano em `upgrade/PLANO_ANUNCIOS.md`; guia de uso em
+`docs/akylla/ANUNCIOS.md`. Todas as rotas exigem o módulo `ADS`
+(`@RequireModule`): fora do plano → 403 `MODULE_NOT_CONTRACTED`;
+desativado pela empresa → 403. A verba é paga pelo cliente direto à
+plataforma: aqui só ficam referências, métricas e o histórico.
+Indicadores sempre calculados no servidor (divisão por zero → `null`;
+mesmo dia: API > CSV > MANUAL — `docs/akylla/DICIONARIO_INDICADORES.md`).
+
+| Método | Rota | Acesso | Descrição |
+|---|---|---|---|
+| GET | `/api/ads/overview` | sessão | `from`/`to` (AAAA-MM-DD; padrão mês atual): campanhas ativas, indicadores do período, `managementMonthly` (mensalidades ativas dos contratos de gestão — entrega `ADS_MANAGEMENT` ou ligados a campanha — por mês), `byClient`, `stale` (ativas sem métrica há 3+ dias) |
+| GET | `/api/ads/accounts` | sessão | Contas de anúncio; `clientId`, `platform`, `status`. Token nunca sai |
+| POST | `/api/ads/accounts` | ADMIN | Cria (201): `clientId`, `platform` (`META`/`GOOGLE`/`TIKTOK`/`OTHER`), `name`, `externalAccountId?`; repetido na mesma plataforma → 409; cliente de outra empresa → 404 |
+| PATCH | `/api/ads/accounts/:id` | ADMIN | `name?`, `externalAccountId?`, `status?` (`ACTIVE`/`INACTIVE`) |
+| GET | `/api/ads/campaigns` | sessão | Lista paginada; `search`, `clientId`, `status`, `platform`; cada item traz `indicators` e `lastMetricDate` |
+| POST | `/api/ads/campaigns` | ADMIN | Cria (201): `clientId`, `platform`, `objective`, `name`, `promotedItem?` (vazio → nome da entrega), `deliveryId?`, `adAccountId?` (mesmo cliente e plataforma), `subscriptionId?`, `targetUrl?` (vazio → site da entrega), `audienceNotes?`, `dailyBudget?`/`totalBudget?`, `startAt?`/`endAt?`, `notes?`. `utmCampaign` é **gerado** (slug único por empresa) e nunca aceito do cliente |
+| GET | `/api/ads/campaigns/:id` | sessão | Detalhe: `indicators`, `metrics` (linha efetiva por dia + `overridden`), `logs` (100 últimos), `allowedStatuses` (404 cross-tenant) |
+| PATCH | `/api/ads/campaigns/:id` | ADMIN | Edição parcial (cliente e plataforma fixos); registra `UPDATE` |
+| POST | `/api/ads/campaigns/:id/status` | ADMIN | `{status, reason?}`: transições válidas (finalizada não volta); pausar/finalizar exigem motivo (3+) → registra `STATUS` |
+| PUT | `/api/ads/campaigns/:id/metrics/:date` | ADMIN | Lança a métrica `MANUAL` do dia (`impressions`, `reach`, `clicks`, `spend`, `results`); repetir o dia corrige e registra `METRIC_FIX` com antes/depois; dia futuro → 400 |
+| POST | `/api/ads/campaigns/:id/metrics/import` | ADMIN | Multipart `file` (.csv ≤ 5 MB), `dryRun` (padrão `true` = prévia), `campaignName?`: CSV do Gerenciador de Anúncios da Meta ou do Google Ads (pt-BR/en, vírgula decimal, UTF-8/UTF-16). Grava `source=CSV` por dia (substitui o CSV do mesmo dia) e registra `CSV_IMPORT` |
+| GET | `/api/ads/campaigns/:id/link` | sessão | `url?` (padrão `targetUrl`): `{url, utmSource, utmMedium: "cpc", utmCampaign}`; mantém os parâmetros do site |
+| GET | `/api/clients/:id/ads` | sessão | Aba Anúncios da ficha: `indicators`, `campaigns`, `accounts` (404 cross-tenant) |
+
+- `AdCampaignLog` é imutável: não há rota de alteração e um trigger no
+  banco recusa `UPDATE`.
+- Precedência por dia: a linha `API` (fase A5) vence `CSV`, que vence
+  `MANUAL`; as outras continuam gravadas e aparecem em `overridden`.
 
 ## Padrão para módulos futuros
 
